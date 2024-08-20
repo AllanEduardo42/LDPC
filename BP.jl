@@ -66,13 +66,14 @@ end
 normalize(f,N)
 
 LF = abs.(log.(f))
+LLF = log.(f)
 
 indices_M  = findindices_M(H,N)
 indices_N  = findindices_N(H,M)
 
 Q = init_q(M,N,f,indices_M)
 LQ = log_init_q(M, N, LF, indices_M)
-LLQ = llr_init_q(M, N, LF, indices_M)
+LLQ = llr_init_q(M, N, LLF, indices_M)
 
 for i=1:3
 
@@ -82,13 +83,13 @@ for i=1:3
 
     @time global LR = log_simple_horizontal_update(M,N,LQ,indices_N, indices_M)
 
-    @time global LLR = llr_simple_horizontal_update(M,N,LLQ,indices_N, indices_M)
+    @time global LLR = llr_simple_horizontal_update(M,N,LLQ,indices_N)
 
     global Q = vertical_update(N,R,Q,f, indices_M)
 
     global LQ = log_vertical_update(N, LR, LQ, LF, indices_M)
 
-    global LLQ = llr_vertical_update(N, LLR, LLQ, LF, indices_M)
+    global LLQ = llr_vertical_update(N, LLR, LLQ, LLF, indices_M)
 
 end
 
@@ -96,7 +97,7 @@ d = MAP_estimator(N,R,f,indices_M)
 
 Ld = log_MAP_estimator(N, LR, LF, indices_M)
 
-LLd = llr_MAP_estimator(N, LLR, LF, indices_M)
+LLd = llr_MAP_estimator(N, LLR, LLF, indices_M)
 
 println(rem.(H*d,2))
 println(rem.(H*Ld,2))

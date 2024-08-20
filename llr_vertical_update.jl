@@ -2,13 +2,12 @@ function llr_vertical_update(N,Lr,Lq,Lf,indices_m)
 
     for n = 1:N
         for m in indices_m[n]
-            sLq = Lf[n,1] - Lf[n,2]
+            Lq[n,m] = Lf[n,1] - Lf[n,2]
             for mm in indices_m[n]
                 if mm != m
-                    sLq += Lr[mm,n]
+                    Lq[n,m] += Lr[mm,n]
                 end
             end
-            Lq[n,m] = sLq
         end
     end  
 

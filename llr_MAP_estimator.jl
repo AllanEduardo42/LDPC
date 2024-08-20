@@ -7,7 +7,7 @@ function llr_MAP_estimator(N,Lr,Lf, indices_m)
         for m in indices_m[n]
             Ld += Lr[m,n]
         end
-        if Ld > 0
+        if Ld < 0
             d[n] = 1
         end
     end
