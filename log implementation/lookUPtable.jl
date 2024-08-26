@@ -1,3 +1,9 @@
+SIZE = 512
+SCOPE = SIZE/10
+SCOPE_LN2 = round(Int,SCOPE*log(2))
+lookUPtable()
+
+
 function lookUPtable()
 
 global f_minus = zeros(Int,SIZE)

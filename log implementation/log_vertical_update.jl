@@ -1,5 +1,7 @@
 function log_vertical_update(N,Lr,Lq,Lf,indices_m)
 
+    # Lf = abs.(log.(f))
+
     for n = 1:N
         for m in indices_m[n]
             Lq0 = Lf[n,1]
@@ -30,6 +32,8 @@ function log_vertical_update(N,Lr,Lq,Lf,indices_m)
 end
 
 function log_init_q(M,N,Lf,indices_m)
+
+    # Lf = abs.(log.(f))
 
     Lq = zeros(N,M,2)
 

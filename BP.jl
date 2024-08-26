@@ -1,23 +1,12 @@
 using LinearAlgebra
 using Statistics
 
-include("horizontal_update.jl")
+# include("horizontal_update.jl")
 include("simple_horizontal_update.jl")
-include("vertical_update.jl")
-include("MAP_estimator.jl")
+include("vertical_update_and_MAP.jl")
 include("auxiliary_functions.jl")
-include("log_simple_horizontal_update.jl")
-include("log_vertical_update.jl")
-include("log_MAP_estimator.jl")
 include("llr_simple_horizontal_update.jl")
-include("llr_vertical_update.jl")
-include("llr_MAP_estimator.jl")
-include("lookUPtable.jl")
-
-SIZE = 512
-SCOPE = SIZE/10
-SCOPE_LN2 = round(Int,SCOPE*log(2))
-lookUPtable()
+include("llr_vertical_update_and_MAP.jl")
 
 H = Bool.([0 1 0 1 0 1 1 1 0 0 0 1;
      1 0 1 1 0 0 0 0 1 0 0 0;
@@ -44,61 +33,61 @@ m = Bool.([1, 0, 0, 0])
 
 c = Bool.(rem.(G*m,2))
 
-t = 2*c .- 1
-
 σ = 0.8
 
-n = σ*randn(N)
+# n = σ*randn(N)
 
-r = t .+ n
+# t = (2*c .- 1 ).+ n
 
-r = [1.3129, 2.6584, 0.7413, 2.1745, 0.5981, −0.8323, −0.3962, −1.7586,
+t = [1.3129, 2.6584, 0.7413, 2.1745, 0.5981, −0.8323, −0.3962, −1.7586,
 1.4905, 0.4084, −0.9290, 1.0765]
 
-f = zeros(N,2)
+F = zeros(N,2)
 k = 1/(sqrt(2π)*σ)
 s = 2σ^2
-for i in eachindex(r)
-    f[i,1] = k*exp(-(r[i]+1)^2/s)
-    f[i,2] = k*exp(-(r[i]-1)^2/s)
+for i in eachindex(t)
+    F[i,1] = k*exp(-(t[i]+1)^2/s)
+    F[i,2] = k*exp(-(t[i]-1)^2/s)
 end
 
-normalize(f,N)
+normalize(F,N)
 
-LF = abs.(log.(f))
-LLF = log.(f)
+ΔLF = log.(F[:,1]) - log.(F[:,2])
 
 indices_M  = findindices_M(H,N)
 indices_N  = findindices_N(H,M)
 
-Q = init_q(M,N,f,indices_M)
-LQ = log_init_q(M, N, LF, indices_M)
-LLQ = llr_init_q(M, N, LLF, indices_M)
+Q = init_q(M,N,F,indices_M)
+LQ = llr_init_q(M, N, ΔLF, indices_M)
 
-for i=1:3
+S = -1
+i = 0
+MAX = 10
 
-    # global R = horizontal_update(M, N, Q, indices_N)
+while S != 0 && i < MAX
+
+    global i += 1
+
+    println("Iteration #", i)
+
+    println("Conventional SPA:")
 
     @time global R = simple_horizontal_update(M, N, Q, indices_N)
+    @time global Q, D = vertical_update_and_MAP(N,R,Q,F, indices_M)
 
-    @time global LR = log_simple_horizontal_update(M,N,LQ,indices_N, indices_M)
+    syndrome = rem.(H*D,2)
 
-    @time global LLR = llr_simple_horizontal_update(M,N,LLQ,indices_N)
+    println("MAP estimate syndrome: ", syndrome)
 
-    global Q = vertical_update(N,R,Q,f, indices_M)
+    println("LLR SPA:")
 
-    global LQ = log_vertical_update(N, LR, LQ, LF, indices_M)
+    @time global LR = llr_simple_horizontal_update(M,N,LQ,indices_N)
+    @time global LQ, D_llr = llr_vertical_update_and_MAP(N, LR, LQ, ΔLF, indices_M)
 
-    global LLQ = llr_vertical_update(N, LLR, LLQ, LLF, indices_M)
+    syndrome_llr = rem.(H*D_llr,2)    
+
+    println("LLR MAP estimate syndrome: ", syndrome_llr)
+    
+    global S = sum(syndrome_llr)
 
 end
-
-d = MAP_estimator(N,R,f,indices_M)
-
-Ld = log_MAP_estimator(N, LR, LF, indices_M)
-
-LLd = llr_MAP_estimator(N, LLR, LLF, indices_M)
-
-println(rem.(H*d,2))
-println(rem.(H*Ld,2))
-println(rem.(H*LLd,2))
