@@ -1,18 +1,19 @@
-function llr_vertical_update_and_MAP(N,Lr,Lq,ΔLf,indices_m)
-
-    d = zeros(Int,N)
+function llr_vertical_update_and_MAP(Lq::Matrix{Float64}, Lr::Matrix{Float64},
+                                     d::Vector{Int64}, N::Int64, ΔLf::Vector{Float64},
+                                     indices_m::Vector{Vector{Int64}})
 
     for n = 1:N
-        LLd = ΔLf[n]
+        Ld = ΔLf[n]
         for m in indices_m[n]
-            LLd += Lr[m,n]
+            Ld += Lr[m,n]
         end
-        if LLd < 0
+        if Ld < 0
             d[n] = 1
+        else
+            d[n] = 0
         end
-        Lq[n,:] .= LLd
         for m in indices_m[n]
-            Lq[n,m] -= Lr[m,n]
+            Lq[n,m] = Ld - Lr[m,n]
         end
     end  
 
@@ -20,9 +21,7 @@ function llr_vertical_update_and_MAP(N,Lr,Lq,ΔLf,indices_m)
 
 end
 
-function llr_init_q(M,N,ΔLf,indices_m)
-
-    Lq = zeros(N,M)
+function llr_init_q(Lq::Matrix{Float64},N,ΔLf::Vector{Float64},indices_m)
 
     for n=1:N
         for m in indices_m[n]

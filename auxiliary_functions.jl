@@ -1,6 +1,6 @@
 function findindices_M(H,N)
 
-    indices_m = Vector{Vector}(undef, N)
+    indices_m = Vector{Vector{Int64}}(undef, N)
     for n=1:N
         indices_m[n] = findall(x -> x == 1, H[:,n])
     end
@@ -11,7 +11,7 @@ end
 
 function findindices_N(H,M)
 
-    indices_n = Vector{Vector}(undef, M)
+    indices_n = Vector{Vector{Int64}}(undef, M)
     for m=1:M
         indices_n[m] = findall(x -> x == 1, H[m,:])
     end
