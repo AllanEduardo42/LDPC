@@ -16,7 +16,7 @@ using Plots
 include("simple_horizontal_update.jl")
 include("vertical_update_and_MAP.jl")
 include("auxiliary_functions.jl")
-include("llr_simple_horizontal_update.jl")
+include("llr_horizontal_update.jl")
 include("llr_vertical_update_and_MAP.jl")
 include("performance_estimation.jl")
 include("test_SPA.jl")
