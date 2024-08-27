@@ -59,7 +59,7 @@ function test_SPA(indices_m::Vector{Vector{Int64}}, indices_n::Vector{Vector{Int
 
         println("LLR SPA:")
 
-        Lr = llr_simple_horizontal_update_table(Lr,M,Lq,indices_n, Lrn, sn, phi)
+        Lr = llr_horizontal_update_table(Lr,M,Lq,indices_n, Lrn, sn, phi)
         Lq, d_llr = llr_vertical_update_and_MAP(Lq, Lr, d_llr, N, ΔLf, indices_m)
 
         syndrome_llr = h*d_llr .% 2   
