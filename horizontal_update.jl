@@ -1,3 +1,8 @@
+################################################################################
+# Allan Eduardo Feitosa
+# 27 ago 2024
+# Horizontal update of the Sum-Product Algorithm
+
 function horizontal_update(M, N, q, indices_n)
 
     r = zeros(M,N,2)

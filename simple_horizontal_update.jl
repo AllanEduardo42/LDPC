@@ -1,6 +1,9 @@
-function simple_horizontal_update(M, N, q, indices_n)
+################################################################################
+# Allan Eduardo Feitosa
+# 27 ago 2024
+# Simple horizontal update of the Sum-Product Algorithm
 
-    r = zeros(M,N,2)
+function simple_horizontal_update(R, M, q, indices_n)
 
     δq = q[:,:,1]-q[:,:,2]
 
@@ -12,11 +15,11 @@ function simple_horizontal_update(M, N, q, indices_n)
                     δr *= δq[nn,m]
                 end
             end
-            r[m,n,1] = 0.5*(1+δr)
-            r[m,n,2] = 0.5*(1-δr)
+            R[m,n,1] = 0.5*(1+δr)
+            R[m,n,2] = 0.5*(1-δr)
         end
     end
 
-    return r
+    return R
 
 end

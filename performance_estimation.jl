@@ -1,11 +1,17 @@
-function performance_estimation(r, σ, M, N, indices_n, indices_m, h; nreals = NREALS)
+################################################################################
+# Allan Eduardo Feitosa
+# 27 ago 2024
+# Functions to estimate the LPCD performance (FER x SNR)
+
+function performance_estimation(c::Vector{Int64}, u::Vector{Int64}, σ::Vector{Float64},
+                                M::Int64, N::Int64, indices_n::Vector{Vector{Int64}},
+                                indices_m::Vector{Vector{Int64}}, h::Matrix{Int64};
+                                nreals = NREALS)
+    
+    Random.seed!(SEED)
 
     fer = zeros(length(σ))
     iters = zeros(Int, length(σ), NREALS)
-
-    # f = Matrix{Float64}(undef,N,2)
-
-    # Lf = Matrix{Float64}(undef,N,2)
 
     ΔLf = Vector{Float64}(undef,N)
 
@@ -23,35 +29,25 @@ function performance_estimation(r, σ, M, N, indices_n, indices_m, h; nreals = N
 
     noise = Vector{Float64}(undef, N)
 
+    Lrn = zeros(N)
+
+    sn = ones(Int,N)
+
     for k in eachindex(σ)
 
-        c = 1/(sqrt(2π)*σ[k])
-        s = 2σ[k]^2
+        s = σ[k]^2
     
         for j=1:nreals
-
-            # Lq .= zeros(N,M)
-            # Lr .= zeros(M,N)
-            # d .= zeros(Int,N)
 
             randn!(noise)
 
             noise .*= σ[k]
 
-            # t .= r .+ noise
-
-            t = [1.3129, 2.6584, 0.7413, 2.1745, 0.5981, −0.8323, −0.3962, −1.7586,
-            1.4905, 0.4084, −0.9290, 1.0765]
+            t .= u .+ noise
 
             for i in eachindex(t)
-                # f[i,1] = c*exp(-(t[i]+1)^2/s)
-                # f[i,2] = c*exp(-(t[i]-1)^2/s)
-                ΔLf[i] = -4t[i]/s
+                ΔLf[i] = -2t[i]/s
             end
-
-            # normalize(f,N)
-            # Lf .= log.(f)
-            # ΔLf = view(Lf,:,1) - view(Lf,:,2)
 
             llr_init_q(Lq, N, ΔLf, indices_m)
 
@@ -62,14 +58,12 @@ function performance_estimation(r, σ, M, N, indices_n, indices_m, h; nreals = N
 
                 i += 1
 
-                Lr = llr_simple_horizontal_update(Lr,M,Lq,indices_n)
+                Lr = llr_horizontal_update_alt(Lr,M,Lq,indices_n, Lrn, sn)
                 Lq, d = llr_vertical_update_and_MAP(Lq, Lr, d, N, ΔLf, indices_m)
-
-                println("d=",d)
 
                 mul!(pre_syndrome, h, d)
 
-                syndrome .= rem.(pre_syndrome,2)    
+                syndrome .= pre_syndrome .% 2 
                 
                 S = sum(syndrome)
 
@@ -77,7 +71,92 @@ function performance_estimation(r, σ, M, N, indices_n, indices_m, h; nreals = N
 
             iters[k,j] = i
 
-            if S !== 0
+            if S != 0 && d != c
+                fer[k] += 1
+            end
+        end
+
+        fer[k] /= NREALS
+    end
+
+    return fer, iters, Lq, Lr
+
+end
+
+function performance_estimation_table(c::Vector{Int64}, u::Vector{Int64}, σ::Vector{Float64},
+                                    M::Int64, N::Int64, indices_n::Vector{Vector{Int64}},
+                                    indices_m::Vector{Vector{Int64}}, h::Matrix{Int64},
+                                    phi::Vector{Float64}; nreals = NREALS)
+
+    Random.seed!(SEED)
+
+    fer = zeros(length(σ))
+    iters = zeros(Int, length(σ), NREALS)
+
+    ΔLf = Vector{Float64}(undef,N)
+
+    Lq = zeros(N,M)
+
+    Lr = zeros(M,N)
+
+    t = Vector{Float64}(undef, N)
+
+    d = Vector{Int64}(undef, N)
+
+    pre_syndrome = Vector{Int64}(undef, M)
+
+    syndrome = Vector{Int64}(undef, M)
+
+    noise = Vector{Float64}(undef, N)
+
+    Lrn = zeros(N)
+
+    sn = ones(Int,N)
+
+    for k in eachindex(σ)
+
+        s = σ[k]^2
+
+        for j=1:nreals
+
+            randn!(noise)
+
+            noise .*= σ[k]
+
+            t .= u .+ noise
+
+            for i in eachindex(t)
+                ΔLf[i] = -2*SIZE_per_RANGE*t[i]/s
+            end
+
+            llr_init_q(Lq, N, ΔLf, indices_m)
+
+            i = 0
+            S = -1
+
+            while S != 0 && i < MAX
+
+                i += 1
+
+                Lr = llr_horizontal_update_table(Lr,M,Lq,indices_n, Lrn, sn, phi)
+                Lq, d = llr_vertical_update_and_MAP(Lq, Lr, d, N, ΔLf, indices_m)
+
+                pre_syndrome .*= 0
+                for m=1:M
+                    for n in indices_n[m]
+                        pre_syndrome[m] += d[n]
+                    end
+                end
+
+                syndrome .= pre_syndrome .% 2 
+
+                S = sum(syndrome)
+
+            end
+
+            iters[k,j] = i
+
+            if S != 0 && d != c
                 fer[k] += 1
             end
         end

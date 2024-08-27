@@ -1,3 +1,8 @@
+################################################################################
+# Allan Eduardo Feitosa
+# 27 ago 2024
+# Auxiliary functions
+
 function findindices_M(H,N)
 
     indices_m = Vector{Vector{Int64}}(undef, N)

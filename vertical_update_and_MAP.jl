@@ -26,9 +26,7 @@ function vertical_update_and_MAP(N,r,q,f,indices_m)
 
 end
 
-function init_q(M,N,f,indices_m)
-
-    q = zeros(N,M,2)
+function init_q(q,N,f,indices_m)
 
     for n=1:N
         for m in indices_m[n]
