@@ -33,7 +33,7 @@ SIZE_per_RANGE::Float64 = SIZE/RANGE
 
 Phi = lookupTable()
 
-NREALS::Int = 100000
+NREALS::Int = 1_000_000
 MAX::Int = 10
 
 #################################### CODING ####################################
@@ -93,7 +93,6 @@ ___ = performance_estimation_table(C, U, Sigma, MM, NN, indices_N, indices_M, H,
 plotlyjs()
 
 ################################### PLOTTING ###################################
-
-plot(log10.(FERt[end:-1:1]))
-plot!(log10.(FER[end:-1:1]))
-plot!([1,10],log10.(1/NREALS*[1, 1]))
+plot(Sigma,log10.(FERt))
+plot!(Sigma,log10.(FER))
+plot!([minimum(Sigma), maximum(Sigma)],log10.(1/NREALS*[1, 1]))

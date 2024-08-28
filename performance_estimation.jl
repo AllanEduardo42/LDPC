@@ -59,6 +59,7 @@ function performance_estimation(c::Vector{Int64}, u::Vector{Int64}, σ::Vector{F
                 i += 1
 
                 Lr = llr_horizontal_update_alt(Lr,M,Lq,indices_n, Lrn, sn)
+                # Lr = llr_horizontal_update(Lr,M,Lq,indices_n)
                 Lq, d = llr_vertical_update_and_MAP(Lq, Lr, d, N, ΔLf, indices_m)
 
                 mul!(pre_syndrome, h, d)
@@ -71,7 +72,9 @@ function performance_estimation(c::Vector{Int64}, u::Vector{Int64}, σ::Vector{F
 
             iters[k,j] = i
 
-            if S != 0 && d != c
+            if S != 0
+                fer[k] += 1
+            elseif d != c
                 fer[k] += 1
             end
         end
@@ -138,7 +141,7 @@ function performance_estimation_table(c::Vector{Int64}, u::Vector{Int64}, σ::Ve
 
                 i += 1
 
-                Lr = llr_horizontal_update_table(Lr,M,Lq,indices_n, Lrn, sn, phi)
+                Lr =  llr_horizontal_update_table(Lr,M,Lq,indices_n, Lrn, sn, phi)
                 Lq, d = llr_vertical_update_and_MAP(Lq, Lr, d, N, ΔLf, indices_m)
 
                 pre_syndrome .*= 0
@@ -156,7 +159,9 @@ function performance_estimation_table(c::Vector{Int64}, u::Vector{Int64}, σ::Ve
 
             iters[k,j] = i
 
-            if S != 0 && d != c
+            if S != 0
+                fer[k] += 1
+            elseif d != c
                 fer[k] += 1
             end
         end
