@@ -21,19 +21,20 @@ include("llr_vertical_update_and_MAP.jl")
 include("performance_estimation.jl")
 include("test_SPA.jl")
 include("lookupTable.jl")
+include("SPA.jl")
 
 ############################# SIMULATION CONSTANTS #############################
 
 SEED::Int64 = 1428
 
 SIZE::Int64 = 1024
-RANGE::Int64 = 10
+RANGE::Int64 = 20
 
 SIZE_per_RANGE::Float64 = SIZE/RANGE
 
 Phi = lookupTable()
 
-NREALS::Int = 1_000_000
+NREALS::Int = 1_000_00
 MAX::Int = 10
 
 #################################### CODING ####################################
@@ -74,25 +75,32 @@ indices_N  = findindices_N(H,MM)
 
 #################################### TEST #####################################
 
-RR, LRR, QQ, LQQ = test_SPA(indices_M, indices_N, H, MM, NN, Phi)
+RR, LRR, QQ, LQQ = test_SPA(indices_M, indices_N, H, MM, NN, Phi, "APPROX")
 
 ############################# JULIA COMPILATION ##############################
 
-___ = performance_estimation(C, U, Sigma, MM, NN, indices_N, indices_M, H;
-                             nreals = 1)
-___ = performance_estimation_table(C, U, Sigma, MM, NN, indices_N, indices_M, H, Phi;
-                              nreals = 1)
 
+_ = performance_estimation(C, U, Sigma, MM, NN, indices_N, indices_M, Phi, "TANH"; nreals = 1)
+_ = performance_estimation(C, U, Sigma, MM, NN, indices_N, indices_M, Phi, "ALT"; nreals = 1)
+_ = performance_estimation(C, U, Sigma, MM, NN, indices_N, indices_M, Phi, "TABLE"; nreals = 1)
+_ = performance_estimation(C, U, Sigma, MM, NN, indices_N, indices_M, Phi, "APPROX"; nreals = 1)
+                             
 ########################### PERFORMANCE SIMULATION ############################
 
-@time FER, Iters, ___, ___ = performance_estimation(C, U, Sigma, MM, NN,
-                                                    indices_N, indices_M, H)
-@time FERt, Iterst, ___, ___ = performance_estimation_table(C, U, Sigma, MM, NN,
-                                                    indices_N, indices_M, H, Phi)
+@time FER_tanh, Iters_tanh = performance_estimation(C, U, Sigma, MM, NN, indices_N, indices_M, Phi, "TANH")
+@time FER_alt, Iters_alt = performance_estimation(C, U, Sigma, MM, NN, indices_N, indices_M, Phi, "ALT")
+@time FER_table, Iters_table = performance_estimation(C, U, Sigma, MM, NN, indices_N, indices_M, Phi, "TABLE")
+@time FER_approx, Iters_approx = performance_estimation(C, U, Sigma, MM, NN, indices_N, indices_M, Phi, "APPROX")
 
 plotlyjs()
 
 ################################### PLOTTING ###################################
-plot(Sigma,log10.(FERt))
-plot!(Sigma,log10.(FER))
-plot!([minimum(Sigma), maximum(Sigma)],log10.(1/NREALS*[1, 1]))
+yaxis = [log10.(FER_tanh), log10.(FER_alt), log10.(FER_table), log10.(FER_approx)]
+labels = permutedims(["Tanh", "Alt", "Table", "Approx"])
+p = plot(Sigma, yaxis, label = labels, linewidth = 2, title = "FER")
+display(p)
+plot!([minimum(Sigma), maximum(Sigma)],log10.(1/NREALS*[1, 1]),label="min")
+# plot(Sigma,log10.(FER_tanh))
+# plot!(Sigma,log10.(FER_alt))
+# plot!(Sigma,log10.(FER_table))
+# plot!(Sigma,log10.(FER_approx))

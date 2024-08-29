@@ -4,7 +4,7 @@
 # Functions to test the SPA algorithms
 
 function test_SPA(indices_m::Vector{Vector{Int64}}, indices_n::Vector{Vector{Int64}},
-                  h::Matrix{Int64}, M::Int64, N::Int64, phi::Vector{Float64})
+                  h::Matrix{Int64}, M::Int64, N::Int64, phi::Vector{Float64}, mode::String)
 
     σ = 0.8
 
@@ -18,7 +18,11 @@ function test_SPA(indices_m::Vector{Vector{Int64}}, indices_n::Vector{Vector{Int
     for i in eachindex(t)
         f[i,1] = k*exp(-(t[i]+1)^2/s)
         f[i,2] = k*exp(-(t[i]-1)^2/s)
-        ΔLf[i] = -SIZE_per_RANGE*4t[i]/s
+        if mode == "TABLE"
+            ΔLf[i] = -SIZE_per_RANGE*4t[i]/s
+        else
+            ΔLf[i] = -4t[i]/s
+        end
     end
 
     normalize(f,N)
@@ -41,7 +45,6 @@ function test_SPA(indices_m::Vector{Vector{Int64}}, indices_n::Vector{Vector{Int
 
     sn = ones(Int,N)
 
-
     while S != 0 && i < MAX
 
         i += 1
@@ -50,8 +53,12 @@ function test_SPA(indices_m::Vector{Vector{Int64}}, indices_n::Vector{Vector{Int
 
         println("Conventional SPA:")
 
-        R = simple_horizontal_update(R, M, Q, indices_n)
-        Q, d = vertical_update_and_MAP(N,R,Q,f, indices_m)
+        δQ = Q[:,:,1]-Q[:,:,2]
+
+        d = zeros(Int, N)
+
+        R = simple_horizontal_update(R, M, δQ, indices_n)
+        Q, d = vertical_update_and_MAP(d, N,R,Q,f, indices_m)
 
         syndrome = h*d .% 2
 
@@ -59,7 +66,22 @@ function test_SPA(indices_m::Vector{Vector{Int64}}, indices_n::Vector{Vector{Int
 
         println("LLR SPA:")
 
-        Lr = llr_horizontal_update_table(Lr,M,Lq,indices_n, Lrn, sn, phi)
+        if mode == "TANH"
+            # tanh SPA
+            Lr = llr_horizontal_update(M,Lr,Lq,indices_n)
+        elseif mode == "APPROX"
+            # approximate SPA
+            Lr = llr_horizontal_update(M,Lr,Lq,indices_n,sn)
+        elseif mode == "ALT"
+            # alternative SPA
+            Lr = llr_horizontal_update(M,Lr,Lq,indices_n,sn,Lrn)
+        elseif mode == "TABLE"
+            # lookup-table SPA
+            Lr = llr_horizontal_update(M,Lr,Lq,indices_n,sn,Lrn,phi)
+        else
+            println("ERROR")
+        end
+
         Lq, d_llr = llr_vertical_update_and_MAP(Lq, Lr, d_llr, N, ΔLf, indices_m)
 
         syndrome_llr = h*d_llr .% 2   
