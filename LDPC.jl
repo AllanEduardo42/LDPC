@@ -34,7 +34,7 @@ SIZE_per_RANGE::Float64 = SIZE/RANGE
 
 Phi = lookupTable()
 
-NREALS::Int = 1_000_00
+NREALS::Int = 1_000_000
 MAX::Int = 10
 
 #################################### CODING ####################################
@@ -91,16 +91,11 @@ _ = performance_estimation(C, U, Sigma, MM, NN, indices_N, indices_M, Phi, "APPR
 @time FER_alt, Iters_alt = performance_estimation(C, U, Sigma, MM, NN, indices_N, indices_M, Phi, "ALT")
 @time FER_table, Iters_table = performance_estimation(C, U, Sigma, MM, NN, indices_N, indices_M, Phi, "TABLE")
 @time FER_approx, Iters_approx = performance_estimation(C, U, Sigma, MM, NN, indices_N, indices_M, Phi, "APPROX")
-
-plotlyjs()
-
+;
 ################################### PLOTTING ###################################
+plotlyjs()
 yaxis = [log10.(FER_tanh), log10.(FER_alt), log10.(FER_table), log10.(FER_approx)]
 labels = permutedims(["Tanh", "Alt", "Table", "Approx"])
 p = plot(Sigma, yaxis, label = labels, linewidth = 2, title = "FER")
 display(p)
 plot!([minimum(Sigma), maximum(Sigma)],log10.(1/NREALS*[1, 1]),label="min")
-# plot(Sigma,log10.(FER_tanh))
-# plot!(Sigma,log10.(FER_alt))
-# plot!(Sigma,log10.(FER_table))
-# plot!(Sigma,log10.(FER_approx))

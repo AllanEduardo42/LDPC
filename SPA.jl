@@ -1,3 +1,4 @@
+# TANH
 function SPA(S::Int64, i::Int64, M::Int64, N::Int64,
              Lr::Matrix{Float64}, Lq::Matrix{Float64},
              indices_n::Vector{Vector{Int64}},
@@ -22,6 +23,7 @@ function SPA(S::Int64, i::Int64, M::Int64, N::Int64,
 
 end
 
+# APPROX
 function SPA(S::Int64, i::Int64, M::Int64, N::Int64,
              Lr::Matrix{Float64}, Lq::Matrix{Float64},
              indices_n::Vector{Vector{Int64}},
@@ -47,6 +49,7 @@ function SPA(S::Int64, i::Int64, M::Int64, N::Int64,
 
 end
 
+# ALT
 function SPA(S::Int64, i::Int64, M::Int64, N::Int64,
              Lr::Matrix{Float64}, Lq::Matrix{Float64},
              indices_n::Vector{Vector{Int64}},
@@ -73,6 +76,7 @@ function SPA(S::Int64, i::Int64, M::Int64, N::Int64,
 
 end
 
+# TABLE
 function SPA(S::Int64, i::Int64, M::Int64, N::Int64,
              Lr::Matrix{Float64}, Lq::Matrix{Float64},
              indices_n::Vector{Vector{Int64}},

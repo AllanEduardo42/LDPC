@@ -4,7 +4,8 @@
 # Functions to test the SPA algorithms
 
 function test_SPA(indices_m::Vector{Vector{Int64}}, indices_n::Vector{Vector{Int64}},
-                  h::Matrix{Int64}, M::Int64, N::Int64, phi::Vector{Float64}, mode::String)
+                  h::Matrix{Int64}, M::Int64, N::Int64, phi::Vector{Float64},
+                  mode::String)
 
     σ = 0.8
 

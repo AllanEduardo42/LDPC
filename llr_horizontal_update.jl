@@ -3,12 +3,13 @@
 # 27 ago 2024
 # Horizontal update of the LLR based Sum-Product Algorithm
 
+# TANH
 function llr_horizontal_update(M::Int64,
                                Lr::Matrix{Float64},
                                Lq::Matrix{Float64},
                                indices_n::Vector{Vector{Int64}})
 
-@inbounds for m=1:M
+@inbounds for m in 1:M
         @inbounds for n in indices_n[m]
             pLr = 1.0
             @inbounds for nn in indices_n[m]
@@ -24,32 +25,39 @@ function llr_horizontal_update(M::Int64,
 
 end
 
+# APPROX
 function llr_horizontal_update(M::Int64,
                                Lr::Matrix{Float64},                               
                                Lq::Matrix{Float64},
                                indices_n::Vector{Vector{Int64}},
                                sn::Vector{Int64})    
 
-    @inbounds for m=1:M
-        minL = Inf
-        minL2 = Inf
-        idx = 0
+    @inbounds for m in 1:M
         s = 1
+        minL = 0.0
+        minL2 = 0.0
+        idx = 0
         @inbounds for n in indices_n[m]
             Lrn = Lq[n,m]
             if Lrn > 0
                 sn[n] = 1
-                if Lrn < minL
-                    idx = n
-                    minL2 = minL
-                    minL = Lrn
-                elseif Lrn < minL2
-                    minL2 = Lrn
-                end
             else
                 sn[n] = -1
                 s *= sn[n]
                 Lrn *= -1
+            end
+            if minL == 0.0
+                idx = n
+                minL = Lrn
+            elseif minL2 == 0
+                if Lrn < minL
+                    idx = n
+                    minL2 = minL
+                    minL = Lrn
+                else
+                    minL2 = Lrn
+                end
+            else
                 if Lrn < minL
                     idx = n
                     minL2 = minL
@@ -80,6 +88,7 @@ function llr_horizontal_update(M::Int64,
 
 end
 
+# ALT
 function llr_horizontal_update(M::Int64,
                                Lr::Matrix{Float64},
                                Lq::Matrix{Float64},
@@ -87,7 +96,7 @@ function llr_horizontal_update(M::Int64,
                                sn::Vector{Int64},
                                Lrn::Vector{Float64})
 
-    @inbounds for m=1:M
+    @inbounds for m in 1:M
         sum = 0.0
         s = 1 
         @inbounds for n in indices_n[m]
@@ -123,6 +132,7 @@ function llr_horizontal_update(M::Int64,
 
 end
 
+# TABLE
 function llr_horizontal_update(M::Int64,
                                Lr::Matrix{Float64},
                                Lq::Matrix{Float64},
@@ -130,7 +140,7 @@ function llr_horizontal_update(M::Int64,
                                sn::Vector{Int64},
                                Lrn::Vector{Float64},
                                phi::Vector{Float64})
-    @inbounds for m=1:M
+    @inbounds for m in 1:M
         sum = 0.0
         s = 1 
         @inbounds for n in indices_n[m]
@@ -173,4 +183,3 @@ function get_index(arg::Float64)::Int64
     
     return i
 end
-
