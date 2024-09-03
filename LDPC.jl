@@ -34,7 +34,7 @@ SIZE_per_RANGE::Float64 = SIZE/RANGE
 
 Phi = lookupTable()
 
-NREALS::Int = 1_000_000
+NREALS::Int = 1_000_00
 MAX::Int = 10
 
 #################################### CODING ####################################
