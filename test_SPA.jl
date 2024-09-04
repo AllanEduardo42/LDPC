@@ -3,8 +3,12 @@
 # 27 ago 2024
 # Functions to test the SPA algorithms
 
-function test_SPA(indices_m::Vector{Vector{Int64}}, indices_n::Vector{Vector{Int64}},
-                  h::Matrix{Int64}, M::Int64, N::Int64, phi::Vector{Float64},
+function test_SPA(indices_m::Vector{Vector{Int64}}, 
+                  indices_n::Vector{Vector{Int64}},
+                  h::Matrix{Int64},
+                  M::Int64,
+                  N::Int64,
+                  phi::Vector{Float64},
                   mode::String)
 
     σ = 0.8
@@ -67,23 +71,23 @@ function test_SPA(indices_m::Vector{Vector{Int64}}, indices_n::Vector{Vector{Int
 
         println("LLR SPA:")
 
-        if mode == "TANH"
+        if mode == "TNH"
             # tanh SPA
             Lr = llr_horizontal_update(M,Lr,Lq,indices_n)
-        elseif mode == "APPROX"
+        elseif mode == "APP"
             # approximate SPA
             Lr = llr_horizontal_update(M,Lr,Lq,indices_n,sn)
         elseif mode == "ALT"
             # alternative SPA
             Lr = llr_horizontal_update(M,Lr,Lq,indices_n,sn,Lrn)
-        elseif mode == "TABLE"
+        elseif mode == "TAB"
             # lookup-table SPA
             Lr = llr_horizontal_update(M,Lr,Lq,indices_n,sn,Lrn,phi)
         else
             println("ERROR")
         end
 
-        Lq, d_llr = llr_vertical_update_and_MAP(Lq, Lr, d_llr, N, ΔLf, indices_m)
+        Lq, d_llr = llr_vertical_update_and_MAP(Lq,Lr,d_llr,N,ΔLf,indices_m)
 
         syndrome_llr = h*d_llr .% 2   
 

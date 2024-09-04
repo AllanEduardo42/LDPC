@@ -3,9 +3,14 @@
 # 27 ago 2024
 # Functions to estimate the LPCD performance (FER x SNR)
 
-function performance_estimation(c::Vector{Int64}, u::Vector{Int64}, σ::Vector{Float64},
-                                M::Int64, N::Int64, indices_n::Vector{Vector{Int64}},
-                                indices_m::Vector{Vector{Int64}}, phi::Vector{Float64},
+function performance_estimation(c::Vector{Int64},
+                                u::Vector{Int64},
+                                σ::Vector{Float64},
+                                M::Int64, 
+                                N::Int64, 
+                                indices_n::Vector{Vector{Int64}},
+                                indices_m::Vector{Vector{Int64}}, 
+                                phi::Vector{Float64},
                                 mode::String;
                                 nreals = NREALS)
 
@@ -57,11 +62,11 @@ function performance_estimation(c::Vector{Int64}, u::Vector{Int64}, σ::Vector{F
 
             i = 0
             S = -1
-            if mode == "TANH"
+            if mode == "TNH"
                 # tanh SPA
                 llr_init_q(Lq, N, ΔLf, indices_m)
                 S, i = SPA(S,i,M,N,Lr,Lq,indices_n,indices_m,d,ΔLf,syndrome)
-            elseif mode == "APPROX"
+            elseif mode == "APP"
                 # approximate SPA
                 llr_init_q(Lq, N, ΔLf, indices_m)
                 S, i = SPA(S,i,M,N,Lr,Lq,indices_n,indices_m,d,ΔLf,syndrome,sn)
@@ -69,7 +74,7 @@ function performance_estimation(c::Vector{Int64}, u::Vector{Int64}, σ::Vector{F
                 # alternative SPA
                 llr_init_q(Lq, N, ΔLf, indices_m)
                 S, i = SPA(S,i,M,N,Lr,Lq,indices_n,indices_m,d,ΔLf,syndrome,sn,Lrn)
-            elseif mode == "TABLE"
+            elseif mode == "TAB"
                 # lookup-table SPA
                 llr_init_q(Lq, N, ΔLf2, indices_m)
                 S, i = SPA(S,i,M,N,Lr,Lq,indices_n,indices_m,d,ΔLf2,syndrome,sn,Lrn,phi)
@@ -87,6 +92,6 @@ function performance_estimation(c::Vector{Int64}, u::Vector{Int64}, σ::Vector{F
         @inbounds fer[k] /= NREALS
     end
 
-    return fer, iters
+    return log10.(fer), iters
 
 end
