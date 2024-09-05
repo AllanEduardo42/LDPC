@@ -16,7 +16,7 @@ function SPA(S::Int64,
              syndrome::Vector{Int64},
              varargs...)
     
-    # varargs = (sn::Vector{Int645},
+    # varargs = (sn::Vector{Int64},
     #            Lrn::Vector{Float64},
     #            phi::phi::Vector{Float64})
              
