@@ -1,7 +1,8 @@
 # PEG Algorithm
 
-function PEG(M, N, d)
+function PEG(M, d)
 
+    N = length(d)
     E = zeros(Int,M,N)
     check_degree = zeros(Int,M)
     girth = 0
@@ -121,12 +122,3 @@ function node_degrees(M, N, λ, ρ)
     return Nv, Nc
 
 end
-
-# test
-
-NN = 10
-MM = 10
-d = 2*ones(Int,NN)
-d[NN] = 4
-
-H, girth = PEG(MM,NN,d)

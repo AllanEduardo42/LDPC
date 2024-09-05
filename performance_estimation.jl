@@ -6,23 +6,25 @@
 function performance_estimation(c::Vector{Int64},
                                 u::Vector{Int64},
                                 σ::Vector{Float64},
-                                M::Int64, 
-                                N::Int64, 
                                 indices_n::Vector{Vector{Int64}},
                                 indices_m::Vector{Vector{Int64}}, 
                                 phi::Vector{Float64},
                                 mode::String;
                                 nreals = NREALS)
 
+
+    M = length(indices_n)
+    N = length(indices_m)
+
     fer = zeros(length(σ))
 
-    ber = zeros(length(σ),MAX)
+    BER = zeros(MAX,length(σ))
+
+    ber = zeros(MAX)
 
     iters = zeros(Int, length(σ), NREALS)
 
     ΔLf = Vector{Float64}(undef,N)
-
-    ΔLf2 = Vector{Float64}(undef,N)
 
     Lq = zeros(N,M)
 
@@ -39,6 +41,10 @@ function performance_estimation(c::Vector{Int64},
     Lrn = zeros(N)
 
     sn = ones(Int,N)
+
+    x = BitArray(undef, length(c))
+
+    divisor = NREALS * N
 
     for k in eachindex(σ)
 
@@ -59,34 +65,40 @@ function performance_estimation(c::Vector{Int64},
             end
 
             for i in eachindex(t)
-                @inbounds ΔLf2[i] = -2*SIZE_per_RANGE*t[i]/s
+                if mode == "TAB"
+                    @inbounds ΔLf[i] = -2*SIZE_per_RANGE*t[i]/s
+                else
+                    @inbounds ΔLf[i] = -2t[i]/s
+                end
             end
 
+            llr_init_q!(Lq,ΔLf,indices_m)
+            
             i = 0
-            S = -1
+            DECODED = false
             if mode == "TNH"
                 # tanh SPA
-                llr_init_q(Lq, N, ΔLf, indices_m)
-                S, i = SPA(S,i,M,N,Lr,Lq,indices_n,indices_m,d,ΔLf,syndrome)
+                DECODED, i = SPA!(d,ber,c,x,Lr,Lq,indices_n,indices_m,ΔLf,
+                                  syndrome,nothing,nothing,nothing)
             elseif mode == "APP"
                 # approximate SPA
-                llr_init_q(Lq, N, ΔLf, indices_m)
-                S, i = SPA(S,i,M,N,Lr,Lq,indices_n,indices_m,d,ΔLf,syndrome,sn)
+                DECODED, i = SPA!(d,ber,c,x,Lr,Lq,indices_n,indices_m,ΔLf,
+                                 syndrome,sn,nothing,nothing)
             elseif mode == "ALT"
                 # alternative SPA
-                llr_init_q(Lq, N, ΔLf, indices_m)
-                S, i = SPA(S,i,M,N,Lr,Lq,indices_n,indices_m,d,ΔLf,syndrome,sn,Lrn)
+                DECODED, i = SPA!(d,ber,c,x,Lr,Lq,indices_n,indices_m,ΔLf,
+                                  syndrome,sn,Lrn,nothing)
             elseif mode == "TAB"
                 # lookup-table SPA
-                llr_init_q(Lq, N, ΔLf2, indices_m)
-                S, i = SPA(S,i,M,N,Lr,Lq,indices_n,indices_m,d,ΔLf2,syndrome,sn,Lrn,phi)
+                DECODED, i = SPA!(d,ber,c,x,Lr,Lq,indices_n,indices_m,ΔLf,
+                                  syndrome,sn,Lrn,phi)
             else
-                println("ERROR")
+                throw(ArgumentError("invalid mode"))
             end
+            ber ./= divisor
+            @inbounds @. BER[:,k] += ber
             @inbounds iters[k,j] = i
-            if S != 0
-                @inbounds fer[k] += 1
-            elseif d != c
+            if ~DECODED
                 @inbounds fer[k] += 1
             end
         end
@@ -94,6 +106,6 @@ function performance_estimation(c::Vector{Int64},
         @inbounds fer[k] /= NREALS
     end
 
-    return log10.(fer), iters
+    return log10.(fer), log10.(BER), iters
 
 end

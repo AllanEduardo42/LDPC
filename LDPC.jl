@@ -41,45 +41,28 @@ MAX::Int = 20
 
 #################################### CODING ####################################
 
+### Moreira's example (p.284)
+
+include("Moreira.jl")
+
 ### PEG
 
-NN = 60
-MM = 30
-# d = rand([2,3],NN)
-# sort!(d)
-# d = 2*ones(Int,NN)
-d = 3*ones(Int,NN)
+# N = 12
+# M = 8
+# # d = rand([2,3],N)
+# # sort!(d)
+# # d = 2*ones(Int,N)
+# D = 2*ones(Int,N)
 
-H, girth = PEG(MM,NN,d)
+# H, girth = PEG(M,D)
 
-println("grith = ", girth)
+# println("grith = ", girth)
 
-_, _, G = GF2_nullspace(H)
+# _, _, G = GF2_nullspace(H)
 
-K = size(G,2)
+# K = size(G,2)
 
-println("K = ", K)
-
-### Moreira's example using Mckay method:
-
-# H = [0 1 0 1 0 1 1 1 0 0 0 1;
-#      1 0 1 1 0 0 0 0 1 0 0 0;
-#      0 1 0 0 1 0 1 0 0 0 0 1;
-#      1 0 0 1 0 0 0 0 0 1 1 0;
-#      0 0 1 0 1 1 0 0 0 1 0 0;
-#      1 0 1 0 0 0 1 1 0 0 1 0;
-#      0 1 0 0 0 1 0 1 1 1 0 0;
-#      0 0 0 0 1 0 0 0 1 0 1 1]
-
-# MM,NN = size(H)
-# K = NN - MM
-
-# A = H[:,1:MM]
-# B = H[:,MM+1:NN]
-
-# P = abs.(Int64.(A\B .% 2))
-
-# G = [P; I(K)]
+# println("K = ", K)
 
 ### Message
 
@@ -97,35 +80,39 @@ Sigma = 1 ./ SNR
 
 ############################# AUXILIARY CONSTANTS ##############################
 
-indices_M  = findindices_M(H,NN)
-indices_N  = findindices_N(H,MM)
+indices_M  = findindices_M(H)
+indices_N  = findindices_N(H)
 
 ##################################### TEST #####################################
 
-RR, LRR, QQ, LQQ = test_SPA(indices_M,indices_N,H,MM,NN,Phi,"APP")
+RR, LRR, QQ, LQQ = test_SPA(indices_M,indices_N,Phi,"TNH")
 
 ############################## JULIA COMPILATION ###############################
 
 
-performance_estimation(C,U,Sigma,MM,NN,indices_N,indices_M,Phi,"TNH";nreals=1)
-performance_estimation(C,U,Sigma,MM,NN,indices_N,indices_M,Phi,"ALT";nreals=1)
-performance_estimation(C,U,Sigma,MM,NN,indices_N,indices_M,Phi,"TAB";nreals=1)
-performance_estimation(C,U,Sigma,MM,NN,indices_N,indices_M,Phi,"APP";nreals=1)
+performance_estimation(C,U,Sigma,indices_N,indices_M,Phi,"TNH";nreals=1)
+performance_estimation(C,U,Sigma,indices_N,indices_M,Phi,"ALT";nreals=1)
+performance_estimation(C,U,Sigma,indices_N,indices_M,Phi,"TAB";nreals=1)
+performance_estimation(C,U,Sigma,indices_N,indices_M,Phi,"APP";nreals=1)
                              
 ########################### PERFORMANCE SIMULATION ############################
 
-@time FER_tnh, Iters_tnh = performance_estimation(C,U,Sigma,MM,NN,indices_N,
+@time FER_tnh, BER_tnh, Iters_tnh = performance_estimation(C,U,Sigma,indices_N,
                                                             indices_M,Phi,"TNH")
-@time FER_alt, Iters_alt = performance_estimation(C,U,Sigma,MM,NN,indices_N,
+@time FER_alt, BER_alt, Iters_alt = performance_estimation(C,U,Sigma,indices_N,
                                                             indices_M,Phi,"ALT")
-@time FER_tab, Iters_tab = performance_estimation(C,U,Sigma,MM,NN,indices_N,
+@time FER_tab, BER_tab, Iters_tab = performance_estimation(C,U,Sigma,indices_N,
                                                             indices_M,Phi,"TAB")
-@time FER_app, Iters_app = performance_estimation(C,U,Sigma,MM,NN,indices_N,
+@time FER_app, BER_app, Iters_app = performance_estimation(C,U,Sigma,indices_N,
                                                           indices_M, Phi, "APP")
 
 ################################### PLOTTING ###################################
 plotlyjs()
 lim = log10(1/NREALS)
-yaxis = [FER_tnh ,FER_alt ,FER_tab, FER_app]
-labels = permutedims(["Tanh", "Alt", "Table", "Approx"])
-plot(SNR, yaxis, label=labels, linewidth=2, title="FER", ylims=(lim,0))
+yaxis = [FER_tnh, FER_alt ,FER_tab, FER_app]
+labels = permutedims(["SPA 1", "SPA 2", "Lookup Table SPA", "Min Sum"])
+display(plot(SNR, yaxis, label=labels, linewidth=2, title="FER", ylims=(lim,0)))
+
+plot(1:MAX, BER_alt, linewidth=2, title="BER SPA", ylims=(lim-1,0))
+plot!(girth*[1, 1]/2, [lim-1, 0], linewidth=2, linestyle=:dot, linecolor=:black)
+

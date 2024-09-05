@@ -5,11 +5,11 @@
 
 function test_SPA(indices_m::Vector{Vector{Int64}}, 
                   indices_n::Vector{Vector{Int64}},
-                  h::Matrix{Int64},
-                  M::Int64,
-                  N::Int64,
                   phi::Vector{Float64},
                   mode::String)
+
+    M = length(indices_n)
+    N = length(indices_m)
 
     σ = 0.8
 
@@ -35,8 +35,8 @@ function test_SPA(indices_m::Vector{Vector{Int64}},
     Q = zeros(N,M,2)
     Lq = zeros(N,M)
 
-    Q = init_q(Q,N,f,indices_m)
-    Lq = llr_init_q(Lq, N, ΔLf, indices_m)
+    init_q!(Q,N,f,indices_m)
+    llr_init_q!(Lq,ΔLf,indices_m)
 
 
     S = -1
@@ -44,11 +44,15 @@ function test_SPA(indices_m::Vector{Vector{Int64}},
 
     R = zeros(M,N,2)
     Lr = zeros(M,N)
+    d = zeros(Int, N)
     d_llr = zeros(Int64, N)
 
     Lrn = zeros(N)
 
     sn = ones(Int,N)
+
+    syndrome = zeros(Int,M)
+    syndrome_llr = zeros(Int,M)
 
     while S != 0 && i < MAX
 
@@ -56,40 +60,42 @@ function test_SPA(indices_m::Vector{Vector{Int64}},
 
         println("Iteration #", i)
 
-        println("Conventional SPA:")
+        ### Conventional simplified SPA
 
-        δQ = Q[:,:,1]-Q[:,:,2]
+        δQ = Q[:,:,1]-Q[:,:,2]    
 
-        d = zeros(Int, N)
+        simple_horizontal_update!(R,δQ,indices_n)
+        vertical_update_and_MAP!(Q,d,R,f,indices_m)
 
-        R = simple_horizontal_update(R, M, δQ, indices_n)
-        Q, d = vertical_update_and_MAP(d, N,R,Q,f, indices_m)
-
-        syndrome = h*d .% 2
-
-        println("MAP estimate syndrome: ", syndrome)
-
-        println("LLR SPA:")
+        calc_syndrome!(syndrome,indices_n,d)
+        
+        ### LLR SPA
 
         if mode == "TNH"
             # tanh SPA
-            Lr = llr_horizontal_update(M,Lr,Lq,indices_n)
+            llr_horizontal_update!(Lr,Lq,indices_n,nothing,nothing,nothing)
         elseif mode == "APP"
             # approximate SPA
-            Lr = llr_horizontal_update(M,Lr,Lq,indices_n,sn)
+            llr_horizontal_update!(Lr,Lq,indices_n,sn,nothing,nothing)
         elseif mode == "ALT"
             # alternative SPA
-            Lr = llr_horizontal_update(M,Lr,Lq,indices_n,sn,Lrn)
+            llr_horizontal_update!(Lr,Lq,indices_n,sn,Lrn,nothing)
         elseif mode == "TAB"
             # lookup-table SPA
-            Lr = llr_horizontal_update(M,Lr,Lq,indices_n,sn,Lrn,phi)
+            llr_horizontal_update!(Lr,Lq,indices_n,sn,Lrn,phi)
         else
-            println("ERROR")
+            throw(ArgumentError("invalid mode"))
         end
 
-        Lq, d_llr = llr_vertical_update_and_MAP(Lq,Lr,d_llr,N,ΔLf,indices_m)
+        llr_vertical_update_and_MAP!(Lq,d_llr,Lr,ΔLf,indices_m)
 
-        syndrome_llr = h*d_llr .% 2   
+        calc_syndrome!(syndrome_llr,indices_n,d)
+
+        println("MAP SPL estimate: ", d)
+
+        println("MAP LLR estimate: ", d_llr)
+
+        println("MAP SPL estimate syndrome: ", syndrome)
 
         println("LLR MAP estimate syndrome: ", syndrome_llr)
         

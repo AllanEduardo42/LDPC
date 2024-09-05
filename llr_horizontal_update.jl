@@ -4,15 +4,19 @@
 # Horizontal update of the LLR based Sum-Product Algorithm
 
 # TANH
-function llr_horizontal_update(M::Int64,
-                               Lr::Matrix{Float64},
-                               Lq::Matrix{Float64},
-                               indices_n::Vector{Vector{Int64}})
+function llr_horizontal_update!(Lr::Matrix{Float64},
+                                Lq::Matrix{Float64},
+                                indices_n::Vector{Vector{Int64}},
+                                x::Nothing,
+                                y::Nothing,
+                                z::Nothing)
 
-@inbounds for m in 1:M
-        @inbounds for n in indices_n[m]
+    m = 0
+    @inbounds for indices in indices_n
+        m += 1
+        @inbounds for n in indices
             pLr = 1.0
-            @inbounds for nn in indices_n[m]
+            @inbounds for nn in indices
                 if nn != n
                     @fastmath pLr *= tanh(0.5*Lq[nn,m])
                 end
@@ -20,24 +24,24 @@ function llr_horizontal_update(M::Int64,
             @fastmath Lr[m,n] = 2*atanh(pLr)
         end
     end
-
-    return Lr
-
 end
 
 # APPROX
-function llr_horizontal_update(M::Int64,
-                               Lr::Matrix{Float64},                               
-                               Lq::Matrix{Float64},
-                               indices_n::Vector{Vector{Int64}},
-                               sn::Vector{Int64})    
+function llr_horizontal_update!(Lr::Matrix{Float64},                           
+                                Lq::Matrix{Float64},
+                                indices_n::Vector{Vector{Int64}},
+                                sn::Vector{Int64},
+                                x::Nothing,
+                                y::Nothing)    
 
-    @inbounds for m in 1:M
+    m = 0
+    @inbounds for indices in indices_n
+        m += 1
         s = 1
         minL = 0.0
         minL2 = 0.0
         idx = 0
-        @inbounds for n in indices_n[m]
+        @inbounds for n in indices
             Lrn = Lq[n,m]
             if Lrn > 0
                 sn[n] = 1
@@ -67,7 +71,7 @@ function llr_horizontal_update(M::Int64,
                 end
             end
         end
-        @inbounds for n in indices_n[m]
+        @inbounds for n in indices
             if n == idx
                 if sn[n] != s
                     Lr[m,n] = -minL2
@@ -83,23 +87,22 @@ function llr_horizontal_update(M::Int64,
             end
         end  
     end
-
-    return Lr
-
 end
 
 # ALT
-function llr_horizontal_update(M::Int64,
-                               Lr::Matrix{Float64},
-                               Lq::Matrix{Float64},
-                               indices_n::Vector{Vector{Int64}},
-                               sn::Vector{Int64},
-                               Lrn::Vector{Float64})
+function llr_horizontal_update!(Lr::Matrix{Float64},                            
+                                Lq::Matrix{Float64},
+                                indices_n::Vector{Vector{Int64}},
+                                sn::Vector{Int64},
+                                Lrn::Vector{Float64},
+                                x::Nothing)
 
-    @inbounds for m in 1:M
+    m = 0
+    @inbounds for indices in indices_n
+        m += 1
         sum = 0.0
         s = 1 
-        @inbounds for n in indices_n[m]
+        @inbounds for n in indices
             ####### what it does: #######
             # Lrn[n] = ϕ(abs(Lq[n,m]))
             # sum += Lrn[n]
@@ -116,7 +119,7 @@ function llr_horizontal_update(M::Int64,
             end
             @fastmath sum += Lrn[n]
         end
-        @inbounds for n in indices_n[m]
+        @inbounds for n in indices
             ############### what it does ###############
             # Lr[m,n] = (s*sn[n])*(ϕ(abs(sum - Lrn[n])))
             ############################################
@@ -127,23 +130,22 @@ function llr_horizontal_update(M::Int64,
             end
         end    
     end
-
-    return Lr
-
 end
 
 # TABLE
-function llr_horizontal_update(M::Int64,
-                               Lr::Matrix{Float64},
-                               Lq::Matrix{Float64},
-                               indices_n::Vector{Vector{Int64}},
-                               sn::Vector{Int64},
-                               Lrn::Vector{Float64},
-                               phi::Vector{Float64})
-    @inbounds for m in 1:M
+function llr_horizontal_update!(Lr::Matrix{Float64},                            
+                                Lq::Matrix{Float64},
+                                indices_n::Vector{Vector{Int64}},
+                                sn::Vector{Int64},
+                                Lrn::Vector{Float64},
+                                phi::Vector{Float64})
+
+    m = 0
+    @inbounds for indices in indices_n
+        m += 1
         sum = 0.0
         s = 1 
-        @inbounds for n in indices_n[m]
+        @inbounds for n in indices
             if Lq[n,m] >= 0
                 Lrn[n] = phi[get_index(Lq[n,m])]
                 sn[n] = 1
@@ -154,7 +156,7 @@ function llr_horizontal_update(M::Int64,
             end
             @fastmath sum += Lrn[n]
         end
-        @inbounds for n in indices_n[m]
+        @inbounds for n in indices
             if sn[n] != s
                 @fastmath Lr[m,n] = -phi[get_index(abs(sum - Lrn[n]))]
             else
@@ -162,24 +164,4 @@ function llr_horizontal_update(M::Int64,
             end
         end    
     end
-
-    return Lr
-
-end
-
-
-function ϕ(x::Float64)::Float64
-    @fastmath m = exp(x)-1
-    @fastmath log(1 + 2/m)
-end
-
-function get_index(arg::Float64)::Int64
-    z = unsafe_trunc(Int,arg)
-    if z >= SIZE
-        i = SIZE
-    else
-        i = z + 1
-    end
-    
-    return i
 end

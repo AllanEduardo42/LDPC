@@ -1,5 +1,10 @@
-function vertical_update_and_MAP(d, N,r,q,f,indices_m)
-
+function vertical_update_and_MAP!(q::Array{Float64,3},
+                                  d::Vector{Int64},
+                                  r::Array{Float64,3},
+                                  f::Matrix{Float64},
+                                  indices_m::Vector{Vector{Int64}})
+    d .*= 0
+    N = length(indices_m)
     for n = 1:N
         @inbounds d0 = f[n,1]
         @inbounds d1 = f[n,2]
@@ -17,14 +22,13 @@ function vertical_update_and_MAP(d, N,r,q,f,indices_m)
             @inbounds q[n,m,1] = q0/α
             @inbounds q[n,m,2] = q1/α
         end
-
-    end  
-
-    return q, d
-
+    end
 end
 
-function init_q(q,N,f,indices_m)
+function init_q!(q::Array{Float64, 3},
+                 N::Int64,
+                 f::Matrix{Float64},
+                 indices_m::Vector{Vector{Int64}})
 
     for n=1:N
         for m in indices_m[n]
@@ -32,7 +36,4 @@ function init_q(q,N,f,indices_m)
             @inbounds q[n,m,2] = f[n,2]
         end
     end
-
-    return q
-
 end
