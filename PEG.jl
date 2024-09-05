@@ -121,3 +121,12 @@ function node_degrees(M, N, λ, ρ)
     return Nv, Nc
 
 end
+
+# test
+
+NN = 10
+MM = 10
+d = 2*ones(Int,NN)
+d[NN] = 4
+
+H, girth = PEG(MM,NN,d)

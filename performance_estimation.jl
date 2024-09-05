@@ -16,6 +16,8 @@ function performance_estimation(c::Vector{Int64},
 
     fer = zeros(length(σ))
 
+    ber = zeros(length(σ),MAX)
+
     iters = zeros(Int, length(σ), NREALS)
 
     ΔLf = Vector{Float64}(undef,N)
