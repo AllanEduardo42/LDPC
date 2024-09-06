@@ -6,15 +6,12 @@
 function test_SPA(indices_m::Vector{Vector{Int64}}, 
                   indices_n::Vector{Vector{Int64}},
                   phi::Vector{Float64},
+                  t::Vector{Float64},
+                  σ::Float64,
                   mode::String)
 
     M = length(indices_n)
     N = length(indices_m)
-
-    σ = 0.8
-
-    t = [1.3129, 2.6584, 0.7413, 2.1745, 0.5981, −0.8323, −0.3962, −1.7586,
-    1.4905, 0.4084, −0.9290, 1.0765]
 
     f = zeros(N,2)
     ΔLf = zeros(N)

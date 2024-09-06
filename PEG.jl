@@ -1,9 +1,14 @@
+################################################################################
+# Allan Eduardo Feitosa
+# 3 set 2024
 # PEG Algorithm
+
+using SparseArrays
 
 function PEG(M, d)
 
     N = length(d)
-    E = zeros(Int,M,N)
+    H = zeros(Int,M,N)
     check_degree = zeros(Int,M)
     girth = 0
 
@@ -11,17 +16,17 @@ function PEG(M, d)
         for k in 1:d[i]
             if k == 1
                 _,j = findmin(check_degree)
-                E[j,i] = 1
+                H[j,i] = 1
                 check_degree[j] += 1
             else
-                checks_L0 = findall(isone,E[:,i])
+                checks_L0 = findall(isone,H[:,i])
                 count = 0
-                E, check_degree, girth = subgraph(E, M, N, check_degree, checks_L0, i, count, girth)
+                H, check_degree, girth = subgraph(H, M, N, check_degree, checks_L0, i, count, girth)
             end
         end
     end
 
-    return E, girth
+    return H, girth
 
 end
 
@@ -29,7 +34,7 @@ function PEG(M, N, λ, ρ)
 
     Nv, Nc = node_degrees(M, N, λ, ρ)
 
-    E = zeros(Int,M,N)
+    H = zeros(Int,M,N)
     check_degree = zeros(Int,M)
     girth = 0
 
@@ -38,21 +43,21 @@ function PEG(M, N, λ, ρ)
         for k in 1:degree
             if k == 1
                 _,j = findmin(check_degree)
-                E[j,i] = 1
+                H[j,i] = 1
                 check_degree[j] += 1
             else
-                checks_L0 = findall(isone,E[:,i])
+                checks_L0 = findall(isone,H[:,i])
                 count = 0
-                E, check_degree, girth = subgraph(E, M, N, check_degree, checks_L0, i, count, girth)
+                H, check_degree, girth = subgraph(H, M, N, check_degree, checks_L0, i, count, girth)
             end
         end
     end
 
-    return E, girth
+    return sparse(H), girth
 
 end
 
-function subgraph(E, M, N, count_degree, checks_L0, root, count, girth; parents=[root], all_checks=copy(checks_L0))    
+function subgraph(H, M, N, count_degree, checks_L0, root, count, girth; parents=[root], all_checks=copy(checks_L0))    
     
     count += 1
     checks_L1 = Int.([])
@@ -61,14 +66,14 @@ function subgraph(E, M, N, count_degree, checks_L0, root, count, girth; parents=
     L1_nodes = Int.([])
     for check in checks_L0
         # remove parent nodes
-        row =  E[check,:]   
+        row =  H[check,:]   
         for parent in parents
             row[parent] = 0
         end
         check_nodes = findall(isone,row)
         union!(L1_nodes, check_nodes)
         for node in check_nodes
-            column = E[:,node]
+            column = H[:,node]
             column[check] = 0
             node_checks = findall(isone,column)
             union!(checks_L1, node_checks)
@@ -79,20 +84,20 @@ function subgraph(E, M, N, count_degree, checks_L0, root, count, girth; parents=
     if L1 == M  # all checks reached
         girth = 2*(count+1)
         _,j = findmin(count_degree[checks_L1])
-        E[checks_L1[j],root] = 1
+        H[checks_L1[j],root] = 1
         count_degree[checks_L1[j]] += 1
     elseif L1 == L0 # stopped increasing
         compl = collect(1:M)
         sort!(all_checks)
         deleteat!(compl, all_checks)        
         _,j = findmin(count_degree[compl])
-        E[compl[j],root] = 1
+        H[compl[j],root] = 1
         count_degree[compl[j]] += 1
     else
-        E, count_degree, girth = subgraph(E, M, N,count_degree, checks_L1, root, count, girth; parents = L1_nodes, all_checks=all_checks)
+        H, count_degree, girth = subgraph(H, M, N,count_degree, checks_L1, root, count, girth; parents = L1_nodes, all_checks=all_checks)
     end
 
-    return E, count_degree, girth
+    return H, count_degree, girth
 end
 
 function node_degrees(M, N, λ, ρ)
@@ -109,14 +114,14 @@ function node_degrees(M, N, λ, ρ)
         R += ρ[i]/i
     end
 
-    E = round(Int,(M/R + N/Λ)/2)
+    H = round(Int,(M/R + N/Λ)/2)
 
     for i in eachindex(λ)
-        Nv[i] = round(Int, E*λ[i]/i)
+        Nv[i] = round(Int, H*λ[i]/i)
     end
 
     for i in eachindex(ρ)
-        Nc[i] = round(Int,E*ρ[i]/i)
+        Nc[i] = round(Int,H*ρ[i]/i)
     end
 
     return Nv, Nc
