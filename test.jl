@@ -1,13 +1,10 @@
-function test(x)
-    s = 0
-    for i in x
-        s = i + 1
-    end
+x = zeros(1000000)
+y = zeros(1000000)
+
+for i in 1:1000000
+    x[i] = @allocated trues(i)
+    y[i] = @allocated ones(Bool,i)
 end
 
-function test2(x)
-    s = 0
-    for i in eachindex(x)
-        s = i + x[i]
-    end
-end
+plot(x, label="trues")
+plot!(y, labels="bools")

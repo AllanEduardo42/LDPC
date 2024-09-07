@@ -16,9 +16,8 @@ end
 function get_phi(arg::Float64, phi::Vector{Float64})::Float64
     z = unsafe_trunc(Int,arg)
     if z >= SIZE
-        i = SIZE
+        return 0.0
     else
-        i = z + 1
-    end
-    return phi[i]
+        return phi[z + 1]
+    end    
 end

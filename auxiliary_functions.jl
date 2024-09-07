@@ -37,19 +37,17 @@ function normalize(f, N)
 
 end
 
-function calc_syndrome!(syndrome::Vector{Int64},
-                        indices_n::Vector{Vector{Int64}},
-                        d::Vector{Int64})
+function calc_syndrome!(syndrome::Vector{Bool},
+                        d::Vector{Bool},
+                        indices_n::Vector{Vector{Int64}})
 
-    syndrome .*= 0
+    syndrome .*= false
     M = length(indices_n)
     for m=1:M
         for n in indices_n[m]
-            syndrome[m] += d[n]
+            syndrome[m] ⊻= d[n]
         end
     end
-
-    syndrome .%= 2
 
 end
 
@@ -72,20 +70,47 @@ end
 function bitwise_mat_mult(A::BitMatrix,
                           B::BitMatrix)::BitMatrix
 
-    Ax, Ay = size(A)
-    Bx, By = size(B)
+    A_bool = Matrix(A)
+    B_bool = Matrix(B)
 
-    if Ay == Bx
-        C = falses(Ax,By)
-        for i in 1:Ax
-            for j in 1:By
-                for k in 1:Ay
-                    @inbounds C[i,j] ⊻= A[i,k] && B[k,j]
+    mA, nA = size(A)
+    mB, nB = size(B)
+
+    if nA == mB
+        C = zeros(Bool,mA,nB)
+        for i in 1:mA
+            for j in 1:nB
+                for k in 1:nA
+                    @inbounds C[i,j] ⊻= A_bool[i,k] && B_bool[k,j]
                 end
             end
         end
+    else
+        throw(DimensionMismatch(lazy"A has dimensions ($mA,$nA) but B has dimensions ($mB,$nB)"))
     end
 
-    return C
+    return BitMatrix(C)
+
+end
+
+function bitwise_mat_mult(A::BitMatrix,
+                          x::Vector{Bool})::Vector{Bool}
+
+    A_bool = Matrix(A)
+
+    mA, nA = size(A)
+    L = length(x)
+    if nA == L
+        y = zeros(Bool,mA)
+        for i in 1:mA
+            for k in 1:nA
+                @inbounds y[i] ⊻= A_bool[i,k] && x[k]
+            end
+        end
+    else
+        throw(DimensionMismatch(lazy"second dimension of A, $nA, does not match length of x, $L"))
+    end
+
+    return y
 
 end
