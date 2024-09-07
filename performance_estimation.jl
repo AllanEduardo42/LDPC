@@ -6,7 +6,7 @@
 function performance_estimation(c::Vector{Int64},
                                 u::Vector{Int64},
                                 σ::Vector{Float64},
-                                H::Matrix{Int64},
+                                H::BitMatrix,
                                 indices_n::Vector{Vector{Int64}},
                                 indices_m::Vector{Vector{Int64}}, 
                                 phi::Vector{Float64},
@@ -27,13 +27,9 @@ function performance_estimation(c::Vector{Int64},
 
     ΔLf = Vector{Float64}(undef,N)
 
-    Lq = sparse(H'*1e-16)
+    Lq = H'*0.0
 
-    Lr = sparse(H*1e-16)
-
-    # Lq = H'*0.0
-
-    # Lr = H*0.0
+    Lr = H*0.0
 
     t = Vector{Float64}(undef, N)
 

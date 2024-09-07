@@ -50,15 +50,12 @@ MAX::Int = 30
 N = 512
 M = 256
 D = rand([2,3],N)
-sort!(D)
-# d = 2*ones(Int,N)
-# D = 2*ones(Int,N)
 
-H, girth = PEG(M,D)
+@time H, girth = PEG!(D,M)
 
 println("girth = ", girth)
 
-_, _, G = GF2_nullspace(H)
+@time _, _, G = GF2_nullspace(H)
 
 K = size(G,2)
 
@@ -93,16 +90,15 @@ t_test = U + n_test
 
 ############################## JULIA COMPILATION ###############################
 
-
-performance_estimation(C,U,Sigma,H,indices_N,indices_M,Phi,"TNH";nreals=1)
+# performance_estimation(C,U,Sigma,H,indices_N,indices_M,Phi,"TNH";nreals=1)
 performance_estimation(C,U,Sigma,H,indices_N,indices_M,Phi,"ALT";nreals=1)
 performance_estimation(C,U,Sigma,H,indices_N,indices_M,Phi,"TAB";nreals=1)
 performance_estimation(C,U,Sigma,H,indices_N,indices_M,Phi,"APP";nreals=1)
                              
 ########################### PERFORMANCE SIMULATION ############################
 
-@time FER_tnh, BER_tnh, Iters_tnh = performance_estimation(C,U,Sigma,H,indices_N,
-                                                            indices_M,Phi,"TNH")
+# @time FER_tnh, BER_tnh, Iters_tnh = performance_estimation(C,U,Sigma,H,indices_N,
+#                                                             indices_M,Phi,"TNH")
 @time FER_alt, BER_alt, Iters_alt = performance_estimation(C,U,Sigma,H,indices_N,
                                                             indices_M,Phi,"ALT")
 @time FER_tab, BER_tab, Iters_tab = performance_estimation(C,U,Sigma,H,indices_N,
@@ -113,8 +109,12 @@ performance_estimation(C,U,Sigma,H,indices_N,indices_M,Phi,"APP";nreals=1)
 ################################### PLOTTING ###################################
 plotlyjs()
 lim = log10(1/NREALS)
-yaxis = [FER_tnh, FER_alt ,FER_tab, FER_app]
-labels = permutedims(["SPA 1", "SPA 2", "Lookup Table SPA", "Min Sum"])
+# yaxis = [FER_tnh, FER_alt ,FER_tab, FER_app]
+# labels = permutedims(["SPA 1", "SPA 2", "Lookup Table SPA", "Min Sum"])
+# display(plot(SNR, yaxis, label=labels, linewidth=2, title="FER", ylims=(lim,0)))
+
+yaxis = [FER_alt ,FER_tab, FER_app]
+labels = permutedims(["SPA", "Lookup Table SPA", "Min Sum"])
 display(plot(SNR, yaxis, label=labels, linewidth=2, title="FER", ylims=(lim,0)))
 
 plot(1:MAX, BER_alt, linewidth=2, title="BER SPA", ylims=(lim-1,0))
