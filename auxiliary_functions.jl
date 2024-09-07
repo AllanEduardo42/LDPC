@@ -3,18 +3,6 @@
 # 27 ago 2024
 # Auxiliary functions
 
-function findindices_M(H::Matrix{Int64})
-
-    N = size(H,2)
-    indices_m = Vector{Vector{Int64}}(undef, N)
-    for n=1:N
-        indices_m[n] = findall(x -> x == 1, H[:,n])
-    end
-
-    return indices_m
-
-end
-
 function findindices_M(H::BitMatrix)
 
     N = size(H,2)
@@ -24,18 +12,6 @@ function findindices_M(H::BitMatrix)
     end
 
     return indices_m
-
-end
-
-function findindices_N(H::Matrix{Int64})
-
-    M = size(H,1)
-    indices_n = Vector{Vector{Int64}}(undef, M)
-    for m=1:M
-        indices_n[m] = findall(x -> x == 1, H[m,:])
-    end
-
-    return indices_n
 
 end
 
@@ -93,7 +69,8 @@ function get_index(arg::Float64)::Int64
     return i
 end
 
-function bitwise_mat_mult(A,B)
+function bitwise_mat_mult(A::BitMatrix,
+                          B::BitMatrix)::BitMatrix
 
     Ax, Ay = size(A)
     Bx, By = size(B)

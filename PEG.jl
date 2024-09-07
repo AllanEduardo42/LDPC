@@ -121,13 +121,3 @@ function node_degrees(M, N, λ, ρ)
     return Nv, Nc
 
 end
-
-### debugging
-
-# N = 16
-# M = 8
-# D = rand([2,3],N)
-# # D = ones(Int,N)
-# # D[1] = 2
-
-# @time H, girth = PEG!(D,M)
