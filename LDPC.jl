@@ -10,6 +10,13 @@ using Random
 using Statistics
 using Plots
 
+################################ SPA MODE FLAGS ################################
+
+TNH = false
+ALT = true
+TAB = true
+APP = true
+
 ################################ INCLUDED FILES ################################
 
 # include("horizontal_update.jl")
@@ -36,19 +43,15 @@ SIZE_per_RANGE::Float64 = SIZE/RANGE
 
 Phi = lookupTable()
 
-NREALS::Int = 1_000_00
-MAX::Int = 20
+NREALS::Int = 1_000_0
+MAX::Int = 10
 
 #################################### CODING ####################################
 
-### Moreira's example (p.284)
+### PEG Algorithm
 
-# include("Moreira.jl")
-
-### PEG
-
-N = 12
-M = 6
+N = 256
+M = 128
 D = rand([2,3],N)
 
 @time H, girth = PEG!(D,M)
@@ -60,10 +63,6 @@ println("girth = ", girth)
 K = size(G,2)
 
 println("K = ", K)
-
-σ_test = 0.8
-
-n_test = σ_test*randn(N)
 
 Message = rand(Bool,K)
 
@@ -78,50 +77,203 @@ Sigma = 1 ./ SNR
 
 ############################# AUXILIARY CONSTANTS ##############################
 
-indices_M  = findindices_M(H)
-indices_N  = findindices_N(H)
-
-##################################### TEST #####################################
-# t_test = U + n_test
-# RR, LRR, QQ, LQQ = test_SPA(indices_M,indices_N,Phi,t_test,σ_test,"TNH")
+Indices_col  = find_indices_col(H)
+Indices_row  = find_indices_row(H)
 
 ############################## JULIA COMPILATION ###############################
 
-performance_estimation(C,Sigma,H,indices_N,indices_M,Phi,"TNH";nreals=1)
-performance_estimation(C,Sigma,H,indices_N,indices_M,Phi,"ALT";nreals=1)
-performance_estimation(C,Sigma,H,indices_N,indices_M,Phi,"TAB";nreals=1)
-performance_estimation(C,Sigma,H,indices_N,indices_M,Phi,"APP";nreals=1)
+if TNH
+    performance_estimation(
+        C,
+        Sigma,
+        H,
+        Indices_row,
+        Indices_col,
+        Phi,
+        "TNH";
+        nreals=1
+    )
+end
+if ALT
+    performance_estimation(
+        C,
+        Sigma,
+        H,
+        Indices_row,
+        Indices_col,
+        Phi,
+        "ALT";
+        nreals=1
+    )
+end
+if TAB
+    performance_estimation(
+        C,
+        Sigma,
+        H,
+        Indices_row,
+        Indices_col,
+        Phi,
+        "TAB";
+        nreals=1
+    )
+end
+if APP
+    performance_estimation(
+        C,
+        Sigma,
+        H,
+        Indices_row,
+        Indices_col,
+        Phi,
+        "APP";
+        nreals=1
+    )
+end
                              
 ########################### PERFORMANCE SIMULATION ############################
 
-@time FER_tnh, BER_tnh, Iters_tnh = performance_estimation(C,Sigma,H,indices_N,
-                                                            indices_M,Phi,"TNH")
-@time FER_alt, BER_alt, Iters_alt = performance_estimation(C,Sigma,H,indices_N,
-                                                            indices_M,Phi,"ALT")
-@time FER_tab, BER_tab, Iters_tab = performance_estimation(C,Sigma,H,indices_N,
-                                                            indices_M,Phi,"TAB")
-@time FER_app, BER_app, Iters_app = performance_estimation(C,Sigma,H,indices_N,
-                                                          indices_M, Phi, "APP")
-
+if TNH
+    @time FER_tnh, BER_tnh, Iters_tnh = 
+        performance_estimation(
+            C,
+            Sigma,
+            H,
+            Indices_row,
+            Indices_col,
+            Phi,
+            "TNH"
+        )
+    ;
+end
+if ALT
+    @time FER_alt, BER_alt, Iters_alt = 
+        performance_estimation(
+            C,
+            Sigma,
+            H,
+            Indices_row,
+            Indices_col,
+            Phi,
+            "ALT"
+        )
+    ;
+end
+if TAB
+    @time FER_tab, BER_tab, Iters_tab = 
+        performance_estimation(
+            C,
+            Sigma,
+            H,
+            Indices_row,
+            Indices_col,
+            Phi,
+            "TAB"
+        )
+    ;
+end
+if APP
+    @time FER_app, BER_app, Iters_app = 
+        performance_estimation(
+            C,
+            Sigma,
+            H,
+            Indices_row,
+            Indices_col,
+            Phi,
+            "APP"
+        )
+    ;
+end
 ################################### PLOTTING ###################################
 plotlyjs()
 lim = log10(1/NREALS)
-# yaxis = [FER_tnh, FER_alt ,FER_tab, FER_app]
-# labels = permutedims(["SPA 1", "SPA 2", "Lookup Table SPA", "Min Sum"])
-# display(plot(SNR, yaxis, label=labels, linewidth=2, title="FER", ylims=(lim,0)))
+yaxis = Vector{Vector{Float64}}(undef,0)
+fer_labels = Vector{String}(undef,0)
+if TNH
+    append!(yaxis,[FER_tnh])
+    push!(fer_labels,"SPA TNH")
+end
+if ALT
+    append!(yaxis,[FER_alt])
+    push!(fer_labels,"SPA ALT")
+end
+if TAB
+    append!(yaxis,[FER_tab])
+    push!(fer_labels,"SPA TAB")
+end
+if APP
+    append!(yaxis,[FER_app])
+    push!(fer_labels,"MIN SUM")
+end
+fer_labels = permutedims(fer_labels)
 
-# yaxis = [FER_alt ,FER_app, FER_tab]
-# labels = permutedims(["SPA", "Min Sum", "Lookup Table SPA"])
-# display(plot(SNR, yaxis, label=labels, linewidth=2, title="FER", ylims=(lim,0)))
+ber_labels = Vector{String}(undef,0)
+for snr in SNR
+    push!(ber_labels,"SNR = $snr")
+end
+ber_labels = permutedims(ber_labels)
 
-yaxis = [FER_tnh, FER_tab]
-labels = permutedims(["Min Sum", "Lookup Table SPA"])
-display(plot(SNR, yaxis, label=labels, linewidth=2, title="FER", ylims=(lim,0)))
+display(
+    plot(
+        SNR,yaxis,
+        xlabel="SNR",
+        label=fer_labels,
+        lw=2,
+        title="FER",
+        ylims=(lim,0)
+    )
+)
 
-# yaxis = [FER_tab]
-# labels = permutedims(["Lookup Table SPA"])
-# display(plot(SNR, yaxis, label=labels, linewidth=2, title="FER", ylims=(lim,0)))
-
-plot(1:MAX, BER_tab, linewidth=2, title="BER SPA", ylims=(lim-1,0))
-plot!(girth*[1, 1]/2, [lim-1, 0], linewidth=2, linestyle=:dot, linecolor=:black)
-
+if TNH
+    display(
+        plot(
+            1:MAX,
+            BER_tnh,
+            label=ber_labels,
+            lw=2,
+            title="BER SPA TNH",
+            ylims=(lim-1,0)
+        )
+    )
+    # plot!(girth*[1, 1]/2,[lim-1, 0],label="girth",lw=2,ls=:dot,lc=:black)
+end
+if ALT
+    display(
+        plot(
+            1:MAX,
+            BER_alt,
+            label=ber_labels,
+            lw=2,
+            title="BER SPA ALT",
+            ylims=(lim-1,0)
+        )
+    )
+    # plot!(girth*[1, 1]/2,[lim-1, 0],label="girth",lw=2,ls=:dot,lc=:black)
+end
+if TAB
+    display(
+        plot(
+            1:MAX,
+            BER_tab,
+            label=ber_labels,
+            lw=2,
+            title="BER SPA TAB",
+            ylims=(lim-1,0)
+        )
+    )
+    # plot!(girth*[1, 1]/2,[lim-1, 0],label="girth",lw=2,ls=:dot,lc=:black)
+end
+if APP
+    display(
+        plot(
+            1:MAX,
+            BER_app,
+            label=ber_labels,
+            lw=2,
+            title="BER SPA APP",
+            ylims=(lim-1,0)
+        )
+    )
+    # plot!(girth*[1, 1]/2,[lim-1, 0],label="girth",lw=2,ls=:dot,lc=:black)
+end

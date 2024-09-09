@@ -3,18 +3,23 @@
 # 27 ago 2024
 # Functions to estimate the LPCD performance (FER bit_error SNR)
 
-function performance_estimation(c::Vector{Bool},
-                                σ::Vector{Float64},
-                                H::BitMatrix,
-                                indices_n::Vector{Vector{Int64}},
-                                indices_m::Vector{Vector{Int64}}, 
-                                phi::Vector{Float64},
-                                mode::String;
-                                nreals = NREALS)
+function 
+    performance_estimation(
+        c::Vector{Bool},
+        σ::Vector{Float64},
+        H::BitMatrix,
+        indices_row::Vector{Vector{Int64}},
+        indices_col::Vector{Vector{Int64}}, 
+        phi::Vector{Float64},
+        mode::String;
+        nreals = NREALS
+    )
 
 
-    M = length(indices_n)
-    N = length(indices_m)
+    M = length(indices_row)
+    N = length(indices_col)
+
+    ############################# preallocation ################################
 
     fer = zeros(length(σ))
 
@@ -40,7 +45,7 @@ function performance_estimation(c::Vector{Bool},
 
     Lrn = zeros(N)
 
-    sn = ones(Int,N)
+    sn = ones(Bool,N)
 
     bit_error = Vector{Bool}(undef,N)
 
@@ -65,10 +70,6 @@ function performance_estimation(c::Vector{Bool},
             t .= u .+ noise
 
             for i in eachindex(t)
-                @inbounds ΔLf[i] = -2t[i]/s
-            end
-
-            for i in eachindex(t)
                 if mode == "TAB"
                     @inbounds ΔLf[i] = -2*SIZE_per_RANGE*t[i]/s
                 else
@@ -76,38 +77,102 @@ function performance_estimation(c::Vector{Bool},
                 end
             end
 
-            llr_init_q!(Lq,ΔLf,indices_m)
+            llr_init_q!(Lq,ΔLf,indices_col)
             
             i = 0
             DECODED = false
             if mode == "TNH"
                 # tanh SPA
-                DECODED, i = SPA!(d,ber,c,bit_error,Lr,Lq,indices_n,indices_m,ΔLf,
-                                  syndrome,nothing,nothing,nothing)
+                DECODED, i = 
+                    SPA!(
+                        d,
+                        ber,
+                        c,
+                        bit_error,
+                        Lr,
+                        Lq,
+                        indices_row,
+                        indices_col,
+                        ΔLf,
+                        syndrome,
+                        nothing,
+                        nothing,
+                        nothing
+                    )
+                ;
             elseif mode == "APP"
                 # approximate SPA
-                DECODED, i = SPA!(d,ber,c,bit_error,Lr,Lq,indices_n,indices_m,ΔLf,
-                                 syndrome,sn,nothing,nothing)
+                DECODED, i = 
+                    SPA!(
+                        d,
+                        ber,
+                        c,
+                        bit_error,
+                        Lr,
+                        Lq,
+                        indices_row,
+                        indices_col,
+                        ΔLf,
+                        syndrome,
+                        sn,
+                        nothing,
+                        nothing
+                    )
+                ;
             elseif mode == "ALT"
                 # alternative SPA
-                DECODED, i = SPA!(d,ber,c,bit_error,Lr,Lq,indices_n,indices_m,ΔLf,
-                                  syndrome,sn,Lrn,nothing)
+                DECODED, i = 
+                    SPA!(
+                        d,
+                        ber,
+                        c,
+                        bit_error,
+                        Lr,
+                        Lq,
+                        indices_row,
+                        indices_col,
+                        ΔLf,
+                        syndrome,
+                        sn,
+                        Lrn,
+                        nothing
+                    )
+                ;
             elseif mode == "TAB"
                 # lookup-table SPA
-                DECODED, i = SPA!(d,ber,c,bit_error,Lr,Lq,indices_n,indices_m,ΔLf,
-                                  syndrome,sn,Lrn,phi)
+                DECODED, i = 
+                    SPA!(
+                        d,
+                        ber,
+                        c,
+                        bit_error,
+                        Lr,
+                        Lq,
+                        indices_row,
+                        indices_col,
+                        ΔLf,
+                        syndrome,
+                        sn,
+                        Lrn,
+                        phi
+                    )
+                ;
             else
-                throw(ArgumentError("invalid mode"))
+                throw(
+                    ArgumentError(
+                        "$mode is not a valid mode"
+                    )
+                )
             end
-            ber ./= divisor
-            @inbounds @. BER[:,k] += ber
+            @fastmath ber ./= divisor
+            @inbounds  @fastmath @. BER[:,k] += ber
             @inbounds iters[k,j] = i
             if ~DECODED
                 @inbounds fer[k] += 1
             end
         end
 
-        @inbounds fer[k] /= NREALS
+        @inbounds @fastmath fer[k] /= NREALS
     end
 
     return log10.(fer), log10.(BER), iters

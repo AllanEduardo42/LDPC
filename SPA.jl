@@ -3,19 +3,22 @@
 # 27 ago 2024
 # MAin loop of the SPA algorithm
 
-function SPA!(d::Vector{Bool},
-              ber::Vector{Float64},
-              c::Vector{Bool},
-              bit_error::Vector{Bool},
-              Lr::Matrix{Float64}, 
-              Lq::Matrix{Float64},
-              indices_n::Vector{Vector{Int64}},
-              indices_m::Vector{Vector{Int64}},
-              ΔLf::Vector{Float64},
-              syndrome::Vector{Bool},
-              sn::Any,
-              Lrn::Any,
-              phi::Any)
+function 
+    SPA!(
+        d::Vector{Bool},
+        ber::Vector{Float64},
+        c::Vector{Bool},
+        bit_error::Vector{Bool},
+        Lr::Matrix{Float64}, 
+        Lq::Matrix{Float64},
+        indices_row::Vector{Vector{Int64}},
+        indices_col::Vector{Vector{Int64}},
+        ΔLf::Vector{Float64},
+        syndrome::Vector{Bool},
+        sn::Union{Vector{Bool},Nothing},
+        Lrn::Union{Vector{Float64},Nothing},
+        phi::Union{Vector{Float64},Nothing}
+    )
     
     # varargs = (sn::Vector{Int64},
     #            Lrn::Vector{Float64},
@@ -27,10 +30,27 @@ function SPA!(d::Vector{Bool},
 
     for i in 1:MAX
         
-        llr_horizontal_update!(Lr,Lq,indices_n,sn,Lrn,phi)
-        llr_vertical_update_and_MAP!(Lq,d,Lr,ΔLf,indices_m)
+        llr_horizontal_update!(
+            Lr,
+            Lq,
+            indices_row,
+            sn,
+            Lrn,
+            phi
+        )
+        llr_vertical_update_and_MAP!(
+            Lq,
+            d,
+            Lr,
+            ΔLf,
+            indices_col
+        )
 
-        calc_syndrome!(syndrome,d,indices_n)
+        calc_syndrome!(
+            syndrome,
+            d,
+            indices_row
+        )
 
         if FIRST && iszero(syndrome)
             FIRST = false

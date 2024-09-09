@@ -3,38 +3,41 @@
 # 27 ago 2024
 # Horizontal update of the Sum-Product Algorithm
 
-function horizontal_update(M, N, q, indices_n)
+function
+    horizontal_update!(
+        r::Array{Float64,3},
+        q::Array{Float64,3},
+        indices_row::Vector{Vector{Int64}}
+    )
 
-    r = zeros(M,N,2)
-
-    for m=1:M
-        S = length(indices_n[m])-1
-        for n in indices_n[m]            
+    m = 0
+    for indices in indices_row
+        m += 1
+        S = length(indices)-1
+        for n in indices           
             for s = 0:2^S-1
                 dig = digits(s, base = 2, pad = S)
                 count = 0
                 rr = 1
                 if iseven(sum(dig))
-                    for nn in indices_n[m] 
+                    for nn in indices
                         if nn != n
                             count += 1
-                            rr *= q[nn,m,dig[count]+1]
+                            @inbounds @fastmath rr *= q[nn,m,dig[count]+1]
                         end
                     end
-                    r[m,n,1] += rr
+                    @inbounds @fastmath r[m,n,1] += rr
                 else
-                    for nn in indices_n[m]
+                    for nn in indices
                         if nn != n
                             count += 1
-                            rr *= q[nn,m,dig[count]+1]
+                            @inbounds @fastmath rr *= q[nn,m,dig[count]+1]
                         end               
                     end
-                    r[m,n,2] += rr
+                    @inbounds @fastmath r[m,n,2] += rr
                 end
             end
         end
     end
-
-    return r
 
 end

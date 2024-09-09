@@ -6,51 +6,57 @@
 using SparseArrays
 
 # TANH
-function llr_horizontal_update!(Lr::Matrix{Float64},
-                                Lq::Matrix{Float64},
-                                indices_n::Vector{Vector{Int64}},
-                                x::Nothing,
-                                y::Nothing,
-                                z::Nothing)
+function 
+    llr_horizontal_update!(
+        Lr::Matrix{Float64},
+        Lq::Matrix{Float64},
+        indices_row::Vector{Vector{Int64}},
+        x::Nothing,
+        y::Nothing,
+        z::Nothing
+    )
 
     m = 0
-    @inbounds for indices in indices_n
+    for indices in indices_row
         m += 1
-        @inbounds for n in indices
+        for n in indices
             pLr = 1.0
-            @inbounds for nn in indices
+            for nn in indices
                 if nn != n
-                    @fastmath pLr *= tanh(0.5*Lq[nn,m])
+                    @inbounds @fastmath pLr *= tanh(0.5*Lq[nn,m])
                 end
             end
-            @fastmath Lr[m,n] = 2*atanh(pLr)
+            @inbounds @fastmath Lr[m,n] = 2*atanh(pLr)
         end
     end
 end
 
 # APPROX
-function llr_horizontal_update!(Lr::Matrix{Float64},                           
-                                Lq::Matrix{Float64},
-                                indices_n::Vector{Vector{Int64}},
-                                sn::Vector{Int64},
-                                x::Nothing,
-                                y::Nothing)    
+function
+    llr_horizontal_update!(
+        Lr::Matrix{Float64},                           
+        Lq::Matrix{Float64},
+        indices_row::Vector{Vector{Int64}},
+        sn::Vector{Bool},
+        x::Nothing,
+        y::Nothing
+    )    
 
     m = 0
-    @inbounds for indices in indices_n
+    for indices in indices_row
         m += 1
-        s = 1
+        s = true
         minL = 0.0
         minL2 = 0.0
         idx = 0
-        @inbounds for n in indices
-            Lrn = Lq[n,m]
+        for n in indices
+            @inbounds Lrn = Lq[n,m]
             if Lrn > 0
-                sn[n] = 1
+                @inbounds sn[n] = false
             else
-                sn[n] = -1
-                s *= sn[n]
-                Lrn *= -1
+                @inbounds sn[n] = true
+                @inbounds s ⊻= sn[n]
+                @fastmath Lrn *= -1
             end
             if minL == 0.0
                 idx = n
@@ -73,18 +79,18 @@ function llr_horizontal_update!(Lr::Matrix{Float64},
                 end
             end
         end
-        @inbounds for n in indices
+        for n in indices
             if n == idx
-                if sn[n] != s
-                    Lr[m,n] = -minL2
+                if @inbounds sn[n] == s
+                    @inbounds Lr[m,n] = -minL2
                 else
-                    Lr[m,n] = minL2
+                    @inbounds Lr[m,n] = minL2
                 end
             else
-                if sn[n] != s
-                    Lr[m,n] = -minL
+                if @inbounds sn[n] == s
+                    @inbounds Lr[m,n] = -minL
                 else
-                    Lr[m,n] = minL
+                    @inbounds Lr[m,n] = minL
                 end
             end
         end  
@@ -92,77 +98,92 @@ function llr_horizontal_update!(Lr::Matrix{Float64},
 end
 
 # ALT
-function llr_horizontal_update!(Lr::Matrix{Float64},                            
-                                Lq::Matrix{Float64},
-                                indices_n::Vector{Vector{Int64}},
-                                sn::Vector{Int64},
-                                Lrn::Vector{Float64},
-                                x::Nothing)
+function 
+    llr_horizontal_update!(
+        Lr::Matrix{Float64},                            
+        Lq::Matrix{Float64},
+        indices_row::Vector{Vector{Int64}},
+        sn::Vector{Bool},
+        Lrn::Vector{Float64},
+        x::Nothing
+    )
 
     m = 0
-    @inbounds for indices in indices_n
+    for indices in indices_row
         m += 1
         sum = 0.0
         s = 1 
-        @inbounds for n in indices
+        for n in indices
             ####### what it does: #######
             # Lrn[n] = ϕ(abs(Lq[n,m]))
             # sum += Lrn[n]
             # sn[n] = sign(Lq[n,m])
             # s *= sn[n]
             #############################
-            if Lq[n,m] >= 0
-                Lrn[n] = ϕ(Lq[n,m])
-                sn[n] = 1
+            if @inbounds Lq[n,m] >= 0
+                @inbounds Lrn[n] = ϕ(Lq[n,m])
+                @inbounds sn[n] = false
             else
-                Lrn[n] = ϕ(-Lq[n,m])
-                sn[n] = -1
-                s *= sn[n]
+                @inbounds Lrn[n] = ϕ(-Lq[n,m])
+                @inbounds sn[n] = true
+                @inbounds s ⊻= sn[n]
             end
             @fastmath sum += Lrn[n]
         end
-        @inbounds for n in indices
+        for n in indices
             ############### what it does ###############
             # Lr[m,n] = (s*sn[n])*(ϕ(abs(sum - Lrn[n])))
             ############################################
-            if sn[n] != s
-                @fastmath Lr[m,n] = -ϕ(abs(sum - Lrn[n]))
+            if @inbounds sn[n] == s
+                @inbounds @fastmath Lr[m,n] = -ϕ(abs(sum - Lrn[n]))
             else
-                @fastmath Lr[m,n] = ϕ(abs(sum - Lrn[n]))
+                @inbounds @fastmath Lr[m,n] = ϕ(abs(sum - Lrn[n]))
             end
         end    
     end
 end
 
 # TABLE
-function llr_horizontal_update!(Lr::Matrix{Float64},                            
-                                Lq::Matrix{Float64},
-                                indices_n::Vector{Vector{Int64}},
-                                sn::Vector{Int64},
-                                Lrn::Vector{Float64},
-                                phi::Vector{Float64})
+function
+    llr_horizontal_update!(
+        Lr::Matrix{Float64},                            
+        Lq::Matrix{Float64},
+        indices_row::Vector{Vector{Int64}},
+        sn::Vector{Bool},
+        Lrn::Vector{Float64},
+        phi::Vector{Float64}
+    )
 
     m = 0
-    @inbounds for indices in indices_n
+    for indices in indices_row
         m += 1
         sum = 0.0
         s = 1 
-        @inbounds for n in indices
-            if Lq[n,m] > 0
-                Lrn[n] = phi[get_index(Lq[n,m])]
-                sn[n] = 1
+        for n in indices
+            ####### what it does: #######
+            # Lrn[n] = ϕ(abs(Lq[n,m]))
+            # sum += Lrn[n]
+            # sn[n] = sign(Lq[n,m])
+            # s *= sn[n]
+            #############################
+            if @inbounds Lq[n,m] >= 0
+                @inbounds Lrn[n] = phi[get_index(Lq[n,m])]
+                @inbounds sn[n] = false
             else
-                Lrn[n] = phi[get_index(-Lq[n,m])]
-                sn[n] = -1
-                s *= sn[n]
+                @inbounds Lrn[n] = phi[get_index(-Lq[n,m])]
+                @inbounds sn[n] = true
+                @inbounds s ⊻= sn[n]
             end
-            @fastmath sum += Lrn[n]
+            @inbounds @fastmath sum += Lrn[n]
         end
-        @inbounds for n in indices
-            if sn[n] != s
-                @fastmath Lr[m,n] = -phi[get_index(abs(sum - Lrn[n]))]
+        for n in indices
+            ############### what it does ###############
+            # Lr[m,n] = (s*sn[n])*(ϕ(abs(sum - Lrn[n])))
+            ############################################
+            if @inbounds sn[n] == s
+                @inbounds @fastmath Lr[m,n] = -phi[get_index(abs(sum - Lrn[n]))]
             else
-                @fastmath Lr[m,n] = phi[get_index(abs(sum - Lrn[n]))]
+                @inbounds @fastmath Lr[m,n] = phi[get_index(abs(sum - Lrn[n]))]
             end
         end    
     end

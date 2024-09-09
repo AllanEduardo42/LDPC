@@ -1,104 +1,158 @@
 ################################################################################
 # Allan Eduardo Feitosa
 # 27 ago 2024
-# Functions to test the SPA algorithms
+# Function to test the SPA algorithms
 
-function test_SPA(indices_m::Vector{Vector{Int64}}, 
-                  indices_n::Vector{Vector{Int64}},
-                  phi::Vector{Float64},
-                  t::Vector{Float64},
-                  σ::Float64,
-                  mode::String)
+function 
+    test_SPA(
+        indices_col::Vector{Vector{Int64}}, 
+        indices_row::Vector{Vector{Int64}},
+        t::Vector{Float64},
+        σ::Float64,
+        phi::Vector{Float64},
+        mode::String
+    )
 
-    M = length(indices_n)
-    N = length(indices_m)
+    M = length(indices_row)
+    N = length(indices_col)
 
     f = zeros(N,2)
     ΔLf = zeros(N)
     k = 1/(sqrt(2π)*σ)
-    s = 2σ^2
+    s = σ^2
     for i in eachindex(t)
-        f[i,1] = k*exp(-(t[i]+1)^2/s)
-        f[i,2] = k*exp(-(t[i]-1)^2/s)
-        if mode == "TABLE"
-            ΔLf[i] = -SIZE_per_RANGE*4t[i]/s
+        f[i,1] = k*exp(-(t[i]+1)^2/(2*s))
+        f[i,2] = k*exp(-(t[i]-1)^2/(2*s))
+        if mode == "TAB"
+            ΔLf[i] = -2*SIZE_per_RANGE*t[i]/s
         else
-            ΔLf[i] = -4t[i]/s
+            ΔLf[i] = -2t[i]/s
         end
     end
 
-    normalize(f,N)
+    normalize!(f)
 
-    Q = zeros(N,M,2)
+    q = zeros(N,M,2)
     Lq = zeros(N,M)
 
-    init_q!(Q,N,f,indices_m)
-    llr_init_q!(Lq,ΔLf,indices_m)
+    init_q!(q,f,indices_col)
+    llr_init_q!(Lq,ΔLf,indices_col)
 
-
-    S = -1
-    i = 0
-
-    R = zeros(M,N,2)
+    r = zeros(M,N,2)
     Lr = zeros(M,N)
-    d = zeros(Int, N)
-    d_llr = zeros(Int64, N)
+    d = zeros(Bool, N)
+    d_llr = zeros(Bool, N)
 
     Lrn = zeros(N)
 
-    sn = ones(Int,N)
+    sn = ones(Bool,N)
 
-    syndrome = zeros(Int,M)
-    syndrome_llr = zeros(Int,M)
+    syndrome = ones(Bool,M)
+    syndrome_llr = zeros(Bool,M)
 
-    while S != 0 && i < MAX
+    i = 0
+    while ~iszero(syndrome) && i < MAX
 
         i += 1
 
-        println("Iteration #", i)
+        println("Iteration #$i")
 
         ### Conventional simplified SPA
 
-        δQ = Q[:,:,1]-Q[:,:,2]    
+        δQ = q[:,:,1]-q[:,:,2]    
 
-        simple_horizontal_update!(R,δQ,indices_n)
-        vertical_update_and_MAP!(Q,d,R,f,indices_m)
+        simple_horizontal_update!(
+            r,
+            δQ,
+            indices_row
+        )
+        vertical_update_and_MAP!(
+            q,
+            d,
+            r,
+            f,
+            indices_col
+        )
 
-        calc_syndrome!(syndrome,indices_n,d)
+        calc_syndrome!(
+            syndrome,
+            d,
+            indices_row
+        )
         
         ### LLR SPA
 
         if mode == "TNH"
             # tanh SPA
-            llr_horizontal_update!(Lr,Lq,indices_n,nothing,nothing,nothing)
+            llr_horizontal_update!(
+                Lr,
+                Lq,
+                indices_row,
+                nothing,
+                nothing,
+                nothing
+            )
         elseif mode == "APP"
             # approximate SPA
-            llr_horizontal_update!(Lr,Lq,indices_n,sn,nothing,nothing)
+            llr_horizontal_update!(
+                Lr,
+                Lq,
+                indices_row,
+                sn,
+                nothing,
+                nothing
+            )
         elseif mode == "ALT"
             # alternative SPA
-            llr_horizontal_update!(Lr,Lq,indices_n,sn,Lrn,nothing)
+            llr_horizontal_update!(
+                Lr,
+                Lq,
+                indices_row,
+                sn,
+                Lrn,
+                nothing
+            )
         elseif mode == "TAB"
             # lookup-table SPA
-            llr_horizontal_update!(Lr,Lq,indices_n,sn,Lrn,phi)
+            llr_horizontal_update!(
+                Lr,
+                Lq,
+                indices_row,
+                sn,
+                Lrn,
+                phi
+            )
         else
-            throw(ArgumentError("invalid mode"))
+            throw(
+                ArgumentError(
+                    "$mode is not a valid mode"
+                )
+            )
         end
 
-        llr_vertical_update_and_MAP!(Lq,d_llr,Lr,ΔLf,indices_m)
+        llr_vertical_update_and_MAP!(
+            Lq,
+            d_llr,
+            Lr,
+            ΔLf,
+            indices_col
+        )
 
-        calc_syndrome!(syndrome_llr,indices_n,d)
+        calc_syndrome!(
+            syndrome_llr,
+            d,
+            indices_row
+        )
 
-        println("MAP SPL estimate: ", d)
+        println("MAP SPL estimate: $d")
 
-        println("MAP LLR estimate: ", d_llr)
+        println("MAP LLR estimate: $d_llr")
 
-        println("MAP SPL estimate syndrome: ", syndrome)
+        println("MAP SPL estimate syndrome: $syndrome")
 
-        println("LLR MAP estimate syndrome: ", syndrome_llr)
-        
-        S = sum(syndrome)
+        println("LLR MAP estimate syndrome: $syndrome_llr")
 
     end
 
-    return R, Lr, Q, Lq
+    return r, Lr, q, Lq
 end

@@ -3,48 +3,53 @@
 # 27 ago 2024
 # Auxiliary functions
 
-function findindices_M(H::BitMatrix)
+function find_indices_col(H::BitMatrix)
 
     N = size(H,2)
-    indices_m = Vector{Vector{Int64}}(undef, N)
+    indices_col = Vector{Vector{Int64}}(undef, N)
     for n=1:N
-        indices_m[n] = findall(x -> x == 1, H[:,n])
+        indices_col[n] = findall(x -> x == 1, H[:,n])
     end
 
-    return indices_m
+    return indices_col
 
 end
 
-function findindices_N(H::BitMatrix)
+function find_indices_row(H::BitMatrix)
 
     M = size(H,1)
-    indices_n = Vector{Vector{Int64}}(undef, M)
+    indices_row = Vector{Vector{Int64}}(undef, M)
     for m=1:M
-        indices_n[m] = findall(x -> x == 1, H[m,:])
+        indices_row[m] = findall(x -> x == 1, H[m,:])
     end
 
-    return indices_n
+    return indices_row
 
 end
 
-function normalize(f, N)
+function normalize!(f::Matrix{Float64})
 
+    N = size(f,1)
+    
     for n=1:N
-        α = f[n,1] + f[n,2]
-        f[n,1] = f[n,1]/α
-        f[n,2] = f[n,2]/α
+        @inbounds @fastmath α = f[n,1] + f[n,2]
+        @inbounds @fastmath f[n,1] = f[n,1]/α
+        @inbounds @fastmath f[n,2] = f[n,2]/α
     end
 
 end
 
-function calc_syndrome!(syndrome::Vector{Bool},
-                        d::Vector{Bool},
-                        indices_n::Vector{Vector{Int64}})
+function 
+    calc_syndrome!(
+        syndrome::Vector{Bool},
+        d::Vector{Bool},
+        indices_row::Vector{Vector{Int64}}
+    )
 
     syndrome .*= false
-    M = length(indices_n)
+    M = length(indices_row)
     for m=1:M
-        for n in indices_n[m]
+        for n in indices_row[m]
             syndrome[m] ⊻= d[n]
         end
     end
@@ -56,19 +61,11 @@ function ϕ(x::Float64)::Float64
     @fastmath log(1 + 2/m)
 end
 
-function get_index(arg::Float64)::Int64
-    z = unsafe_trunc(Int,arg)
-    if z >= SIZE
-        i = SIZE
-    else
-        i = z + 1
-    end
-    
-    return i
-end
-
-function bitwise_mat_mult(A::BitMatrix,
-                          B::BitMatrix)::BitMatrix
+function
+    bitwise_mat_mult(
+        A::BitMatrix,
+        B::BitMatrix
+    )::BitMatrix
 
     A_bool = Matrix(A)
     B_bool = Matrix(B)
@@ -86,15 +83,22 @@ function bitwise_mat_mult(A::BitMatrix,
             end
         end
     else
-        throw(DimensionMismatch(lazy"A has dimensions ($mA,$nA) but B has dimensions ($mB,$nB)"))
+        throw(
+            DimensionMismatch(
+                lazy"A has dimensions ($mA,$nA) but B has dimensions ($mB,$nB)"
+            )
+        )
     end
 
     return BitMatrix(C)
 
 end
 
-function bitwise_mat_mult(A::BitMatrix,
-                          x::Vector{Bool})::Vector{Bool}
+function 
+    bitwise_mat_mult(
+        A::BitMatrix,
+        x::Vector{Bool}
+    )::Vector{Bool}
 
     A_bool = Matrix(A)
 
@@ -108,7 +112,11 @@ function bitwise_mat_mult(A::BitMatrix,
             end
         end
     else
-        throw(DimensionMismatch(lazy"second dimension of A, $nA, does not match length of x, $L"))
+        throw(
+            DimensionMismatch(
+                lazy"second dimension of A, $nA, does not match length of x, $L"
+            )
+        )
     end
 
     return y

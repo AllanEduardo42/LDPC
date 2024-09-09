@@ -5,8 +5,11 @@
 
 using SparseArrays
 
-function PEG!(d::Vector{Int64},
-              M::Int64)
+function 
+    PEG!(
+        d::Vector{Int64},
+        M::Int64
+    )
 
     sort!(d)
     N = length(d)
@@ -23,8 +26,18 @@ function PEG!(d::Vector{Int64},
                 check_degrees[j] += 1
             else
                 L0_checks = findall(isone,H[:,i])
-                level = subtree!(H,M,i,0,check_degrees,L0_checks,[i],
-                                                copy(L0_checks),copy(L0_checks))
+                level = 
+                    subtree!(
+                        H,
+                        M,
+                        i,
+                        0,
+                        check_degrees,
+                        L0_checks,[i],
+                        copy(L0_checks),
+                        copy(L0_checks)
+                    )
+                ;
                 if level > 0
                     girth = min(girth, 2*(level+1))
                 end
@@ -36,15 +49,18 @@ function PEG!(d::Vector{Int64},
 
 end
 
-function subtree!(H::BitMatrix,
-                  M::Int64,
-                  root::Int64,
-                  level::Int64,
-                  check_degrees::Vector{Int64},
-                  L0_checks::Vector{Int64},
-                  parent_nodes::Vector{Int64},
-                  L0_check_set::Vector{Int64},
-                  L1_check_set::Vector{Int64})    
+function 
+    subtree!(
+        H::BitMatrix,
+        M::Int64,
+        root::Int64,
+        level::Int64,
+        check_degrees::Vector{Int64},
+        L0_checks::Vector{Int64},
+        parent_nodes::Vector{Int64},
+        L0_check_set::Vector{Int64},
+        L1_check_set::Vector{Int64}
+    )    
     # L0: previous level in the subtree
     # L1: current level in the subtree
 
@@ -81,43 +97,60 @@ function subtree!(H::BitMatrix,
         check_degrees[idx] += 1
     else
         append_sort_unique!(L0_check_set,L1_checks)
-        level = subtree!(H,M,root,level,check_degrees,L1_checks,L1_nodes,
-                                                      L0_check_set,L1_check_set)
+        level = 
+            subtree!(
+                H,
+                M,
+                root,
+                level,
+                check_degrees,
+                L1_checks,
+                L1_nodes,
+                L0_check_set,
+                L1_check_set
+            )
+        ;
     end
 
     return level
 end
 
-function append_sort_unique!(x,y)
+function 
+    append_sort_unique!(
+        x::Vector{Int64},
+        y::Vector{Int64}
+    )
+
     append!(x,y)
     sort!(x)
     unique!(x)
-end
-
-function node_degrees(M, N, λ, ρ)
-
-    # d = zeros(Int, N)
-    Nv = zeros(Int, length(λ))
-    Nc = zeros(Int, length(ρ))
-    Λ = 0
-    for i in eachindex(λ)
-        Λ += λ[i]/i
-    end
-    R = 0
-    for i in eachindex(ρ)
-        R += ρ[i]/i
-    end
-
-    H = round(Int,(M/R + N/Λ)/2)
-
-    for i in eachindex(λ)
-        Nv[i] = round(Int, H*λ[i]/i)
-    end
-
-    for i in eachindex(ρ)
-        Nc[i] = round(Int,H*ρ[i]/i)
-    end
-
-    return Nv, Nc
 
 end
+
+# function node_degrees(M, N, λ, ρ)
+
+#     # d = zeros(Int, N)
+#     Nv = zeros(Int, length(λ))
+#     Nc = zeros(Int, length(ρ))
+#     Λ = 0
+#     for i in eachindex(λ)
+#         Λ += λ[i]/i
+#     end
+#     R = 0
+#     for i in eachindex(ρ)
+#         R += ρ[i]/i
+#     end
+
+#     H = round(Int,(M/R + N/Λ)/2)
+
+#     for i in eachindex(λ)
+#         Nv[i] = round(Int, H*λ[i]/i)
+#     end
+
+#     for i in eachindex(ρ)
+#         Nc[i] = round(Int,H*ρ[i]/i)
+#     end
+
+#     return Nv, Nc
+
+# end

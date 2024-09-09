@@ -13,11 +13,13 @@ function lookupTable()
     return phi
 end
 
-function get_phi(arg::Float64, phi::Vector{Float64})::Float64
+function get_index(arg::Float64)::Int64
     z = unsafe_trunc(Int,arg)
     if z >= SIZE
-        return 0.0
+        i = SIZE
     else
-        return phi[z + 1]
-    end    
+        i = z + 1
+    end
+    
+    return i
 end
