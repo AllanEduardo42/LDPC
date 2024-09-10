@@ -15,59 +15,68 @@ function
         nreals = NREALS
     )
 
+    ############################### constants ##################################
 
     M = length(indices_row)
     N = length(indices_col)
+    divisor = NREALS * N
+    # BPKS
+    u = 2*c .- 1
 
     ############################# preallocation ################################
 
-    fer = zeros(length(σ))
+    # frame error rate
+    FER = zeros(length(σ))
 
+    # bit error rate
+    ber = zeros(MAX)
     BER = zeros(MAX,length(σ))
 
-    ber = zeros(MAX)
-
+    # iteration in which SPA stopped
     iters = zeros(Int, length(σ), NREALS)
 
+    # prior Δ-llr
     ΔLf = Vector{Float64}(undef,N)
 
+    # Vertical and horizontal update matrices
     Lq = H'*0.0
-
     Lr = H*0.0
 
+    # received signal
     t = Vector{Float64}(undef,N)
 
+    # MAP estimate
     d = Vector{Bool}(undef,N)
 
+    # syndrome
     syndrome = Vector{Bool}(undef,M)
 
+    # noise
     noise = Vector{Float64}(undef,N)
 
+    # auxiliary variables
     Lrn = zeros(N)
-
     sn = ones(Bool,N)
+    bit_error = Vector{Bool}(undef,N)    
 
-    bit_error = Vector{Bool}(undef,N)
-
-    divisor = NREALS * N
-
-    # BPKS 
-
-    u = 2*c .- 1
+    ################################## MAIN ####################################
 
     for k in eachindex(σ)
-
+        
+        # set random seed
         Random.seed!(SEED)
 
         s = σ[k]^2
     
-        for j=1:nreals
+        for j in 1:nreals
 
             randn!(noise)
 
             noise .*= σ[k]
 
             t .= u .+ noise
+
+            # prior Δ-llr
 
             for i in eachindex(t)
                 if mode == "TAB"
@@ -76,9 +85,11 @@ function
                     @inbounds ΔLf[i] = -2t[i]/s
                 end
             end
-
+            
+            # initialize matrix Lq
             llr_init_q!(Lq,ΔLf,indices_col)
             
+            # SPA
             i = 0
             DECODED = false
             if mode == "TNH"
@@ -96,25 +107,6 @@ function
                         ΔLf,
                         syndrome,
                         nothing,
-                        nothing,
-                        nothing
-                    )
-                ;
-            elseif mode == "APP"
-                # approximate SPA
-                DECODED, i = 
-                    SPA!(
-                        d,
-                        ber,
-                        c,
-                        bit_error,
-                        Lr,
-                        Lq,
-                        indices_row,
-                        indices_col,
-                        ΔLf,
-                        syndrome,
-                        sn,
                         nothing,
                         nothing
                     )
@@ -157,6 +149,25 @@ function
                         phi
                     )
                 ;
+            elseif mode == "MIN"
+                # approximate SPA
+                DECODED, i = 
+                    SPA!(
+                        d,
+                        ber,
+                        c,
+                        bit_error,
+                        Lr,
+                        Lq,
+                        indices_row,
+                        indices_col,
+                        ΔLf,
+                        syndrome,
+                        sn,
+                        nothing,
+                        nothing
+                    )
+                ;
             else
                 throw(
                     ArgumentError(
@@ -164,17 +175,20 @@ function
                     )
                 )
             end
+            # bit error rate
             @fastmath ber ./= divisor
             @inbounds  @fastmath @. BER[:,k] += ber
+            # iteration in which SPA stopped
             @inbounds iters[k,j] = i
             if ~DECODED
-                @inbounds fer[k] += 1
+                # frame error rate
+                @inbounds FER[k] += 1
             end
         end
 
-        @inbounds @fastmath fer[k] /= NREALS
+        @inbounds @fastmath FER[k] /= NREALS
     end
 
-    return log10.(fer), log10.(BER), iters, Lr
+    return log10.(FER), log10.(BER), iters
 
 end

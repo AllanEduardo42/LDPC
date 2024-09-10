@@ -3,9 +3,7 @@
 # 27 ago 2024
 # Horizontal update of the LLR based Sum-Product Algorithm
 
-using SparseArrays
-
-# TANH
+######################### SPA USING HYPERBOLIC TANGENT #########################
 function 
     llr_horizontal_update!(
         Lr::Matrix{Float64},
@@ -22,7 +20,7 @@ function
         for n in indices
             pLr = 1.0
             for nn in indices
-                if nn != n
+                if nn ≠ n
                     @inbounds pLr *= tanh(0.5*Lq[nn,m])
                 end
             end
@@ -31,7 +29,110 @@ function
     end
 end
 
-# APPROX
+###################### ALTERNATIVE TO HYPERBOLIC TANGENT #######################
+
+function ϕ(x::Float64)::Float64
+
+    m = exp(x)-1
+    
+    return log(1 + 2/m)
+
+end
+
+function 
+    llr_horizontal_update!(
+        Lr::Matrix{Float64},                            
+        Lq::Matrix{Float64},
+        indices_row::Vector{Vector{Int64}},
+        sn::Vector{Bool},
+        Lrn::Vector{Float64},
+        x::Nothing
+    )
+
+    m = 0
+    for indices in indices_row
+        m += 1
+        sum = 0.0
+        s = 1 
+        for n in indices
+            ####### what it does: #######
+            # Lrn[n] = ϕ(abs(Lq[n,m]))
+            # sum += Lrn[n]
+            # sn[n] = sign(Lq[n,m])
+            # s *= sn[n]
+            #############################
+            if @inbounds Lq[n,m] >= 0
+                @inbounds Lrn[n] = ϕ(Lq[n,m])
+                @inbounds sn[n] = false
+            else
+                @inbounds Lrn[n] = ϕ(-Lq[n,m])
+                @inbounds sn[n] = true
+                @inbounds s ⊻= sn[n]
+            end
+            sum += Lrn[n]
+        end
+        for n in indices
+            ############### what it does ###############
+            # Lr[m,n] = (s*sn[n])*(ϕ(abs(sum - Lrn[n])))
+            ############################################
+            if @inbounds sn[n] == s
+                @inbounds Lr[m,n] = -ϕ(abs(sum - Lrn[n]))
+            else
+                @inbounds Lr[m,n] = ϕ(abs(sum - Lrn[n]))
+            end
+        end    
+    end
+end
+
+############################ SPA USING LOOKUP TABLE ############################
+
+function
+    llr_horizontal_update!(
+        Lr::Matrix{Float64},                            
+        Lq::Matrix{Float64},
+        indices_row::Vector{Vector{Int64}},
+        sn::Vector{Bool},
+        Lrn::Vector{Float64},
+        phi::Vector{Float64}
+    )
+
+    m = 0
+    for indices in indices_row
+        m += 1
+        sum = 0.0
+        s = 1 
+        for n in indices
+            ####### what it does: #######
+            # Lrn[n] = ϕ(abs(Lq[n,m]))
+            # sum += Lrn[n]
+            # sn[n] = sign(Lq[n,m])
+            # s *= sn[n]
+            #############################
+            if @inbounds Lq[n,m] >= 0
+                @inbounds Lrn[n] = phi[get_index(Lq[n,m])]
+                @inbounds sn[n] = false
+            else
+                @inbounds Lrn[n] = phi[get_index(-Lq[n,m])]
+                @inbounds sn[n] = true
+                @inbounds s ⊻= sn[n]
+            end
+            @inbounds @fastmath sum += Lrn[n]
+        end
+        for n in indices
+            ############### what it does ###############
+            # Lr[m,n] = (s*sn[n])*(ϕ(abs(sum - Lrn[n])))
+            ############################################
+            if @inbounds sn[n] == s
+                @inbounds @fastmath Lr[m,n] = -phi[get_index(abs(sum - Lrn[n]))]
+            else
+                @inbounds @fastmath Lr[m,n] = phi[get_index(abs(sum - Lrn[n]))]
+            end
+        end    
+    end
+end
+
+################################### MIN SUM ####################################
+
 function
     llr_horizontal_update!(
         Lr::Matrix{Float64},                           
@@ -94,97 +195,5 @@ function
                 end
             end
         end  
-    end
-end
-
-# ALT
-function 
-    llr_horizontal_update!(
-        Lr::Matrix{Float64},                            
-        Lq::Matrix{Float64},
-        indices_row::Vector{Vector{Int64}},
-        sn::Vector{Bool},
-        Lrn::Vector{Float64},
-        x::Nothing
-    )
-
-    m = 0
-    for indices in indices_row
-        m += 1
-        sum = 0.0
-        s = 1 
-        for n in indices
-            ####### what it does: #######
-            # Lrn[n] = ϕ(abs(Lq[n,m]))
-            # sum += Lrn[n]
-            # sn[n] = sign(Lq[n,m])
-            # s *= sn[n]
-            #############################
-            if @inbounds Lq[n,m] >= 0
-                @inbounds Lrn[n] = ϕ(Lq[n,m])
-                @inbounds sn[n] = false
-            else
-                @inbounds Lrn[n] = ϕ(-Lq[n,m])
-                @inbounds sn[n] = true
-                @inbounds s ⊻= sn[n]
-            end
-            sum += Lrn[n]
-        end
-        for n in indices
-            ############### what it does ###############
-            # Lr[m,n] = (s*sn[n])*(ϕ(abs(sum - Lrn[n])))
-            ############################################
-            if @inbounds sn[n] == s
-                @inbounds Lr[m,n] = -ϕ(abs(sum - Lrn[n]))
-            else
-                @inbounds Lr[m,n] = ϕ(abs(sum - Lrn[n]))
-            end
-        end    
-    end
-end
-
-# TABLE
-function
-    llr_horizontal_update!(
-        Lr::Matrix{Float64},                            
-        Lq::Matrix{Float64},
-        indices_row::Vector{Vector{Int64}},
-        sn::Vector{Bool},
-        Lrn::Vector{Float64},
-        phi::Vector{Float64}
-    )
-
-    m = 0
-    for indices in indices_row
-        m += 1
-        sum = 0.0
-        s = 1 
-        for n in indices
-            ####### what it does: #######
-            # Lrn[n] = ϕ(abs(Lq[n,m]))
-            # sum += Lrn[n]
-            # sn[n] = sign(Lq[n,m])
-            # s *= sn[n]
-            #############################
-            if @inbounds Lq[n,m] >= 0
-                @inbounds Lrn[n] = phi[get_index(Lq[n,m])]
-                @inbounds sn[n] = false
-            else
-                @inbounds Lrn[n] = phi[get_index(-Lq[n,m])]
-                @inbounds sn[n] = true
-                @inbounds s ⊻= sn[n]
-            end
-            @inbounds @fastmath sum += Lrn[n]
-        end
-        for n in indices
-            ############### what it does ###############
-            # Lr[m,n] = (s*sn[n])*(ϕ(abs(sum - Lrn[n])))
-            ############################################
-            if @inbounds sn[n] == s
-                @inbounds @fastmath Lr[m,n] = -phi[get_index(abs(sum - Lrn[n]))]
-            else
-                @inbounds @fastmath Lr[m,n] = phi[get_index(abs(sum - Lrn[n]))]
-            end
-        end    
     end
 end

@@ -14,8 +14,8 @@ using Plots
 
 TNH = false
 ALT = true
-TAB = true
-APP = false
+TAB = false
+MIN = true
 
 ################################ INCLUDED FILES ################################
 
@@ -36,14 +36,14 @@ include("GF2_functions.jl")
 
 SEED::Int64 = 1427
 
-SIZE::Int64 = 1024
-RANGE::Int64 = 100
+SIZE::Int64 = 2048
+RANGE::Int64 = 10
 
 SIZE_per_RANGE::Float64 = SIZE/RANGE
 
 Phi = lookupTable()
 
-NREALS::Int = 1_000
+NREALS::Int = 1_000_0
 MAX::Int = 10
 
 #################################### CODING ####################################
@@ -52,7 +52,7 @@ MAX::Int = 10
 
 N = 256
 M = 128
-D = rand([2,3],N)
+D = rand([4,4],N)
 
 @time H, girth = PEG!(D,M)
 
@@ -118,7 +118,7 @@ if TAB
         nreals=1
     )
 end
-if APP
+if MIN
     performance_estimation(
         C,
         Sigma,
@@ -172,7 +172,7 @@ if TAB
         )
     ;
 end
-if APP
+if MIN
     @time FER_app, BER_app, Iters_app = 
         performance_estimation(
             C,
@@ -202,7 +202,7 @@ if TAB
     append!(yaxis,[FER_tab])
     push!(fer_labels,"SPA TAB")
 end
-if APP
+if MIN
     append!(yaxis,[FER_app])
     push!(fer_labels,"MIN SUM")
 end
@@ -264,7 +264,7 @@ if TAB
     )
     # plot!(girth*[1, 1]/2,[lim-1, 0],label="girth",lw=2,ls=:dot,lc=:black)
 end
-if APP
+if MIN
     display(
         plot(
             1:MAX,

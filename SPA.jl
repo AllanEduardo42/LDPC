@@ -59,7 +59,7 @@ function
                 DECODED = true
             end
         end
-        bit_error .= (d .!= c)
+        bit_error .= (d .≠ c)
         ber[i] = sum(bit_error)
 
     end

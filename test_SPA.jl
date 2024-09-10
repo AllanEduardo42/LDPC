@@ -93,16 +93,6 @@ function
                 nothing,
                 nothing
             )
-        elseif mode == "APP"
-            # approximate SPA
-            llr_horizontal_update!(
-                Lr,
-                Lq,
-                indices_row,
-                sn,
-                nothing,
-                nothing
-            )
         elseif mode == "ALT"
             # alternative SPA
             llr_horizontal_update!(
@@ -122,6 +112,16 @@ function
                 sn,
                 Lrn,
                 phi
+            )
+        elseif mode == "MIN"
+            # approximate SPA
+            llr_horizontal_update!(
+                Lr,
+                Lq,
+                indices_row,
+                sn,
+                nothing,
+                nothing
             )
         else
             throw(

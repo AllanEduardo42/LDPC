@@ -6,27 +6,21 @@
 using Random
 using LinearAlgebra
 
+########################### GF2 matrix multiplication ##########################
+
+# C = A*B BitArray
+
 function
     GF2_mat_mult(
         A::BitMatrix,
         B::BitMatrix
     )::BitMatrix
 
-    A_bool = Matrix(A)
-    B_bool = Matrix(B)
-
     mA, nA = size(A)
     mB, nB = size(B)
 
     if nA == mB
-        C = zeros(Bool,mA,nB)
-        for i in 1:mA
-            for j in 1:nB
-                for k in 1:nA
-                    @inbounds C[i,j] ⊻= A_bool[i,k] && B_bool[k,j]
-                end
-            end
-        end
+        C = GF2_mat_mult_core(Matrix(A),Matrix(B),mA,nA,nB)
     else
         throw(
             DimensionMismatch(
@@ -39,23 +33,65 @@ function
 
 end
 
+# C = A*B Matrix{Bool}
+
+function
+    GF2_mat_mult(
+        A::Matrix{Bool},
+        B::Matrix{Bool}
+    )::Matrix{Bool}
+
+    mA, nA = size(A)
+    mB, nB = size(B)
+
+    if nA == mB
+        C = GF2_mat_mult_core(A,B,mA,nA,nB)
+    else
+        throw(
+            DimensionMismatch(
+                lazy"A has dimensions ($mA,$nA) but B has dimensions ($mB,$nB)"
+            )
+        )
+    end
+
+    return C
+
+end
+
+# y = A*x BitArray
+
 function 
     GF2_mat_mult(
         A::BitMatrix,
+        x::BitVector
+    )::BitVector
+
+    mA, nA = size(A)
+    if nA == length(x)
+        y = GF2_mat_mult_core(Matrix(A),Vector(x),mA,nA)
+    else
+        throw(
+            DimensionMismatch(
+                lazy"second dimension of A, $nA, does not match length of x, $L"
+            )
+        )
+    end
+
+    return BitVector(y)
+
+end
+
+# y = A*x Matrix{Bool}
+
+function 
+    GF2_mat_mult(
+        A::Matrix{Bool},
         x::Vector{Bool}
     )::Vector{Bool}
 
-    A_bool = Matrix(A)
-
     mA, nA = size(A)
-    L = length(x)
-    if nA == L
-        y = zeros(Bool,mA)
-        for i in 1:mA
-            for k in 1:nA
-                @inbounds y[i] ⊻= A_bool[i,k] && x[k]
-            end
-        end
+    if nA == length(x)
+        y = GF2_mat_mult_core(A,x,mA,nA)
     else
         throw(
             DimensionMismatch(
@@ -67,6 +103,51 @@ function
     return y
 
 end
+
+# Core computation of C = A*B
+
+function 
+    GF2_mat_mult_core(
+        A::Matrix{Bool},
+        B::Matrix{Bool},
+        mA::Int,
+        nA::Int,
+        nB::Int
+    )::Matrix{Bool}
+
+    C = zeros(Bool,mA,nB)
+    for i in 1:mA
+        for j in 1:nB
+            for k in 1:nA
+                @inbounds C[i,j] ⊻= A[i,k] && B[k,j]
+            end
+        end
+    end
+
+    return C
+end
+
+# Core computation of y = A*x
+
+function 
+    GF2_mat_mult_core(
+        A::Matrix{Bool},
+        x::Vector{Bool},
+        mA::Int,
+        nA::Int,
+    )::Vector{Bool}
+
+    y = zeros(Bool,mA)
+    for i in 1:mA
+        for k in 1:nA
+            @inbounds y[i] ⊻= A[i,k] && x[k]
+        end
+    end
+
+    return y
+end
+
+################################# GF2 NULLSPACE ################################
 
 function GF2_nullspace(A::BitMatrix)
 
@@ -82,7 +163,7 @@ function GF2_nullspace(A::BitMatrix)
         AA_sup = view(AA,1:M,:)
         AA_inf = view(AA,M+1:M+N,:)
 
-        # find the zero columns of A_sup
+        # find the zero columns of AA_sup
         zero_columns = []
 
         for j = 1:N
@@ -91,30 +172,51 @@ function GF2_nullspace(A::BitMatrix)
             end
         end
 
-        # The nullspace of A is the columns of A_inf corresponding to the zero 
-        # columns of A_sup
+        # The nullspace of A is the columns of AA_inf corresponding to the zero 
+        # columns of AA_sup
 
-        null_space_A = falses(N,length(zero_columns))
+        nullspace_A = falses(N,length(zero_columns))
         j = 0
         for column in zero_columns
             j += 1
-            null_space_A[:,j] = view(AA_inf,:,column)
+            nullspace_A[:,j] = view(AA_inf,:,column)
         end
 
-        return null_space_A
+        return nullspace_A
     end
 
 end
 
-function GF2_inverse(A::BitMatrix;IAEF=false)
+############################# GF2 MATRIX INVERSION #############################
 
-    # IAEF: invertible augmented echelon form
+
+function GF2_inverse(A::BitMatrix;ACCEF=false)
+
+    # ACCEF: augmented complete column echelon form
+
+    # ⌈   1      0      0    ...    0      0      0  ⌉
+    # |  x₂₁     1      0    ...    0      0      0  |
+    # |  x₃₁    x₃₂     1    ...    0      0      0  |
+    # |   ⋮       ⋮       ⋮    ⋱      ⋮      ⋮       ⋮  |
+    # | xₙ₋₂₁  xₙ₋₂₂  xₙ₋₂₃  ...    1      0      0  |
+    # | xₙ₋₁₁  xₙ₋₁₂  xₙ₋₁₃  ...  xₙₘ₋₃    1      0  |
+    # |  xₙ₁    xₙ₂    xₙ₃   ...  xₙₘ₋₂  xₙₘ₋₁    1  |   ⌈ X ⌉
+    # |----------------------------------------------| = |---|
+    # |  y₁₁    y₁₂    y₁₃   ...  y₁ₘ₋₂  y₁ₘ₋₁   y₁ₘ |   ⌊ Y ⌋
+    # |   ⋮       ⋮       ⋮    ⋱      ⋮      ⋮       ⋮  |
+    # ⌊  yₘ₁    yₘ₂    yₘ₃   ...  yₘₘ₋₂  yₘₘ₋₁   yₘₘ ⌋
+
+    #       ⌈ X ⌉
+    # where |---| is the result of Gaussian elimination by applying a sequence
+    #       ⌊ Y ⌋                           ⌈ Z ⌉
+    # of elementary columns operations over |---|.
+    #                                       ⌊ I ⌋ 
 
     M,N = size(A)
 
-    if !IAEF
+    if !(ACCEF)
 
-        if M != N
+        if M ≠ N
             throw(
                 DimensionMismatch(
                     lazy"matrix is not square: dimensions are ($M,N)"
@@ -127,27 +229,27 @@ function GF2_inverse(A::BitMatrix;IAEF=false)
         invertible = GF2_column_echelon_form!(AA,N)
 
     else
-        MM,N = size(A)
-        # confirm that is indeed an IAEF
-        if N != MM÷2
+        if M ≠ 2*N
             throw(
                 ArgumentError(
-                    "A is not in an invertible augmented echelon form"
+                    lazy"matrix dimensions are incompatible ($M ≠ $(2*N))"
                 )
             )
         elseif !(istril(A[1:N,:] - I,-1))
             throw(
                 ArgumentError(
-                    "A is not in an invertible augmented echelon form"
+                    lazy"matrix X in [X;Y] is not lower triangular with diag(X) = I"
                 )
             )
-        else
-            invertible = true
-            AA = copy(A)
         end
+        println("""WARNING: Be sure A is the result of a column-wise Gaussian 
+                elimination over an augmented matrix [B; I]. Otherwise result
+                will almost certainly be wrong.""")
+        invertible = true
+        AA = A
     end
 
-    if !invertible
+    if !(invertible)
         throw(
             SingularException(1)
         )
@@ -159,40 +261,43 @@ function GF2_inverse(A::BitMatrix;IAEF=false)
 
 end
 
-function GF2_column_echelon_form!(A::BitMatrix,N::Int64)
+function GF2_column_echelon_form!(AA::BitMatrix,N::Int64)
 
     full_rank_sub_matrix = true
 
-    for j=1:N
-        if A[j,j] != 1
+    for j in 1:N-1
+        if !(AA[j,j])
             p = j+1
-            while p <= N && A[j,p] != 1
+            while p <= N && !(AA[j,p])
                 p +=1
             end
             if p <= N
-                @. A[:,j] = A[:,j] ⊻ A[:,p]
-                @. A[:,p] = A[:,p] ⊻ A[:,j]
+                @. AA[:,j] ⊻= AA[:,p]
+                @. AA[:,p] ⊻= AA[:,j]
             else
                 full_rank_sub_matrix = false
             end
         end
-        for i=j+1:N
-            if A[j,i] == 1
-                @. A[:,i] = A[:,i] ⊻ A[:,j]
+        for k in j+1:N
+            if AA[j,k]
+                @. AA[:,k] ⊻= AA[:,j]
             end
         end
+    end
+    if !(AA[N,N])
+        full_rank_sub_matrix = false
     end
 
     return full_rank_sub_matrix
 
 end
 
-function GF2_reduce!(A::BitMatrix,M::Int64)
+function GF2_reduce!(AA::BitMatrix,N::Int64)
 
-    for i=M:-1:1
-        for j=i-1:-1:1
-            if A[i,j] == 1
-                @. A[:,j] = A[:,j] ⊻ A[:,i]
+    for j in N:-1:2
+        for k in j-1:-1:1
+            if AA[j,k]
+                @. AA[:,k] ⊻= AA[:,j]
             end
         end
     end
@@ -204,7 +309,7 @@ function isGF2invertible(A::BitMatrix)
     M,N = size(A)
     AA = [A; I]
 
-    if M != N
+    if M ≠ N
         invertible = false
     else
         invertible = GF2_column_echelon_form!(AA,N)
@@ -229,4 +334,3 @@ function find_GF2_invertible_matrix(M::Int64)
     return A, A_inv
 
 end
-
