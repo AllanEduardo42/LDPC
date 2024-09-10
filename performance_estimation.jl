@@ -175,6 +175,6 @@ function
         @inbounds @fastmath fer[k] /= NREALS
     end
 
-    return log10.(fer), log10.(BER), iters
+    return log10.(fer), log10.(BER), iters, Lr
 
 end

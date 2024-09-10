@@ -48,12 +48,11 @@ function GF2_nullspace(H::BitMatrix)
     # The nullspace of H is the columns of A_inf corresponding to the zero 
     # columns of A_sup
 
-    null_space_H = BitMatrix(undef,N,length(zero_columns))
-    null_space_H .= false
+    null_space_H = falses(N,length(zero_columns))
     for j in eachindex(zero_columns)
         null_space_H[:,j] = A_inf[:,zero_columns[j]]
     end
 
-    return A_sup, A_inf, null_space_H
+    return null_space_H
 
 end

@@ -15,7 +15,7 @@ using Plots
 TNH = false
 ALT = true
 TAB = true
-APP = true
+APP = false
 
 ################################ INCLUDED FILES ################################
 
@@ -30,20 +30,20 @@ include("test_SPA.jl")
 include("lookupTable.jl")
 include("SPA.jl")
 include("PEG.jl")
-include("GF2_nullspace.jl")
+include("GF2_functions.jl")
 
 ############################# SIMULATION CONSTANTS #############################
 
 SEED::Int64 = 1427
 
-SIZE::Int64 = 4096
-RANGE::Int64 = 10
+SIZE::Int64 = 1024
+RANGE::Int64 = 100
 
 SIZE_per_RANGE::Float64 = SIZE/RANGE
 
 Phi = lookupTable()
 
-NREALS::Int = 1_000_0
+NREALS::Int = 1_000
 MAX::Int = 10
 
 #################################### CODING ####################################
@@ -58,7 +58,7 @@ D = rand([2,3],N)
 
 println("girth = ", girth)
 
-@time _, _, G = GF2_nullspace(H)
+@time G = GF2_nullspace(H)
 
 K = size(G,2)
 

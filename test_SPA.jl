@@ -5,6 +5,7 @@
 
 function 
     test_SPA(
+        c::Vector{Bool},
         indices_col::Vector{Vector{Int64}}, 
         indices_row::Vector{Vector{Int64}},
         t::Vector{Float64},
@@ -50,10 +51,10 @@ function
     syndrome = ones(Bool,M)
     syndrome_llr = zeros(Bool,M)
 
-    i = 0
-    while ~iszero(syndrome) && i < MAX
-
-        i += 1
+    index = MAX
+    FIRST = true
+    DECODED = false
+    for i in 1:MAX
 
         println("Iteration #$i")
 
@@ -152,7 +153,15 @@ function
 
         println("LLR MAP estimate syndrome: $syndrome_llr")
 
+        if FIRST && iszero(syndrome)
+            FIRST = false
+            index = i
+            if d == c
+                DECODED = true
+            end
+        end
+
     end
 
-    return r, Lr, q, Lq
+    return r, Lr, q, Lq, index, DECODED
 end

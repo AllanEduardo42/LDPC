@@ -23,10 +23,10 @@ function
             pLr = 1.0
             for nn in indices
                 if nn != n
-                    @inbounds @fastmath pLr *= tanh(0.5*Lq[nn,m])
+                    @inbounds pLr *= tanh(0.5*Lq[nn,m])
                 end
             end
-            @inbounds @fastmath Lr[m,n] = 2*atanh(pLr)
+            @inbounds Lr[m,n] = 2*atanh(pLr)
         end
     end
 end
@@ -128,16 +128,16 @@ function
                 @inbounds sn[n] = true
                 @inbounds s ⊻= sn[n]
             end
-            @fastmath sum += Lrn[n]
+            sum += Lrn[n]
         end
         for n in indices
             ############### what it does ###############
             # Lr[m,n] = (s*sn[n])*(ϕ(abs(sum - Lrn[n])))
             ############################################
             if @inbounds sn[n] == s
-                @inbounds @fastmath Lr[m,n] = -ϕ(abs(sum - Lrn[n]))
+                @inbounds Lr[m,n] = -ϕ(abs(sum - Lrn[n]))
             else
-                @inbounds @fastmath Lr[m,n] = ϕ(abs(sum - Lrn[n]))
+                @inbounds Lr[m,n] = ϕ(abs(sum - Lrn[n]))
             end
         end    
     end

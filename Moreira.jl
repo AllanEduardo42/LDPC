@@ -8,6 +8,7 @@
 using LinearAlgebra
 
 include("lookupTable.jl")
+include("GF2_functions.jl")
 include("auxiliary_functions.jl")
 include("test_SPA.jl")
 include("simple_horizontal_update.jl")
@@ -15,15 +16,15 @@ include("vertical_update_and_MAP.jl")
 include("llr_horizontal_update.jl")
 include("llr_vertical_update_and_MAP.jl")
 
-MAX = 3
+MAX = 16
 
-SIZE::Int64 = 4096
+SIZE::Int64 = 1024
 RANGE::Int64 = 10
 SIZE_per_RANGE::Float64 = SIZE/RANGE
 
 Phi = lookupTable()
 
-mode = "APP"
+mode = "TAB"
 
 H = BitMatrix(
      [0 1 0 1 0 1 1 1 0 0 0 1;
@@ -47,19 +48,22 @@ K = N - M
 A = H[:,1:M]
 B = H[:,M+1:N]
 
-P = abs.(Int64.(A\B .% 2))
+P = GF2_mat_mult(GF2_inverse(A),B)
 
 G = [P; I(K)]
+
+Message = Vector(Bool.([1, 0, 0, 0]))
+
+C = bitwise_mat_mult(G, Message)
 
 σ = 0.8
 
 t = [1.3129, 2.6584, 0.7413, 2.1745, 0.5981, −0.8323, −0.3962, −1.7586,
 1.4905, 0.4084, −0.9290, 1.0765]
 
-Message = [1, 0, 0, 0]
-
-R, LR, Q, LQ = 
+R, LR, Q, LQ, index, Decoded = 
     test_SPA(
+        C,
         Indices_col, 
         Indices_row,
         t,
@@ -68,6 +72,10 @@ R, LR, Q, LQ =
         mode
     )
 ;
+if mode == "TAB"
+    LR /= SIZE_per_RANGE
+    LQ /= SIZE_per_RANGE
+end
 
 logQ = log.(Q[:,:,1]./Q[:,:,2])
 logR = log.(R[:,:,1]./R[:,:,2])
