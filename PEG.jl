@@ -3,8 +3,6 @@
 # 3 set 2024
 # PEG Algorithm
 
-using SparseArrays
-
 function 
     PEG!(
         d::Vector{Int64},
