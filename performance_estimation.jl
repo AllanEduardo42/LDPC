@@ -21,7 +21,7 @@ function
     N = length(indices_col)
     divisor = NREALS * N
     # BPKS
-    u = 2*c .- 1
+    u = Float64.(2*c .- 1)
 
     ############################# preallocation ################################
 
@@ -66,7 +66,7 @@ function
         # set random seed
         Random.seed!(SEED)
 
-        s = σ[k]^2
+        σ² = σ[k]^2
     
         for j in 1:nreals
 
@@ -80,9 +80,9 @@ function
 
             for i in eachindex(t)
                 if mode == "TAB"
-                    @inbounds ΔLf[i] = -2*SIZE_per_RANGE*t[i]/s
+                    @inbounds ΔLf[i] = -2*SIZE_per_RANGE*t[i]/σ²
                 else
-                    @inbounds ΔLf[i] = -2t[i]/s
+                    @inbounds ΔLf[i] = -2t[i]/σ²
                 end
             end
             

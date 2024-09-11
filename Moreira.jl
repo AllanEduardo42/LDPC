@@ -48,7 +48,7 @@ K = N - M
 A = H[:,1:M]
 B = H[:,M+1:N]
 
-P = GF2_mat_mult(GF2_inverse(A),B)
+P = gf2_mat_mult(gf2_inverse(A),B)
 
 G = [P; I(K)]
 

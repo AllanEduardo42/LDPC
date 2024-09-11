@@ -33,9 +33,7 @@ end
 
 function ϕ(x::Float64)::Float64
 
-    m = exp(x)-1
-    
-    return log(1 + 2/m)
+    @fastmath log(1 + 2/(exp(x)-1))
 
 end
 

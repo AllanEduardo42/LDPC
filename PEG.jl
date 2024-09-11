@@ -16,7 +16,7 @@ function
     H = BitArray(undef,M,N)
     H *= false
     check_degrees = zeros(Int,M)
-    girth = 2*N
+    girth = Inf
 
     for i in 1:N
         for k in 1:d[i]

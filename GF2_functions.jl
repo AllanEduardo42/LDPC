@@ -11,7 +11,7 @@ using LinearAlgebra
 # C = A*B BitArray
 
 function
-    GF2_mat_mult(
+    gf2_mat_mult(
         A::BitMatrix,
         B::BitMatrix
     )::BitMatrix
@@ -20,7 +20,7 @@ function
     mB, nB = size(B)
 
     if nA == mB
-        C = GF2_mat_mult_core(Matrix(A),Matrix(B),mA,nA,nB)
+        C = gf2_mat_mult_core(Matrix(A),Matrix(B),mA,nA,nB)
     else
         throw(
             DimensionMismatch(
@@ -36,7 +36,7 @@ end
 # C = A*B Matrix{Bool}
 
 function
-    GF2_mat_mult(
+    gf2_mat_mult(
         A::Matrix{Bool},
         B::Matrix{Bool}
     )::Matrix{Bool}
@@ -45,7 +45,7 @@ function
     mB, nB = size(B)
 
     if nA == mB
-        C = GF2_mat_mult_core(A,B,mA,nA,nB)
+        C = gf2_mat_mult_core(A,B,mA,nA,nB)
     else
         throw(
             DimensionMismatch(
@@ -61,14 +61,14 @@ end
 # y = A*x BitArray
 
 function 
-    GF2_mat_mult(
+    gf2_mat_mult(
         A::BitMatrix,
         x::BitVector
     )::BitVector
 
     mA, nA = size(A)
     if nA == length(x)
-        y = GF2_mat_mult_core(Matrix(A),Vector(x),mA,nA)
+        y = gf2_mat_mult_core(Matrix(A),Vector(x),mA,nA)
     else
         throw(
             DimensionMismatch(
@@ -84,14 +84,14 @@ end
 # y = A*x Matrix{Bool}
 
 function 
-    GF2_mat_mult(
+    gf2_mat_mult(
         A::Matrix{Bool},
         x::Vector{Bool}
     )::Vector{Bool}
 
     mA, nA = size(A)
     if nA == length(x)
-        y = GF2_mat_mult_core(A,x,mA,nA)
+        y = gf2_mat_mult_core(A,x,mA,nA)
     else
         throw(
             DimensionMismatch(
@@ -107,7 +107,7 @@ end
 # Core computation of C = A*B
 
 function 
-    GF2_mat_mult_core(
+    gf2_mat_mult_core(
         A::Matrix{Bool},
         B::Matrix{Bool},
         mA::Int,
@@ -130,7 +130,7 @@ end
 # Core computation of y = A*x
 
 function 
-    GF2_mat_mult_core(
+    gf2_mat_mult_core(
         A::Matrix{Bool},
         x::Vector{Bool},
         mA::Int,
@@ -149,48 +149,45 @@ end
 
 ################################# GF2 NULLSPACE ################################
 
-function GF2_nullspace(A::BitMatrix)
+function gf2_nullspace(A::BitMatrix)
 
     M,N = size(A)
 
     AA = [A;I]
 
-    invertible = GF2_column_echelon_form!(AA,N)
+    _ = gf2_column_echelon_form!(AA,N)
 
-    if invertible
-        return falses(0,0)
-    else
-        AA_sup = view(AA,1:M,:)
-        AA_inf = view(AA,M+1:M+N,:)
 
-        # find the zero columns of AA_sup
-        zero_columns = []
+    AA_sup = view(AA,1:M,:)
+    AA_inf = view(AA,M+1:M+N,:)
 
-        for j = 1:N
-            if iszero(view(AA_sup,:,j))
-                append!(zero_columns, j)
-            end
+    # find the zero columns of AA_sup
+    zero_columns = []
+
+    for j = 1:N
+        if iszero(view(AA_sup,:,j))
+            append!(zero_columns, j)
         end
-
-        # The nullspace of A is the columns of AA_inf corresponding to the zero 
-        # columns of AA_sup
-
-        nullspace_A = falses(N,length(zero_columns))
-        j = 0
-        for column in zero_columns
-            j += 1
-            nullspace_A[:,j] = view(AA_inf,:,column)
-        end
-
-        return nullspace_A
     end
+
+    # The nullspace of A is the columns of AA_inf corresponding to the zero 
+    # columns of AA_sup
+
+    nullspace_A = falses(N,length(zero_columns))
+    j = 0
+    for column in zero_columns
+        j += 1
+        nullspace_A[:,j] = view(AA_inf,:,column)
+    end
+
+    return nullspace_A
 
 end
 
 ############################# GF2 MATRIX INVERSION #############################
 
 
-function GF2_inverse(A::BitMatrix;ACCEF=false)
+function gf2_inverse(A::BitMatrix;ACCEF=false)
 
     # ACCEF: augmented complete column echelon form
 
@@ -226,7 +223,7 @@ function GF2_inverse(A::BitMatrix;ACCEF=false)
 
         AA = [A; I]
 
-        invertible = GF2_column_echelon_form!(AA,N)
+        invertible = gf2_column_echelon_form!(AA,N)
 
     else
         if M ≠ 2*N
@@ -255,13 +252,13 @@ function GF2_inverse(A::BitMatrix;ACCEF=false)
         )
     end
 
-    GF2_reduce!(AA,N)
+    gf2_reduce!(AA,N)
 
     return AA[N+1:end,:]
 
 end
 
-function GF2_column_echelon_form!(AA::BitMatrix,N::Int64)
+function gf2_column_echelon_form!(AA::BitMatrix,N::Int64)
 
     full_rank_sub_matrix = true
 
@@ -292,7 +289,7 @@ function GF2_column_echelon_form!(AA::BitMatrix,N::Int64)
 
 end
 
-function GF2_reduce!(AA::BitMatrix,N::Int64)
+function gf2_reduce!(AA::BitMatrix,N::Int64)
 
     for j in N:-1:2
         for k in j-1:-1:1
@@ -304,7 +301,7 @@ function GF2_reduce!(AA::BitMatrix,N::Int64)
 
 end
 
-function isGF2invertible(A::BitMatrix)
+function isgf2invertible(A::BitMatrix)
 
     M,N = size(A)
     AA = [A; I]
@@ -312,24 +309,24 @@ function isGF2invertible(A::BitMatrix)
     if M ≠ N
         invertible = false
     else
-        invertible = GF2_column_echelon_form!(AA,N)
+        invertible = gf2_column_echelon_form!(AA,N)
     end
 
     return invertible, AA
 
 end
 
-function find_GF2_invertible_matrix(M::Int64)
+function find_gf2_invertible_matrix(M::Int64)
 
     A = bitrand(M,M)
 
-    invertible, AA = isGF2invertible(A)
+    invertible, AA = isgf2invertible(A)
     while !invertible
         A = bitrand(M,M)
-        invertible, AA = isGF2invertible(A)
+        invertible, AA = isgf2invertible(A)
     end
 
-    A_inv = GF2_inverse(AA;IAEF=true)
+    A_inv = gf2_inverse(AA;IAEF=true)
 
     return A, A_inv
 

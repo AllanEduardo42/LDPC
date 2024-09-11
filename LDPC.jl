@@ -17,6 +17,9 @@ ALT = true
 TAB = false
 MIN = true
 
+PLOT_BER = true
+HISTOGRAMS = true
+
 ################################ INCLUDED FILES ################################
 
 # include("horizontal_update.jl")
@@ -36,29 +39,29 @@ include("GF2_functions.jl")
 
 SEED::Int64 = 1427
 
-SIZE::Int64 = 2048
-RANGE::Int64 = 10
+SIZE::Int64 = 1024
+RANGE::Int64 = 20
 
 SIZE_per_RANGE::Float64 = SIZE/RANGE
 
 Phi = lookupTable()
 
-NREALS::Int = 1_000_0
-MAX::Int = 10
+NREALS::Int = 2_000_0
+MAX::Int = 20
 
 #################################### CODING ####################################
 
 ### PEG Algorithm
 
-N = 256
-M = 128
-D = rand([4,4],N)
+N = 512
+M = 256
+D = rand([2,3],N)
 
 @time H, girth = PEG!(D,M)
 
 println("girth = ", girth)
 
-@time G = GF2_nullspace(H)
+@time G = gf2_nullspace(H)
 
 K = size(G,2)
 
@@ -68,12 +71,13 @@ Message = rand(Bool,K)
 
 ### codeword
 
-C = bitwise_mat_mult(G, Message)
+C = gf2_mat_mult(Matrix(G), Message)
 
 #################################### NOISE #####################################
 
-SNR = collect(3:-0.3:0.3)
-Sigma = 1 ./ SNR
+SNR_db = collect(0:1:8)
+SNR = exp10.(SNR_db/10)
+Sigma = 1 ./ sqrt.(SNR)
 
 ############################# AUXILIARY CONSTANTS ##############################
 
@@ -126,7 +130,7 @@ if MIN
         Indices_row,
         Indices_col,
         Phi,
-        "APP";
+        "MIN";
         nreals=1
     )
 end
@@ -173,7 +177,7 @@ if TAB
     ;
 end
 if MIN
-    @time FER_app, BER_app, Iters_app = 
+    @time FER_min, BER_min, Iters_min = 
         performance_estimation(
             C,
             Sigma,
@@ -181,7 +185,7 @@ if MIN
             Indices_row,
             Indices_col,
             Phi,
-            "APP"
+            "MIN"
         )
     ;
 end
@@ -203,77 +207,88 @@ if TAB
     push!(fer_labels,"SPA TAB")
 end
 if MIN
-    append!(yaxis,[FER_app])
+    append!(yaxis,[FER_min])
     push!(fer_labels,"MIN SUM")
 end
 fer_labels = permutedims(fer_labels)
 
 ber_labels = Vector{String}(undef,0)
-for snr in SNR
-    push!(ber_labels,"SNR = $snr")
+for snr in SNR_db
+    push!(ber_labels,"SNR (dB) = $snr")
 end
 ber_labels = permutedims(ber_labels)
 
 display(
     plot(
-        SNR,yaxis,
+        SNR_db,yaxis,
         xlabel="SNR",
         label=fer_labels,
         lw=2,
-        title="FER",
+        title="FER (girth = $girth)",
         ylims=(lim,0)
     )
 )
 
-if TNH
-    display(
-        plot(
-            1:MAX,
-            BER_tnh,
-            label=ber_labels,
-            lw=2,
-            title="BER SPA TNH",
-            ylims=(lim-1,0)
+if PLOT_BER
+    if TNH
+        display(
+            plot(
+                1:MAX,
+                BER_tnh,
+                label=ber_labels,
+                lw=2,
+                title="BER SPA TNH",
+                ylims=(lim-1,0)
+            )
         )
-    )
-    # plot!(girth*[1, 1]/2,[lim-1, 0],label="girth",lw=2,ls=:dot,lc=:black)
+    end
+    if ALT
+        display(
+            plot(
+                1:MAX,
+                BER_alt,
+                label=ber_labels,
+                lw=2,
+                title="BER SPA ALT",
+                ylims=(lim-1,0)
+            )
+        )
+    end
+    if TAB
+        display(
+            plot(
+                1:MAX,
+                BER_tab,
+                label=ber_labels,
+                lw=2,
+                title="BER SPA TAB",
+                ylims=(lim-1,0)
+            )
+        )
+    end
+    if MIN
+        display(
+            plot(
+                1:MAX,
+                BER_min,
+                label=ber_labels,
+                lw=2,
+                title="BER MIN SUM",
+                ylims=(lim-1,0)
+            )
+        )
+    end
 end
-if ALT
-    display(
-        plot(
-            1:MAX,
-            BER_alt,
-            label=ber_labels,
-            lw=2,
-            title="BER SPA ALT",
-            ylims=(lim-1,0)
+
+if HISTOGRAMS
+    for i in eachindex(SNR)
+        display(
+            histogram(
+                [Iters_alt[i,:] Iters_min[i,:]],
+                layout=grid(2,1),
+                xlims=(0,MAX+1),
+                title="SNR (dB) = $(SNR_db[i])"
+            )
         )
-    )
-    # plot!(girth*[1, 1]/2,[lim-1, 0],label="girth",lw=2,ls=:dot,lc=:black)
-end
-if TAB
-    display(
-        plot(
-            1:MAX,
-            BER_tab,
-            label=ber_labels,
-            lw=2,
-            title="BER SPA TAB",
-            ylims=(lim-1,0)
-        )
-    )
-    # plot!(girth*[1, 1]/2,[lim-1, 0],label="girth",lw=2,ls=:dot,lc=:black)
-end
-if MIN
-    display(
-        plot(
-            1:MAX,
-            BER_app,
-            label=ber_labels,
-            lw=2,
-            title="BER SPA APP",
-            ylims=(lim-1,0)
-        )
-    )
-    # plot!(girth*[1, 1]/2,[lim-1, 0],label="girth",lw=2,ls=:dot,lc=:black)
+    end
 end
