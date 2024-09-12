@@ -4,6 +4,7 @@
 # Lookup table functions
 
 function lookupTable()
+
     phi = zeros(SIZE)
     for i in 1:SIZE
         m = exp(i/SIZE_per_RANGE)
@@ -15,7 +16,7 @@ end
 
 function get_index(arg::Float64)::Int64
     
-    z = unsafe_trunc(Int,arg)
+    z = trunc(Int,arg)
     if z >= SIZE
         i = SIZE
     else

@@ -9,16 +9,17 @@ using LinearAlgebra
 using Random
 using Statistics
 using Plots
+using SparseArrays
 
 ################################ SPA MODE FLAGS ################################
 
-TNH = false
-ALT = true
+TNH = true
+ALT = false
 TAB = false
 MIN = true
 
 PLOT_BER = true
-HISTOGRAMS = true
+HISTOGRAMS = false
 
 ################################ INCLUDED FILES ################################
 
@@ -37,7 +38,8 @@ include("GF2_functions.jl")
 
 ############################# SIMULATION CONSTANTS #############################
 
-SEED::Int64 = 1427
+SEED::Int64 = 1428
+SEED2::Int64 = 5714
 
 SIZE::Int64 = 1024
 RANGE::Int64 = 20
@@ -46,8 +48,8 @@ SIZE_per_RANGE::Float64 = SIZE/RANGE
 
 Phi = lookupTable()
 
-NREALS::Int = 2_000_0
-MAX::Int = 20
+NREALS::Int = 1_000
+MAX::Int = 30
 
 #################################### CODING ####################################
 
@@ -55,6 +57,8 @@ MAX::Int = 20
 
 N = 512
 M = 256
+Random.seed!(SEED2)
+
 D = rand([2,3],N)
 
 @time H, girth = PEG!(D,M)
@@ -287,6 +291,7 @@ if HISTOGRAMS
                 [Iters_alt[i,:] Iters_min[i,:]],
                 layout=grid(2,1),
                 xlims=(0,MAX+1),
+                labels=["SPA" "MIN SUM"],
                 title="SNR (dB) = $(SNR_db[i])"
             )
         )

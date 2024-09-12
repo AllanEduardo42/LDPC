@@ -17,11 +17,11 @@ function
             δr = 1
             for nn in indices
                 if nn != n
-                    @inbounds @fastmath δr *= δq[nn,m]
+                    @inbounds δr *= δq[nn,m]
                 end
             end
-            @inbounds @fastmath r[m,n,1] = 0.5*(1+δr)
-            @inbounds @fastmath r[m,n,2] = 0.5*(1-δr)
+            @inbounds r[m,n,1] = 0.5*(1+δr)
+            @inbounds r[m,n,2] = 0.5*(1-δr)
         end
     end
 end

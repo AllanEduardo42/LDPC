@@ -18,13 +18,22 @@ function
         n += 1
         @inbounds Ld = ΔLf[n]
         for m in indices
-            @fastmath @inbounds Ld += Lr[m,n]
+            if isfinite(Lr[m,n])
+                @inbounds @fastmath Ld += Lr[m,n]
+            else
+                Ld = Lr[m,n]
+                break
+            end
         end
         if Ld < 0
             @inbounds d[n] = 1
         end
         for m in indices
-            @fastmath @inbounds Lq[n,m] = Ld - Lr[m,n]
+            if isfinite(Lr[m,n])
+                @inbounds @fastmath Lq[n,m] = Ld - Lr[m,n]
+            else
+                @inbounds Lq[n,m] = Ld
+            end
         end
     end
 end

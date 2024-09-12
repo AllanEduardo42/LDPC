@@ -11,7 +11,8 @@ function
         t::Vector{Float64},
         σ::Float64,
         phi::Vector{Float64},
-        mode::String
+        mode::String,
+        printing::Bool
     )
 
     M = length(indices_row)
@@ -54,9 +55,9 @@ function
     index = MAX
     FIRST = true
     DECODED = false
-    for i in 1:MAX
-
-        println("Iteration #$i")
+    i = 1
+    converged = false
+    while i <= MAX && !converged
 
         ### Conventional simplified SPA
 
@@ -131,27 +132,34 @@ function
             )
         end
 
-        llr_vertical_update_and_MAP!(
+        converged = llr_vertical_update_and_MAP!(
             Lq,
             d_llr,
             Lr,
             ΔLf,
             indices_col
         )
+        println(converged)
 
         calc_syndrome!(
             syndrome_llr,
-            d,
+            d_llr,
             indices_row
         )
 
-        println("MAP SPL estimate: $d")
+        if printing
 
-        println("MAP LLR estimate: $d_llr")
+            println("Iteration #$i")
 
-        println("MAP SPL estimate syndrome: $syndrome")
+            println("MAP SIMPLE estimate: $d")
 
-        println("LLR MAP estimate syndrome: $syndrome_llr")
+            println("MAP Δ-LLRs estimate: $d_llr")
+
+            println("MAP SIMPLE syndrome: $syndrome")
+
+            println("LLR Δ-LLRs syndrome: $syndrome_llr")
+
+        end
 
         if FIRST && iszero(syndrome)
             FIRST = false
@@ -160,6 +168,8 @@ function
                 DECODED = true
             end
         end
+
+        i += 1
 
     end
 

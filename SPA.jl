@@ -28,6 +28,7 @@ function
     FIRST = true
     DECODED = false
 
+    i = 1
     for i in 1:MAX
         
         llr_horizontal_update!(

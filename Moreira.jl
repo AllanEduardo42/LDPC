@@ -1,4 +1,4 @@
-################################################################################
+9################################################################################
 # Allan Eduardo Feitosa
 # 27 ago 2024
 # Test LDPC using Moreira's example
@@ -16,10 +16,12 @@ include("vertical_update_and_MAP.jl")
 include("llr_horizontal_update.jl")
 include("llr_vertical_update_and_MAP.jl")
 
-MAX = 16
+PRINTING = true
 
-SIZE::Int64 = 1024
-RANGE::Int64 = 10
+MAX = 19
+
+SIZE::Int64 = 1024*1024
+RANGE::Float64 = 20
 SIZE_per_RANGE::Float64 = SIZE/RANGE
 
 Phi = lookupTable()
@@ -35,7 +37,7 @@ H = BitMatrix(
       1 0 1 0 0 0 1 1 0 0 1 0;
       0 1 0 0 0 1 0 1 1 1 0 0;
       0 0 0 0 1 0 0 0 1 0 1 1]
-     )
+    )
 
 Indices_col  = find_indices_col(H)
 Indices_row  = find_indices_row(H)
@@ -54,14 +56,14 @@ G = [P; I(K)]
 
 Message = Vector(Bool.([1, 0, 0, 0]))
 
-C = bitwise_mat_mult(G, Message)
+C = gf2_mat_mult(Matrix(G), Message)
 
 σ = 0.8
 
 t = [1.3129, 2.6584, 0.7413, 2.1745, 0.5981, −0.8323, −0.3962, −1.7586,
 1.4905, 0.4084, −0.9290, 1.0765]
 
-R, LR, Q, LQ, index, Decoded = 
+@time R, LR, Q, LQQ, index, Decoded = 
     test_SPA(
         C,
         Indices_col, 
@@ -69,13 +71,14 @@ R, LR, Q, LQ, index, Decoded =
         t,
         σ,
         Phi,
-        mode
+        mode,
+        PRINTING
     )
 ;
 if mode == "TAB"
     LR /= SIZE_per_RANGE
-    LQ /= SIZE_per_RANGE
+    LQQ /= SIZE_per_RANGE
 end
 
 logQ = log.(Q[:,:,1]./Q[:,:,2])
-logR = log.(R[:,:,1]./R[:,:,2])
+logR = log.(R[:,:,1]./R[:,:,2]);

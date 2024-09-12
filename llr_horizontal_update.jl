@@ -21,10 +21,10 @@ function
             pLr = 1.0
             for nn in indices
                 if nn ≠ n
-                    @inbounds pLr *= tanh(0.5*Lq[nn,m])
+                    @inbounds @fastmath pLr *= tanh(0.5*Lq[nn,m])
                 end
             end
-            @inbounds Lr[m,n] = 2*atanh(pLr)
+            @inbounds @fastmath Lr[m,n] = 2*atanh(pLr)
         end
     end
 end
@@ -131,6 +131,15 @@ end
 
 ################################### MIN SUM ####################################
 
+function min_sum(Lrn,s)
+    
+    if Lrn > 0
+        return Lrn, false, s
+    else
+        return -Lrn, true, s ⊻ true
+    end
+end
+
 function
     llr_horizontal_update!(
         Lr::Matrix{Float64},                           
@@ -145,38 +154,32 @@ function
     for indices in indices_row
         m += 1
         s = true
-        minL = 0.0
-        minL2 = 0.0
-        idx = 0
-        for n in indices
-            @inbounds Lrn = Lq[n,m]
-            if Lrn > 0
-                @inbounds sn[n] = false
-            else
-                @inbounds sn[n] = true
-                @inbounds s ⊻= sn[n]
-                @fastmath Lrn *= -1
-            end
-            if minL == 0.0
+        # first index
+        @inbounds idx = indices[1]        
+        @inbounds minL,sn[idx],s = min_sum(Lq[idx,m],s)
+        # second index
+        @inbounds n = indices[2]          
+        @inbounds Lrn,sn[n],s = min_sum(Lq[n,m],s)
+        if Lrn < minL
+            idx = n
+            minL2 = minL
+            minL = Lrn
+        else
+            minL2 = Lrn
+        end
+        # other indices
+        next = iterate(indices,3)
+        while next !== nothing
+            (n,state) = next   
+            @inbounds Lrn,sn[n],s = min_sum(Lq[n,m],s)
+            if Lrn < minL
                 idx = n
+                minL2 = minL
                 minL = Lrn
-            elseif minL2 == 0
-                if Lrn < minL
-                    idx = n
-                    minL2 = minL
-                    minL = Lrn
-                else
-                    minL2 = Lrn
-                end
-            else
-                if Lrn < minL
-                    idx = n
-                    minL2 = minL
-                    minL = Lrn
-                elseif Lrn < minL2
-                    minL2 = Lrn
-                end
+            elseif Lrn < minL2
+                minL2 = Lrn
             end
+            next = iterate(indices,state)
         end
         for n in indices
             if n == idx
@@ -195,3 +198,68 @@ function
         end  
     end
 end
+
+# function
+#     llr_horizontal_update!(
+#         Lr::Matrix{Float64},                           
+#         Lq::Matrix{Float64},
+#         indices_row::Vector{Vector{Int64}},
+#         sn::Vector{Bool},
+#         x::Nothing,
+#         y::Nothing
+#     )    
+
+#     m = 0
+#     for indices in indices_row
+#         m += 1
+#         s = true
+#         minL = 0.0
+#         minL2 = 0.0
+#         idx = 0
+#         for n in indices
+#             @inbounds Lrn = Lq[n,m]
+#             if Lrn > 0
+#                 @inbounds sn[n] = false
+#             else
+#                 @inbounds sn[n] = true
+#                 @inbounds s ⊻= sn[n]
+#                 @fastmath Lrn *= -1
+#             end
+#             if minL == 0.0
+#                 idx = n
+#                 minL = Lrn
+#             elseif minL2 == 0
+#                 if Lrn < minL
+#                     idx = n
+#                     minL2 = minL
+#                     minL = Lrn
+#                 else
+#                     minL2 = Lrn
+#                 end
+#             else
+#                 if Lrn < minL
+#                     idx = n
+#                     minL2 = minL
+#                     minL = Lrn
+#                 elseif Lrn < minL2
+#                     minL2 = Lrn
+#                 end
+#             end
+#         end
+#         for n in indices
+#             if n == idx
+#                 if @inbounds sn[n] == s
+#                     @inbounds Lr[m,n] = -minL2
+#                 else
+#                     @inbounds Lr[m,n] = minL2
+#                 end
+#             else
+#                 if @inbounds sn[n] == s
+#                     @inbounds Lr[m,n] = -minL
+#                 else
+#                     @inbounds Lr[m,n] = minL
+#                 end
+#             end
+#         end  
+#     end
+# end
