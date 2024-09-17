@@ -32,9 +32,11 @@ end
 ###################### ALTERNATIVE TO HYPERBOLIC TANGENT #######################
 
 function ϕ(x::Float64)::Float64
-
     @fastmath log(1 + 2/(exp(x)-1))
+end
 
+function phi_sign!(x::Float64,s::Int8)
+    return ϕ(abs(x)), sign(x), flipsign(s,x)
 end
 
 function 
@@ -42,7 +44,7 @@ function
         Lr::Matrix{Float64},                            
         Lq::Matrix{Float64},
         indices_row::Vector{Vector{Int64}},
-        sn::Vector{Bool},
+        sn::Vector{Int8},
         Lrn::Vector{Float64},
         x::Nothing
     )
@@ -51,45 +53,34 @@ function
     for indices in indices_row
         m += 1
         sum = 0.0
-        s = 1 
+        s = Int8(1) 
         for n in indices
-            ####### what it does: #######
-            # Lrn[n] = ϕ(abs(Lq[n,m]))
-            # sum += Lrn[n]
-            # sn[n] = sign(Lq[n,m])
-            # s *= sn[n]
-            #############################
-            if @inbounds Lq[n,m] >= 0
-                @inbounds Lrn[n] = ϕ(Lq[n,m])
-                @inbounds sn[n] = false
-            else
-                @inbounds Lrn[n] = ϕ(-Lq[n,m])
-                @inbounds sn[n] = true
-                @inbounds s ⊻= sn[n]
-            end
-            sum += Lrn[n]
+            @inbounds Lrn[n], sn[n], s = phi_sign!(Lq[n,m],s)
+            @inbounds @fastmath sum += Lrn[n] 
         end
         for n in indices
-            ############### what it does ###############
-            # Lr[m,n] = (s*sn[n])*(ϕ(abs(sum - Lrn[n])))
-            ############################################
-            if @inbounds sn[n] == s
-                @inbounds Lr[m,n] = -ϕ(abs(sum - Lrn[n]))
-            else
-                @inbounds Lr[m,n] = ϕ(abs(sum - Lrn[n]))
-            end
+            @inbounds Lr[m,n] = flipsign(s,sn[n])*ϕ(abs(sum - Lrn[n]))
         end    
     end
 end
 
 ############################ SPA USING LOOKUP TABLE ############################
 
+function 
+    phi_sign!(
+        x::Float64,
+        s::Int8,
+        phi::Vector{Float64}
+    )    
+    return phi[get_index(abs(x))], sign(x), flipsign(s,x)
+end
+
 function
     llr_horizontal_update!(
         Lr::Matrix{Float64},                            
         Lq::Matrix{Float64},
         indices_row::Vector{Vector{Int64}},
-        sn::Vector{Bool},
+        sn::Vector{Int8},
         Lrn::Vector{Float64},
         phi::Vector{Float64}
     )
@@ -98,46 +89,21 @@ function
     for indices in indices_row
         m += 1
         sum = 0.0
-        s = 1 
+        s = Int8(1) 
         for n in indices
-            ####### what it does: #######
-            # Lrn[n] = ϕ(abs(Lq[n,m]))
-            # sum += Lrn[n]
-            # sn[n] = sign(Lq[n,m])
-            # s *= sn[n]
-            #############################
-            if @inbounds Lq[n,m] >= 0
-                @inbounds Lrn[n] = phi[get_index(Lq[n,m])]
-                @inbounds sn[n] = false
-            else
-                @inbounds Lrn[n] = phi[get_index(-Lq[n,m])]
-                @inbounds sn[n] = true
-                @inbounds s ⊻= sn[n]
-            end
+            @inbounds Lrn[n], sn[n], s = phi_sign!(Lq[n,m],s,phi)
             @inbounds @fastmath sum += Lrn[n]
         end
         for n in indices
-            ############### what it does ###############
-            # Lr[m,n] = (s*sn[n])*(ϕ(abs(sum - Lrn[n])))
-            ############################################
-            if @inbounds sn[n] == s
-                @inbounds @fastmath Lr[m,n] = -phi[get_index(abs(sum - Lrn[n]))]
-            else
-                @inbounds @fastmath Lr[m,n] = phi[get_index(abs(sum - Lrn[n]))]
-            end
+            @inbounds Lr[m,n] = flipsign(s,sn[n])*phi[get_index(abs(sum - Lrn[n]))]
         end    
     end
 end
 
 ################################### MIN SUM ####################################
 
-function min_sum(Lrn,s)
-    
-    if Lrn > 0
-        return Lrn, false, s
-    else
-        return -Lrn, true, s ⊻ true
-    end
+function abs_sign!(x::Float64,s::Int8)
+    return abs(x), sign(x), flipsign(s,x)
 end
 
 function
@@ -145,121 +111,48 @@ function
         Lr::Matrix{Float64},                           
         Lq::Matrix{Float64},
         indices_row::Vector{Vector{Int64}},
-        sn::Vector{Bool},
+        sn::Vector{Int8},
         x::Nothing,
         y::Nothing
     )    
 
     m = 0
     for indices in indices_row
-        m += 1
-        s = true
+        m += 1       
+        s = Int8(1) 
         # first index
-        @inbounds idx = indices[1]        
-        @inbounds minL,sn[idx],s = min_sum(Lq[idx,m],s)
+        @inbounds idx = indices[1]
+        @inbounds minL, sn[idx], s = abs_sign!(Lq[idx,m],s) 
         # second index
-        @inbounds n = indices[2]          
-        @inbounds Lrn,sn[n],s = min_sum(Lq[n,m],s)
-        if Lrn < minL
+        @inbounds n = indices[2]
+        @inbounds β, sn[n], s = abs_sign!(Lq[n,m],s)      
+        if β < minL
             idx = n
             minL2 = minL
-            minL = Lrn
+            minL = β
         else
-            minL2 = Lrn
+            minL2 = β
         end
-        # other indices
+        # remaining indices
         next = iterate(indices,3)
         while next !== nothing
-            (n,state) = next   
-            @inbounds Lrn,sn[n],s = min_sum(Lq[n,m],s)
-            if Lrn < minL
+            (n,state) = next
+            @inbounds β, sn[n], s = abs_sign!(Lq[n,m],s)
+            if β < minL
                 idx = n
                 minL2 = minL
-                minL = Lrn
-            elseif Lrn < minL2
-                minL2 = Lrn
+                minL = β
+            elseif β < minL2
+                minL2 = β
             end
             next = iterate(indices,state)
         end
         for n in indices
             if n == idx
-                if @inbounds sn[n] == s
-                    @inbounds Lr[m,n] = -minL2
-                else
-                    @inbounds Lr[m,n] = minL2
-                end
+                @inbounds Lr[m,n] = flipsign(s,sn[n])*minL2
             else
-                if @inbounds sn[n] == s
-                    @inbounds Lr[m,n] = -minL
-                else
-                    @inbounds Lr[m,n] = minL
-                end
+                @inbounds Lr[m,n] = flipsign(s,sn[n])*minL
             end
         end  
     end
 end
-
-# function
-#     llr_horizontal_update!(
-#         Lr::Matrix{Float64},                           
-#         Lq::Matrix{Float64},
-#         indices_row::Vector{Vector{Int64}},
-#         sn::Vector{Bool},
-#         x::Nothing,
-#         y::Nothing
-#     )    
-
-#     m = 0
-#     for indices in indices_row
-#         m += 1
-#         s = true
-#         minL = 0.0
-#         minL2 = 0.0
-#         idx = 0
-#         for n in indices
-#             @inbounds Lrn = Lq[n,m]
-#             if Lrn > 0
-#                 @inbounds sn[n] = false
-#             else
-#                 @inbounds sn[n] = true
-#                 @inbounds s ⊻= sn[n]
-#                 @fastmath Lrn *= -1
-#             end
-#             if minL == 0.0
-#                 idx = n
-#                 minL = Lrn
-#             elseif minL2 == 0
-#                 if Lrn < minL
-#                     idx = n
-#                     minL2 = minL
-#                     minL = Lrn
-#                 else
-#                     minL2 = Lrn
-#                 end
-#             else
-#                 if Lrn < minL
-#                     idx = n
-#                     minL2 = minL
-#                     minL = Lrn
-#                 elseif Lrn < minL2
-#                     minL2 = Lrn
-#                 end
-#             end
-#         end
-#         for n in indices
-#             if n == idx
-#                 if @inbounds sn[n] == s
-#                     @inbounds Lr[m,n] = -minL2
-#                 else
-#                     @inbounds Lr[m,n] = minL2
-#                 end
-#             else
-#                 if @inbounds sn[n] == s
-#                     @inbounds Lr[m,n] = -minL
-#                 else
-#                     @inbounds Lr[m,n] = minL
-#                 end
-#             end
-#         end  
-#     end
-# end

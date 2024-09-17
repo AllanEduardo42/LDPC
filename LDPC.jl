@@ -13,8 +13,8 @@ using SparseArrays
 
 ################################ SPA MODE FLAGS ################################
 
-TNH = true
-ALT = false
+TNH = false
+ALT = true
 TAB = false
 MIN = true
 
@@ -50,6 +50,8 @@ Phi = lookupTable()
 
 NREALS::Int = 1_000
 MAX::Int = 30
+
+LR_idx = 9;
 
 #################################### CODING ####################################
 
@@ -142,7 +144,7 @@ end
 ########################### PERFORMANCE SIMULATION ############################
 
 if TNH
-    @time FER_tnh, BER_tnh, Iters_tnh = 
+    @time FER_tnh, BER_tnh, Iters_tnh, Lr_tnh = 
         performance_estimation(
             C,
             Sigma,
@@ -150,12 +152,13 @@ if TNH
             Indices_row,
             Indices_col,
             Phi,
-            "TNH"
+            "TNH";
+            Lr_idx=LR_idx
         )
     ;
 end
 if ALT
-    @time FER_alt, BER_alt, Iters_alt = 
+    @time FER_alt, BER_alt, Iters_alt, Lr_alt = 
         performance_estimation(
             C,
             Sigma,
@@ -163,12 +166,13 @@ if ALT
             Indices_row,
             Indices_col,
             Phi,
-            "ALT"
+            "ALT";
+            Lr_idx=LR_idx
         )
     ;
 end
 if TAB
-    @time FER_tab, BER_tab, Iters_tab = 
+    @time FER_tab, BER_tab, Iters_tab, Lr_tab = 
         performance_estimation(
             C,
             Sigma,
@@ -176,12 +180,13 @@ if TAB
             Indices_row,
             Indices_col,
             Phi,
-            "TAB"
+            "TAB";
+            Lr_idx=LR_idx
         )
     ;
 end
 if MIN
-    @time FER_min, BER_min, Iters_min = 
+    @time FER_min, BER_min, Iters_min, Lr_min = 
         performance_estimation(
             C,
             Sigma,
@@ -189,7 +194,8 @@ if MIN
             Indices_row,
             Indices_col,
             Phi,
-            "MIN"
+            "MIN";
+            Lr_idx=LR_idx
         )
     ;
 end

@@ -12,7 +12,8 @@ function
         indices_col::Vector{Vector{Int64}}, 
         phi::Vector{Float64},
         mode::String;
-        nreals = NREALS
+        nreals = NREALS,
+        Lr_idx = 1
     )
 
     ############################### constants ##################################
@@ -41,6 +42,7 @@ function
     # Vertical and horizontal update matrices
     Lq = H'*0.0
     Lr = H*0.0
+    Lr_return = H*0.0
 
     # received signal
     t = Vector{Float64}(undef,N)
@@ -56,7 +58,7 @@ function
 
     # auxiliary variables
     Lrn = zeros(N)
-    sn = ones(Bool,N)
+    sn = ones(Int8,N)
     bit_error = Vector{Bool}(undef,N)    
 
     ################################## MAIN ####################################
@@ -187,8 +189,10 @@ function
         end
 
         @inbounds @fastmath FER[k] /= NREALS
+
+        (k == Lr_idx) && (Lr_return = copy(Lr))
     end
 
-    return log10.(FER), log10.(BER), iters
+    return log10.(FER), log10.(BER), iters, Lr_return
 
 end

@@ -1,4 +1,4 @@
-9################################################################################
+###############################################################################
 # Allan Eduardo Feitosa
 # 27 ago 2024
 # Test LDPC using Moreira's example
@@ -16,9 +16,9 @@ include("vertical_update_and_MAP.jl")
 include("llr_horizontal_update.jl")
 include("llr_vertical_update_and_MAP.jl")
 
-PRINTING = true
+PRINTING = false
 
-MAX = 19
+MAX = 10
 
 SIZE::Int64 = 1024*1024
 RANGE::Float64 = 20
@@ -26,7 +26,7 @@ SIZE_per_RANGE::Float64 = SIZE/RANGE
 
 Phi = lookupTable()
 
-mode = "TAB"
+mode = "ALT"
 
 H = BitMatrix(
      [0 1 0 1 0 1 1 1 0 0 0 1;

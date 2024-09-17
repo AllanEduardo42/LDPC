@@ -3,6 +3,9 @@
 # 27 ago 2024
 # Auxiliary functions
 
+"""For each column j of matrix H, find the indices i where H[i,j] = 1, and 
+return a vector "indices_col" where indices_col[j] is a vector containing the
+indices i where H[i,j] = 1"""
 function find_indices_col(H::BitMatrix)
 
     N = size(H,2)
@@ -15,6 +18,9 @@ function find_indices_col(H::BitMatrix)
 
 end
 
+"""For each row i of matrix H, find the indices j where H[i,j] = 1, and 
+return a vector "indices_row" where indices_row[i] is a vector containing the
+indices j where H[i,j] = 1"""
 function find_indices_row(H::BitMatrix)
 
     M = size(H,1)
@@ -27,6 +33,7 @@ function find_indices_row(H::BitMatrix)
 
 end
 
+"""Normalize a binary probability distribution function"""
 function normalize!(f::Matrix{Float64})
 
     N = size(f,1)
@@ -39,6 +46,8 @@ function normalize!(f::Matrix{Float64})
 
 end
 
+"""Return the syndrome H*d, where H is the parity check matrix and d an estimate
+of the transmited codeword."""
 function 
     calc_syndrome!(
         syndrome::Vector{Bool},

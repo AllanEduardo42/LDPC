@@ -15,7 +15,7 @@ function
         indices_col::Vector{Vector{Int64}},
         ΔLf::Vector{Float64},
         syndrome::Vector{Bool},
-        sn::Union{Vector{Bool},Nothing},
+        sn::Union{Vector{Int8},Nothing},
         Lrn::Union{Vector{Float64},Nothing},
         phi::Union{Vector{Float64},Nothing}
     )

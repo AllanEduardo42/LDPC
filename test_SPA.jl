@@ -56,8 +56,7 @@ function
     FIRST = true
     DECODED = false
     i = 1
-    converged = false
-    while i <= MAX && !converged
+    while i <= MAX
 
         ### Conventional simplified SPA
 
@@ -132,14 +131,13 @@ function
             )
         end
 
-        converged = llr_vertical_update_and_MAP!(
+        llr_vertical_update_and_MAP!(
             Lq,
             d_llr,
             Lr,
             ΔLf,
             indices_col
         )
-        println(converged)
 
         calc_syndrome!(
             syndrome_llr,
