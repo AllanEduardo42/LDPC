@@ -4,6 +4,33 @@
 # Horizontal update of the LLR based Sum-Product Algorithm
 
 ######################### SPA USING HYPERBOLIC TANGENT #########################
+### No Inf restriction ###
+function 
+    llr_horizontal_update!(
+        Lr::Matrix{Float64},
+        Lq::Matrix{Float64},
+        checks2nodes::Vector{Vector{Int64}},
+        x::Nothing,
+        y::Nothing,
+        z::Nothing
+    )
+
+    check = 0
+    for nodes in checks2nodes
+        check += 1
+        for node in nodes
+            @inbounds Lr[check,node] = 1.0
+            for n in nodes
+                if n ≠ node
+                    @inbounds @fastmath Lr[check,node] *= tanh(0.5*Lq[check,n])
+                end
+            end
+            @inbounds @fastmath Lr[check,node] = 2*atanh(Lr[check,node])
+        end
+    end
+end
+
+### Inf restriction ###
 function 
     llr_horizontal_update!(
         Lr::Matrix{Float64},
@@ -20,10 +47,13 @@ function
         pLr = 1.0
         for node in nodes
             @inbounds @fastmath Lrn[node] = tanh(0.5*Lq[check,node])
-            @fastmath pLr *= Lrn[node]
+            @inbounds @fastmath pLr *= Lrn[node]
         end
         for node in nodes
-            @inbounds @fastmath Lr[check,node] = 2*atanh(pLr/Lrn[node])
+            @inbounds @fastmath x = pLr/Lrn[node]
+            if abs(x) < 1
+                @inbounds @fastmath Lr[check,node] = 2*atanh(x)
+            end
         end
     end
 end
@@ -58,7 +88,10 @@ function
             @inbounds @fastmath sLr += Lrn[node] 
         end
         for node in nodes
-            @inbounds Lr[check,node] = flipsign(s,sn[node])*ϕ(sLr - Lrn[node])
+            x = abs(sLr - Lrn[node])
+            if x > 0 
+                @inbounds Lr[check,node] = flipsign(s,sn[node])*ϕ(x)
+            end
         end    
     end
 end

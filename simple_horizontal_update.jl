@@ -17,7 +17,7 @@ function
             δr = 1
             for nn in indices
                 if nn != n
-                    @inbounds δr *= δq[nn,m]
+                    @inbounds δr *= δq[m,nn]
                 end
             end
             @inbounds r[m,n,1] = 0.5*(1+δr)

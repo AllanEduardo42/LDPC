@@ -18,8 +18,11 @@ function
 
     for m in eachindex(checks2nodes)
 
-        cmax = max_coords[1]
-        nmax = max_coords[2]
+        if max_residue == 0
+            break
+        end
+
+        (cmax,nmax) = max_coords
 
         # update the message with largest residue
         @inbounds @fastmath Lr[cmax,nmax] += max_residue
@@ -34,7 +37,7 @@ function
                         @inbounds @fastmath Lq[check,nmax] += Lr[c,nmax]
                     end
                 end
-                # horizontal update of Lr[node,check], node ≠ nmax, check ≠ cmax
+                # find max ΔLr[node,check], node ≠ nmax, check ≠ cmax
                 pLr = 1.0
                 for node in checks2nodes[check]
                     @inbounds @fastmath Lrn[node] = tanh(0.5*Lq[check,node])
@@ -42,12 +45,14 @@ function
                 end
                 for node in checks2nodes[check]
                     if node != nmax
-                        @inbounds @fastmath L = 2*atanh(pLr/Lrn[node])
-                        @inbounds @fastmath ΔLr = L - Lr[check,node]
-                        if abs(ΔLr) > abs(max_residue)
-                            max_residue = ΔLr
-                            max_coords[1] = check
-                            max_coords[2] = node
+                        @inbounds @fastmath x = pLr/Lrn[node]
+                        if abs(x) < 1
+                            @inbounds @fastmath L = 2*atanh(x)                     
+                            @inbounds @fastmath ΔLr = L - Lr[check,node] 
+                            if abs(ΔLr) > abs(max_residue)
+                                max_residue = ΔLr
+                                max_coords = [check,node]
+                            end
                         end
                     end
                 end
@@ -91,10 +96,10 @@ function
     FIRST = true
     DECODED = false
 
-    max_coords = ones(Int,2)
-    max_residue = 0.0
-
     for i in 1:MAX
+
+        max_residue = 1e-16
+        max_coords = [1,1]
         
         RBP!(
             Lr,

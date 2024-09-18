@@ -14,9 +14,11 @@ function
         Lrn::Vector{Float64},
     )
 
-    for check in eachindex(checks2nodes)
+    check = 0
+    for nodes in checks2nodes
+        check += 1
         # vertical update        
-        for node in checks2nodes[check]
+        for node in nodes
             @inbounds Lq[check,node] = ΔLf[node]
             for c in nodes2checks[node]
                 if c != check
@@ -26,12 +28,15 @@ function
         end
         # horizontal update
         pLr = 1.0
-        for node in checks2nodes[check]
+        for node in nodes
             @inbounds @fastmath Lrn[node] = tanh(0.5*Lq[check,node])
             @inbounds @fastmath pLr *= Lrn[node]
         end
-        for node in checks2nodes[check]
-            @inbounds @fastmath Lr[check,node] = 2*atanh(pLr/Lrn[node])
+        for node in nodes
+            @inbounds @fastmath x = pLr/Lrn[node]
+            if abs(x) < 1
+                @inbounds @fastmath Lr[check,node] = 2*atanh(x)
+            end
         end
     end
 
