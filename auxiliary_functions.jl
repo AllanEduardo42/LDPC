@@ -4,32 +4,32 @@
 # Auxiliary functions
 
 """For each column j of matrix H, find the indices i where H[i,j] = 1, and 
-return a vector "indices_col" where indices_col[j] is a vector containing the
+return a vector "nodes2checks" where nodes2checks[j] is a vector containing the
 indices i where H[i,j] = 1"""
-function find_indices_col(H::BitMatrix)
+function find_nodes2checks(H::BitMatrix)
 
     N = size(H,2)
-    indices_col = Vector{Vector{Int64}}(undef, N)
+    nodes2checks = Vector{Vector{Int64}}(undef, N)
     for n in 1:N
-        indices_col[n] = findall(x -> x == 1, H[:,n])
+        nodes2checks[n] = findall(x -> x == 1, H[:,n])
     end
 
-    return indices_col
+    return nodes2checks
 
 end
 
 """For each row i of matrix H, find the indices j where H[i,j] = 1, and 
-return a vector "indices_row" where indices_row[i] is a vector containing the
+return a vector "checks2nodes" where checks2nodes[i] is a vector containing the
 indices j where H[i,j] = 1"""
-function find_indices_row(H::BitMatrix)
+function find_checks2nodes(H::BitMatrix)
 
     M = size(H,1)
-    indices_row = Vector{Vector{Int64}}(undef, M)
+    checks2nodes = Vector{Vector{Int64}}(undef, M)
     for m in 1:M
-        indices_row[m] = findall(x -> x == 1, H[m,:])
+        checks2nodes[m] = findall(x -> x == 1, H[m,:])
     end
 
-    return indices_row
+    return checks2nodes
 
 end
 
@@ -52,12 +52,12 @@ function
     calc_syndrome!(
         syndrome::Vector{Bool},
         d::Vector{Bool},
-        indices_row::Vector{Vector{Int64}}
+        checks2nodes::Vector{Vector{Int64}}
     )
 
     syndrome .*= false
     m = 0
-    for indices in indices_row
+    for indices in checks2nodes
         m += 1
         for n in indices
             @inbounds syndrome[m] ⊻= d[n]

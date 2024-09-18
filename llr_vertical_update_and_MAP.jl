@@ -9,30 +9,25 @@ function
         d::Vector{Bool},
         Lr::Matrix{Float64},
         ΔLf::Vector{Float64},
-        indices_col::Vector{Vector{Int64}}
+        nodes2checks::Vector{Vector{Int64}}
     )
 
     d .*= false
-    n = 0
-    for indices in indices_col
-        n += 1
-        @inbounds Ld = ΔLf[n]
-        for m in indices
-            if isfinite(Lr[m,n])
-                @inbounds @fastmath Ld += Lr[m,n]
-            else
-                Ld = Lr[m,n]
-                break
-            end
+    node = 0
+    for checks in nodes2checks
+        node += 1
+        @inbounds Ld = ΔLf[node]
+        for check in checks
+            @inbounds @fastmath Ld += Lr[check,node]
         end
         if Ld < 0
-            @inbounds d[n] = 1
+            @inbounds d[node] = 1
         end
-        for m in indices
-            if isfinite(Lr[m,n])
-                @inbounds @fastmath Lq[n,m] = Ld - Lr[m,n]
+        for check in checks
+            if isfinite(Lr[check,node])
+                @inbounds @fastmath Lq[check,node] = Ld - Lr[check,node]
             else
-                @inbounds Lq[n,m] = Ld
+                @inbounds Lq[check,node] = Ld
             end
         end
     end
@@ -43,14 +38,14 @@ function
     llr_init_q!(
         Lq::Matrix{Float64},
         ΔLf::Vector{Float64},
-        indices_col::Vector{Vector{Int64}}
+        nodes2checks::Vector{Vector{Int64}}
     )
 
-    n = 0
-    for indices in indices_col
-        n += 1
-        for m in indices
-            @inbounds Lq[n,m] = ΔLf[n]
+    node = 0
+    for checks in nodes2checks
+        node += 1
+        for check in checks
+            @inbounds Lq[check,node] = ΔLf[node]
         end
     end
 end

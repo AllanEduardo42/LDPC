@@ -8,30 +8,29 @@ function
     llr_horizontal_update!(
         Lr::Matrix{Float64},
         Lq::Matrix{Float64},
-        indices_row::Vector{Vector{Int64}},
+        checks2nodes::Vector{Vector{Int64}},
         x::Nothing,
-        y::Nothing,
+        Lrn::Vector{Float64},
         z::Nothing
     )
 
-    m = 0
-    for indices in indices_row
-        m += 1
-        for n in indices
-            pLr = 1.0
-            for nn in indices
-                if nn ≠ n
-                    @inbounds @fastmath pLr *= tanh(0.5*Lq[nn,m])
-                end
-            end
-            @inbounds @fastmath Lr[m,n] = 2*atanh(pLr)
+    check = 0
+    for nodes in checks2nodes
+        check += 1
+        pLr = 1.0
+        for node in nodes
+            @inbounds @fastmath Lrn[node] = tanh(0.5*Lq[check,node])
+            @fastmath pLr *= Lrn[node]
+        end
+        for node in nodes
+            @inbounds @fastmath Lr[check,node] = 2*atanh(pLr/Lrn[node])
         end
     end
 end
 
 ###################### ALTERNATIVE TO HYPERBOLIC TANGENT #######################
 
-function ϕ(x::Float64)::Float64
+function ϕ(x::Float64)    
     @fastmath log(1 + 2/(exp(x)-1))
 end
 
@@ -43,23 +42,23 @@ function
     llr_horizontal_update!(
         Lr::Matrix{Float64},                            
         Lq::Matrix{Float64},
-        indices_row::Vector{Vector{Int64}},
+        checks2nodes::Vector{Vector{Int64}},
         sn::Vector{Int8},
         Lrn::Vector{Float64},
         x::Nothing
     )
 
-    m = 0
-    for indices in indices_row
-        m += 1
-        sum = 0.0
+    check = 0
+    for nodes in checks2nodes
+        check += 1
+        sLr = 0.0
         s = Int8(1) 
-        for n in indices
-            @inbounds Lrn[n], sn[n], s = phi_sign!(Lq[n,m],s)
-            @inbounds @fastmath sum += Lrn[n] 
+        for node in nodes
+            @inbounds Lrn[node], sn[node], s = phi_sign!(Lq[check,node],s)
+            @inbounds @fastmath sLr += Lrn[node] 
         end
-        for n in indices
-            @inbounds Lr[m,n] = flipsign(s,sn[n])*ϕ(abs(sum - Lrn[n]))
+        for node in nodes
+            @inbounds Lr[check,node] = flipsign(s,sn[node])*ϕ(sLr - Lrn[node])
         end    
     end
 end
@@ -79,23 +78,23 @@ function
     llr_horizontal_update!(
         Lr::Matrix{Float64},                            
         Lq::Matrix{Float64},
-        indices_row::Vector{Vector{Int64}},
+        checks2nodes::Vector{Vector{Int64}},
         sn::Vector{Int8},
         Lrn::Vector{Float64},
         phi::Vector{Float64}
     )
 
-    m = 0
-    for indices in indices_row
-        m += 1
-        sum = 0.0
+    check = 0
+    for nodes in checks2nodes
+        check += 1
+        sLr = 0.0
         s = Int8(1) 
-        for n in indices
-            @inbounds Lrn[n], sn[n], s = phi_sign!(Lq[n,m],s,phi)
-            @inbounds @fastmath sum += Lrn[n]
+        for node in nodes
+            @inbounds Lrn[node], sn[node], s = phi_sign!(Lq[check,node],s,phi)
+            @inbounds @fastmath sLr += Lrn[node]
         end
-        for n in indices
-            @inbounds Lr[m,n] = flipsign(s,sn[n])*phi[get_index(abs(sum - Lrn[n]))]
+        for node in nodes
+            @inbounds Lr[check,node] = flipsign(s,sn[node])*phi[get_index(sLr - Lrn[node])]
         end    
     end
 end
@@ -110,48 +109,48 @@ function
     llr_horizontal_update!(
         Lr::Matrix{Float64},                           
         Lq::Matrix{Float64},
-        indices_row::Vector{Vector{Int64}},
+        checks2nodes::Vector{Vector{Int64}},
         sn::Vector{Int8},
         x::Nothing,
         y::Nothing
     )    
 
-    m = 0
-    for indices in indices_row
-        m += 1       
+    check = 0
+    for nodes in checks2nodes
+        check += 1       
         s = Int8(1) 
         # first index
-        @inbounds idx = indices[1]
-        @inbounds minL, sn[idx], s = abs_sign!(Lq[idx,m],s) 
+        @inbounds idx = nodes[1]
+        @inbounds minL, sn[idx], s = abs_sign!(Lq[check,idx],s) 
         # second index
-        @inbounds n = indices[2]
-        @inbounds β, sn[n], s = abs_sign!(Lq[n,m],s)      
+        @inbounds node = nodes[2]
+        @inbounds β, sn[node], s = abs_sign!(Lq[check,node],s)      
         if β < minL
-            idx = n
+            idx = node
             minL2 = minL
             minL = β
         else
             minL2 = β
         end
-        # remaining indices
-        next = iterate(indices,3)
+        # remaining nodes
+        next = iterate(nodes,3)
         while next !== nothing
-            (n,state) = next
-            @inbounds β, sn[n], s = abs_sign!(Lq[n,m],s)
+            (node,state) = next
+            @inbounds β, sn[node], s = abs_sign!(Lq[check,node],s)
             if β < minL
-                idx = n
+                idx = node
                 minL2 = minL
                 minL = β
             elseif β < minL2
                 minL2 = β
             end
-            next = iterate(indices,state)
+            next = iterate(nodes,state)
         end
-        for n in indices
-            if n == idx
-                @inbounds Lr[m,n] = flipsign(s,sn[n])*minL2
+        for node in nodes
+            if node == idx
+                @inbounds Lr[check,node] = flipsign(s,sn[node])*minL2
             else
-                @inbounds Lr[m,n] = flipsign(s,sn[n])*minL
+                @inbounds Lr[check,node] = flipsign(s,sn[node])*minL
             end
         end  
     end

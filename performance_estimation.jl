@@ -8,8 +8,8 @@ function
         c::Vector{Bool},
         σ::Vector{Float64},
         H::BitMatrix,
-        indices_row::Vector{Vector{Int64}},
-        indices_col::Vector{Vector{Int64}}, 
+        checks2nodes::Vector{Vector{Int64}},
+        nodes2checks::Vector{Vector{Int64}}, 
         phi::Vector{Float64},
         mode::String;
         nreals = NREALS,
@@ -18,8 +18,8 @@ function
 
     ############################### constants ##################################
 
-    M = length(indices_row)
-    N = length(indices_col)
+    M = length(checks2nodes)
+    N = length(nodes2checks)
     divisor = NREALS * N
     # BPKS
     u = Float64.(2*c .- 1)
@@ -40,7 +40,7 @@ function
     ΔLf = Vector{Float64}(undef,N)
 
     # Vertical and horizontal update matrices
-    Lq = H'*0.0
+    Lq = H*0.0
     Lr = H*0.0
     Lr_return = H*0.0
 
@@ -89,7 +89,7 @@ function
             end
             
             # initialize matrix Lq
-            llr_init_q!(Lq,ΔLf,indices_col)
+            llr_init_q!(Lq,ΔLf,nodes2checks)
             
             # SPA
             i = 0
@@ -104,12 +104,12 @@ function
                         bit_error,
                         Lr,
                         Lq,
-                        indices_row,
-                        indices_col,
+                        checks2nodes,
+                        nodes2checks,
                         ΔLf,
                         syndrome,
                         nothing,
-                        nothing,
+                        Lrn,
                         nothing
                     )
                 ;
@@ -123,8 +123,8 @@ function
                         bit_error,
                         Lr,
                         Lq,
-                        indices_row,
-                        indices_col,
+                        checks2nodes,
+                        nodes2checks,
                         ΔLf,
                         syndrome,
                         sn,
@@ -142,8 +142,8 @@ function
                         bit_error,
                         Lr,
                         Lq,
-                        indices_row,
-                        indices_col,
+                        checks2nodes,
+                        nodes2checks,
                         ΔLf,
                         syndrome,
                         sn,
@@ -161,13 +161,49 @@ function
                         bit_error,
                         Lr,
                         Lq,
-                        indices_row,
-                        indices_col,
+                        checks2nodes,
+                        nodes2checks,
                         ΔLf,
                         syndrome,
                         sn,
                         nothing,
                         nothing
+                    )
+                ;
+            elseif mode == "LBP"
+                # LBP SPA
+                Lr = 0.0*H
+                DECODED, i = 
+                    SPA_LBP!(
+                        d,
+                        ber,
+                        c,
+                        bit_error,
+                        Lr,
+                        Lq,
+                        checks2nodes,
+                        nodes2checks,
+                        ΔLf,
+                        syndrome,
+                        Lrn
+                    )
+                ;
+            elseif mode == "RBP"
+                # RBP SPA
+                Lr = 0.0*H
+                DECODED, i = 
+                    SPA_RBP!(
+                        d,
+                        ber,
+                        c,
+                        bit_error,
+                        Lr,
+                        Lq,
+                        checks2nodes,
+                        nodes2checks,
+                        ΔLf,
+                        syndrome,
+                        Lrn
                     )
                 ;
             else

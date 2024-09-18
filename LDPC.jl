@@ -13,10 +13,12 @@ using SparseArrays
 
 ################################ SPA MODE FLAGS ################################
 
-TNH = false
-ALT = true
+TNH = true
+ALT = false
 TAB = false
 MIN = true
+LBP = true
+RBP = true
 
 PLOT_BER = true
 HISTOGRAMS = false
@@ -35,6 +37,8 @@ include("lookupTable.jl")
 include("SPA.jl")
 include("PEG.jl")
 include("GF2_functions.jl")
+include("LBP.jl")
+include("RBP.jl")
 
 ############################# SIMULATION CONSTANTS #############################
 
@@ -48,8 +52,8 @@ SIZE_per_RANGE::Float64 = SIZE/RANGE
 
 Phi = lookupTable()
 
-NREALS::Int = 1_000
-MAX::Int = 30
+NREALS::Int = 100
+MAX::Int = 4
 
 LR_idx = 9;
 
@@ -87,8 +91,8 @@ Sigma = 1 ./ sqrt.(SNR)
 
 ############################# AUXILIARY CONSTANTS ##############################
 
-Indices_col  = find_indices_col(H)
-Indices_row  = find_indices_row(H)
+Nodes2checks  = find_nodes2checks(H)
+Checks2nodes  = find_checks2nodes(H)
 
 ############################## JULIA COMPILATION ###############################
 
@@ -97,8 +101,8 @@ if TNH
         C,
         Sigma,
         H,
-        Indices_row,
-        Indices_col,
+        Checks2nodes,
+        Nodes2checks,
         Phi,
         "TNH";
         nreals=1
@@ -109,8 +113,8 @@ if ALT
         C,
         Sigma,
         H,
-        Indices_row,
-        Indices_col,
+        Checks2nodes,
+        Nodes2checks,
         Phi,
         "ALT";
         nreals=1
@@ -121,8 +125,8 @@ if TAB
         C,
         Sigma,
         H,
-        Indices_row,
-        Indices_col,
+        Checks2nodes,
+        Nodes2checks,
         Phi,
         "TAB";
         nreals=1
@@ -133,10 +137,34 @@ if MIN
         C,
         Sigma,
         H,
-        Indices_row,
-        Indices_col,
+        Checks2nodes,
+        Nodes2checks,
         Phi,
         "MIN";
+        nreals=1
+    )
+end
+if LBP
+    performance_estimation(
+        C,
+        Sigma,
+        H,
+        Checks2nodes,
+        Nodes2checks,
+        Phi,
+        "LBP";
+        nreals=1
+    )
+end
+if RBP
+    performance_estimation(
+        C,
+        Sigma,
+        H,
+        Checks2nodes,
+        Nodes2checks,
+        Phi,
+        "RBP";
         nreals=1
     )
 end
@@ -149,8 +177,8 @@ if TNH
             C,
             Sigma,
             H,
-            Indices_row,
-            Indices_col,
+            Checks2nodes,
+            Nodes2checks,
             Phi,
             "TNH";
             Lr_idx=LR_idx
@@ -163,8 +191,8 @@ if ALT
             C,
             Sigma,
             H,
-            Indices_row,
-            Indices_col,
+            Checks2nodes,
+            Nodes2checks,
             Phi,
             "ALT";
             Lr_idx=LR_idx
@@ -177,8 +205,8 @@ if TAB
             C,
             Sigma,
             H,
-            Indices_row,
-            Indices_col,
+            Checks2nodes,
+            Nodes2checks,
             Phi,
             "TAB";
             Lr_idx=LR_idx
@@ -191,10 +219,38 @@ if MIN
             C,
             Sigma,
             H,
-            Indices_row,
-            Indices_col,
+            Checks2nodes,
+            Nodes2checks,
             Phi,
             "MIN";
+            Lr_idx=LR_idx
+        )
+    ;
+end
+if LBP
+    @time FER_lbp, BER_lbp, Iters_lbp, Lr_lbp = 
+        performance_estimation(
+            C,
+            Sigma,
+            H,
+            Checks2nodes,
+            Nodes2checks,
+            Phi,
+            "LBP";
+            Lr_idx=LR_idx
+        )
+    ;
+end
+if RBP
+    @time FER_rbp, BER_rbp, Iters_rbp, Lr_rbp = 
+        performance_estimation(
+            C,
+            Sigma,
+            H,
+            Checks2nodes,
+            Nodes2checks,
+            Phi,
+            "RBP";
             Lr_idx=LR_idx
         )
     ;
@@ -219,6 +275,14 @@ end
 if MIN
     append!(yaxis,[FER_min])
     push!(fer_labels,"MIN SUM")
+end
+if LBP
+    append!(yaxis,[FER_lbp])
+    push!(fer_labels,"SPA LBP")
+end
+if RBP
+    append!(yaxis,[FER_rbp])
+    push!(fer_labels,"SPA RBP")
 end
 fer_labels = permutedims(fer_labels)
 
@@ -284,6 +348,30 @@ if PLOT_BER
                 label=ber_labels,
                 lw=2,
                 title="BER MIN SUM",
+                ylims=(lim-1,0)
+            )
+        )
+    end
+    if LBP
+        display(
+            plot(
+                1:MAX,
+                BER_lbp,
+                label=ber_labels,
+                lw=2,
+                title="BER SPA LBP",
+                ylims=(lim-1,0)
+            )
+        )
+    end
+    if RBP
+        display(
+            plot(
+                1:MAX,
+                BER_rbp,
+                label=ber_labels,
+                lw=2,
+                title="BER SPA RBP",
                 ylims=(lim-1,0)
             )
         )
