@@ -6,11 +6,11 @@
 function 
     test_SPA(
         c::Vector{Bool},
-        nodes2checks::Vector{Vector{T}} where {T<:Integer}, 
-        checks2nodes::Vector{Vector{T}} where {T<:Integer},
-        t::Vector{<:AbstractFloat},
-        σ::AbstractFloat,
-        phi::Vector{<:AbstractFloat},
+        indices_col::Vector{Vector{Int64}}, 
+        indices_row::Vector{Vector{Int64}},
+        t::Vector{Float64},
+        σ::Float64,
+        phi::Vector{Float64},
         mode::String,
         printing::Bool
     )

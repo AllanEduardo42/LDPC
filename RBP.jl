@@ -45,15 +45,12 @@ function
                 end
                 for node in checks2nodes[check]
                     if node != nmax
-                        @inbounds @fastmath x = pLr/Lrn[node]
-                        if abs(x) < 1
-                            @inbounds @fastmath L = 2*atanh(x)                     
-                            @inbounds @fastmath ΔLr = L - Lr[check,node] 
-                            if abs(ΔLr) > abs(max_residue)
-                                max_residue = ΔLr
-                                max_coords[1] = check
-                                max_coords[2] = node
-                            end
+                        @inbounds @fastmath L = 2*atanh(pLr/Lrn[node])
+                        @inbounds @fastmath ΔLr = L - Lr[check,node]
+                        if abs(ΔLr) > abs(max_residue)
+                            max_residue = ΔLr
+                            max_coords[1] = check
+                            max_coords[2] = node
                         end
                     end
                 end

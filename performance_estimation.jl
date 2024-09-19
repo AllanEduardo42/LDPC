@@ -39,8 +39,9 @@ function
     ΔLf = Vector{Float64}(undef,N)
 
     # Vertical and horizontal update matrices
-    Lq = zeros(M,N)
-    Lr = zeros(M,N)
+    Lq = H*0.0
+    Lr = H*0.0
+    Lr_return = H*0.0
 
     # received signal
     t = Vector{Float64}(undef,N)
