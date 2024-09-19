@@ -9,9 +9,9 @@ indices i where H[i,j] = 1"""
 function find_nodes2checks(H::BitMatrix)
 
     N = size(H,2)
-    nodes2checks = Vector{Vector{Int64}}(undef, N)
+    nodes2checks = Vector{Vector{Int}}()
     for n in 1:N
-        nodes2checks[n] = findall(x -> x == 1, H[:,n])
+        push!(nodes2checks,findall(x -> x == true, H[:,n]))
     end
 
     return nodes2checks
@@ -24,9 +24,9 @@ indices j where H[i,j] = 1"""
 function find_checks2nodes(H::BitMatrix)
 
     M = size(H,1)
-    checks2nodes = Vector{Vector{Int64}}(undef, M)
+    checks2nodes = Vector{Vector{Int}}()
     for m in 1:M
-        checks2nodes[m] = findall(x -> x == 1, H[m,:])
+        push!(checks2nodes,findall(x -> x == true, H[m,:]))
     end
 
     return checks2nodes
@@ -34,7 +34,7 @@ function find_checks2nodes(H::BitMatrix)
 end
 
 """Normalize a binary probability distribution function"""
-function normalize!(f::Matrix{Float64})
+function normalize!(f::Matrix{<:AbstractFloat})
 
     N = size(f,1)
     
@@ -52,7 +52,7 @@ function
     calc_syndrome!(
         syndrome::Vector{Bool},
         d::Vector{Bool},
-        checks2nodes::Vector{Vector{Int64}}
+        checks2nodes::Vector{Vector{T}} where {T<:Integer}
     )
 
     syndrome .*= false

@@ -5,9 +5,9 @@
 
 function 
     simple_horizontal_update!(
-        r::Array{Float64,3},
-        δq::Matrix{Float64},
-        indices_row::Vector{Vector{Int64}}
+        r::Array{AbstractFloat,3},
+        δq::Matrix{<:AbstractFloat},
+        indices_row::Vector{Vector{T}} where {T<:Integer}
     )
 
     m = 0
@@ -17,7 +17,7 @@ function
             δr = 1
             for nn in indices
                 if nn != n
-                    @inbounds δr *= δq[nn,m]
+                    @inbounds δr *= δq[m,nn]
                 end
             end
             @inbounds r[m,n,1] = 0.5*(1+δr)

@@ -16,9 +16,9 @@ include("vertical_update_and_MAP.jl")
 include("llr_horizontal_update.jl")
 include("llr_vertical_update_and_MAP.jl")
 
-PRINTING = false
+PRINTING = true
 
-MAX = 10
+MAX = 3
 
 SIZE::Int64 = 1024*1024
 RANGE::Float64 = 20
@@ -26,7 +26,7 @@ SIZE_per_RANGE::Float64 = SIZE/RANGE
 
 Phi = lookupTable()
 
-mode = "ALT"
+mode = "TNH"
 
 H = BitMatrix(
      [0 1 0 1 0 1 1 1 0 0 0 1;
@@ -39,8 +39,8 @@ H = BitMatrix(
       0 0 0 0 1 0 0 0 1 0 1 1]
     )
 
-Indices_col  = find_indices_col(H)
-Indices_row  = find_indices_row(H)
+Nodes2checks  = find_nodes2checks(H)
+checks2nodes  = find_checks2nodes(H)
 
 M,N = size(H)
 K = N - M
@@ -66,8 +66,8 @@ t = [1.3129, 2.6584, 0.7413, 2.1745, 0.5981, −0.8323, −0.3962, −1.7586,
 @time R, LR, Q, LQQ, index, Decoded = 
     test_SPA(
         C,
-        Indices_col, 
-        Indices_row,
+        Nodes2checks, 
+        Checks2nodes,
         t,
         σ,
         Phi,

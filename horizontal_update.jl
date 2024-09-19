@@ -5,9 +5,9 @@
 
 function
     horizontal_update!(
-        r::Array{Float64,3},
-        q::Array{Float64,3},
-        indices_row::Vector{Vector{Int64}}
+        r::Array{<:AbstractFloat,3},
+        q::Array{<:AbstractFloat,3},
+        indices_row::Vector{Vector{T}} where {T<:Integer}
     )
 
     m = 0

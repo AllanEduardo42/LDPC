@@ -6,14 +6,13 @@
 function 
     performance_estimation(
         c::Vector{Bool},
-        σ::Vector{Float64},
+        σ::Vector{<:AbstractFloat},
         H::BitMatrix,
-        checks2nodes::Vector{Vector{Int64}},
-        nodes2checks::Vector{Vector{Int64}}, 
-        phi::Vector{Float64},
+        checks2nodes::Vector{Vector{T}} where {T<:Integer},
+        nodes2checks::Vector{Vector{T}} where {T<:Integer}, 
+        phi::Vector{<:AbstractFloat},
         mode::String;
-        nreals = NREALS,
-        Lr_idx = 1
+        nreals = NREALS
     )
 
     ############################### constants ##################################
@@ -40,9 +39,8 @@ function
     ΔLf = Vector{Float64}(undef,N)
 
     # Vertical and horizontal update matrices
-    Lq = H*0.0
-    Lr = H*0.0
-    Lr_return = H*0.0
+    Lq = zeros(M,N)
+    Lr = zeros(M,N)
 
     # received signal
     t = Vector{Float64}(undef,N)
@@ -172,7 +170,7 @@ function
                 ;
             elseif mode == "LBP"
                 # LBP SPA
-                Lr = 0.0*H
+                Lr = zeros(M,N)
                 DECODED, i = 
                     SPA_LBP!(
                         d,
@@ -226,9 +224,11 @@ function
 
         @inbounds @fastmath FER[k] /= NREALS
 
-        (k == Lr_idx) && (Lr_return = copy(Lr))
     end
 
-    return log10.(FER), log10.(BER), iters, Lr_return
-
+    if nreals == 1
+        return Lr, Lq
+    else
+        return log10.(FER), log10.(BER), iters
+    end
 end

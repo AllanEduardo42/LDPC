@@ -110,9 +110,9 @@ function
     gf2_mat_mult_core(
         A::Matrix{Bool},
         B::Matrix{Bool},
-        mA::Int,
-        nA::Int,
-        nB::Int
+        mA::Integer,
+        nA::Integer,
+        nB::Integer
     )::Matrix{Bool}
 
     C = zeros(Bool,mA,nB)
@@ -133,8 +133,8 @@ function
     gf2_mat_mult_core(
         A::Matrix{Bool},
         x::Vector{Bool},
-        mA::Int,
-        nA::Int,
+        mA::Integer,
+        nA::Integer,
     )::Vector{Bool}
 
     y = zeros(Bool,mA)
@@ -258,7 +258,7 @@ function gf2_inverse(A::BitMatrix;ACCEF=false)
 
 end
 
-function gf2_column_echelon_form!(AA::BitMatrix,N::Int64)
+function gf2_column_echelon_form!(AA::BitMatrix,N::Integer)
 
     full_rank_sub_matrix = true
 
@@ -289,7 +289,7 @@ function gf2_column_echelon_form!(AA::BitMatrix,N::Int64)
 
 end
 
-function gf2_reduce!(AA::BitMatrix,N::Int64)
+function gf2_reduce!(AA::BitMatrix,N::Integer)
 
     for j in N:-1:2
         for k in j-1:-1:1
@@ -316,7 +316,7 @@ function isgf2invertible(A::BitMatrix)
 
 end
 
-function find_gf2_invertible_matrix(M::Int64)
+function find_gf2_invertible_matrix(M::Integer)
 
     A = bitrand(M,M)
 

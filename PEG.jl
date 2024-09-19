@@ -5,8 +5,8 @@
 
 function 
     PEG!(
-        d::Vector{Int64},
-        M::Int64
+        d::Vector{<:Integer},
+        M::Integer
     )
 
     sort!(d)
@@ -50,22 +50,22 @@ end
 function 
     subtree!(
         H::BitMatrix,
-        M::Int64,
-        root::Int64,
-        level::Int64,
-        check_degrees::Vector{Int64},
-        L0_checks::Vector{Int64},
-        parent_nodes::Vector{Int64},
-        L0_check_set::Vector{Int64},
-        L1_check_set::Vector{Int64}
+        M::Integer,
+        root::Integer,
+        level::Integer,
+        check_degrees::Vector{<:Integer},
+        L0_checks::Vector{<:Integer},
+        parent_nodes::Vector{<:Integer},
+        L0_check_set::Vector{<:Integer},
+        L1_check_set::Vector{<:Integer}
     )    
     # L0: previous level in the subtree
     # L1: current level in the subtree
 
     STOPPED = false                     # flag: subtree stopped increasing
     level += 1                          # absolute level in the subtree
-    L1_checks = Vector{Int64}(undef,0)  # checks in the current level
-    L1_nodes = Vector{Int64}(undef,0)   # nodes in the current level
+    L1_checks = Vector{Int}(undef,0)  # checks in the current level
+    L1_nodes = Vector{Int}(undef,0)   # nodes in the current level
     # L1_check_set = copy(L0_check_set)
     for check in L0_checks
         row =  H[check,:]
@@ -115,8 +115,8 @@ end
 
 function 
     append_sort_unique!(
-        x::Vector{Int64},
-        y::Vector{Int64}
+        x::Vector{<:Integer},
+        y::Vector{<:Integer}
     )
 
     append!(x,y)

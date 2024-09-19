@@ -5,11 +5,11 @@
 
 function 
     vertical_update_and_MAP!(
-        q::Array{Float64,3},
+        q::Array{<:AbstractFloat,3},
         d::Vector{Bool},
-        r::Array{Float64,3},
-        f::Matrix{Float64},
-        indices_col::Vector{Vector{Int64}}
+        r::Array{<:AbstractFloat,3},
+        f::Matrix{<:AbstractFloat},
+        indices_col::Vector{Vector{T}} where {T<:Integer}
     )
 
     d .*= 0
@@ -29,19 +29,19 @@ function
             @inbounds q0 = d0 / (r[m,n,1]+eps())
             @inbounds q1 = d1 / (r[m,n,2]+eps())
             α = q0 + q1
-            @inbounds q[n,m,1] = q0/α
-            @inbounds q[n,m,2] = q1/α
+            @inbounds q[m,n,1] = q0/α
+            @inbounds q[m,n,2] = q1/α
         end
     end
 end
 
 # function 
 #     vertical_update_and_MAP!(
-#         q::Array{Float64,3},
+#         q::Array{AbstractFloat,3},
 #         d::Vector{Bool},
-#         r::Array{Float64,3},
-#         f::Matrix{Float64},
-#         indices_col::Vector{Vector{Int64}}
+#         r::Array{AbstractFloat,3},
+#         f::Matrix{<:AbstractFloat},
+#         indices_col::Vector{Vector{T}} where {T<:Integer}
 #     )
 
 #     d .*= 0
@@ -49,42 +49,42 @@ end
 #     for indices in indices_col
 #         n += 1
 #         for m in indices
-#             @inbounds q[n,m,1] = f[n,1]
-#             @inbounds q[n,m,2] = f[n,2]
+#             @inbounds q[m,n,1] = f[n,1]
+#             @inbounds q[m,n,2] = f[n,2]
 #             for mm in indices
 #                 if mm ≠ m
-#                     @inbounds q[n,m,1] *= r[mm,n,1]
-#                     @inbounds q[n,m,2] *= r[mm,n,2]
+#                     @inbounds q[m,n,1] *= r[mm,n,1]
+#                     @inbounds q[m,n,2] *= r[mm,n,2]
 #                 end
 #             end
 #         end
 #         m = indices[1]
-#         @inbounds d0 = q[n,m,1] * r[m,n,1]
-#         @inbounds d1 = q[n,m,2] * r[m,n,2]
+#         @inbounds d0 = q[m,n,1] * r[m,n,1]
+#         @inbounds d1 = q[m,n,2] * r[m,n,2]
 #         if d1 > d0
 #             @inbounds d[n] = 1
 #         end
 #         for m in indices
-#             α = q[n,m,1] + q[n,m,2] 
-#             @inbounds q[n,m,1] /= α
-#             @inbounds q[n,m,2] /= α
+#             α = q[m,n,1] + q[m,n,2] 
+#             @inbounds q[m,n,1] /= α
+#             @inbounds q[m,n,2] /= α
 #         end
 #     end
 # end
 
 function
     init_q!(
-        q::Array{Float64, 3},
-        f::Matrix{Float64},
-        indices_col::Vector{Vector{Int64}}
+        q::Array{<:AbstractFloat, 3},
+        f::Matrix{<:AbstractFloat},
+        indices_col::Vector{Vector{T}} where {T<:Integer}
     )
 
     n = 0
     for indices in indices_col
         n += 1
         for m in indices
-            @inbounds q[n,m,1] = f[n,1]
-            @inbounds q[n,m,2] = f[n,2]
+            @inbounds q[m,n,1] = f[n,1]
+            @inbounds q[m,n,2] = f[n,2]
         end
     end
 end

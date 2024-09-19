@@ -4,13 +4,40 @@
 # Horizontal update of the LLR based Sum-Product Algorithm
 
 ######################### SPA USING HYPERBOLIC TANGENT #########################
+### No Inf restriction ###
 function 
     llr_horizontal_update!(
-        Lr::Matrix{Float64},
-        Lq::Matrix{Float64},
-        checks2nodes::Vector{Vector{Int64}},
+        Lr::Matrix{<:AbstractFloat},
+        Lq::Matrix{<:AbstractFloat},
+        checks2nodes::Vector{Vector{T}} where {T<:Integer},
         x::Nothing,
-        Lrn::Vector{Float64},
+        y::Nothing,
+        z::Nothing
+    )
+
+    check = 0
+    for nodes in checks2nodes
+        check += 1
+        for node in nodes
+            @inbounds Lr[check,node] = 1.0
+            for n in nodes
+                if n ≠ node
+                    @inbounds @fastmath Lr[check,node] *= tanh(0.5*Lq[check,n])
+                end
+            end
+            @inbounds @fastmath Lr[check,node] = 2*atanh(Lr[check,node])
+        end
+    end
+end
+
+### Inf restriction ###
+function 
+    llr_horizontal_update!(
+        Lr::Matrix{<:AbstractFloat},
+        Lq::Matrix{<:AbstractFloat},
+        checks2nodes::Vector{Vector{T}} where {T<:Integer},
+        x::Nothing,
+        Lrn::Vector{<:AbstractFloat},
         z::Nothing
     )
 
@@ -20,31 +47,34 @@ function
         pLr = 1.0
         for node in nodes
             @inbounds @fastmath Lrn[node] = tanh(0.5*Lq[check,node])
-            @fastmath pLr *= Lrn[node]
+            @inbounds @fastmath pLr *= Lrn[node]
         end
         for node in nodes
-            @inbounds @fastmath Lr[check,node] = 2*atanh(pLr/Lrn[node])
+            @inbounds @fastmath x = pLr/Lrn[node]
+            if abs(x) < 1
+                @inbounds @fastmath Lr[check,node] = 2*atanh(x)
+            end
         end
     end
 end
 
 ###################### ALTERNATIVE TO HYPERBOLIC TANGENT #######################
 
-function ϕ(x::Float64)    
+function ϕ(x::AbstractFloat)    
     @fastmath log(1 + 2/(exp(x)-1))
 end
 
-function phi_sign!(x::Float64,s::Int8)
+function phi_sign!(x::AbstractFloat,s::Integer)
     return ϕ(abs(x)), sign(x), flipsign(s,x)
 end
 
 function 
     llr_horizontal_update!(
-        Lr::Matrix{Float64},                            
-        Lq::Matrix{Float64},
-        checks2nodes::Vector{Vector{Int64}},
-        sn::Vector{Int8},
-        Lrn::Vector{Float64},
+        Lr::Matrix{<:AbstractFloat},                            
+        Lq::Matrix{<:AbstractFloat},
+        checks2nodes::Vector{Vector{T}} where {T<:Integer},
+        sn::Vector{<:Integer},
+        Lrn::Vector{<:AbstractFloat},
         x::Nothing
     )
 
@@ -52,13 +82,16 @@ function
     for nodes in checks2nodes
         check += 1
         sLr = 0.0
-        s = Int8(1) 
+        s = 0x01 
         for node in nodes
             @inbounds Lrn[node], sn[node], s = phi_sign!(Lq[check,node],s)
             @inbounds @fastmath sLr += Lrn[node] 
         end
         for node in nodes
-            @inbounds Lr[check,node] = flipsign(s,sn[node])*ϕ(sLr - Lrn[node])
+            x = abs(sLr - Lrn[node])
+            if x > 0 
+                @inbounds Lr[check,node] = flipsign(s,sn[node])*ϕ(x)
+            end
         end    
     end
 end
@@ -67,28 +100,28 @@ end
 
 function 
     phi_sign!(
-        x::Float64,
-        s::Int8,
-        phi::Vector{Float64}
+        x::AbstractFloat,
+        s::Integer,
+        phi::Vector{<:AbstractFloat}
     )    
     return phi[get_index(abs(x))], sign(x), flipsign(s,x)
 end
 
 function
     llr_horizontal_update!(
-        Lr::Matrix{Float64},                            
-        Lq::Matrix{Float64},
-        checks2nodes::Vector{Vector{Int64}},
-        sn::Vector{Int8},
-        Lrn::Vector{Float64},
-        phi::Vector{Float64}
+        Lr::Matrix{<:AbstractFloat},                            
+        Lq::Matrix{<:AbstractFloat},
+        checks2nodes::Vector{Vector{T}} where {T<:Integer},
+        sn::Vector{<:Integer},
+        Lrn::Vector{<:AbstractFloat},
+        phi::Vector{<:AbstractFloat}
     )
 
     check = 0
     for nodes in checks2nodes
         check += 1
         sLr = 0.0
-        s = Int8(1) 
+        s = 0x01
         for node in nodes
             @inbounds Lrn[node], sn[node], s = phi_sign!(Lq[check,node],s,phi)
             @inbounds @fastmath sLr += Lrn[node]
@@ -101,16 +134,16 @@ end
 
 ################################### MIN SUM ####################################
 
-function abs_sign!(x::Float64,s::Int8)
+function abs_sign!(x::AbstractFloat,s::Integer)
     return abs(x), sign(x), flipsign(s,x)
 end
 
 function
     llr_horizontal_update!(
-        Lr::Matrix{Float64},                           
-        Lq::Matrix{Float64},
-        checks2nodes::Vector{Vector{Int64}},
-        sn::Vector{Int8},
+        Lr::Matrix{<:AbstractFloat},                           
+        Lq::Matrix{<:AbstractFloat},
+        checks2nodes::Vector{Vector{T}} where {T<:Integer},
+        sn::Vector{<:Integer},
         x::Nothing,
         y::Nothing
     )    
@@ -118,7 +151,7 @@ function
     check = 0
     for nodes in checks2nodes
         check += 1       
-        s = Int8(1) 
+        s = Integer(1) 
         # first index
         @inbounds idx = nodes[1]
         @inbounds minL, sn[idx], s = abs_sign!(Lq[check,idx],s) 

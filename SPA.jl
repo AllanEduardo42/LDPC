@@ -6,23 +6,23 @@
 function 
     SPA!(
         d::Vector{Bool},
-        ber::Vector{Float64},
+        ber::Vector{<:AbstractFloat},
         c::Vector{Bool},
         bit_error::Vector{Bool},
-        Lr::Matrix{Float64}, 
-        Lq::Matrix{Float64},
-        indices_row::Vector{Vector{Int64}},
-        indices_col::Vector{Vector{Int64}},
-        ΔLf::Vector{Float64},
+        Lr::Matrix{<:AbstractFloat}, 
+        Lq::Matrix{<:AbstractFloat},
+        indices_row::Vector{Vector{T}} where {T<:Integer},
+        indices_col::Vector{Vector{T}} where {T<:Integer},
+        ΔLf::Vector{<:AbstractFloat},
         syndrome::Vector{Bool},
         sn::Union{Vector{Int8},Nothing},
-        Lrn::Union{Vector{Float64},Nothing},
-        phi::Union{Vector{Float64},Nothing}
+        Lrn::Union{Vector{<:AbstractFloat},Nothing},
+        phi::Union{Vector{<:AbstractFloat},Nothing}
     )
     
-    # varargs = (sn::Vector{Int64},
-    #            Lrn::Vector{Float64},
-    #            phi::phi::Vector{Float64})
+    # varargs = (sn::Vector{<:Integer},
+    #            Lrn::Vector{<:AbstractFloat},
+    #            phi::phi::Vector{<:AbstractFloat})
              
     index = MAX
     FIRST = true

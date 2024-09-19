@@ -5,18 +5,20 @@
 
 function
     LBP!(
-        Lr::Matrix{Float64},
-        Lq::Matrix{Float64},
+        Lr::Matrix{<:AbstractFloat},
+        Lq::Matrix{<:AbstractFloat},
         d::Vector{Bool},
-        ΔLf::Vector{Float64},
-        checks2nodes::Vector{Vector{Int64}},
-        nodes2checks::Vector{Vector{Int64}},
-        Lrn::Vector{Float64},
+        ΔLf::Vector{<:AbstractFloat},
+        checks2nodes::Vector{Vector{T}} where {T<:Integer},
+        nodes2checks::Vector{Vector{T}} where {T<:Integer},
+        Lrn::Vector{<:AbstractFloat},
     )
 
-    for check in eachindex(checks2nodes)
+    check = 0
+    for nodes in checks2nodes
+        check += 1
         # vertical update        
-        for node in checks2nodes[check]
+        for node in nodes
             @inbounds Lq[check,node] = ΔLf[node]
             for c in nodes2checks[node]
                 if c != check
@@ -26,12 +28,15 @@ function
         end
         # horizontal update
         pLr = 1.0
-        for node in checks2nodes[check]
+        for node in nodes
             @inbounds @fastmath Lrn[node] = tanh(0.5*Lq[check,node])
             @inbounds @fastmath pLr *= Lrn[node]
         end
-        for node in checks2nodes[check]
-            @inbounds @fastmath Lr[check,node] = 2*atanh(pLr/Lrn[node])
+        for node in nodes
+            @inbounds @fastmath x = pLr/Lrn[node]
+            if abs(x) < 1
+                @inbounds @fastmath Lr[check,node] = 2*atanh(x)
+            end
         end
     end
 
@@ -51,21 +56,21 @@ end
 function 
     SPA_LBP!(
         d::Vector{Bool},
-        ber::Vector{Float64},
+        ber::Vector{<:AbstractFloat},
         c::Vector{Bool},
         bit_error::Vector{Bool},
-        Lr::Matrix{Float64}, 
-        Lq::Matrix{Float64},
-        checks2nodes::Vector{Vector{Int64}},
-        nodes2checks::Vector{Vector{Int64}},
-        ΔLf::Vector{Float64},
+        Lr::Matrix{<:AbstractFloat}, 
+        Lq::Matrix{<:AbstractFloat},
+        checks2nodes::Vector{Vector{T}} where {T<:Integer},
+        nodes2checks::Vector{Vector{T}} where {T<:Integer},
+        ΔLf::Vector{<:AbstractFloat},
         syndrome::Vector{Bool},
-        Lrn::Vector{Float64}
+        Lrn::Vector{<:AbstractFloat}
     )
     
-    # varargs = (sn::Vector{Int64},
-    #            Lrn::Vector{Float64},
-    #            phi::phi::Vector{Float64})
+    # varargs = (sn::Vector{<:Integer},
+    #            Lrn::Vector{<:AbstractFloat},
+    #            phi::phi::Vector{<:AbstractFloat})
              
     index = MAX
     FIRST = true

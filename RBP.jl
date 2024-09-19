@@ -5,21 +5,24 @@
 
 function
     RBP!(
-        Lr::Matrix{Float64},
-        max_coords::Vector{Int64},
-        max_residue::Float64,
-        Lq::Matrix{Float64},
+        Lr::Matrix{<:AbstractFloat},
+        max_coords::Vector{<:Integer},
+        max_residue::AbstractFloat,
+        Lq::Matrix{<:AbstractFloat},
         d::Vector{Bool},
-        ΔLf::Vector{Float64},
-        checks2nodes::Vector{Vector{Int64}},
-        nodes2checks::Vector{Vector{Int64}},
-        Lrn::Vector{Float64},
+        ΔLf::Vector{<:AbstractFloat},
+        checks2nodes::Vector{Vector{T}} where {T<:Integer},
+        nodes2checks::Vector{Vector{T}} where {T<:Integer},
+        Lrn::Vector{<:AbstractFloat},
     )
 
     for m in eachindex(checks2nodes)
 
-        cmax = max_coords[1]
-        nmax = max_coords[2]
+        if max_residue == 0
+            break
+        end
+
+        (cmax,nmax) = max_coords
 
         # update the message with largest residue
         @inbounds @fastmath Lr[cmax,nmax] += max_residue
@@ -34,7 +37,7 @@ function
                         @inbounds @fastmath Lq[check,nmax] += Lr[c,nmax]
                     end
                 end
-                # horizontal update of Lr[node,check], node ≠ nmax, check ≠ cmax
+                # find max ΔLr[node,check], node ≠ nmax, check ≠ cmax
                 pLr = 1.0
                 for node in checks2nodes[check]
                     @inbounds @fastmath Lrn[node] = tanh(0.5*Lq[check,node])
@@ -42,12 +45,15 @@ function
                 end
                 for node in checks2nodes[check]
                     if node != nmax
-                        @inbounds @fastmath L = 2*atanh(pLr/Lrn[node])
-                        @inbounds @fastmath ΔLr = L - Lr[check,node]
-                        if abs(ΔLr) > abs(max_residue)
-                            max_residue = ΔLr
-                            max_coords[1] = check
-                            max_coords[2] = node
+                        @inbounds @fastmath x = pLr/Lrn[node]
+                        if abs(x) < 1
+                            @inbounds @fastmath L = 2*atanh(x)                     
+                            @inbounds @fastmath ΔLr = L - Lr[check,node] 
+                            if abs(ΔLr) > abs(max_residue)
+                                max_residue = ΔLr
+                                max_coords[1] = check
+                                max_coords[2] = node
+                            end
                         end
                     end
                 end
@@ -71,30 +77,30 @@ end
 function 
     SPA_RBP!(
         d::Vector{Bool},
-        ber::Vector{Float64},
+        ber::Vector{<:AbstractFloat},
         c::Vector{Bool},
         bit_error::Vector{Bool},
-        Lr::Matrix{Float64},
-        Lq::Matrix{Float64},
-        checks2nodes::Vector{Vector{Int64}},
-        nodes2checks::Vector{Vector{Int64}},
-        ΔLf::Vector{Float64},
+        Lr::Matrix{<:AbstractFloat},
+        Lq::Matrix{<:AbstractFloat},
+        checks2nodes::Vector{Vector{T}} where {T<:Integer},
+        nodes2checks::Vector{Vector{T}} where {T<:Integer},
+        ΔLf::Vector{<:AbstractFloat},
         syndrome::Vector{Bool},
-        Lrn::Vector{Float64}
+        Lrn::Vector{<:AbstractFloat}
     )
     
-    # varargs = (sn::Vector{Int64},
-    #            Lrn::Vector{Float64},
-    #            phi::phi::Vector{Float64})
+    # varargs = (sn::Vector{<:Integer},
+    #            Lrn::Vector{<:AbstractFloat},
+    #            phi::phi::Vector{<:AbstractFloat})
              
     index = MAX
     FIRST = true
     DECODED = false
 
-    max_coords = ones(Int,2)
-    max_residue = 0.0
-
     for i in 1:MAX
+
+        max_residue = 1e-16
+        max_coords = [1,1]
         
         RBP!(
             Lr,

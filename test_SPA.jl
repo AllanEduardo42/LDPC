@@ -6,17 +6,17 @@
 function 
     test_SPA(
         c::Vector{Bool},
-        indices_col::Vector{Vector{Int64}}, 
-        indices_row::Vector{Vector{Int64}},
-        t::Vector{Float64},
-        σ::Float64,
-        phi::Vector{Float64},
+        nodes2checks::Vector{Vector{T}} where {T<:Integer}, 
+        checks2nodes::Vector{Vector{T}} where {T<:Integer},
+        t::Vector{<:AbstractFloat},
+        σ::AbstractFloat,
+        phi::Vector{<:AbstractFloat},
         mode::String,
         printing::Bool
     )
 
-    M = length(indices_row)
-    N = length(indices_col)
+    M = length(checks2nodes)
+    N = length(nodes2checks)
 
     f = zeros(N,2)
     ΔLf = zeros(N)
@@ -34,11 +34,11 @@ function
 
     normalize!(f)
 
-    q = zeros(N,M,2)
-    Lq = zeros(N,M)
+    q = zeros(M,N,2)
+    Lq = zeros(M,N)
 
-    init_q!(q,f,indices_col)
-    llr_init_q!(Lq,ΔLf,indices_col)
+    init_q!(q,f,nodes2checks)
+    llr_init_q!(Lq,ΔLf,nodes2checks)
 
     r = zeros(M,N,2)
     Lr = zeros(M,N)
@@ -65,20 +65,20 @@ function
         simple_horizontal_update!(
             r,
             δQ,
-            indices_row
+            checks2nodes
         )
         vertical_update_and_MAP!(
             q,
             d,
             r,
             f,
-            indices_col
+            nodes2checks
         )
 
         calc_syndrome!(
             syndrome,
             d,
-            indices_row
+            checks2nodes
         )
         
         ### LLR SPA
@@ -88,7 +88,7 @@ function
             llr_horizontal_update!(
                 Lr,
                 Lq,
-                indices_row,
+                checks2nodes,
                 nothing,
                 nothing,
                 nothing
@@ -98,7 +98,7 @@ function
             llr_horizontal_update!(
                 Lr,
                 Lq,
-                indices_row,
+                checks2nodes,
                 sn,
                 Lrn,
                 nothing
@@ -108,7 +108,7 @@ function
             llr_horizontal_update!(
                 Lr,
                 Lq,
-                indices_row,
+                checks2nodes,
                 sn,
                 Lrn,
                 phi
@@ -118,7 +118,7 @@ function
             llr_horizontal_update!(
                 Lr,
                 Lq,
-                indices_row,
+                checks2nodes,
                 sn,
                 nothing,
                 nothing
@@ -131,18 +131,18 @@ function
             )
         end
 
-        llr_vertical_update_and_MAP!(
+        llr_vertical_update_and_MAP_crude!(
             Lq,
             d_llr,
             Lr,
             ΔLf,
-            indices_col
+            nodes2checks
         )
 
         calc_syndrome!(
             syndrome_llr,
             d_llr,
-            indices_row
+            checks2nodes
         )
 
         if printing

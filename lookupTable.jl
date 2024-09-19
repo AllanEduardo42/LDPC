@@ -14,7 +14,7 @@ function lookupTable()
     return phi
 end
 
-function get_index(arg::Float64)::Int64
+function get_index(arg::AbstractFloat)
     
     z = trunc(Int,arg)
     if z >= SIZE
