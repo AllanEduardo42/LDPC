@@ -5,7 +5,7 @@
 
 function 
     RBP_findmax_ΔLr!(
-        _checks2nodes::Vector{<:Integer},
+        _nodes::Vector{<:Integer},
         Lrn::Vector{<:AbstractFloat},
         Lq::AbstractVector{<:AbstractFloat},
         Lr::AbstractVector{<:AbstractFloat},
@@ -16,11 +16,11 @@ function
         )
     
     pLr = 1.0
-    for node in _checks2nodes
+    for node in _nodes
         @inbounds @fastmath Lrn[node] = tanh(0.5*Lq[node])
         @inbounds @fastmath pLr *= Lrn[node]
     end
-    for node in _checks2nodes
+    for node in _nodes
         if node != nmax
             @inbounds @fastmath x = pLr/Lrn[node]
             if abs(x) < 1
@@ -35,4 +35,31 @@ function
     end
 
     return max_residue
+end
+
+function 
+    calc_residues!(
+        _nodes::Vector{<:Integer},
+        Lrn::Vector{<:AbstractFloat},
+        Lq::AbstractVector{<:AbstractFloat},
+        Lr::AbstractVector{<:AbstractFloat},
+        check::Integer,
+        nmax::Integer,
+        R::Matrix{<:AbstractFloat}
+        )
+    
+    pLr = 1.0
+    for node in _nodes
+        @inbounds @fastmath Lrn[node] = tanh(0.5*Lq[node])
+        @inbounds @fastmath pLr *= Lrn[node]
+    end
+    for node in _nodes
+        if node != nmax
+            @inbounds @fastmath x = pLr/Lrn[node]
+            if abs(x) < 1
+                @inbounds @fastmath R[check,node] = 2*atanh(x) - Lr[node]
+            end
+        end
+    end
+
 end

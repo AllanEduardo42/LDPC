@@ -81,6 +81,7 @@ function
     # Vertical and horizontal update matrices
     Lq = H*0.0
     Lr = H*0.0
+    R = H*0.0 #residues
     r, q = (TEST ? (zeros(M,N,2), zeros(M,N,2)) : (nothing, nothing))
    
     # Set variables that depend on the mode
@@ -149,6 +150,7 @@ function
             end            
             # initialize matrix Lr
             Lr .*= 0
+            R .*= 0
             # initialize matrix Lq
             llr_init_q!(Lq,Lf,nodes2checks)                
             # SPA routine
@@ -175,7 +177,8 @@ function
                     f,
                     r,
                     q,
-                    printing
+                    printing,
+                    R
                 )                
 
             # bit error rate

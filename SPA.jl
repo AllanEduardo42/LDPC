@@ -34,7 +34,8 @@ function
         f::Union{Matrix{<:AbstractFloat},Nothing},
         r::Union{Array{<:AbstractFloat,3},Nothing},
         q::Union{Array{<:AbstractFloat,3},Nothing},
-        printing::Union{Bool,Nothing}
+        printing::Union{Bool,Nothing},
+        R::Matrix{<:AbstractFloat}
     )
              
     index = MAX
@@ -70,18 +71,17 @@ function
                 Lrn
             )
         elseif mode == "RBP"
-            max_residue = 1e-16
             max_coords = [1,1]
             RBP!(
                 d,
                 Lr,
                 max_coords,
-                max_residue,
                 Lq,
                 Lf,
                 checks2nodes,
                 nodes2checks,
-                Lrn
+                Lrn,
+                R
             )
         end
 

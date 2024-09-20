@@ -13,12 +13,12 @@ using SparseArrays
 
 ################################ SPA MODE FLAGS ################################
 
-TNH = false
+TNH = true
 ALT = false
 TAB = false
-MIN = true
+MIN = false
 LBP = false
-RBP = false
+RBP = true
 
 PLOT_BER = true
 HISTOGRAMS = false
@@ -40,7 +40,7 @@ RANGE::Int64 = 20
 
 SIZE_per_RANGE::Float64 = SIZE/RANGE
 
-NREALS::Int = 1000
+NREALS::Int = 100
 MAX::Int = 30
 
 LR_idx = 9;
