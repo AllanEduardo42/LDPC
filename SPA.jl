@@ -1,7 +1,13 @@
 ################################################################################
 # Allan Eduardo Feitosa
 # 27 ago 2024
-# MAin loop of the SPA algorithm
+# Main loop of the SPA algorithm
+
+include("flooding.jl")
+include("llr_flooding.jl")
+include("calc_syndrome.jl")
+include("LBP.jl")
+include("RBP.jl")
 
 function 
     SPA!(
@@ -11,56 +17,112 @@ function
         bit_error::Vector{Bool},
         Lr::Matrix{<:AbstractFloat}, 
         Lq::Matrix{<:AbstractFloat},
-        indices_row::Vector{Vector{T}} where {T<:Integer},
-        indices_col::Vector{Vector{T}} where {T<:Integer},
-        ΔLf::Vector{<:AbstractFloat},
+        checks2nodes::Vector{Vector{T}} where {T<:Integer},
+        nodes2checks::Vector{Vector{T}} where {T<:Integer},
+        Lf::Vector{<:AbstractFloat},
         syndrome::Vector{Bool},
-        sn::Union{Vector{Int8},Nothing},
         Lrn::Union{Vector{<:AbstractFloat},Nothing},
-        phi::Union{Vector{<:AbstractFloat},Nothing}
+        sn::Union{Vector{Int8},Nothing},        
+        phi::Union{Vector{<:AbstractFloat},Nothing},
+        mode::String,
+        flooding::Bool,
+        test::Bool,
+        d_test::Union{Vector{Bool},Nothing},
+        syndrome_test::Union{Vector{Bool},Nothing},
+        f::Union{Matrix{<:AbstractFloat},Nothing},
+        r::Union{Array{<:AbstractFloat,3},Nothing},
+        q::Union{Array{<:AbstractFloat,3},Nothing},
+        printing::Union{Bool,Nothing}
     )
-    
-    # varargs = (sn::Vector{<:Integer},
-    #            Lrn::Vector{<:AbstractFloat},
-    #            phi::phi::Vector{<:AbstractFloat})
              
     index = MAX
     FIRST = true
     DECODED = false
 
     for i in 1:MAX
-        
-        llr_horizontal_update!(
-            Lr,
-            Lq,
-            indices_row,
-            sn,
-            Lrn,
-            phi
-        )
-        llr_vertical_update_and_MAP!(
-            Lq,
-            d,
-            Lr,
-            ΔLf,
-            indices_col
-        )
+
+        if flooding
+            llr_flooding!(
+                d,
+                Lr, 
+                Lq,
+                checks2nodes,
+                nodes2checks,
+                Lf,
+                Lrn,
+                sn,
+                phi,
+            )            
+        elseif mode == "LBP"
+            LBP!(
+                d,
+                Lr,
+                Lq,
+                Lf,
+                checks2nodes,
+                nodes2checks,
+                Lrn
+            )
+        elseif mode == "RBP"
+            max_residue = 1e-16
+            max_coords = [1,1]
+            RBP!(
+                d,
+                Lr,
+                max_coords,
+                max_residue,
+                Lq,
+                Lf,
+                checks2nodes,
+                nodes2checks,
+                Lrn
+            )
+        end
 
         calc_syndrome!(
             syndrome,
             d,
-            indices_row
+            checks2nodes
         )
 
-        if FIRST && iszero(syndrome)
-            FIRST = false
-            index = i
-            if d == c
-                DECODED = true
+        if test
+            flooding!(
+                d_test,
+                r, 
+                q,
+                checks2nodes,
+                nodes2checks,
+                f
+            )
+            calc_syndrome!(
+                syndrome_test,
+                d_test,
+                checks2nodes
+            )
+            if printing
+
+                println("Iteration #$i")
+    
+                println("MAP SIMPLE estimate: $d_test")
+    
+                println("MAP Δ-LLRs estimate: $d")
+    
+                println("MAP SIMPLE syndrome: $syndrome_test")
+    
+                println("LLR Δ-LLRs syndrome: $syndrome")
+    
             end
+        else
+            if FIRST && iszero(syndrome)
+                FIRST = false
+                index = i
+                if d == c
+                    DECODED = true
+                end
+            end
+            bit_error .= (d .≠ c)
+            ber[i] = sum(bit_error)
         end
-        bit_error .= (d .≠ c)
-        ber[i] = sum(bit_error)
 
     end
 

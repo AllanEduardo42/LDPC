@@ -14,9 +14,9 @@ using SparseArrays
 ################################ SPA MODE FLAGS ################################
 
 TNH = true
-ALT = false
-TAB = false
-MIN = false
+ALT = true
+TAB = true
+MIN = true
 LBP = true
 RBP = true
 
@@ -25,20 +25,10 @@ HISTOGRAMS = false
 
 ################################ INCLUDED FILES ################################
 
-# include("horizontal_update.jl")
-include("simple_horizontal_update.jl")
-include("vertical_update_and_MAP.jl")
 include("auxiliary_functions.jl")
-include("llr_horizontal_update.jl")
-include("llr_vertical_update_and_MAP.jl")
 include("performance_estimation.jl")
-include("test_SPA.jl")
-include("lookupTable.jl")
-include("SPA.jl")
 include("PEG.jl")
 include("GF2_functions.jl")
-include("LBP.jl")
-include("RBP.jl")
 
 ############################# SIMULATION CONSTANTS #############################
 
@@ -49,8 +39,6 @@ SIZE::Int64 = 1024
 RANGE::Int64 = 20
 
 SIZE_per_RANGE::Float64 = SIZE/RANGE
-
-Phi = lookupTable()
 
 NREALS::Int = 100
 MAX::Int = 30
@@ -97,75 +85,69 @@ Checks2nodes  = find_checks2nodes(H)
 ############################## JULIA COMPILATION ###############################
 
 if TNH
-    Lr_tnh, Lq_tnh = performance_estimation(
+    performance_estimation(
         C,
         [Sigma[LR_idx]],
         H,
         Checks2nodes,
         Nodes2checks,
-        Phi,
-        "TNH";
-        nreals=1
+        "TNH",
+        NREALS
     )
 end
 if ALT
-    Lr_alt, Lq_alt = performance_estimation(
+    performance_estimation(
         C,
         [Sigma[LR_idx]],
         H,
         Checks2nodes,
         Nodes2checks,
-        Phi,
-        "ALT";
-        nreals=1
+        "ALT",
+        NREALS
     )
 end
 if TAB
-    Lr_tab, Lq_tab = performance_estimation(
+    performance_estimation(
         C,
         [Sigma[LR_idx]],
         H,
         Checks2nodes,
         Nodes2checks,
-        Phi,
-        "TAB";
-        nreals=1
+        "TAB",
+        NREALS
     )
 end
 if MIN
-    Lr_min, Lq_min = performance_estimation(
+    performance_estimation(
         C,
         [Sigma[LR_idx]],
         H,
         Checks2nodes,
         Nodes2checks,
-        Phi,
-        "MIN";
-        nreals=1
+        "MIN",
+        NREALS
     )
 end
 if LBP
-    Lr_lbp, Lq_lbp = performance_estimation(
+    performance_estimation(
         C,
         [Sigma[LR_idx]],
         H,
         Checks2nodes,
         Nodes2checks,
-        Phi,
-        "LBP";
-        nreals=1
+        "LBP",
+        NREALS
     )
 end
 if RBP
-    Lr_rbp, Lq_rbp = performance_estimation(
+    performance_estimation(
         C,
         [Sigma[LR_idx]],
         H,
         Checks2nodes,
         Nodes2checks,
-        Phi,
-        "RBP";
-        nreals=1
+        "RBP",
+        NREALS
     )
 end
                              
@@ -179,8 +161,8 @@ if NREALS > 1
                 H,
                 Checks2nodes,
                 Nodes2checks,
-                Phi,
-                "TNH"
+                "TNH",
+                NREALS
             )
         ;
     end
@@ -192,8 +174,8 @@ if NREALS > 1
                 H,
                 Checks2nodes,
                 Nodes2checks,
-                Phi,
-                "ALT"
+                "ALT",
+                NREALS
             )
         ;
     end
@@ -205,8 +187,8 @@ if NREALS > 1
                 H,
                 Checks2nodes,
                 Nodes2checks,
-                Phi,
-                "TAB"
+                "TAB",
+                NREALS
             )
         ;
     end
@@ -218,8 +200,8 @@ if NREALS > 1
                 H,
                 Checks2nodes,
                 Nodes2checks,
-                Phi,
-                "MIN"
+                "MIN",
+                NREALS
             )
         ;
     end
@@ -231,8 +213,8 @@ if NREALS > 1
                 H,
                 Checks2nodes,
                 Nodes2checks,
-                Phi,
-                "LBP"
+                "LBP",
+                NREALS
             )
         ;
     end
@@ -244,8 +226,8 @@ if NREALS > 1
                 H,
                 Checks2nodes,
                 Nodes2checks,
-                Phi,
-                "RBP"
+                "RBP",
+                NREALS
             )
         ;
     end

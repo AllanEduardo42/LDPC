@@ -9,12 +9,12 @@ function
         d::Vector{Bool},
         r::Array{<:AbstractFloat,3},
         f::Matrix{<:AbstractFloat},
-        indices_col::Vector{Vector{T}} where {T<:Integer}
+        nodes2checks::Vector{Vector{T}} where {T<:Integer}
     )
 
     d .*= 0
     n = 0
-    for indices in indices_col
+    for indices in nodes2checks
         n += 1
         @inbounds d0 = f[n,1]
         @inbounds d1 = f[n,2]
@@ -41,12 +41,12 @@ end
 #         d::Vector{Bool},
 #         r::Array{AbstractFloat,3},
 #         f::Matrix{<:AbstractFloat},
-#         indices_col::Vector{Vector{T}} where {T<:Integer}
+#         nodes2checks::Vector{Vector{T}} where {T<:Integer}
 #     )
 
 #     d .*= 0
 #     n = 0
-#     for indices in indices_col
+#     for indices in nodes2checks
 #         n += 1
 #         for m in indices
 #             @inbounds q[m,n,1] = f[n,1]
@@ -76,11 +76,11 @@ function
     init_q!(
         q::Array{<:AbstractFloat, 3},
         f::Matrix{<:AbstractFloat},
-        indices_col::Vector{Vector{T}} where {T<:Integer}
+        nodes2checks::Vector{Vector{T}} where {T<:Integer}
     )
 
     n = 0
-    for indices in indices_col
+    for indices in nodes2checks
         n += 1
         for m in indices
             @inbounds q[m,n,1] = f[n,1]

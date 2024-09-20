@@ -1,7 +1,9 @@
 ################################################################################
 # Allan Eduardo Feitosa
 # 27 ago 2024
-# Horizontal update of the LLR based Sum-Product Algorithm
+# Horizontal update of the LLR based Sum-Product Algorithm (with Inf restriction)
+
+include("tanh_llr_horizontal_update.jl")
 
 ######################### SPA USING HYPERBOLIC TANGENT #########################
 function 
@@ -9,25 +11,15 @@ function
         Lr::Matrix{<:AbstractFloat},
         Lq::Matrix{<:AbstractFloat},
         checks2nodes::Vector{Vector{T}} where {T<:Integer},
-        x::Nothing,
         Lrn::Vector{<:AbstractFloat},
+        x::Nothing,
         z::Nothing
     )
 
     check = 0
     for nodes in checks2nodes
         check += 1
-        pLr = 1.0
-        for node in nodes
-            @inbounds @fastmath Lrn[node] = tanh(0.5*Lq[check,node])
-            @inbounds @fastmath pLr *= Lrn[node]
-        end
-        for node in nodes
-            @inbounds @fastmath x = pLr/Lrn[node]
-            if abs(x) < 1
-                @inbounds @fastmath Lr[check,node] = 2*atanh(x)
-            end
-        end
+        tanh_llr_horizontal_update!(Lr,Lq,nodes,check,Lrn)
     end
 end
 
@@ -46,8 +38,8 @@ function
         Lr::Matrix{<:AbstractFloat},                            
         Lq::Matrix{<:AbstractFloat},
         checks2nodes::Vector{Vector{T}} where {T<:Integer},
-        sn::Vector{<:Integer},
         Lrn::Vector{<:AbstractFloat},
+        sn::Vector{<:Integer},
         x::Nothing
     )
 
@@ -85,8 +77,8 @@ function
         Lr::Matrix{<:AbstractFloat},                            
         Lq::Matrix{<:AbstractFloat},
         checks2nodes::Vector{Vector{T}} where {T<:Integer},
-        sn::Vector{<:Integer},
         Lrn::Vector{<:AbstractFloat},
+        sn::Vector{<:Integer},
         phi::Vector{<:AbstractFloat}
     )
 
@@ -116,8 +108,8 @@ function
         Lr::Matrix{<:AbstractFloat},                           
         Lq::Matrix{<:AbstractFloat},
         checks2nodes::Vector{Vector{T}} where {T<:Integer},
-        sn::Vector{<:Integer},
         x::Nothing,
+        sn::Vector{<:Integer},
         y::Nothing
     )    
 

@@ -3,215 +3,201 @@
 # 27 ago 2024
 # Functions to estimate the LPCD performance (FER bit_error SNR)
 
+include("lookupTable.jl")
+include("SPA.jl")
+include("calc_priors.jl")
+
 function 
     performance_estimation(
         c::Vector{Bool},
         σ::Vector{<:AbstractFloat},
         H::BitMatrix,
         checks2nodes::Vector{Vector{T}} where {T<:Integer},
-        nodes2checks::Vector{Vector{T}} where {T<:Integer}, 
-        phi::Vector{<:AbstractFloat},
-        mode::String;
-        nreals = NREALS
+        nodes2checks::Vector{Vector{T}} where {T<:Integer},
+        mode::String,
+        nreals::Integer;
+        test=false,
+        t_test=nothing,
+        printing=nothing,
     )
+
+    # set random seed
+    Random.seed!(SEED)
+
+    ############################################################################
+    if (mode ≠ "TNH") && (mode ≠ "ALT") && (mode ≠ "TAB") && (mode ≠ "MIN") &&
+       (mode ≠ "LBP") && (mode ≠ "RBP")
+        throw(
+            ArgumentError(
+                "$mode is not a valid mode"
+            )
+        )
+    end
 
     ############################### constants ##################################
 
     M = length(checks2nodes)
     N = length(nodes2checks)
-    divisor = NREALS * N
     # BPKS
     u = Float64.(2*c .- 1)
 
     ############################# preallocation ################################
+
+    # constant
+    divisor = nreals * N
 
     # frame error rate
     FER = zeros(length(σ))
 
     # bit error rate
     ber = zeros(MAX)
+    
     BER = zeros(MAX,length(σ))
 
     # iteration in which SPA stopped
-    iters = zeros(Int, length(σ), NREALS)
+    iters = zeros(Int, length(σ), nreals)
 
-    # prior Δ-llr
-    ΔLf = Vector{Float64}(undef,N)
 
-    # Vertical and horizontal update matrices
-    Lq = H*0.0
-    Lr = H*0.0
-    Lr_return = H*0.0
-
-    # received signal
-    t = Vector{Float64}(undef,N)
 
     # MAP estimate
     d = Vector{Bool}(undef,N)
+    if test
+        d_test = Vector{Bool}(undef,N)
+    else
+        d_test = nothing
+    end
 
     # syndrome
     syndrome = Vector{Bool}(undef,M)
+    if test
+        syndrome_test = Vector{Bool}(undef,M)
+    else
+        syndrome_test = nothing
+    end
+
+    # prior llr-probabilitities
+    Lf = Vector{Float64}(undef,N)
+    if test
+        f = Matrix{Float64}(undef,N,2)
+    else
+        f = nothing
+    end
 
     # noise
     noise = Vector{Float64}(undef,N)
 
-    # auxiliary variables
-    Lrn = zeros(N)
-    sn = ones(Int8,N)
-    bit_error = Vector{Bool}(undef,N)    
+    # received signal
+    t = Vector{Float64}(undef,N)
+
+    # bit-error
+    bit_error = Vector{Bool}(undef,N) 
+
+    # Vertical and horizontal update matrices
+    Lq = H*0.0
+    Lr = H*0.0
+    if test
+        r = zeros(M,N,2)
+        q = zeros(M,N,2)
+    else
+        r = nothing
+        q = nothing
+    end
+   
+    if mode == "TNH"
+        flooding = true
+        Lrn = zeros(N)
+        sn = nothing
+        phi = nothing
+    elseif mode == "ALT"
+        flooding = true
+        Lrn = zeros(N)
+        sn = ones(Int8,N)
+        phi = nothing
+    elseif mode == "TAB"
+        flooding = true
+        Lrn = zeros(N)
+        sn = ones(Int8,N)
+        phi = lookupTable()
+    elseif mode == "MIN"
+        flooding = true
+        Lrn = nothing
+        sn = ones(Int8,N)
+        phi = nothing
+    elseif mode == "LBP" || mode == "RBP"
+        flooding = false
+        Lrn = zeros(N)
+        sn = nothing
+        phi = nothing
+    end
+    
+    # first realization
+    if test
+        if t_test === nothing
+            received!(t,noise,σ[1],u)
+        elseif length(t_test) != N
+            throw(
+                DimensionMismatch(
+                    "length(t_test) should be $N, not $(length(t_test))"
+                )
+            )
+        else
+            t = t_test
+        end
+        calc_f!(f,t,σ[1]^2)
+        init_q!(q,f,nodes2checks)
+        nreals = 1
+    else
+        received!(t,noise,σ[1],u)
+    end
 
     ################################## MAIN ####################################
-
     for k in eachindex(σ)
-        
-        # set random seed
-        Random.seed!(SEED)
 
         σ² = σ[k]^2
     
         for j in 1:nreals
 
-            randn!(noise)
-
-            noise .*= σ[k]
-
-            t .= u .+ noise
-
-            # prior Δ-llr
-
-            for i in eachindex(t)
-                if mode == "TAB"
-                    @inbounds ΔLf[i] = -2*SIZE_per_RANGE*t[i]/σ²
-                else
-                    @inbounds ΔLf[i] = -2t[i]/σ²
-                end
+            # prior f-llr
+            calc_Lf!(
+                Lf,
+                t,
+                σ²
+            )
+            if mode == "TAB"
+                Lf .*= SIZE_per_RANGE
             end
             
+            # initialize matrix Lr
+            Lr .*= 0
             # initialize matrix Lq
-            llr_init_q!(Lq,ΔLf,nodes2checks)
-            
+            llr_init_q!(Lq,Lf,nodes2checks)                
             # SPA
-            i = 0
-            DECODED = false
-            if mode == "TNH"
-                # tanh SPA
-                DECODED, i = 
-                    SPA!(
-                        d,
-                        ber,
-                        c,
-                        bit_error,
-                        Lr,
-                        Lq,
-                        checks2nodes,
-                        nodes2checks,
-                        ΔLf,
-                        syndrome,
-                        nothing,
-                        Lrn,
-                        nothing
-                    )
-                ;
-            elseif mode == "ALT"
-                # alternative SPA
-                DECODED, i = 
-                    SPA!(
-                        d,
-                        ber,
-                        c,
-                        bit_error,
-                        Lr,
-                        Lq,
-                        checks2nodes,
-                        nodes2checks,
-                        ΔLf,
-                        syndrome,
-                        sn,
-                        Lrn,
-                        nothing
-                    )
-                ;
-            elseif mode == "TAB"
-                # lookup-table SPA
-                DECODED, i = 
-                    SPA!(
-                        d,
-                        ber,
-                        c,
-                        bit_error,
-                        Lr,
-                        Lq,
-                        checks2nodes,
-                        nodes2checks,
-                        ΔLf,
-                        syndrome,
-                        sn,
-                        Lrn,
-                        phi
-                    )
-                ;
-            elseif mode == "MIN"
-                # approximate SPA
-                DECODED, i = 
-                    SPA!(
-                        d,
-                        ber,
-                        c,
-                        bit_error,
-                        Lr,
-                        Lq,
-                        checks2nodes,
-                        nodes2checks,
-                        ΔLf,
-                        syndrome,
-                        sn,
-                        nothing,
-                        nothing
-                    )
-                ;
-            elseif mode == "LBP"
-                # LBP SPA
-                Lr = zeros(M,N)
-                DECODED, i = 
-                    SPA_LBP!(
-                        d,
-                        ber,
-                        c,
-                        bit_error,
-                        Lr,
-                        Lq,
-                        checks2nodes,
-                        nodes2checks,
-                        ΔLf,
-                        syndrome,
-                        Lrn
-                    )
-                ;
-            elseif mode == "RBP"
-                # RBP SPA
-                Lr = 0.0*H
-                DECODED, i = 
-                    SPA_RBP!(
-                        d,
-                        ber,
-                        c,
-                        bit_error,
-                        Lr,
-                        Lq,
-                        checks2nodes,
-                        nodes2checks,
-                        ΔLf,
-                        syndrome,
-                        Lrn
-                    )
-                ;
-            else
-                throw(
-                    ArgumentError(
-                        "$mode is not a valid mode"
-                    )
-                )
-            end
+            DECODED, i = 
+                SPA!(
+                    d,
+                    ber,
+                    c,
+                    bit_error,
+                    Lr,
+                    Lq,
+                    checks2nodes,
+                    nodes2checks,
+                    Lf,
+                    syndrome,
+                    Lrn,
+                    sn,
+                    phi,
+                    mode,
+                    flooding,
+                    test,
+                    d_test,
+                    syndrome_test,
+                    f,
+                    r,
+                    q,
+                    printing
+                )                
+
             # bit error rate
             @fastmath ber ./= divisor
             @inbounds  @fastmath @. BER[:,k] += ber
@@ -221,15 +207,31 @@ function
                 # frame error rate
                 @inbounds FER[k] += 1
             end
+            # next realization
+            received!(t,noise,σ[k],u)
         end
 
         @inbounds @fastmath FER[k] /= NREALS
 
     end
 
-    if nreals == 1
-        return Lr, Lq
+    if test
+        return r, Lr, q, Lq
     else
         return log10.(FER), log10.(BER), iters
     end
+
+end
+
+function
+    received!(
+        t::Vector{<:AbstractFloat},
+        noise::Vector{<:AbstractFloat},
+        σ::AbstractFloat,
+        u::Vector{<:AbstractFloat})
+
+    randn!(noise)
+    noise .*= σ
+    t .= u .+ noise
+
 end

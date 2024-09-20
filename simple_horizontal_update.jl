@@ -5,13 +5,13 @@
 
 function 
     simple_horizontal_update!(
-        r::Array{AbstractFloat,3},
+        r::Array{<:AbstractFloat,3},
         δq::Matrix{<:AbstractFloat},
-        indices_row::Vector{Vector{T}} where {T<:Integer}
+        checks2nodes::Vector{Vector{T}} where {T<:Integer}
     )
 
     m = 0
-    for indices in indices_row
+    for indices in checks2nodes
         m += 1
         for n in indices
             δr = 1
