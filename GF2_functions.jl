@@ -8,44 +8,16 @@ using LinearAlgebra
 
 ########################### GF2 matrix multiplication ##########################
 
-# C = A*B BitArray
-
 function
     gf2_mat_mult(
-        A::BitMatrix,
-        B::BitMatrix
-    )::BitMatrix
-
-    mA, nA = size(A)
-    mB, nB = size(B)
-
-    if nA == mB
-        C = gf2_mat_mult_core(Matrix(A),Matrix(B),mA,nA,nB)
-    else
-        throw(
-            DimensionMismatch(
-                lazy"A has dimensions ($mA,$nA) but B has dimensions ($mB,$nB)"
-            )
-        )
-    end
-
-    return BitMatrix(C)
-
-end
-
-# C = A*B Matrix{Bool}
-
-function
-    gf2_mat_mult(
-        A::Matrix{Bool},
-        B::Matrix{Bool}
-    )::Matrix{Bool}
-
-    mA, nA = size(A)
-    mB, nB = size(B)
+        A::AbstractArray{Bool},
+        B::AbstractArray{Bool},
+    )
+    ndims(A) == 2 ? (mA, nA) = size(A) : (mA, nA) = (length(A),1)
+    ndims(B) == 2 ? (mB, nB) = size(B) : (mB, nB) = (length(B),1)
 
     if nA == mB
-        C = gf2_mat_mult_core(A,B,mA,nA,nB)
+        C = _gf2_mat_mult(A,B,mA,nA,nB)
     else
         throw(
             DimensionMismatch(
@@ -58,63 +30,15 @@ function
 
 end
 
-# y = A*x BitArray
-
 function 
-    gf2_mat_mult(
-        A::BitMatrix,
-        x::BitVector
-    )::BitVector
-
-    mA, nA = size(A)
-    if nA == length(x)
-        y = gf2_mat_mult_core(Matrix(A),Vector(x),mA,nA)
-    else
-        throw(
-            DimensionMismatch(
-                lazy"second dimension of A, $nA, does not match length of x, $L"
-            )
-        )
-    end
-
-    return BitVector(y)
-
-end
-
-# y = A*x Matrix{Bool}
-
-function 
-    gf2_mat_mult(
-        A::Matrix{Bool},
-        x::Vector{Bool}
-    )::Vector{Bool}
-
-    mA, nA = size(A)
-    if nA == length(x)
-        y = gf2_mat_mult_core(A,x,mA,nA)
-    else
-        throw(
-            DimensionMismatch(
-                lazy"second dimension of A, $nA, does not match length of x, $L"
-            )
-        )
-    end
-
-    return y
-
-end
-
-# Core computation of C = A*B
-
-function 
-    gf2_mat_mult_core(
-        A::Matrix{Bool},
-        B::Matrix{Bool},
+    _gf2_mat_mult(
+        A::AbstractArray{Bool},
+        B::AbstractArray{Bool},
         mA::Integer,
         nA::Integer,
         nB::Integer
-    )::Matrix{Bool}
-
+    )
+    
     C = zeros(Bool,mA,nB)
     for i in 1:mA
         for j in 1:nB
@@ -125,26 +49,27 @@ function
     end
 
     return C
+
 end
 
-# Core computation of y = A*x
-
 function 
-    gf2_mat_mult_core(
-        A::Matrix{Bool},
-        x::Vector{Bool},
+    _gf2_mat_mult(
+        A::AbstractArray{Bool},
+        B::AbstractVector{Bool},
         mA::Integer,
         nA::Integer,
-    )::Vector{Bool}
-
-    y = zeros(Bool,mA)
+        nB::Integer
+    )
+    
+    C = zeros(Bool,mA)
     for i in 1:mA
         for k in 1:nA
-            @inbounds y[i] ⊻= A[i,k] && x[k]
+            @inbounds C[i] ⊻= A[i,k] && B[k]
         end
     end
 
-    return y
+    return C
+
 end
 
 ################################# GF2 NULLSPACE ################################

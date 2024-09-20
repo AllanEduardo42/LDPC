@@ -32,10 +32,8 @@ function
 
     normalize!(f)
 
-
 end
 
-"""Normalize a binary probability distribution function"""
 function normalize!(f::Matrix{<:AbstractFloat})
 
     N = size(f,1)

@@ -1,7 +1,7 @@
 ################################################################################
 # Allan Eduardo Feitosa
 # 27 ago 2024
-# Functions to estimate the LPCD performance (FER bit_error SNR)
+# Functions to estimate the LPCD performance (FER BER x SNR)
 
 include("lookupTable.jl")
 include("SPA.jl")
@@ -24,7 +24,7 @@ function
     # set random seed
     Random.seed!(SEED)
 
-    ############################################################################
+    ############################## CHECK MODE ##################################
     if (mode ≠ "TNH") && (mode ≠ "ALT") && (mode ≠ "TAB") && (mode ≠ "MIN") &&
        (mode ≠ "LBP") && (mode ≠ "RBP")
         throw(
@@ -50,38 +50,23 @@ function
     FER = zeros(length(σ))
 
     # bit error rate
-    ber = zeros(MAX)
-    
+    ber = zeros(MAX)    
     BER = zeros(MAX,length(σ))
 
     # iteration in which SPA stopped
     iters = zeros(Int, length(σ), nreals)
 
-
-
     # MAP estimate
     d = Vector{Bool}(undef,N)
-    if test
-        d_test = Vector{Bool}(undef,N)
-    else
-        d_test = nothing
-    end
+    d_test = (test ? Vector{Bool}(undef,N) : nothing)
 
     # syndrome
     syndrome = Vector{Bool}(undef,M)
-    if test
-        syndrome_test = Vector{Bool}(undef,M)
-    else
-        syndrome_test = nothing
-    end
+    syndrome_test = (test ? Vector{Bool}(undef,M) : nothing)
 
     # prior llr-probabilitities
     Lf = Vector{Float64}(undef,N)
-    if test
-        f = Matrix{Float64}(undef,N,2)
-    else
-        f = nothing
-    end
+    f = (test ? Matrix{Float64}(undef,N,2) : nothing)
 
     # noise
     noise = Vector{Float64}(undef,N)
@@ -95,14 +80,9 @@ function
     # Vertical and horizontal update matrices
     Lq = H*0.0
     Lr = H*0.0
-    if test
-        r = zeros(M,N,2)
-        q = zeros(M,N,2)
-    else
-        r = nothing
-        q = nothing
-    end
+    r, q = (test ? (zeros(M,N,2), zeros(M,N,2)) : (nothing, nothing))
    
+    # Set variables that depend on the mode chosen
     if mode == "TNH"
         flooding = true
         Lrn = zeros(N)
@@ -151,17 +131,13 @@ function
     end
 
     ################################## MAIN ####################################
-    for k in eachindex(σ)
-
-        σ² = σ[k]^2
-    
+    for k in eachindex(σ)    
         for j in 1:nreals
-
             # prior f-llr
             calc_Lf!(
                 Lf,
                 t,
-                σ²
+                σ[k]^2
             )
             if mode == "TAB"
                 Lf .*= SIZE_per_RANGE
@@ -231,7 +207,7 @@ function
         u::Vector{<:AbstractFloat})
 
     randn!(noise)
-    noise .*= σ
-    t .= u .+ noise
+    @fastmath noise .*= σ
+    @fastmath t .= u .+ noise
 
 end

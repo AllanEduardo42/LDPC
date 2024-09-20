@@ -3,8 +3,10 @@
 # 27 ago 2024
 # Main loop of the SPA algorithm
 
-include("flooding.jl")
-include("llr_flooding.jl")
+include("simple_horizontal_update.jl")
+include("vertical_update_and_MAP.jl")
+include("llr_horizontal_update.jl")
+include("llr_vertical_update_and_MAP.jl")
 include("calc_syndrome.jl")
 include("LBP.jl")
 include("RBP.jl")
@@ -42,17 +44,21 @@ function
     for i in 1:MAX
 
         if flooding
-            llr_flooding!(
-                d,
-                Lr, 
+            llr_horizontal_update!(
+                Lr,
                 Lq,
                 checks2nodes,
-                nodes2checks,
-                Lf,
                 Lrn,
                 sn,
-                phi,
-            )            
+                phi
+            )
+            llr_vertical_update_and_MAP!(
+                Lq,
+                d,
+                Lr,
+                Lf,
+                nodes2checks
+            )          
         elseif mode == "LBP"
             LBP!(
                 d,
@@ -85,14 +91,20 @@ function
             checks2nodes
         )
 
-        if test
-            flooding!(
-                d_test,
-                r, 
+        if test            
+            ### Conventional simplified SPA
+            δQ = q[:,:,1]-q[:,:,2]    
+            simple_horizontal_update!(
+                r,
+                δQ,
+                checks2nodes
+            )
+            vertical_update_and_MAP!(
                 q,
-                checks2nodes,
-                nodes2checks,
-                f
+                d_test,
+                r,
+                f,
+                nodes2checks
             )
             calc_syndrome!(
                 syndrome_test,
@@ -100,17 +112,11 @@ function
                 checks2nodes
             )
             if printing
-
-                println("Iteration #$i")
-    
-                println("MAP SIMPLE estimate: $d_test")
-    
-                println("MAP Δ-LLRs estimate: $d")
-    
-                println("MAP SIMPLE syndrome: $syndrome_test")
-    
-                println("LLR Δ-LLRs syndrome: $syndrome")
-    
+                println("Iteration #$i")    
+                println("MAP SIMPLE estimate: $d_test")    
+                println("MAP Δ-LLRs estimate: $d")    
+                println("MAP SIMPLE syndrome: $syndrome_test")    
+                println("LLR Δ-LLRs syndrome: $syndrome")    
             end
         else
             if FIRST && iszero(syndrome)
@@ -123,7 +129,6 @@ function
             bit_error .= (d .≠ c)
             ber[i] = sum(bit_error)
         end
-
     end
 
     return DECODED, index

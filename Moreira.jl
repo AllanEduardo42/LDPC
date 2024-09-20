@@ -23,7 +23,7 @@ SIZE_per_RANGE::Float64 = SIZE/RANGE
 
 Phi = lookupTable()
 
-mode = "ALT"
+mode = "TNH"
 
 H = BitMatrix(
      [0 1 0 1 0 1 1 1 0 0 0 1;
