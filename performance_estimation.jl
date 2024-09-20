@@ -16,10 +16,11 @@ function
         nodes2checks::Vector{Vector{T}} where {T<:Integer},
         mode::String,
         nreals::Integer;
-        test=false,
         t_test=nothing,
-        printing=nothing,
+        printing=false,
     )
+
+    TEST = (nreals == 1) ? true : false
 
     # set random seed
     Random.seed!(SEED)
@@ -58,15 +59,15 @@ function
 
     # MAP estimate
     d = Vector{Bool}(undef,N)
-    d_test = (test ? Vector{Bool}(undef,N) : nothing)
+    d_test = (TEST ? Vector{Bool}(undef,N) : nothing)
 
     # syndrome
     syndrome = Vector{Bool}(undef,M)
-    syndrome_test = (test ? Vector{Bool}(undef,M) : nothing)
+    syndrome_test = (TEST ? Vector{Bool}(undef,M) : nothing)
 
     # prior llr-probabilitities
     Lf = Vector{Float64}(undef,N)
-    f = (test ? Matrix{Float64}(undef,N,2) : nothing)
+    f = (TEST ? Matrix{Float64}(undef,N,2) : nothing)
 
     # noise
     noise = Vector{Float64}(undef,N)
@@ -80,9 +81,9 @@ function
     # Vertical and horizontal update matrices
     Lq = H*0.0
     Lr = H*0.0
-    r, q = (test ? (zeros(M,N,2), zeros(M,N,2)) : (nothing, nothing))
+    r, q = (TEST ? (zeros(M,N,2), zeros(M,N,2)) : (nothing, nothing))
    
-    # Set variables that depend on the mode chosen
+    # Set variables that depend on the mode
     if mode == "TNH"
         flooding = true
         Lrn = zeros(N)
@@ -110,44 +111,47 @@ function
         phi = nothing
     end
     
-    # first realization
-    if test
+    ######################### FIRST RECEIVED SIGNAL ############################
+    # In order to allow a test with a given received signal t_test, the first
+    # received signal t is set outside the main loop.
+    if TEST
         if t_test === nothing
+            # generate a received signal
             received!(t,noise,σ[1],u)
         elseif length(t_test) != N
+            # if a received test signal was given but with wrong dimension
             throw(
                 DimensionMismatch(
                     "length(t_test) should be $N, not $(length(t_test))"
                 )
             )
         else
+            # the received signal is the test signal
             t = t_test
         end
+        # init the priors
         calc_f!(f,t,σ[1]^2)
+        # init the matrices q
         init_q!(q,f,nodes2checks)
-        nreals = 1
     else
+        # generate the first received signal outside the main loop
         received!(t,noise,σ[1],u)
     end
 
-    ################################## MAIN ####################################
+    ############################## MAIN LOOP ##################################
     for k in eachindex(σ)    
         for j in 1:nreals
-            # prior f-llr
-            calc_Lf!(
-                Lf,
-                t,
-                σ[k]^2
-            )
+            # init the llr priors
+            calc_Lf!(Lf,t,σ[k]^2)
             if mode == "TAB"
+                # scale for table
                 Lf .*= SIZE_per_RANGE
-            end
-            
+            end            
             # initialize matrix Lr
             Lr .*= 0
             # initialize matrix Lq
             llr_init_q!(Lq,Lf,nodes2checks)                
-            # SPA
+            # SPA routine
             DECODED, i = 
                 SPA!(
                     d,
@@ -165,7 +169,7 @@ function
                     phi,
                     mode,
                     flooding,
-                    test,
+                    TEST,
                     d_test,
                     syndrome_test,
                     f,
@@ -177,13 +181,13 @@ function
             # bit error rate
             @fastmath ber ./= divisor
             @inbounds  @fastmath @. BER[:,k] += ber
-            # iteration in which SPA stopped
+            # iteration in which SPA stopped (iszero(syndrome) = true)
             @inbounds iters[k,j] = i
-            if ~DECODED
+            if !(DECODED)
                 # frame error rate
                 @inbounds FER[k] += 1
             end
-            # next realization
+            # receibed signal for the next realization (j+1)
             received!(t,noise,σ[k],u)
         end
 
@@ -191,7 +195,7 @@ function
 
     end
 
-    if test
+    if TEST
         return r, Lr, q, Lq
     else
         return log10.(FER), log10.(BER), iters

@@ -13,12 +13,12 @@ using SparseArrays
 
 ################################ SPA MODE FLAGS ################################
 
-TNH = true
-ALT = true
-TAB = true
+TNH = false
+ALT = false
+TAB = false
 MIN = true
-LBP = true
-RBP = true
+LBP = false
+RBP = false
 
 PLOT_BER = true
 HISTOGRAMS = false
@@ -40,7 +40,7 @@ RANGE::Int64 = 20
 
 SIZE_per_RANGE::Float64 = SIZE/RANGE
 
-NREALS::Int = 100
+NREALS::Int = 1000
 MAX::Int = 30
 
 LR_idx = 9;
@@ -85,69 +85,69 @@ Checks2nodes  = find_checks2nodes(H)
 ############################## JULIA COMPILATION ###############################
 
 if TNH
-    performance_estimation(
+    R_tnh, Lr_tnh, Q_tnh, LQ_tnh = performance_estimation(
         C,
         [Sigma[LR_idx]],
         H,
         Checks2nodes,
         Nodes2checks,
         "TNH",
-        NREALS
+        1
     )
 end
 if ALT
-    performance_estimation(
+    R_alt, Lr_alt, Q_alt, LQ_alt = performance_estimation(
         C,
         [Sigma[LR_idx]],
         H,
         Checks2nodes,
         Nodes2checks,
         "ALT",
-        NREALS
+        1
     )
 end
 if TAB
-    performance_estimation(
+    R_tab, Lr_tab, Q_tab, LQ_tab = performance_estimation(
         C,
         [Sigma[LR_idx]],
         H,
         Checks2nodes,
         Nodes2checks,
         "TAB",
-        NREALS
+        1
     )
 end
 if MIN
-    performance_estimation(
+    R_min, Lr_min, Q_min, LQ_min = performance_estimation(
         C,
         [Sigma[LR_idx]],
         H,
         Checks2nodes,
         Nodes2checks,
         "MIN",
-        NREALS
+        1
     )
 end
 if LBP
-    performance_estimation(
+    R_lbp, Lr_lbp, Q_lbp, LQ_lbp = performance_estimation(
         C,
         [Sigma[LR_idx]],
         H,
         Checks2nodes,
         Nodes2checks,
         "LBP",
-        NREALS
+        1
     )
 end
 if RBP
-    performance_estimation(
+    R_rbp, Lr_rbp, Q_rbp, LQ_rbp = performance_estimation(
         C,
         [Sigma[LR_idx]],
         H,
         Checks2nodes,
         Nodes2checks,
         "RBP",
-        NREALS
+        1
     )
 end
                              

@@ -14,16 +14,16 @@ include("performance_estimation.jl")
 PRINTING = true
 SEED = 1428
 
-MAX = 3
+MAX = 60
 NREALS = 1
 
-SIZE::Int64 = 1024*1024
+SIZE::Int64 = 1024
 RANGE::Float64 = 20
 SIZE_per_RANGE::Float64 = SIZE/RANGE
 
 Phi = lookupTable()
 
-mode = "TNH"
+mode = "MIN"
 
 H = BitMatrix(
      [0 1 0 1 0 1 1 1 0 0 0 1;
@@ -69,7 +69,6 @@ t = [1.3129, 2.6584, 0.7413, 2.1745, 0.5981, −0.8323, −0.3962, −1.7586,
         Nodes2checks,
         mode,
         1;
-        test=true,
         t_test=t,
         printing=PRINTING
     )

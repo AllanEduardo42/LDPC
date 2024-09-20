@@ -2,8 +2,9 @@
 # Allan Eduardo Feitosa
 # 19 set 2024
 # Core of the horizontal update of the LLR based Sum-Product Algorithm 
-# using the tang function (with Inf restriction)
-#(Obs: this core is a separate function because it is also used in the LBP
+# using the tang function
+# This method has Inf restriction (see line 25)
+# (Obs: this core is a separate function because it is also used in the LBP
 # algorithm)
 
 function
@@ -21,7 +22,7 @@ function
     end
     for node in nodes
         @inbounds @fastmath x = pLr/Lrn[node]
-        if abs(x) < 1
+        if abs(x) < 1 #(Inf restriction)
             @inbounds @fastmath Lr[check,node] = 2*atanh(x)
         end
     end
