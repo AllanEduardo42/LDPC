@@ -4,7 +4,7 @@
 # Horizontal update of the LLR based Sum-Product Algorithm (with Inf restriction)
 # There are 4 different methods to update: tanh, alternative, table and min-sum 
 
-include("tanh_llr_horizontal_update.jl")
+include("min_sum.jl")
 
 ######################### SPA USING HYPERBOLIC TANGENT #########################
 function 
@@ -20,8 +20,57 @@ function
     check = 0
     for nodes in checks2nodes
         check += 1
-        tanh_llr_horizontal_update!(Lr,Lq,nodes,check,Lrn)
+        _llr_horizontal_update!(
+            view(Lr,check,:),
+            view(Lq,check,:),
+            Lrn,
+            nodes,
+        )
     end
+end
+
+# The core function below is is also used in the LBP algorithm
+function
+    _llr_horizontal_update!(
+        Lr::AbstractVector{<:AbstractFloat},
+        Lq::AbstractVector{<:AbstractFloat},
+        Lrn::Vector{<:AbstractFloat},
+        nodes::Vector{<:Integer},        
+    )
+    pLr = 1.0
+    for node in nodes
+        @inbounds @fastmath Lrn[node] = tanh(0.5*Lq[node])
+        @inbounds @fastmath pLr *= Lrn[node]
+    end
+    for node in nodes
+        @inbounds @fastmath x = pLr/Lrn[node]
+        if abs(x) < 1 #(Inf restriction)
+            @inbounds @fastmath Lr[node] = 2*atanh(x)
+        end
+    end
+end
+
+### The function below is used in the RBP algorithm
+function
+    llr_horizontal_update_one_check_only!(
+        Lq::AbstractVector{<:AbstractFloat},
+        nodes::Vector{<:Integer},
+        _node::Integer,
+        Lr::AbstractFloat
+    )
+    pLr = 1.0
+    for node in nodes
+        if node != _node
+            @inbounds @fastmath pLr *= tanh(0.5*Lq[node])
+        end
+    end
+
+    if abs(pLr) < 1 
+        return @inbounds @fastmath 2*atanh(pLr)
+    else
+        return Lr
+    end
+
 end
 
 ###################### ALTERNATIVE TO HYPERBOLIC TANGENT #######################
@@ -114,39 +163,10 @@ function
         y::Nothing
     )    
 
-    check = 0
-    for nodes in checks2nodes
-        check += 1       
-        s = Int8(1)
-        # first index 
-        @inbounds max_idx = nodes[1]
-        @inbounds minL, sn[max_idx], s = abs_sign!(Lq[check,max_idx],s) 
-        # second index
-        @inbounds node = nodes[2]
-        @inbounds minL2, sn[node], s = abs_sign!(Lq[check,node],s)      
-        if minL2 < minL
-            max_idx = node
-            minL, minL2 = minL2, minL
-        end
-        # remaining nodes
-        next = iterate(nodes,3)
-        while next !== nothing
-            (node,state) = next
-            @inbounds β, sn[node], s = abs_sign!(Lq[check,node],s)
-            if β < minL
-                max_idx = node
-                minL, minL2 = β, minL
-            elseif β < minL2
-                minL2 = β
-            end
-            next = iterate(nodes,state)
-        end
-        for node in nodes
-            if node == max_idx #(pick the second least Lq)
-                @inbounds Lr[check,node] = flipsign(s,sn[node])*minL2
-            else
-                @inbounds Lr[check,node] = flipsign(s,sn[node])*minL
-            end
-        end  
-    end
+    min_sum!(
+        Lr,                           
+        Lq,
+        checks2nodes,
+        sn,
+    ) 
 end

@@ -14,7 +14,7 @@ include("performance_estimation.jl")
 PRINTING = true
 SEED = 1428
 
-MAX = 60
+MAX = 3
 NREALS = 1
 
 SIZE::Int64 = 1024

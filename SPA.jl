@@ -80,8 +80,7 @@ function
                 Lf,
                 checks2nodes,
                 nodes2checks,
-                Lrn,
-                R
+                sn,
             )
         end
 

@@ -108,7 +108,7 @@ function
     elseif mode == "LBP" || mode == "RBP"
         flooding = false
         Lrn = zeros(N)
-        sn = nothing
+        sn = ones(Int8,N)
         phi = nothing
     end
     

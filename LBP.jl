@@ -3,7 +3,8 @@
 # 17 set 2024
 # LBP Sum-Product Algorithm
 
-include("tanh_llr_horizontal_update.jl")
+include("llr_horizontal_update.jl")
+include("MAP.jl")
 
 function
     LBP!(
@@ -29,7 +30,12 @@ function
             end
         end
         # horizontal update
-        tanh_llr_horizontal_update!(Lr,Lq,nodes,check,Lrn)
+        _llr_horizontal_update!(
+            view(Lr,check,:),
+            view(Lq,check,:),
+            Lrn,
+            nodes
+        )
     end
 
     MAP!(
