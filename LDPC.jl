@@ -40,8 +40,9 @@ RANGE::Int64 = 20
 
 SIZE_per_RANGE::Float64 = SIZE/RANGE
 
-NREALS::Int = 100
+NREALS::Int = 10_000
 MAX::Int = 30
+MAX_RBP::Int = 5
 
 LR_idx = 9;
 
@@ -92,7 +93,8 @@ if TNH
         Checks2nodes,
         Nodes2checks,
         "TNH",
-        1
+        1,
+        MAX
     )
 end
 if ALT
@@ -103,7 +105,8 @@ if ALT
         Checks2nodes,
         Nodes2checks,
         "ALT",
-        1
+        1,
+        MAX
     )
 end
 if TAB
@@ -114,7 +117,8 @@ if TAB
         Checks2nodes,
         Nodes2checks,
         "TAB",
-        1
+        1,
+        MAX
     )
 end
 if MIN
@@ -125,7 +129,8 @@ if MIN
         Checks2nodes,
         Nodes2checks,
         "MIN",
-        1
+        1,
+        MAX
     )
 end
 if LBP
@@ -136,7 +141,8 @@ if LBP
         Checks2nodes,
         Nodes2checks,
         "LBP",
-        1
+        1,
+        MAX
     )
 end
 if RBP
@@ -147,7 +153,8 @@ if RBP
         Checks2nodes,
         Nodes2checks,
         "RBP",
-        1
+        1,
+        MAX_RBP
     )
 end
                              
@@ -162,7 +169,8 @@ if NREALS > 1
                 Checks2nodes,
                 Nodes2checks,
                 "TNH",
-                NREALS
+                NREALS,
+                MAX
             )
         ;
     end
@@ -175,7 +183,8 @@ if NREALS > 1
                 Checks2nodes,
                 Nodes2checks,
                 "ALT",
-                NREALS
+                NREALS,
+                MAX
             )
         ;
     end
@@ -188,7 +197,8 @@ if NREALS > 1
                 Checks2nodes,
                 Nodes2checks,
                 "TAB",
-                NREALS
+                NREALS,
+                MAX
             )
         ;
     end
@@ -201,7 +211,8 @@ if NREALS > 1
                 Checks2nodes,
                 Nodes2checks,
                 "MIN",
-                NREALS
+                NREALS,
+                MAX
             )
         ;
     end
@@ -214,7 +225,8 @@ if NREALS > 1
                 Checks2nodes,
                 Nodes2checks,
                 "LBP",
-                NREALS
+                NREALS,
+                MAX
             )
         ;
     end
@@ -227,7 +239,8 @@ if NREALS > 1
                 Checks2nodes,
                 Nodes2checks,
                 "RBP",
-                NREALS
+                NREALS,
+                MAX_RBP
             )
         ;
     end
@@ -343,7 +356,7 @@ if NREALS > 1
         if RBP
             display(
                 plot(
-                    1:MAX,
+                    1:MAX_RBP,
                     BER_rbp,
                     label=ber_labels,
                     lw=2,

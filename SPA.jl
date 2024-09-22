@@ -35,14 +35,14 @@ function
         r::Union{Array{<:AbstractFloat,3},Nothing},
         q::Union{Array{<:AbstractFloat,3},Nothing},
         printing::Union{Bool,Nothing},
-        R::Matrix{<:AbstractFloat}
+        max::Integer
     )
              
-    index = MAX
+    index = max
     FIRST = true
     DECODED = false
 
-    for i in 1:MAX
+    for i in 1:max
 
         if flooding
             llr_horizontal_update!(

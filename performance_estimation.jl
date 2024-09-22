@@ -15,7 +15,8 @@ function
         checks2nodes::Vector{Vector{T}} where {T<:Integer},
         nodes2checks::Vector{Vector{T}} where {T<:Integer},
         mode::String,
-        nreals::Integer;
+        nreals::Integer,
+        max::Integer;
         t_test=nothing,
         printing=false,
     )
@@ -51,8 +52,8 @@ function
     FER = zeros(length(σ))
 
     # bit error rate
-    ber = zeros(MAX)    
-    BER = zeros(MAX,length(σ))
+    ber = zeros(max)    
+    BER = zeros(max,length(σ))
 
     # iteration in which SPA stopped
     iters = zeros(Int, length(σ), nreals)
@@ -81,7 +82,6 @@ function
     # Vertical and horizontal update matrices
     Lq = H*0.0
     Lr = H*0.0
-    R = H*0.0 #residues
     r, q = (TEST ? (zeros(M,N,2), zeros(M,N,2)) : (nothing, nothing))
    
     # Set variables that depend on the mode
@@ -150,7 +150,6 @@ function
             end            
             # initialize matrix Lr
             Lr .*= 0
-            R .*= 0
             # initialize matrix Lq
             llr_init_q!(Lq,Lf,nodes2checks)                
             # SPA routine
@@ -178,7 +177,7 @@ function
                     r,
                     q,
                     printing,
-                    R
+                    max
                 )                
 
             # bit error rate
