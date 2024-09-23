@@ -1,22 +1,26 @@
 ################################################################################
 # Allan Eduardo Feitosa
 # 27 ago 2024
-# Horizontal update of the LLR based Sum-Product Algorithm
-# There are 3 different methods to update: tanh, alternative and table
+# Horizontal update of the LLR based Sum-Product Algorithm (with Inf restriction)
+# There are 4 different methods to update: tanh, alternative, table and min-sum 
+
+include("min_sum.jl")
 
 ######################### SPA USING HYPERBOLIC TANGENT #########################
 function 
-    llr_horizontal_update_tnh!(
+    llr_horizontal_update!(
         Lr::Matrix{<:AbstractFloat},
         Lq::Matrix{<:AbstractFloat},
         checks2nodes::Vector{Vector{T}} where {T<:Integer},
-        Lrn::Vector{<:AbstractFloat}
+        Lrn::Vector{<:AbstractFloat},
+        x::Nothing,
+        z::Nothing
     )
 
     check = 0
     for nodes in checks2nodes
         check += 1
-        _llr_horizontal_update_tnh!(
+        _llr_horizontal_update!(
             view(Lr,check,:),
             view(Lq,check,:),
             Lrn,
@@ -27,7 +31,7 @@ end
 
 # The core function below is is also used in the LBP algorithm
 function
-    _llr_horizontal_update_tnh!(
+    _llr_horizontal_update!(
         Lr::AbstractVector{<:AbstractFloat},
         Lq::AbstractVector{<:AbstractFloat},
         Lrn::Vector{<:AbstractFloat},
@@ -40,7 +44,7 @@ function
     end
     for node in nodes
         @inbounds @fastmath x = pLr/Lrn[node]
-        if abs(x) < 1 # controls divergent values of Lr
+        if abs(x) < 1 #(Inf restriction)
             @inbounds @fastmath Lr[node] = 2*atanh(x)
         end
     end
@@ -80,12 +84,13 @@ function phi_sign!(Lq::AbstractFloat,s::Integer)
 end
 
 function 
-    llr_horizontal_update_alt!(
+    llr_horizontal_update!(
         Lr::Matrix{<:AbstractFloat},                            
         Lq::Matrix{<:AbstractFloat},
         checks2nodes::Vector{Vector{T}} where {T<:Integer},
         Lrn::Vector{<:AbstractFloat},
         sn::Vector{<:Integer},
+        x::Nothing
     )
 
     check = 0
@@ -118,7 +123,7 @@ function
 end
 
 function
-    llr_horizontal_update_tab!(
+    llr_horizontal_update!(
         Lr::Matrix{<:AbstractFloat},                            
         Lq::Matrix{<:AbstractFloat},
         checks2nodes::Vector{Vector{T}} where {T<:Integer},
@@ -142,3 +147,26 @@ function
     end
 end
 
+################################### MIN SUM ####################################
+
+function abs_sign!(Lq::AbstractFloat,s::Integer)
+    return abs(Lq), sign(Lq), flipsign(s,Lq)
+end
+
+function
+    llr_horizontal_update!(
+        Lr::Matrix{<:AbstractFloat},                           
+        Lq::Matrix{<:AbstractFloat},
+        checks2nodes::Vector{Vector{T}} where {T<:Integer},
+        x::Nothing,
+        sn::Vector{<:Integer},
+        y::Nothing
+    )    
+
+    min_sum!(
+        Lr,                           
+        Lq,
+        checks2nodes,
+        sn,
+    ) 
+end

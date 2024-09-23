@@ -27,9 +27,9 @@ function
     # set random seed
     Random.seed!(SEED)
 
-    ############################## CHECK MODE ##################################
+    ################################ CHECK MODE ####################################
     if (mode ≠ "TNH") && (mode ≠ "ALT") && (mode ≠ "TAB") && (mode ≠ "MIN") &&
-       (mode ≠ "LBP") && (mode ≠ "RBP") && (mode ≠ "RBP_R")
+        (mode ≠ "LBP") && (mode ≠ "RBP") && (mode ≠ "RBP_R")
         throw(
             ArgumentError(
                 "$mode is not a valid mode"
@@ -39,8 +39,6 @@ function
 
     ############################### constants ##################################
 
-    M = length(checks2nodes)
-    N = length(nodes2checks)
     # BPKS
     u = Float64.(2*c .- 1)
 
@@ -81,33 +79,18 @@ function
     Lq = H*0.0
     Lr = H*0.0
 
+    # variables used only if testing
     f = TEST ? zeros(N,2) : nothing
     q,r = TEST ? (zeros(M,N,2),zeros(M,N,2)) : (nothing,nothing)
-   
+
     # Set variables that depend on the mode
-    if mode == "TNH"
-        flooding = true
+    if mode == "TNH" || mode == "LBP"
         Lrn = zeros(N)
         sn = nothing
-    elseif mode == "ALT"
-        flooding = true
+    elseif mode == "ALT" || mode == "TAB"
         Lrn = zeros(N)
         sn = ones(Int8,N)
-    elseif mode == "TAB"
-        flooding = true
-        Lrn = zeros(N)
-        sn = ones(Int8,N)
-    elseif mode == "MIN"
-        flooding = true
-        Lrn = nothing
-        sn = ones(Int8,N)
-        phi = nothing
-    elseif mode == "LBP"
-        flooding = false
-        Lrn = zeros(N)
-        sn = nothing
-    elseif mode == "RBP" || mode == "RBP_R"
-        flooding = false
+    elseif mode == "MIN" || mode == "RBP" || mode == "RBP_R"
         Lrn = nothing
         sn = ones(Int8,N)
     end
@@ -116,7 +99,7 @@ function
     R = (mode == "RBP_R") ? H*0.0 : nothing
     Edges = (mode == "RBP" || mode == "RBP_R") ? H*0 : nothing
     max_coords = (mode == "RBP" || mode == "RBP_R") ? [1,1] : nothing
-    
+
     ######################### FIRST RECEIVED SIGNAL ############################
     # In order to allow a test with a given received signal t_test, the first
     # received signal t is set outside the main loop.
@@ -147,8 +130,9 @@ function
     end
 
     ############################## MAIN LOOP ##################################
-    for k in eachindex(σ)    
+    for k in eachindex(σ)
         for j in 1:nreals
+
             # init the llr priors
             calc_Lf!(Lf,t,σ[k]^2)
             if mode == "TAB"
@@ -159,7 +143,7 @@ function
             Lr .*= 0
             # initialize matrix Lq
             llr_init_q!(Lq,Lf,nodes2checks)
-    
+
             if mode == "RBP"
                 # find max_coords for the first update
                 check = 0
@@ -192,7 +176,6 @@ function
             DECODED, i = 
             SPA!(
                 mode,
-                flooding,
                 TEST,
                 max,
                 syndrome,
@@ -226,8 +209,9 @@ function
                 # frame error rate
                 @inbounds FER[k] += 1
             end
-            # receibed signal for the next realization (j+1)
+            # received signal for the next realization (j+1)
             received!(t,noise,σ[k],u)
+
         end
 
         @inbounds @fastmath FER[k] /= NREALS

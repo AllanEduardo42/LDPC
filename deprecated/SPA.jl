@@ -15,6 +15,7 @@ include("RBP_R.jl")
 function 
     SPA!(
         mode::String,
+        flooding::Bool,
         test::Bool,
         max::Integer,
         syndrome::Vector{Bool},
@@ -45,37 +46,8 @@ function
 
     for i in 1:max
 
-        if mode == "TNH"
-            llr_horizontal_update_tnh!(
-                Lr,
-                Lq,
-                checks2nodes,
-                Lrn
-            )
-            llr_vertical_update_and_MAP!(
-                Lq,
-                d,
-                Lr,
-                Lf,
-                nodes2checks
-            )  
-        elseif mode == "ALT"
-            llr_horizontal_update_alt!(
-                Lr,
-                Lq,
-                checks2nodes,
-                Lrn,
-                sn
-            )
-            llr_vertical_update_and_MAP!(
-                Lq,
-                d,
-                Lr,
-                Lf,
-                nodes2checks
-            )  
-        elseif mode == "TAB"
-            llr_horizontal_update_tab!(
+        if flooding
+            llr_horizontal_update!(
                 Lr,
                 Lq,
                 checks2nodes,
@@ -89,21 +61,7 @@ function
                 Lr,
                 Lf,
                 nodes2checks
-            )  
-        elseif mode == "MIN"
-            min_sum!(
-                Lr,
-                Lq,
-                checks2nodes,
-                sn
-            )
-            llr_vertical_update_and_MAP!(
-                Lq,
-                d,
-                Lr,
-                Lf,
-                nodes2checks
-            )        
+            )          
         elseif mode == "LBP"
             LBP!(
                 d,

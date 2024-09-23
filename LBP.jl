@@ -30,7 +30,7 @@ function
             end
         end
         # horizontal update
-        _llr_horizontal_update!(
+        _llr_horizontal_update_tnh!(
             view(Lr,check,:),
             view(Lq,check,:),
             Lrn,

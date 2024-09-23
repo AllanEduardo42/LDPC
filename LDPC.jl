@@ -14,10 +14,10 @@ using SparseArrays
 ################################ SPA MODE FLAGS ################################
 
 TNH = true
-ALT = false
-TAB = false
-MIN = false
-LBP = false
+ALT = true
+TAB = true
+MIN = true
+LBP = true
 RBP = true
 RBP_R = false
 
