@@ -13,10 +13,10 @@ function
     
     d .*= false
     node = 0
-    for nodes in nodes2checks
+    for checks in nodes2checks
         node += 1
         @inbounds Ld = ΔLf[node]
-        for check in nodes
+        for check in checks
             @inbounds @fastmath Ld += Lr[check,node]
         end
         if Ld < 0

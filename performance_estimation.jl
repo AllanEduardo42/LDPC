@@ -28,7 +28,7 @@ function
 
     ############################## CHECK MODE ##################################
     if (mode ≠ "TNH") && (mode ≠ "ALT") && (mode ≠ "TAB") && (mode ≠ "MIN") &&
-       (mode ≠ "LBP") && (mode ≠ "RBP")
+       (mode ≠ "LBP") && (mode ≠ "RBP") && (mode ≠ "RBP_R")
         throw(
             ArgumentError(
                 "$mode is not a valid mode"
@@ -89,28 +89,31 @@ function
         flooding = true
         Lrn = zeros(N)
         sn = nothing
-        phi = nothing
     elseif mode == "ALT"
         flooding = true
         Lrn = zeros(N)
         sn = ones(Int8,N)
-        phi = nothing
     elseif mode == "TAB"
         flooding = true
         Lrn = zeros(N)
         sn = ones(Int8,N)
-        phi = lookupTable()
     elseif mode == "MIN"
         flooding = true
         Lrn = nothing
         sn = ones(Int8,N)
         phi = nothing
-    elseif mode == "LBP" || mode == "RBP"
+    elseif mode == "LBP"
         flooding = false
         Lrn = zeros(N)
+        sn = nothing
+    elseif mode == "RBP" || mode == "RBP_R"
+        flooding = false
+        Lrn = nothing
         sn = ones(Int8,N)
-        phi = nothing
     end
+
+    phi = (mode == "TAB") ? lookupTable() : nothing
+    R = (mode == "RBP_R") ? H*0.0 : nothing
     
     ######################### FIRST RECEIVED SIGNAL ############################
     # In order to allow a test with a given received signal t_test, the first
@@ -177,7 +180,8 @@ function
                     r,
                     q,
                     printing,
-                    max
+                    max,
+                    R
                 )                
 
             # bit error rate

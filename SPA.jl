@@ -10,6 +10,7 @@ include("llr_vertical_update_and_MAP.jl")
 include("calc_syndrome.jl")
 include("LBP.jl")
 include("RBP.jl")
+include("RBP_R.jl")
 
 function 
     SPA!(
@@ -35,12 +36,17 @@ function
         r::Union{Array{<:AbstractFloat,3},Nothing},
         q::Union{Array{<:AbstractFloat,3},Nothing},
         printing::Union{Bool,Nothing},
-        max::Integer
+        max::Integer,
+        R::Union{Matrix{<:AbstractFloat},Nothing}
     )
              
     index = max
     FIRST = true
     DECODED = false
+
+    if mode == "RBP_R"
+        R .*= 0.0
+    end
 
     for i in 1:max
 
@@ -80,7 +86,20 @@ function
                 Lf,
                 checks2nodes,
                 nodes2checks,
+                sn
+            )
+        elseif mode == "RBP_R"
+            max_coords = [1,1]
+            RBP_R!(
+                d,
+                Lr,
+                max_coords,
+                Lq,
+                Lf,
+                checks2nodes,
+                nodes2checks,
                 sn,
+                R
             )
         end
 

@@ -14,11 +14,12 @@ using SparseArrays
 ################################ SPA MODE FLAGS ################################
 
 TNH = true
-ALT = true
-TAB = true
-MIN = true
-LBP = true
+ALT = false
+TAB = false
+MIN = false
+LBP = false
 RBP = true
+RBP_R = true
 
 PLOT_BER = true
 HISTOGRAMS = false
@@ -40,7 +41,7 @@ RANGE::Int64 = 20
 
 SIZE_per_RANGE::Float64 = SIZE/RANGE
 
-NREALS::Int = 10_000
+NREALS::Int = 1000
 MAX::Int = 30
 MAX_RBP::Int = 5
 
@@ -50,13 +51,15 @@ LR_idx = 9;
 
 ### PEG Algorithm
 
-N = 512
-M = 256
+N::Int64 = 512
+M::Int64 = 256
 Random.seed!(SEED2)
 
 D = rand([2,3,4],N)
 
 H, girth = PEG!(D,M)
+
+N_MESSAGES::Int64 = sum(H)
 
 println("girth = ", girth)
 
@@ -157,6 +160,18 @@ if RBP
         MAX_RBP
     )
 end
+if RBP_R
+    R_rbpr, Lr_rbpr, Q_rbpr, LQ_rbpr = performance_estimation(
+        C,
+        [Sigma[LR_idx]],
+        H,
+        Checks2nodes,
+        Nodes2checks,
+        "RBP_R",
+        1,
+        MAX_RBP
+    )
+end
                              
 ########################### PERFORMANCE SIMULATION ############################
 if NREALS > 1
@@ -244,6 +259,20 @@ if NREALS > 1
             )
         ;
     end
+    if RBP_R
+        @time FER_rbpr, BER_rbpr, Iters_rbpr = 
+            performance_estimation(
+                C,
+                Sigma,
+                H,
+                Checks2nodes,
+                Nodes2checks,
+                "RBP_R",
+                NREALS,
+                MAX_RBP
+            )
+        ;
+    end
     ################################### PLOTTING ###################################
     plotlyjs()
     lim = log10(1/NREALS)
@@ -272,6 +301,10 @@ if NREALS > 1
     if RBP
         append!(yaxis,[FER_rbp])
         push!(fer_labels,"SPA RBP")
+    end
+    if RBP
+        append!(yaxis,[FER_rbp])
+        push!(fer_labels,"SPA RBP_R")
     end
     fer_labels = permutedims(fer_labels)
 
@@ -361,6 +394,18 @@ if NREALS > 1
                     label=ber_labels,
                     lw=2,
                     title="BER SPA RBP",
+                    ylims=(lim-1,0)
+                )
+            )
+        end
+        if RBP_R
+            display(
+                plot(
+                    1:MAX_RBP,
+                    BER_rbpr,
+                    label=ber_labels,
+                    lw=2,
+                    title="BER SPA RBP_R",
                     ylims=(lim-1,0)
                 )
             )
