@@ -15,7 +15,6 @@ function
         nodes2checks::Vector{Vector{T}} where {T<:Integer}
     )
 
-    d .*= false
     node = 0
     for checks in nodes2checks
         node += 1

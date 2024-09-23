@@ -11,7 +11,6 @@ function
         Lr::Matrix{<:AbstractFloat}
     )
     
-    d .*= false
     node = 0
     for checks in nodes2checks
         node += 1
@@ -34,10 +33,7 @@ function
     for check in checks
         @inbounds @fastmath Ld += Lr[check]
     end
-    if Ld < 0
-        return 1, Ld
-    else
-        return 0, Ld
-    end
+    
+    return signbit(Ld), Ld
 
 end
