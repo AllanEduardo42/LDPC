@@ -6,6 +6,7 @@
 include("lookupTable.jl")
 include("SPA.jl")
 include("calc_priors.jl")
+include("min_sum.jl")
 
 function 
     performance_estimation(
@@ -114,6 +115,8 @@ function
 
     phi = (mode == "TAB") ? lookupTable() : nothing
     R = (mode == "RBP_R") ? H*0.0 : nothing
+    Edges = (mode == "RBP" || mode == "RBP_R") ? H*0 : nothing
+    max_coords = (mode == "RBP" || mode == "RBP_R") ? [1,1] : nothing
     
     ######################### FIRST RECEIVED SIGNAL ############################
     # In order to allow a test with a given received signal t_test, the first
@@ -154,7 +157,36 @@ function
             # initialize matrix Lr
             Lr .*= 0
             # initialize matrix Lq
-            llr_init_q!(Lq,Lf,nodes2checks)                
+            llr_init_q!(Lq,Lf,nodes2checks)
+    
+            if mode == "RBP"
+                # find max_coords for the first update
+                check = 0
+                for nodes in checks2nodes
+                    check += 1
+                    min_sum_RBP_init!(
+                        max_coords,
+                        view(Lq,check,:),
+                        sn,
+                        nodes,
+                        check,
+                    )
+                end
+            end
+            if mode == "RBP_R"
+                # initialize the matrix of residues R
+                check = 0
+                for nodes in checks2nodes
+                    check += 1
+                    min_sum_RBP_R_init!(
+                        R,
+                        view(Lq,check,:),
+                        sn,
+                        nodes,
+                        check
+                    )
+                end
+            end       
             # SPA routine
             DECODED, i = 
                 SPA!(
@@ -181,7 +213,9 @@ function
                     q,
                     printing,
                     max,
-                    R
+                    R,
+                    Edges,
+                    max_coords
                 )                
 
             # bit error rate
@@ -202,7 +236,11 @@ function
     end
 
     if TEST
-        return r, Lr, q, Lq
+        if mode == "RBP" || mode == "RBP_R"
+            return r, Lr, q, Lq, Edges
+        else
+            return r, Lr, q, Lq
+        end
     else
         return log10.(FER), log10.(BER), iters
     end

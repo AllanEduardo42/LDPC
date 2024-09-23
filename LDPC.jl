@@ -149,7 +149,7 @@ if LBP
     )
 end
 if RBP
-    R_rbp, Lr_rbp, Q_rbp, LQ_rbp = performance_estimation(
+    R_rbp, Lr_rbp, Q_rbp, LQ_rbp, Edges_n = performance_estimation(
         C,
         [Sigma[LR_idx]],
         H,
@@ -161,7 +161,7 @@ if RBP
     )
 end
 if RBP_R
-    R_rbpr, Lr_rbpr, Q_rbpr, LQ_rbpr = performance_estimation(
+    R_rbpr, Lr_rbpr, Q_rbpr, LQ_rbpr, Edges_r = performance_estimation(
         C,
         [Sigma[LR_idx]],
         H,

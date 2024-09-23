@@ -19,27 +19,13 @@ function
         checks2nodes::Vector{Vector{T}} where {T<:Integer},
         nodes2checks::Vector{Vector{T}} where {T<:Integer},
         sn::Vector{Int8},
+        Edges::Matrix{<:Integer}
     )
-
-    max_residue = 0.0
-    check = 0
-    for nodes in checks2nodes
-        check += 1
-        max_residue = min_sum_RBP!(
-            view(Lr,check,:),
-            view(Lq,check,:),
-            sn,
-            nodes,
-            0,
-            check,
-            max_residue,
-            max_coords
-        )
-    end
 
     for m in 1:EDGES
 
         (cmax,nmax) = max_coords
+        Edges[cmax,nmax] += 1
         Lr[cmax,nmax] = llr_horizontal_update_one_check_only!(
             view(Lq,cmax,:),
             checks2nodes[cmax],
@@ -61,14 +47,14 @@ function
                 # find max ΔLr[node,check], node ≠ nmax, check ≠ cmax
                 _nodes = checks2nodes[check]
                 max_residue = min_sum_RBP!(
+                    max_coords,
+                    max_residue,
                     view(Lr,check,:),
                     view(Lq,check,:),
                     sn,
                     _nodes,
                     nmax,
-                    check,
-                    max_residue,
-                    max_coords
+                    check
                 )
             end
         end

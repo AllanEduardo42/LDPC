@@ -19,21 +19,9 @@ function
         checks2nodes::Vector{Vector{T}} where {T<:Integer},
         nodes2checks::Vector{Vector{T}} where {T<:Integer},
         sn::Vector{Int8},
-        R::Matrix{<:AbstractFloat}
+        R::Matrix{<:AbstractFloat},
+        Edges::Matrix{<:Integer}
     )
-
-    check = 0
-    for nodes in checks2nodes
-        check += 1
-        min_sum_RBP_R!(
-            view(Lr,check,:),
-            view(Lq,check,:),
-            sn,
-            nodes,
-            check,
-            R
-        )
-    end
 
     for m in 1:EDGES
 
@@ -44,6 +32,7 @@ function
         end
 
         (cmax,nmax) = max_coords
+        Edges[cmax,nmax] += 1
         Lr[cmax,nmax] = llr_horizontal_update_one_check_only!(
             view(Lq,cmax,:),
             checks2nodes[cmax],
@@ -69,13 +58,13 @@ function
                 # if any new residue estimate is larger than the previously estimated maximum 
                 # residue than update the value of max_residue and max_coords.
                 min_sum_RBP_R!(
+                    R,
                     view(Lr,check,:),
                     view(Lq,check,:),
                     sn,
                     _nodes,
                     nmax,
-                    check,
-                    R
+                    check
                 )
             end
         end
@@ -100,11 +89,13 @@ function
 
     check = 0
     max_residue = 0
+    x = 0.0
     for nodes in checks2nodes
         check += 1
         for node in nodes
-            if R[check,node] > max_residue
-                max_residue = R[check,node]
+            x = R[check,node]
+            if x > max_residue
+                max_residue = x
                 max_coords[1] = check
                 max_coords[2] = node
             end

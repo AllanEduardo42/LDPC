@@ -37,16 +37,14 @@ function
         q::Union{Array{<:AbstractFloat,3},Nothing},
         printing::Union{Bool,Nothing},
         max::Integer,
-        R::Union{Matrix{<:AbstractFloat},Nothing}
+        R::Union{Matrix{<:AbstractFloat},Nothing},
+        Edges::Union{Matrix{<:Integer},Nothing},
+        max_coords::Union{Vector{<:Integer},Nothing}
     )
              
     index = max
     FIRST = true
     DECODED = false
-
-    if mode == "RBP_R"
-        R .*= 0.0
-    end
 
     for i in 1:max
 
@@ -77,7 +75,7 @@ function
                 Lrn
             )
         elseif mode == "RBP"
-            max_coords = [1,1]
+            Edges .*= 0
             RBP!(
                 d,
                 Lr,
@@ -86,10 +84,11 @@ function
                 Lf,
                 checks2nodes,
                 nodes2checks,
-                sn
+                sn,
+                Edges
             )
         elseif mode == "RBP_R"
-            max_coords = [1,1]
+            Edges .*= 0
             RBP_R!(
                 d,
                 Lr,
@@ -99,7 +98,8 @@ function
                 checks2nodes,
                 nodes2checks,
                 sn,
-                R
+                R,
+                Edges
             )
         end
 

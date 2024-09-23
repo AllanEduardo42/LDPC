@@ -70,14 +70,14 @@ end
 ### specialized method for the RBP algorithm
 function
     min_sum_RBP!(
+        max_coords::Vector{<:Integer},
+        max_residue::AbstractFloat,
         Lr::AbstractVector{<:AbstractFloat},                           
         Lq::AbstractVector{<:AbstractFloat},
         sn::Vector{<:Integer},
         nodes::Vector{<:Integer},
         nmax::Integer,
-        check::Integer,
-        max_residue::AbstractFloat,
-        max_coords::Vector{<:Integer} 
+        check::Integer
     )
     
     x = 0.0
@@ -98,16 +98,40 @@ function
     return max_residue
 end
 
+function
+    min_sum_RBP_init!(          
+        max_coords::Vector{<:Integer},              
+        Lq::AbstractVector{<:AbstractFloat},
+        sn::Vector{<:Integer},
+        nodes::Vector{<:Integer},
+        check::Integer
+    )
+    
+    x = 0.0
+    y = 0.0
+    max_residue = 0.0
+    minL, minL2, s, max_idx = _min_sum!(Lq,sn,nodes)
+    for node in nodes
+        x = __min_sum!(node,max_idx,s,sn[node],minL,minL2)
+        y = abs(x) 
+        if y > max_residue
+            max_residue = y
+            max_coords[1] = check
+            max_coords[2] = node
+        end
+    end
+end
+
 ### specialized method for the RBP algorithm
 function
     min_sum_RBP_R!(
+        R::Matrix{<:AbstractFloat},
         Lr::AbstractVector{<:AbstractFloat},                           
         Lq::AbstractVector{<:AbstractFloat},
         sn::Vector{<:Integer},
         nodes::Vector{<:Integer},
         nmax::Integer,
-        check::Integer,
-        R::Matrix{<:AbstractFloat}
+        check::Integer
     )
     
     x = 0.0
@@ -122,20 +146,19 @@ function
 end
 
 function
-    min_sum_RBP_R!(
-        Lr::AbstractVector{<:AbstractFloat},                           
+    min_sum_RBP_R_init!(     
+        R::Matrix{<:AbstractFloat},                    
         Lq::AbstractVector{<:AbstractFloat},
         sn::Vector{<:Integer},
         nodes::Vector{<:Integer},
         check::Integer,
-        R::Matrix{<:AbstractFloat}
     )
     
     x = 0.0
     minL, minL2, s, max_idx = _min_sum!(Lq,sn,nodes)
     for node in nodes
         x = __min_sum!(node,max_idx,s,sn[node],minL,minL2)
-        R[check,node] = abs(x - Lr[node]) 
+        R[check,node] = abs(x) 
     end
 
 end
