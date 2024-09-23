@@ -15,12 +15,29 @@ function
     node = 0
     for checks in nodes2checks
         node += 1
-        @inbounds Ld = ΔLf[node]
-        for check in checks
-            @inbounds @fastmath Ld += Lr[check,node]
-        end
-        if Ld < 0
-            @inbounds d[node] = 1
-        end
+        @inbounds d[node], _ = _MAP!(
+            checks,
+            ΔLf[node],
+            view(Lr,:,node)
+        )
     end
+
+end
+
+function 
+    _MAP!(
+        checks::Vector{<:Integer},
+        ΔLf::AbstractFloat,
+        Lr::AbstractVector{<:AbstractFloat}
+    )
+    Ld = ΔLf
+    for check in checks
+        @inbounds @fastmath Ld += Lr[check]
+    end
+    if Ld < 0
+        return 1, Ld
+    else
+        return 0, Ld
+    end
+
 end
