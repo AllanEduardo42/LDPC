@@ -25,18 +25,17 @@ function
     check = 0
     for nodes in checks2nodes
         check += 1
-        min_sum_RBP!(
+        min_sum_RBP_R!(
             view(Lr,check,:),
             view(Lq,check,:),
             sn,
             nodes,
-            0,
             check,
             R
         )
     end
 
-    for m in 1:1531
+    for m in 1:EDGES
 
         max_residue = find_max_residue_coords!(max_coords,R,checks2nodes)
 

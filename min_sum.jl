@@ -121,3 +121,22 @@ function
 
 end
 
+function
+    min_sum_RBP_R!(
+        Lr::AbstractVector{<:AbstractFloat},                           
+        Lq::AbstractVector{<:AbstractFloat},
+        sn::Vector{<:Integer},
+        nodes::Vector{<:Integer},
+        check::Integer,
+        R::Matrix{<:AbstractFloat}
+    )
+    
+    x = 0.0
+    minL, minL2, s, max_idx = _min_sum!(Lq,sn,nodes)
+    for node in nodes
+        x = __min_sum!(node,max_idx,s,sn[node],minL,minL2)
+        R[check,node] = abs(x - Lr[node]) 
+    end
+
+end
+

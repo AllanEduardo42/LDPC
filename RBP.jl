@@ -37,7 +37,7 @@ function
         )
     end
 
-    for m in 1:1531
+    for m in 1:EDGES
 
         (cmax,nmax) = max_coords
         Lr[cmax,nmax] = llr_horizontal_update_one_check_only!(

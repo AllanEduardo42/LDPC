@@ -19,7 +19,7 @@ TAB = false
 MIN = false
 LBP = false
 RBP = true
-RBP_R = false
+RBP_R = true
 
 PLOT_BER = true
 HISTOGRAMS = false
@@ -41,7 +41,7 @@ RANGE::Int64 = 20
 
 SIZE_per_RANGE::Float64 = SIZE/RANGE
 
-NREALS::Int = 1000
+NREALS::Int = 100
 MAX::Int = 30
 MAX_RBP::Int = 5
 
@@ -59,7 +59,7 @@ D = rand([2,3,4],N)
 
 H, girth = PEG!(D,M)
 
-N_MESSAGES::Int64 = sum(H)
+EDGES::Int64 = sum(H)
 
 println("girth = ", girth)
 
