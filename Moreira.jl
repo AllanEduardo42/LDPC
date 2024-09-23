@@ -23,7 +23,7 @@ SIZE_per_RANGE::Float64 = SIZE/RANGE
 
 Phi = lookupTable()
 
-mode = "MIN"
+mode = "TNH"
 
 H = BitMatrix(
      [0 1 0 1 0 1 1 1 0 0 0 1;
@@ -68,7 +68,8 @@ t = [1.3129, 2.6584, 0.7413, 2.1745, 0.5981, −0.8323, −0.3962, −1.7586,
         Checks2nodes,
         Nodes2checks,
         mode,
-        1;
+        1,
+        MAX;
         t_test=t,
         printing=PRINTING
     )

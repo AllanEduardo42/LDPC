@@ -61,15 +61,12 @@ function
 
     # MAP estimate
     d = Vector{Bool}(undef,N)
-    d_test = (TEST ? Vector{Bool}(undef,N) : nothing)
 
     # syndrome
     syndrome = Vector{Bool}(undef,M)
-    syndrome_test = (TEST ? Vector{Bool}(undef,M) : nothing)
 
     # prior llr-probabilitities
     Lf = Vector{Float64}(undef,N)
-    f = (TEST ? Matrix{Float64}(undef,N,2) : nothing)
 
     # noise
     noise = Vector{Float64}(undef,N)
@@ -83,7 +80,9 @@ function
     # Vertical and horizontal update matrices
     Lq = H*0.0
     Lr = H*0.0
-    r, q = (TEST ? (zeros(M,N,2), zeros(M,N,2)) : (nothing, nothing))
+
+    f = TEST ? zeros(N,2) : nothing
+    q,r = TEST ? (zeros(M,N,2),zeros(M,N,2)) : (nothing,nothing)
    
     # Set variables that depend on the mode
     if mode == "TNH"
@@ -136,10 +135,12 @@ function
             # the received signal is the test signal
             t = t_test
         end
-        # init the priors
+        # init the priors for test
         calc_f!(f,t,σ[1]^2)
-        # init the matrices q
+        # init matrix q
         init_q!(q,f,nodes2checks)
+        # init matrix r
+        r = zeros(M,N,2)
     else
         # generate the first received signal outside the main loop
         received!(t,noise,σ[1],u)
@@ -189,33 +190,31 @@ function
             end       
             # SPA routine
             DECODED, i = 
-                SPA!(
-                    d,
-                    ber,
-                    c,
-                    bit_error,
-                    Lr,
-                    Lq,
-                    checks2nodes,
-                    nodes2checks,
-                    Lf,
-                    syndrome,
-                    Lrn,
-                    sn,
-                    phi,
-                    mode,
-                    flooding,
-                    TEST,
-                    d_test,
-                    syndrome_test,
-                    f,
-                    r,
-                    q,
-                    printing,
-                    max,
-                    R,
-                    Edges,
-                    max_coords
+            SPA!(
+                mode,
+                flooding,
+                TEST,
+                max,
+                syndrome,
+                d,
+                c,
+                bit_error,
+                ber,
+                Lf,
+                Lq,
+                Lr,
+                checks2nodes,
+                nodes2checks,
+                Lrn,
+                sn,
+                phi,
+                f,
+                q,
+                r,
+                printing,
+                R,
+                Edges,
+                max_coords
                 )                
 
             # bit error rate

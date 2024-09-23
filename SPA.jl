@@ -14,29 +14,27 @@ include("RBP_R.jl")
 
 function 
     SPA!(
-        d::Vector{Bool},
-        ber::Vector{<:AbstractFloat},
-        c::Vector{Bool},
-        bit_error::Vector{Bool},
-        Lr::Matrix{<:AbstractFloat}, 
-        Lq::Matrix{<:AbstractFloat},
-        checks2nodes::Vector{Vector{T}} where {T<:Integer},
-        nodes2checks::Vector{Vector{T}} where {T<:Integer},
-        Lf::Vector{<:AbstractFloat},
-        syndrome::Vector{Bool},
-        Lrn::Union{Vector{<:AbstractFloat},Nothing},
-        sn::Union{Vector{Int8},Nothing},        
-        phi::Union{Vector{<:AbstractFloat},Nothing},
         mode::String,
         flooding::Bool,
         test::Bool,
-        d_test::Union{Vector{Bool},Nothing},
-        syndrome_test::Union{Vector{Bool},Nothing},
-        f::Union{Matrix{<:AbstractFloat},Nothing},
-        r::Union{Array{<:AbstractFloat,3},Nothing},
-        q::Union{Array{<:AbstractFloat,3},Nothing},
-        printing::Union{Bool,Nothing},
         max::Integer,
+        syndrome::Vector{Bool},
+        d::Vector{Bool},
+        c::Vector{Bool},
+        bit_error::Vector{Bool},
+        ber::Vector{<:AbstractFloat},
+        Lf::Vector{<:AbstractFloat},
+        Lq::Matrix{<:AbstractFloat},
+        Lr::Matrix{<:AbstractFloat},      
+        checks2nodes::Vector{Vector{T}} where {T<:Integer},
+        nodes2checks::Vector{Vector{T}} where {T<:Integer},
+        Lrn::Union{Vector{<:AbstractFloat},Nothing},
+        sn::Union{Vector{Int8},Nothing},        
+        phi::Union{Vector{<:AbstractFloat},Nothing},
+        f::Union{Matrix{<:AbstractFloat},Nothing},
+        q::Union{Array{<:AbstractFloat,3},Nothing},
+        r::Union{Array{<:AbstractFloat,3},Nothing},
+        printing::Union{Bool,Nothing},        
         R::Union{Matrix{<:AbstractFloat},Nothing},
         Edges::Union{Matrix{<:Integer},Nothing},
         max_coords::Union{Vector{<:Integer},Nothing}
@@ -117,15 +115,13 @@ function
                 δQ,
                 checks2nodes
             )
-            vertical_update_and_MAP!(
+            d_test = vertical_update_and_MAP!(
                 q,
-                d_test,
                 r,
                 f,
                 nodes2checks
             )
-            calc_syndrome!(
-                syndrome_test,
+            syndrome_test = calc_syndrome(
                 d_test,
                 checks2nodes
             )

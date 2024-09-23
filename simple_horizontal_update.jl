@@ -10,18 +10,18 @@ function
         checks2nodes::Vector{Vector{T}} where {T<:Integer}
     )
 
-    m = 0
-    for indices in checks2nodes
-        m += 1
-        for n in indices
+    check = 0
+    for nodes in checks2nodes
+        check += 1
+        for node in nodes
             δr = 1
-            for nn in indices
-                if nn != n
-                    @inbounds δr *= δq[m,nn]
+            for n in nodes
+                if n != node
+                    @inbounds δr *= δq[check,n]
                 end
             end
-            @inbounds r[m,n,1] = 0.5*(1+δr)
-            @inbounds r[m,n,2] = 0.5*(1-δr)
+            @inbounds r[check,node,1] = 0.5*(1+δr)
+            @inbounds r[check,node,2] = 0.5*(1-δr)
         end
     end
 end
