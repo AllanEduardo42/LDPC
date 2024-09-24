@@ -88,10 +88,10 @@ function
         sn = nothing
     elseif mode == "ALT" || mode == "TAB"
         Lrn = zeros(N)
-        sn = ones(Int8,N)
+        sn = zeros(Bool,N)
     elseif mode == "MIN" || mode == "RBP" || mode == "RBP_R"
         Lrn = nothing
-        sn = ones(Int8,N)
+        sn = zeros(Bool,N)
     end
 
     phi = (mode == "TAB") ? lookupTable() : nothing
@@ -100,6 +100,7 @@ function
     max_coords = (mode == "RBP" || mode == "RBP_R") ? [1,1] : nothing
     penalty = (mode == "RBP") ? 1.0*H : nothing
     penalty_factor = (mode == "RBP") ? PENALTY : nothing
+    num_edges = (mode == "RBP") ? sum(H) : nothing
 
     ######################### FIRST RECEIVED SIGNAL ############################
     # In order to allow a test with a given received signal t_test, the first
@@ -148,7 +149,6 @@ function
             if mode == "RBP"
                 # find max_coords for the first update
                 check = 0
-                penalty = 1.0*H
                 for nodes in checks2nodes
                     check += 1
                     min_sum_RBP_init!(
@@ -159,7 +159,6 @@ function
                         check,
                     )
                 end
-                penalty[max_coords[1],max_coords[2]] *= penalty_factor
             end
             if mode == "RBP_R"
                 # initialize the matrix of residues R
@@ -202,7 +201,8 @@ function
                 Edges,
                 max_coords,
                 penalty,
-                penalty_factor
+                penalty_factor,
+                num_edges
                 )                
 
             # bit error rate

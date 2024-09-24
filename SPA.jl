@@ -28,7 +28,7 @@ function
         checks2nodes::Vector{Vector{T}} where {T<:Integer},
         nodes2checks::Vector{Vector{T}} where {T<:Integer},
         Lrn::Union{Vector{<:AbstractFloat},Nothing},
-        sn::Union{Vector{Int8},Nothing},        
+        sn::Union{Vector{Bool},Nothing},        
         phi::Union{Vector{<:AbstractFloat},Nothing},
         f::Union{Matrix{<:AbstractFloat},Nothing},
         q::Union{Array{<:AbstractFloat,3},Nothing},
@@ -39,6 +39,7 @@ function
         max_coords::Union{Vector{<:Integer},Nothing},
         penalty::Union{Matrix{<:AbstractFloat},Nothing},
         penalty_factor::Union{AbstractFloat,Nothing},
+        num_edges::Union{Integer,Nothing}
     )
              
     index = max
@@ -129,8 +130,11 @@ function
                 sn,
                 Edges,
                 penalty,
-                penalty_factor
+                penalty_factor,
+                num_edges
             )
+            # reset penalties
+            reset_penalties!(penalty,checks2nodes)
         elseif mode == "RBP_R"
             Edges .*= 0
             RBP_R!(
@@ -143,7 +147,8 @@ function
                 nodes2checks,
                 sn,
                 R,
-                Edges
+                Edges,
+                num_edges
             )
         end
 
@@ -193,4 +198,19 @@ function
 
     return DECODED, index
 
+end
+
+function 
+    reset_penalties!(
+        penalty::Matrix{<:AbstractFloat},
+        checks2nodes::Vector{Vector{T}} where {T<:Integer}
+    )
+
+    check = 0
+    for nodes in checks2nodes
+        check += 1
+        for node in nodes
+            penalty[check,node] = 1.0
+        end
+    end
 end

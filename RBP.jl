@@ -18,13 +18,15 @@ function
         ΔLf::Vector{<:AbstractFloat},
         checks2nodes::Vector{Vector{T}} where {T<:Integer},
         nodes2checks::Vector{Vector{T}} where {T<:Integer},
-        sn::Vector{Int8},
+        sn::Vector{Bool},
         Edges::Matrix{<:Integer},
         penalty::Matrix{<:AbstractFloat},
         penalty_factor::AbstractFloat,
+        num_edges::Integer
     )
 
-    for m in 1:EDGES
+    e = 1
+    while e <= num_edges
 
         (cmax,nmax) = max_coords
         penalty[cmax,nmax] *= penalty_factor
@@ -66,6 +68,8 @@ function
         if max_residue == 0.0
             break
         end
+
+        e += 1
 
     end
 

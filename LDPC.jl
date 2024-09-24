@@ -16,7 +16,7 @@ using SparseArrays
 TNH = true
 ALT = false
 TAB = false
-MIN = false
+MIN = true
 LBP = false
 RBP = true
 RBP_R = false
@@ -59,8 +59,6 @@ Random.seed!(SEED2)
 D = rand([2,3,4],N)
 
 H, girth = PEG!(D,M)
-
-EDGES::Int64 = sum(H)
 
 println("girth = ", girth)
 

@@ -3,35 +3,40 @@
 # 22 set 2024
 # Horizontal update of the LLR based MIN SUM Algorithm
 
-function abs_sign!(Lq::AbstractFloat,s::Integer)
-    return abs(Lq), sign(Lq), flipsign(s,Lq)
-end
-
 function
     min_sum!(
         Lr::Matrix{<:AbstractFloat},                           
         Lq::Matrix{<:AbstractFloat},
         checks2nodes::Vector{Vector{T}} where {T<:Integer},
-        sn::Vector{<:Integer},
+        sn::Vector{Bool},
     )    
 
     check = 0
     for nodes in checks2nodes
         check += 1
-        minL, minL2, s, max_idx = _min_sum!(view(Lq,check,:),sn,nodes)
+        args = _min_sum!(
+            view(Lq,check,:),
+            sn,
+            nodes
+        )
         for node in nodes
-            Lr[check,node] = __min_sum!(node,max_idx,s,sn[node],minL,minL2)
+            Lr[check,node] = __min_sum!(node,sn[node],args...)
         end
     end
 end
 
+function abs_sign!(Lq::AbstractFloat,s::Integer)
+    sn = signbit(Lq)
+    return abs(Lq), sn, s ⊻ sn
+end
+
 function _min_sum!(                           
     Lq::AbstractVector{<:AbstractFloat},
-    sn::Vector{<:Integer},
+    sn::Vector{Bool},
     nodes::Vector{<:Integer},        
     )
 
-    s = Int8(1)
+    s = false
     minL = Inf
     minL2 = Inf
     max_idx = 0
@@ -52,17 +57,25 @@ end
 function 
     __min_sum!(
         node::Integer,
-        max_idx::Integer,
-        s::Int8,
-        sn::Int8,
+        sn::Bool,
         minL::AbstractFloat,
-        minL2::AbstractFloat
+        minL2::AbstractFloat,
+        s::Bool,
+        max_idx::Integer
     )
 
     if node == max_idx #(pick the second least Lq)
-        return flipsign(s,sn)*minL2
+        if s ⊻ sn #if negative
+            return -minL2
+        else
+            return minL2
+        end
     else
-        return flipsign(s,sn)*minL
+        if s ⊻ sn #if negative
+            return -minL
+        else
+            return minL
+        end
     end
 
 end
@@ -75,7 +88,7 @@ function
         penalty::Matrix{<:AbstractFloat},
         Lr::AbstractVector{<:AbstractFloat},                           
         Lq::AbstractVector{<:AbstractFloat},
-        sn::Vector{<:Integer},
+        sn::Vector{Bool},
         nodes::Vector{<:Integer},
         nmax::Integer,
         check::Integer
@@ -83,10 +96,10 @@ function
     
     x = 0.0
     y = 0.0
-    minL, minL2, s, max_idx = _min_sum!(Lq,sn,nodes)
+    args = _min_sum!(Lq,sn,nodes)
     for node in nodes
         if node ≠ nmax
-            x = __min_sum!(node,max_idx,s,sn[node],minL,minL2)
+            x = __min_sum!(node,sn[node],args...)
             y = abs(x - Lr[node])*penalty[check,node]
             if y > max_residue
                 max_residue = y
@@ -103,7 +116,7 @@ function
     min_sum_RBP_init!(          
         max_coords::Vector{<:Integer},              
         Lq::AbstractVector{<:AbstractFloat},
-        sn::Vector{<:Integer},
+        sn::Vector{Bool},
         nodes::Vector{<:Integer},
         check::Integer
     )
@@ -111,9 +124,9 @@ function
     x = 0.0
     y = 0.0
     max_residue = 0.0
-    minL, minL2, s, max_idx = _min_sum!(Lq,sn,nodes)
+    args = _min_sum!(Lq,sn,nodes)
     for node in nodes
-        x = __min_sum!(node,max_idx,s,sn[node],minL,minL2)
+        x = __min_sum!(node,sn[node],args...)
         y = abs(x) 
         if y > max_residue
             max_residue = y
@@ -129,7 +142,7 @@ function
         R::Matrix{<:AbstractFloat},
         Lr::AbstractVector{<:AbstractFloat},                           
         Lq::AbstractVector{<:AbstractFloat},
-        sn::Vector{<:Integer},
+        sn::Vector{Bool},
         nodes::Vector{<:Integer},
         nmax::Integer,
         check::Integer
@@ -156,9 +169,9 @@ function
     )
     
     x = 0.0
-    minL, minL2, s, max_idx = _min_sum!(Lq,sn,nodes)
+    args = _min_sum!(Lq,sn,nodes)
     for node in nodes
-        x = __min_sum!(node,max_idx,s,sn[node],minL,minL2)
+        x = __min_sum!(node,sn[node],args...)
         R[check,node] = abs(x) 
     end
 

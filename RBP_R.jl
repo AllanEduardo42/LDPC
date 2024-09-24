@@ -20,10 +20,12 @@ function
         nodes2checks::Vector{Vector{T}} where {T<:Integer},
         sn::Vector{Int8},
         R::Matrix{<:AbstractFloat},
-        Edges::Matrix{<:Integer}
+        Edges::Matrix{<:Integer},
+        num_edges::Integer
     )
 
-    for m in 1:EDGES
+    e = 1
+    while e <= num_edges
 
         max_residue = find_max_residue_coords!(max_coords,R,checks2nodes)
 
@@ -68,6 +70,8 @@ function
                 )
             end
         end
+
+        e +=1
 
     end
 

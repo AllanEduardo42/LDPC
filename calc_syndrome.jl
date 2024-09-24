@@ -29,7 +29,7 @@ function
         checks2nodes::Vector{Vector{T}} where {T<:Integer}
     )
 
-    syndrome = zeros(Bool,M)
+    syndrome = zeros(Bool,length(checks2nodes))
     check = 0
     for nodes in checks2nodes
         check += 1
