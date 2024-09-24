@@ -100,7 +100,7 @@ function
     max_coords = (mode == "RBP" || mode == "RBP_R") ? [1,1] : nothing
     penalty = (mode == "RBP") ? 1.0*H : nothing
     penalty_factor = (mode == "RBP") ? PENALTY : nothing
-    num_edges = (mode == "RBP") ? sum(H) : nothing
+    num_edges = (mode == "RBP" || mode == "RBP_R") ? sum(H) : nothing
 
     ######################### FIRST RECEIVED SIGNAL ############################
     # In order to allow a test with a given received signal t_test, the first
@@ -148,17 +148,12 @@ function
 
             if mode == "RBP"
                 # find max_coords for the first update
-                check = 0
-                for nodes in checks2nodes
-                    check += 1
-                    min_sum_RBP_init!(
-                        max_coords,
-                        view(Lq,check,:),
-                        sn,
-                        nodes,
-                        check,
-                    )
-                end
+                min_sum_RBP_init!(
+                    max_coords,
+                    Lq,
+                    sn,
+                    checks2nodes
+                )
             end
             if mode == "RBP_R"
                 # initialize the matrix of residues R

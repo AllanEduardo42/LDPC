@@ -117,23 +117,25 @@ function
         max_coords::Vector{<:Integer},              
         Lq::AbstractVector{<:AbstractFloat},
         sn::Vector{Bool},
-        nodes::Vector{<:Integer},
-        check::Integer
+        checks2nodes::Vector{Vector{<:Integer}},
     )
     
     x = 0.0
     y = 0.0
     max_residue = 0.0
-    args = _min_sum!(Lq,sn,nodes)
-    for node in nodes
-        x = __min_sum!(node,sn[node],args...)
-        y = abs(x) 
-        if y > max_residue
-            max_residue = y
-            max_coords[1] = check
-            max_coords[2] = node
+    check = 0
+    for nodes in checks2nodes
+        check += 1
+        args = _min_sum!(view(Lq,check,:),sn,nodes)
+        for node in nodes
+            x = __min_sum!(node,sn[node],args...)
+            y = abs(x) 
+            if y > max_residue
+                max_residue = y
+                max_coords[1] = check
+                max_coords[2] = node
+            end
         end
-    end
 end
 
 ### specialized method for the RBP algorithm
@@ -149,10 +151,10 @@ function
     )
     
     x = 0.0
-    minL, minL2, s, max_idx = _min_sum!(Lq,sn,nodes)
+    args = _min_sum!(Lq,sn,nodes)
     for node in nodes
         if node ≠ nmax
-            x = __min_sum!(node,max_idx,s,sn[node],minL,minL2)
+            x = __min_sum!(node,sn[node],args...)
             R[check,node] = abs(x - Lr[node]) 
         end
     end

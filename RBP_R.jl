@@ -18,7 +18,7 @@ function
         ΔLf::Vector{<:AbstractFloat},
         checks2nodes::Vector{Vector{T}} where {T<:Integer},
         nodes2checks::Vector{Vector{T}} where {T<:Integer},
-        sn::Vector{Int8},
+        sn::Vector{Bool},
         R::Matrix{<:AbstractFloat},
         Edges::Matrix{<:Integer},
         num_edges::Integer

@@ -19,7 +19,7 @@ TAB = false
 MIN = true
 LBP = false
 RBP = true
-RBP_R = false
+RBP_R = true
 
 PLOT_BER = true
 HISTOGRAMS = false
