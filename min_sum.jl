@@ -72,6 +72,8 @@ function
     min_sum_RBP!(
         max_coords::Vector{<:Integer},
         max_residue::AbstractFloat,
+        penalty::Matrix{<:AbstractFloat},
+        penalty_factor::AbstractFloat,
         Lr::AbstractVector{<:AbstractFloat},                           
         Lq::AbstractVector{<:AbstractFloat},
         sn::Vector{<:Integer},
@@ -86,8 +88,9 @@ function
     for node in nodes
         if node ≠ nmax
             x = __min_sum!(node,max_idx,s,sn[node],minL,minL2)
-            y = abs(x - Lr[node]) 
+            y = abs(x - Lr[node])*penalty[check,node]
             if y > max_residue
+                penalty[check,node] *= penalty_factor
                 max_residue = y
                 max_coords[1] = check
                 max_coords[2] = node

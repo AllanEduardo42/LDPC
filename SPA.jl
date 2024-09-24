@@ -36,7 +36,9 @@ function
         printing::Union{Bool,Nothing},        
         R::Union{Matrix{<:AbstractFloat},Nothing},
         Edges::Union{Matrix{<:Integer},Nothing},
-        max_coords::Union{Vector{<:Integer},Nothing}
+        max_coords::Union{Vector{<:Integer},Nothing},
+        penalty::Union{Matrix{<:AbstractFloat},Nothing},
+        penalty_factor::Union{AbstractFloat,Nothing},
     )
              
     index = max
@@ -125,7 +127,9 @@ function
                 checks2nodes,
                 nodes2checks,
                 sn,
-                Edges
+                Edges,
+                penalty,
+                penalty_factor
             )
         elseif mode == "RBP_R"
             Edges .*= 0

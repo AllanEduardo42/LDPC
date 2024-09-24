@@ -14,10 +14,10 @@ using SparseArrays
 ################################ SPA MODE FLAGS ################################
 
 TNH = true
-ALT = true
-TAB = true
-MIN = true
-LBP = true
+ALT = false
+TAB = false
+MIN = false
+LBP = false
 RBP = true
 RBP_R = false
 
@@ -41,11 +41,12 @@ RANGE::Int64 = 20
 
 SIZE_per_RANGE::Float64 = SIZE/RANGE
 
-NREALS::Int = 100
+NREALS::Int = 10_000
 MAX::Int = 30
 MAX_RBP::Int = 5
 
-LR_idx = 9;
+LR_idx::Int = 9;
+PENALTY::Float64 = 0.9
 
 #################################### CODING ####################################
 
@@ -97,7 +98,7 @@ if TNH
         Nodes2checks,
         "TNH",
         1,
-        MAX
+        1
     )
 end
 if ALT
@@ -109,7 +110,7 @@ if ALT
         Nodes2checks,
         "ALT",
         1,
-        MAX
+        1
     )
 end
 if TAB
@@ -121,7 +122,7 @@ if TAB
         Nodes2checks,
         "TAB",
         1,
-        MAX
+        1
     )
 end
 if MIN
@@ -133,7 +134,7 @@ if MIN
         Nodes2checks,
         "MIN",
         1,
-        MAX
+        1
     )
 end
 if LBP
@@ -145,7 +146,7 @@ if LBP
         Nodes2checks,
         "LBP",
         1,
-        MAX
+        1
     )
 end
 if RBP
@@ -157,7 +158,7 @@ if RBP
         Nodes2checks,
         "RBP",
         1,
-        MAX_RBP
+        1
     )
 end
 if RBP_R
@@ -169,7 +170,7 @@ if RBP_R
         Nodes2checks,
         "RBP_R",
         1,
-        MAX_RBP
+        1
     )
 end
                              
@@ -302,8 +303,8 @@ if NREALS > 1
         append!(yaxis,[FER_rbp])
         push!(fer_labels,"SPA RBP")
     end
-    if RBP
-        append!(yaxis,[FER_rbp])
+    if RBP_R
+        append!(yaxis,[FER_rbpr])
         push!(fer_labels,"SPA RBP_R")
     end
     fer_labels = permutedims(fer_labels)
@@ -393,7 +394,7 @@ if NREALS > 1
                     BER_rbp,
                     label=ber_labels,
                     lw=2,
-                    title="BER SPA RBP",
+                    title="BER SPA RBP (penalty = $PENALTY)",
                     ylims=(lim-1,0)
                 )
             )
@@ -416,10 +417,10 @@ if NREALS > 1
         for i in eachindex(SNR)
             display(
                 histogram(
-                    [Iters_alt[i,:] Iters_min[i,:]],
+                    [Iters_tnh[i,:] Iters_rbp[i,:]],
                     layout=grid(2,1),
                     xlims=(0,MAX+1),
-                    labels=["SPA" "MIN SUM"],
+                    labels=["Flooding" "RBP"],
                     title="SNR (dB) = $(SNR_db[i])"
                 )
             )

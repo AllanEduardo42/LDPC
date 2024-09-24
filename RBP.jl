@@ -19,7 +19,9 @@ function
         checks2nodes::Vector{Vector{T}} where {T<:Integer},
         nodes2checks::Vector{Vector{T}} where {T<:Integer},
         sn::Vector{Int8},
-        Edges::Matrix{<:Integer}
+        Edges::Matrix{<:Integer},
+        penalty::Matrix{<:AbstractFloat},
+        penalty_factor::AbstractFloat,
     )
 
     for m in 1:EDGES
@@ -49,6 +51,8 @@ function
                 max_residue = min_sum_RBP!(
                     max_coords,
                     max_residue,
+                    penalty,
+                    penalty_factor,
                     view(Lr,check,:),
                     view(Lq,check,:),
                     sn,
