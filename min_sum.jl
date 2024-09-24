@@ -14,11 +14,7 @@ function
     check = 0
     for nodes in checks2nodes
         check += 1
-        args = _min_sum!(
-            view(Lq,check,:),
-            sn,
-            nodes
-        )
+        args = _min_sum!(view(Lq,check,:),sn,nodes)
         for node in nodes
             Lr[check,node] = __min_sum!(node,sn[node],args...)
         end
@@ -115,9 +111,9 @@ end
 function
     min_sum_RBP_init!(          
         max_coords::Vector{<:Integer},              
-        Lq::AbstractVector{<:AbstractFloat},
+        Lq::Matrix{<:AbstractFloat},
         sn::Vector{Bool},
-        checks2nodes::Vector{Vector{<:Integer}},
+        checks2nodes::Vector{Vector{T}} where {T<:Integer}
     )
     
     x = 0.0
@@ -136,6 +132,7 @@ function
                 max_coords[2] = node
             end
         end
+    end
 end
 
 ### specialized method for the RBP algorithm
@@ -164,18 +161,20 @@ end
 function
     min_sum_RBP_R_init!(     
         R::Matrix{<:AbstractFloat},                    
-        Lq::AbstractVector{<:AbstractFloat},
+        Lq::Matrix{<:AbstractFloat},
         sn::Vector{<:Integer},
-        nodes::Vector{<:Integer},
-        check::Integer,
+        checks2nodes::Vector{Vector{T}} where {T<:Integer}
     )
     
     x = 0.0
-    args = _min_sum!(Lq,sn,nodes)
-    for node in nodes
-        x = __min_sum!(node,sn[node],args...)
-        R[check,node] = abs(x) 
+    check = 0
+    for nodes in checks2nodes
+        check += 1
+        args = _min_sum!(view(Lq,check,:),sn,nodes)
+        for node in nodes
+            x = __min_sum!(node,sn[node],args...)
+            R[check,node] = abs(x) 
+        end
     end
-
 end
 

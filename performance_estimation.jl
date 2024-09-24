@@ -157,17 +157,12 @@ function
             end
             if mode == "RBP_R"
                 # initialize the matrix of residues R
-                check = 0
-                for nodes in checks2nodes
-                    check += 1
-                    min_sum_RBP_R_init!(
-                        R,
-                        view(Lq,check,:),
-                        sn,
-                        nodes,
-                        check
-                    )
-                end
+                min_sum_RBP_R_init!(
+                    R,
+                    Lq,
+                    sn,
+                    checks2nodes
+                )
             end       
             # SPA routine
             DECODED, i = 
