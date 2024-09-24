@@ -13,8 +13,8 @@ function
         A::AbstractArray{Bool},
         B::AbstractArray{Bool},
     )
-    ndims(A) == 2 ? (mA, nA) = size(A) : (mA, nA) = (length(A),1)
-    ndims(B) == 2 ? (mB, nB) = size(B) : (mB, nB) = (length(B),1)
+    (mA, nA) =  (ndims(A) == 2) ? size(A) : (length(A),1)
+    (mB, nB) =  (ndims(B) == 2) ? size(B) : (length(B),1)
 
     if nA == mB
         C = _gf2_mat_mult(A,B,mA,nA,nB)
@@ -39,7 +39,8 @@ function
         nB::Integer
     )
     
-    C = zeros(Bool,mA,nB)
+    C = similar(A,mA,nB)
+    C .*= false
     for i in 1:mA
         for j in 1:nB
             for k in 1:nA
@@ -61,20 +62,21 @@ function
         nB::Integer
     )
     
-    C = zeros(Bool,mA)
+    v = similar(A,mA)
+    v .*= false
     for i in 1:mA
         for k in 1:nA
-            @inbounds C[i] ⊻= A[i,k] && B[k]
+            @inbounds v[i] ⊻= A[i,k] && B[k]
         end
     end
 
-    return C
+    return v
 
 end
 
 ################################# GF2 NULLSPACE ################################
 
-function gf2_nullspace(A::BitMatrix)
+function gf2_nullspace(A::AbstractMatrix{Bool})
 
     M,N = size(A)
 
@@ -98,7 +100,7 @@ function gf2_nullspace(A::BitMatrix)
     # The nullspace of A is the columns of AA_inf corresponding to the zero 
     # columns of AA_sup
 
-    nullspace_A = falses(N,length(zero_columns))
+    nullspace_A = similar(A,N,length(zero_columns))
     j = 0
     for column in zero_columns
         j += 1
@@ -112,7 +114,7 @@ end
 ############################# GF2 MATRIX INVERSION #############################
 
 
-function gf2_inverse(A::BitMatrix;ACCEF=false)
+function gf2_inverse(A::AbstractMatrix{Bool};ACCEF=false)
 
     # ACCEF: augmented complete column echelon form
 
@@ -183,7 +185,7 @@ function gf2_inverse(A::BitMatrix;ACCEF=false)
 
 end
 
-function gf2_column_echelon_form!(AA::BitMatrix,N::Integer)
+function gf2_column_echelon_form!(AA::AbstractMatrix{Bool},N::Integer)
 
     full_rank_sub_matrix = true
 
@@ -214,7 +216,7 @@ function gf2_column_echelon_form!(AA::BitMatrix,N::Integer)
 
 end
 
-function gf2_reduce!(AA::BitMatrix,N::Integer)
+function gf2_reduce!(AA::AbstractMatrix{Bool},N::Integer)
 
     for j in N:-1:2
         for k in j-1:-1:1
@@ -226,7 +228,7 @@ function gf2_reduce!(AA::BitMatrix,N::Integer)
 
 end
 
-function isgf2invertible(A::BitMatrix)
+function isgf2invertible(A::AbstractMatrix{Bool})
 
     M,N = size(A)
     AA = [A; I]
@@ -251,7 +253,7 @@ function find_gf2_invertible_matrix(M::Integer)
         invertible, AA = isgf2invertible(A)
     end
 
-    A_inv = gf2_inverse(AA;IAEF=true)
+    A_inv = gf2_inverse(AA;ACCEF=true)
 
     return A, A_inv
 
