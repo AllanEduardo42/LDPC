@@ -16,7 +16,7 @@ using SparseArrays
 TNH = true
 ALT = false
 TAB = false
-MIN = true
+MIN = false
 LBP = false
 RBP = true
 RBP_R = true

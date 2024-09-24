@@ -4,7 +4,7 @@
 # 23 set 2024
 # RBP Sum-Product Algorithm using min-sum to calculate the residues
 
-include("min_sum.jl")
+include("min_sum_RBP.jl")
 include("llr_horizontal_update.jl")
 include("MAP.jl")
 include("RBP_vertical_update.jl")
@@ -19,21 +19,29 @@ function
         checks2nodes::Vector{Vector{T}} where {T<:Integer},
         nodes2checks::Vector{Vector{T}} where {T<:Integer},
         sn::Vector{Bool},
-        R::Matrix{<:AbstractFloat},
         Edges::Matrix{<:Integer},
-        num_edges::Integer
+        penalty::Matrix{<:AbstractFloat},
+        penalty_factor::AbstractFloat,
+        num_edges::Integer,
+        R::Matrix{<:AbstractFloat}
     )
 
     e = 1
     while e <= num_edges
 
-        max_residue = find_max_residue_coords!(max_coords,R,checks2nodes)
+        max_residue = find_max_residue_coords!(
+                                            max_coords,
+                                            R,
+                                            penalty,
+                                            checks2nodes
+                        )
 
         if max_residue == 0.0 # if RBP has converged
             break
         end
 
         (cmax,nmax) = max_coords
+        penalty[cmax,nmax] *= penalty_factor
         Edges[cmax,nmax] += 1
         Lr[cmax,nmax] = llr_horizontal_update_one_check_only!(
             view(Lq,cmax,:),
@@ -88,6 +96,7 @@ function
     find_max_residue_coords!(
         max_coords::Vector{<:Integer},
         R::Matrix{<:AbstractFloat},
+        penalty::Matrix{<:AbstractFloat},
         checks2nodes::Vector{Vector{T}} where {T<:Integer}
     )
 
@@ -97,7 +106,7 @@ function
     for nodes in checks2nodes
         check += 1
         for node in nodes
-            x = R[check,node]
+            x = R[check,node]*penalty[check,node]
             if x > max_residue
                 max_residue = x
                 max_coords[1] = check

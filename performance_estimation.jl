@@ -7,6 +7,7 @@ include("lookupTable.jl")
 include("SPA.jl")
 include("calc_priors.jl")
 include("min_sum.jl")
+include("min_sum_RBP.jl")
 
 function 
     performance_estimation(
@@ -98,8 +99,8 @@ function
     R = (mode == "RBP_R") ? H*0.0 : nothing
     Edges = (mode == "RBP" || mode == "RBP_R") ? H*0 : nothing
     max_coords = (mode == "RBP" || mode == "RBP_R") ? [1,1] : nothing
-    penalty = (mode == "RBP") ? 1.0*H : nothing
-    penalty_factor = (mode == "RBP") ? PENALTY : nothing
+    penalty = (mode == "RBP" || mode == "RBP_R") ? 1.0*H : nothing
+    penalty_factor = (mode == "RBP" || mode == "RBP_R") ? PENALTY : nothing
     num_edges = (mode == "RBP" || mode == "RBP_R") ? sum(H) : nothing
 
     ######################### FIRST RECEIVED SIGNAL ############################

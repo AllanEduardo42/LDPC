@@ -146,10 +146,14 @@ function
                 checks2nodes,
                 nodes2checks,
                 sn,
-                R,
                 Edges,
-                num_edges
+                penalty,
+                penalty_factor,
+                num_edges,
+                R
             )
+            # reset penalties
+            reset_penalties!(penalty,checks2nodes)
         end
 
         calc_syndrome!(
