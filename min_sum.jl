@@ -72,6 +72,7 @@ function
     min_sum_RBP!(
         max_coords::Vector{<:Integer},
         max_residue::AbstractFloat,
+        penalty::Matrix{<:AbstractFloat},
         Lr::AbstractVector{<:AbstractFloat},                           
         Lq::AbstractVector{<:AbstractFloat},
         sn::Vector{<:Integer},

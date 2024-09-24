@@ -41,12 +41,12 @@ RANGE::Int64 = 20
 
 SIZE_per_RANGE::Float64 = SIZE/RANGE
 
-NREALS::Int = 10_000
+NREALS::Int = 100
 MAX::Int = 30
 MAX_RBP::Int = 5
 
 LR_idx::Int = 9;
-PENALTY::Float64 = 0.9
+PENALTY::Float64 = 1
 
 #################################### CODING ####################################
 

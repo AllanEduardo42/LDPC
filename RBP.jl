@@ -52,6 +52,7 @@ function
                 max_residue = min_sum_RBP!(
                     max_coords,
                     max_residue,
+                    penalty,
                     view(Lr,check,:),
                     view(Lq,check,:),
                     sn,
