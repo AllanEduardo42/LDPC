@@ -27,6 +27,7 @@ function
     for m in 1:EDGES
 
         (cmax,nmax) = max_coords
+        penalty[cmax,nmax] *= penalty_factor
         Edges[cmax,nmax] += 1
         Lr[cmax,nmax] = llr_horizontal_update_one_check_only!(
             view(Lq,cmax,:),
@@ -51,8 +52,6 @@ function
                 max_residue = min_sum_RBP!(
                     max_coords,
                     max_residue,
-                    penalty,
-                    penalty_factor,
                     view(Lr,check,:),
                     view(Lq,check,:),
                     sn,

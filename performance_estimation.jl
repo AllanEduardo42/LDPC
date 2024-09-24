@@ -41,11 +41,10 @@ function
 
     # BPKS
     u = Float64.(2*c .- 1)
+    # divisor
+    divisor = nreals * N
 
     ############################# preallocation ################################
-
-    # constant
-    divisor = nreals * N
 
     # frame error rate
     FER = zeros(length(σ))
@@ -106,11 +105,11 @@ function
     # In order to allow a test with a given received signal t_test, the first
     # received signal t is set outside the main loop.
     if TEST
-        if t_test === nothing
+        if t_test === nothing # if no test signal was provided:
             # generate a received signal
             received!(t,noise,σ[1],u)
         elseif length(t_test) != N
-            # if a received test signal was given but with wrong dimension
+            # if a received test signal was given but with wrong size
             throw(
                 DimensionMismatch(
                     "length(t_test) should be $N, not $(length(t_test))"
@@ -215,6 +214,7 @@ function
                 # frame error rate
                 @inbounds FER[k] += 1
             end
+
             # received signal for the next realization (j+1)
             received!(t,noise,σ[k],u)
 
