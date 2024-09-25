@@ -18,8 +18,8 @@ ALT = false
 TAB = false
 MIN = false
 LBP = false
-RBP = true
-RBP_R = true
+RBP = false
+RBP_R = false
 
 PLOT_BER = true
 HISTOGRAMS = false
@@ -41,8 +41,8 @@ RANGE::Int64 = 20
 
 SIZE_per_RANGE::Float64 = SIZE/RANGE
 
-NREALS::Int = 100
-MAX::Int = 30
+NREALS::Int = 1
+MAX::Int = 1
 MAX_RBP::Int = 5
 
 LR_idx::Int = 9;
@@ -88,7 +88,7 @@ Checks2nodes  = find_checks2nodes(H)
 ############################## JULIA COMPILATION ###############################
 
 if TNH
-    R_tnh, Lr_tnh, Q_tnh, LQ_tnh = performance_estimation(
+    R, Lr_tnh, Q, Lq_tnh = performance_estimation(
         C,
         [Sigma[LR_idx]],
         H,
@@ -96,11 +96,12 @@ if TNH
         Nodes2checks,
         "TNH",
         1,
-        1
+        1;
+        printing=true
     )
 end
 if ALT
-    R_alt, Lr_alt, Q_alt, LQ_alt = performance_estimation(
+    R, Lr_alt, Q, Lq_alt = performance_estimation(
         C,
         [Sigma[LR_idx]],
         H,
@@ -112,7 +113,7 @@ if ALT
     )
 end
 if TAB
-    R_tab, Lr_tab, Q_tab, LQ_tab = performance_estimation(
+    R, Lr_tab, Q, Lq_tab = performance_estimation(
         C,
         [Sigma[LR_idx]],
         H,
@@ -124,7 +125,7 @@ if TAB
     )
 end
 if MIN
-    R_min, Lr_min, Q_min, LQ_min = performance_estimation(
+    R, Lr_min, Q, Lq_min = performance_estimation(
         C,
         [Sigma[LR_idx]],
         H,
@@ -136,7 +137,7 @@ if MIN
     )
 end
 if LBP
-    R_lbp, Lr_lbp, Q_lbp, LQ_lbp = performance_estimation(
+    R, Lr_lbp, Q, Lq_lbp = performance_estimation(
         C,
         [Sigma[LR_idx]],
         H,
@@ -148,7 +149,7 @@ if LBP
     )
 end
 if RBP
-    R_rbp, Lr_rbp, Q_rbp, LQ_rbp, Edges_n = performance_estimation(
+    R, Lr_rbp, Q, Lq_rbp, Edges_n = performance_estimation(
         C,
         [Sigma[LR_idx]],
         H,
@@ -160,7 +161,7 @@ if RBP
     )
 end
 if RBP_R
-    R_rbpr, Lr_rbpr, Q_rbpr, LQ_rbpr, Edges_r = performance_estimation(
+    R, Lr_rbpr, pr,qLQ_rbpr, Edges_r = performance_estimation(
         C,
         [Sigma[LR_idx]],
         H,
