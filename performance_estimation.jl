@@ -29,7 +29,7 @@ function
     Random.seed!(SEED)
 
     ################################ CHECK MODE ####################################
-    if (mode ≠ "FTNH") && (mode ≠ "FALT") && (mode ≠ "FTAB") && (mode ≠ "MSUM") &&
+    if (mode ≠ "FTNH") && (mode ≠ "FALT") && (mode ≠ "FTAB") && (mode ≠ "FMSM") &&
        (mode ≠ "_LBP") && (mode ≠ "ILBP") && (mode ≠ "_RBP") && (mode ≠ "LRBP")
         throw(
             ArgumentError(
@@ -61,7 +61,7 @@ function
     d = Vector{Bool}(undef,N)
 
     # syndrome
-    syndrome = Vector{Bool}(undef,M)
+    syndrome = ones(Bool,M)
 
     # prior llr-probabilitities
     Lf = Vector{Float64}(undef,N)
@@ -90,12 +90,13 @@ function
     elseif mode == "FALT" || mode == "FTAB"
         Lrn = zeros(N)
         sn = zeros(Bool,N)
-    elseif mode == "MSUM" || mode == "_RBP" || mode == "LRBP"
+    elseif mode == "FMSM" || mode == "_RBP" || mode == "LRBP"
         Lrn = nothing
         sn = zeros(Bool,N)
     end
 
     phi = (mode == "FTAB") ? lookupTable() : nothing
+    ftab_factor = (mode == "FTAB") ? true : false
     R = (mode == "_RBP") ? H*0.0 : nothing
     Edges = (mode == "_RBP" || mode == "LRBP") ? H*0 : nothing
     max_coords = (mode == "_RBP" || mode == "LRBP") ? [1,1] : nothing
@@ -103,8 +104,8 @@ function
     penalty_factor = (mode == "_RBP" || mode == "LRBP") ? PENALTY : nothing
     num_edges = (mode == "_RBP" || mode == "LRBP") ? sum(H) : nothing
     
-    # the 3 flooding methods 
-    mode = (mode == "FTNH" || mode == "FALT" || mode == "FTAB") ? "FLOO" : mode
+    # the 4 flooding methods 
+    mode = (mode == "FTNH" || mode == "FALT" || mode == "FTAB" || mode == "FMSM") ? "FLOO" : mode
 
     ######################### FIRST RECEIVED SIGNAL ############################
     # In order to allow a test with a given received signal t_test, the first
@@ -141,7 +142,7 @@ function
 
             # init the llr priors
             calc_Lf!(Lf,t,σ[k]^2)
-            if mode == "FTAB"
+            if ftab_factor
                 # scale for table
                 Lf .*= SIZE_per_RANGE
             end            

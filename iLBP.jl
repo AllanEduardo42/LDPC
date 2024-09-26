@@ -3,8 +3,8 @@
 # 26 set 2024
 # instantaneos LBP Sum-Product Algorithm
 
-include("llr_horizontal_update.jl")
-include("llr_vertical_update_and_MAP.jl")
+include("check2node_llr.jl")
+include("node2check_llr_and_MAP.jl")
 
 function
     iLBP!(
@@ -23,7 +23,7 @@ function
         check += 1
         # vertical update        
         for node in nodes
-            d[node] = _llr_vertical_update_and_MAP!(
+            d[node] = node2check_llr_and_MAP!(
                 view(Lq,:,node),
                 view(Lr,:,node),
                 ΔLf[node],
@@ -36,7 +36,7 @@ function
             break
         end            
         # horizontal update
-        _llr_horizontal_update!(
+        check2node_llr!(
             view(Lr,check,:),
             view(Lq,check,:),
             nodes,
@@ -45,12 +45,5 @@ function
             nothing
         )
     end
-
-    # MAP!(
-    #     d,
-    #     nodes2checks,
-    #     ΔLf,
-    #     Lr
-    # )
 
 end

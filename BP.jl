@@ -5,14 +5,12 @@
 
 include("simple_horizontal_update.jl")
 include("vertical_update_and_MAP.jl")
-include("llr_horizontal_update.jl")
-include("llr_vertical_update_and_MAP.jl")
+include("flooding.jl")
 include("calc_syndrome.jl")
 include("LBP.jl")
 include("iLBP.jl")
 include("RBP.jl")
 include("lRBP.jl")
-include("flooding.jl")
 
 function 
     BP!(

@@ -3,8 +3,8 @@
 # 17 set 2024
 # LBP Sum-Product Algorithm
 
-include("llr_horizontal_update.jl")
-include("llr_vertical_update_and_MAP.jl")
+include("check2node_llr.jl")
+include("node2check_llr_and_MAP.jl")
 
 function
     LBP!(
@@ -22,7 +22,7 @@ function
         check += 1
         # vertical update        
         for node in nodes
-            _llr_vertical_update_and_MAP!(
+            node2check_llr_and_MAP!(
                 view(Lq,:,node),
                 view(Lr,:,node),
                 ΔLf[node],
@@ -31,7 +31,7 @@ function
             )
         end
         # horizontal update
-        _llr_horizontal_update!(
+        check2node_llr!(
             view(Lr,check,:),
             view(Lq,check,:),
             nodes,

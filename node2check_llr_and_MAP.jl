@@ -5,9 +5,9 @@
 # "Inf" restriction)
 
 function
-    _llr_vertical_update_and_MAP!(
-        v_Lq::AbstractVector{<:AbstractFloat},
-        v_Lr::AbstractVector{<:AbstractFloat},
+    node2check_llr_and_MAP!(
+        vLq::AbstractVector{<:AbstractFloat},
+        vLr::AbstractVector{<:AbstractFloat},
         ΔLf::AbstractFloat,
         checks::Vector{<:Integer};
         MAP = true
@@ -16,10 +16,10 @@ function
     Ld = calc_Ld(
         checks,
         ΔLf,
-        v_Lr
+        vLr
     )
     for check in checks
-        @inbounds @fastmath v_Lq[check] = Ld - v_Lr[check]
+        @inbounds @fastmath vLq[check] = Ld - vLr[check]
     end
 
     return MAP ? signbit(Ld) : nothing
@@ -29,11 +29,11 @@ function
     calc_Ld(
         checks::Vector{<:Integer},
         ΔLf::AbstractFloat,
-        Lr::AbstractVector{<:AbstractFloat}
+        vLr::AbstractVector{<:AbstractFloat}
     )
     Ld = ΔLf
     for check in checks
-        @inbounds @fastmath Ld += Lr[check]
+        @inbounds @fastmath Ld += vLr[check]
     end
     
     return Ld

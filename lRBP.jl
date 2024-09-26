@@ -5,8 +5,8 @@
 # local RBP Sum-Product Algorithm using min-sum to calculate the residues
 
 include("min_sum.jl")
-include("llr_horizontal_update.jl")
-include("llr_vertical_update_and_MAP.jl")
+include("check2node_llr.jl")
+include("node2check_llr_and_MAP.jl")
 include("RBP_vertical_update.jl")
 
 function
@@ -31,7 +31,7 @@ function
         (cmax,nmax) = max_coords
         penalty[cmax,nmax] *= penalty_factor
         Edges[cmax,nmax] += 1
-        Lr[cmax,nmax] = llr_horizontal_update_one_check_only!(
+        Lr[cmax,nmax] = check2node_llr_one_check_only!(
             view(Lq,cmax,:),
             checks2nodes[cmax],
             nmax,

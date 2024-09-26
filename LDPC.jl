@@ -13,7 +13,6 @@ using SparseArrays
 
 ################################ BP MODE FLAGS ################################
 
-MSUM = false
 _LBP = true
 ILBP = true
 _RBP = false
@@ -23,6 +22,9 @@ LRBP = true
 FTNH = true
 FALT = false
 FTAB = false
+FMSM = false
+
+################################### PLOTTING ###################################
 
 PLOT_BER = true
 HISTOGRAMS = false
@@ -44,7 +46,7 @@ RANGE::Int64 = 20
 
 SIZE_per_RANGE::Float64 = SIZE/RANGE
 
-NREALS::Int = 100
+NREALS::Int = 10000
 MAX::Int = 30
 MAX_RBP::Int = 5
 
@@ -127,14 +129,14 @@ if FTAB
         1
     )
 end
-if MSUM
+if FMSM
     R, Lr_msum, Q, Lq_msum = performance_estimation(
         C,
         [Sigma[LR_idx]],
         H,
         Checks2nodes,
         Nodes2checks,
-        "MSUM",
+        "FMSM",
         1,
         1
     )
@@ -232,7 +234,7 @@ if NREALS > 1
             )
         ;
     end
-    if MSUM
+    if FMSM
         @time FER_msum, BER_msum, Iters_msum = 
             performance_estimation(
                 C,
@@ -240,7 +242,7 @@ if NREALS > 1
                 H,
                 Checks2nodes,
                 Nodes2checks,
-                "MSUM",
+                "FMSM",
                 NREALS,
                 MAX
             )
@@ -319,7 +321,7 @@ if NREALS > 1
         append!(yaxis,[FER_ftab])
         push!(fer_labels,"SPA FL (TABLE)")
     end
-    if MSUM
+    if FMSM
         append!(yaxis,[FER_msum])
         push!(fer_labels,"MIN SUM")
     end
@@ -395,7 +397,7 @@ if NREALS > 1
                 )
             )
         end
-        if MSUM
+        if FMSM
             display(
                 plot(
                     1:MAX,
@@ -461,7 +463,7 @@ if NREALS > 1
         for i in eachindex(SNR)
             display(
                 histogram(
-                    [Iters_ftnh[i,:] Iters_lrbp[i,:]],
+                    [Iters_ftnh[i,:] Iters_ilbp[i,:]],
                     layout=grid(2,1),
                     xlims=(0,MAX+1),
                     labels=["Flooding" "local-RBP"],

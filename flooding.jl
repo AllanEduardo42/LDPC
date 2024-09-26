@@ -3,6 +3,9 @@
 # 26 set 2024
 # Flooding Sum-Product Algorithm
 
+include("check2node_llr.jl")
+include("node2check_llr_and_MAP.jl")
+
 function
     flooding!(
         d::Vector{Bool},
@@ -13,14 +16,14 @@ function
         nodes2checks::Vector{Vector{T}} where {T<:Integer},
         Lrn::Union{Vector{<:AbstractFloat},Nothing},
         sn::Union{Vector{Bool},Nothing},
-        phi::Union{Vector{Bool},Nothing}
+        phi::Union{Vector{<:AbstractFloat},Nothing}
     )
 
     # horizontal update
     check = 0
     for nodes in checks2nodes
         check += 1
-        _llr_horizontal_update!(
+        check2node_llr!(
             view(Lr,check,:),
             view(Lq,check,:),
             nodes,
@@ -34,7 +37,7 @@ function
     node = 0
     for checks in nodes2checks
         node += 1
-        d[node] = _llr_vertical_update_and_MAP!(
+        d[node] = node2check_llr_and_MAP!(
                         view(Lq,:,node),
                         view(Lr,:,node),
                         Lf[node],

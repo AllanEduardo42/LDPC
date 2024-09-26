@@ -14,16 +14,14 @@ include("performance_estimation.jl")
 PRINTING::Bool = true
 SEED::Int = 1
 
-MAX::Int = 30
+MAX::Int = 3
 NREALS::Int = 1
 
 SIZE::Int = 1024
 RANGE::Float64 = 20
 SIZE_per_RANGE::Float64 = SIZE/RANGE
 
-Phi = lookupTable()
-
-MODE::String = "LBP"
+MODE::String = "FTAB"
 
 H = BitMatrix(
      [0 1 0 1 0 1 1 1 0 0 0 1;
@@ -74,7 +72,7 @@ R, LR, Q, LQQ =
         printing=PRINTING
     )
 ;
-if MODE == "TAB"
+if MODE == "FTAB"
     LR /= SIZE_per_RANGE
     LQQ /= SIZE_per_RANGE
 end
