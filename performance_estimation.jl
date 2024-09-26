@@ -4,7 +4,7 @@
 # Functions to estimate the LPCD performance (FER BER x SNR)
 
 include("lookupTable.jl")
-include("SPA.jl")
+include("BP.jl")
 include("calc_priors.jl")
 include("min_sum.jl")
 include("min_sum_RBP.jl")
@@ -29,8 +29,8 @@ function
     Random.seed!(SEED)
 
     ################################ CHECK MODE ####################################
-    if (mode ≠ "TNH") && (mode ≠ "ALT") && (mode ≠ "TAB") && (mode ≠ "MIN") &&
-        (mode ≠ "LBP") && (mode ≠ "RBP") && (mode ≠ "RBP_R")
+    if (mode ≠ "FTNH") && (mode ≠ "FALT") && (mode ≠ "FTAB") && (mode ≠ "MSUM") &&
+       (mode ≠ "_LBP") && (mode ≠ "ILBP") && (mode ≠ "_RBP") && (mode ≠ "LRBP")
         throw(
             ArgumentError(
                 "$mode is not a valid mode"
@@ -84,24 +84,27 @@ function
     q,r = TEST ? (zeros(M,N,2),zeros(M,N,2)) : (nothing,nothing)
 
     # Set variables that depend on the mode
-    if mode == "TNH" || mode == "LBP"
+    if mode == "FTNH" || mode == "_LBP" || mode == "ILBP"
         Lrn = zeros(N)
         sn = nothing
-    elseif mode == "ALT" || mode == "TAB"
+    elseif mode == "FALT" || mode == "FTAB"
         Lrn = zeros(N)
         sn = zeros(Bool,N)
-    elseif mode == "MIN" || mode == "RBP" || mode == "RBP_R"
+    elseif mode == "MSUM" || mode == "_RBP" || mode == "LRBP"
         Lrn = nothing
         sn = zeros(Bool,N)
     end
 
-    phi = (mode == "TAB") ? lookupTable() : nothing
-    R = (mode == "RBP_R") ? H*0.0 : nothing
-    Edges = (mode == "RBP" || mode == "RBP_R") ? H*0 : nothing
-    max_coords = (mode == "RBP" || mode == "RBP_R") ? [1,1] : nothing
-    penalty = (mode == "RBP" || mode == "RBP_R") ? 1.0*H : nothing
-    penalty_factor = (mode == "RBP" || mode == "RBP_R") ? PENALTY : nothing
-    num_edges = (mode == "RBP" || mode == "RBP_R") ? sum(H) : nothing
+    phi = (mode == "FTAB") ? lookupTable() : nothing
+    R = (mode == "_RBP") ? H*0.0 : nothing
+    Edges = (mode == "_RBP" || mode == "LRBP") ? H*0 : nothing
+    max_coords = (mode == "_RBP" || mode == "LRBP") ? [1,1] : nothing
+    penalty = (mode == "_RBP" || mode == "LRBP") ? 1.0*H : nothing
+    penalty_factor = (mode == "_RBP" || mode == "LRBP") ? PENALTY : nothing
+    num_edges = (mode == "_RBP" || mode == "LRBP") ? sum(H) : nothing
+    
+    # the 3 flooding methods 
+    mode = (mode == "FTNH" || mode == "FALT" || mode == "FTAB") ? "FLOO" : mode
 
     ######################### FIRST RECEIVED SIGNAL ############################
     # In order to allow a test with a given received signal t_test, the first
@@ -138,7 +141,7 @@ function
 
             # init the llr priors
             calc_Lf!(Lf,t,σ[k]^2)
-            if mode == "TAB"
+            if mode == "FTAB"
                 # scale for table
                 Lf .*= SIZE_per_RANGE
             end            
@@ -147,18 +150,18 @@ function
             # initialize matrix Lq
             llr_init_q!(Lq,Lf,nodes2checks)
 
-            if mode == "RBP"
+            if mode == "LRBP"
                 # find max_coords for the first update
-                min_sum_RBP_init!(
+                min_sum_lRBP_init!(
                     max_coords,
                     Lq,
                     sn,
                     checks2nodes
                 )
             end
-            if mode == "RBP_R"
+            if mode == "_RBP"
                 # initialize the matrix of residues R
-                min_sum_RBP_R_init!(
+                min_sum_RBP_init!(
                     R,
                     Lq,
                     sn,
@@ -167,7 +170,7 @@ function
             end       
             # SPA routine
             DECODED, i = 
-            SPA!(
+            BP!(
                 mode,
                 TEST,
                 max,
@@ -216,7 +219,7 @@ function
     end
 
     if TEST
-        if mode == "RBP" || mode == "RBP_R"
+        if mode == "_RBP" || mode == "LRBP"
             return r, Lr, q, Lq, Edges
         else
             return r, Lr, q, Lq

@@ -3,24 +3,6 @@
 # 22 set 2024
 # Horizontal update of the LLR based MIN SUM Algorithm
 
-function
-    min_sum!(
-        Lr::Matrix{<:AbstractFloat},                           
-        Lq::Matrix{<:AbstractFloat},
-        checks2nodes::Vector{Vector{T}} where {T<:Integer},
-        sn::Vector{Bool},
-    )    
-
-    check = 0
-    for nodes in checks2nodes
-        check += 1
-        args = _min_sum!(view(Lq,check,:),sn,nodes)
-        for node in nodes
-            Lr[check,node] = __min_sum!(node,sn[node],args...)
-        end
-    end
-end
-
 function abs_sign!(Lq::AbstractFloat,s::Integer)
     sn = signbit(Lq)
     return abs(Lq), sn, s ⊻ sn
@@ -61,17 +43,9 @@ function
     )
 
     if node == max_idx #(pick the second least Lq)
-        if s ⊻ sn #if negative
-            return -minL2
-        else
-            return minL2
-        end
+        return (1 - 2*(sn ⊻ s))*minL2
     else
-        if s ⊻ sn #if negative
-            return -minL
-        else
-            return minL
-        end
+        return (1 - 2*(sn ⊻ s))*minL
     end
 
 end

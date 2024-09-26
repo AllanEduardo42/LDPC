@@ -6,7 +6,7 @@
 include("min_sum.jl")
 
 function
-    min_sum_RBP!(
+    min_sum_lRBP!(
         max_coords::Vector{<:Integer},
         max_residue::AbstractFloat,
         penalty::Matrix{<:AbstractFloat},
@@ -37,7 +37,7 @@ function
 end
 
 function
-    min_sum_RBP_init!(          
+    min_sum_lRBP_init!(          
         max_coords::Vector{<:Integer},              
         Lq::Matrix{<:AbstractFloat},
         sn::Vector{Bool},
@@ -65,7 +65,7 @@ end
 
 ### specialized method for the RBP algorithm
 function
-    min_sum_RBP_R!(
+    min_sum_RBP!(
         R::Matrix{<:AbstractFloat},
         Lr::AbstractVector{<:AbstractFloat},                           
         Lq::AbstractVector{<:AbstractFloat},
@@ -87,7 +87,7 @@ function
 end
 
 function
-    min_sum_RBP_R_init!(     
+    min_sum_RBP_init!(     
         R::Matrix{<:AbstractFloat},                    
         Lq::Matrix{<:AbstractFloat},
         sn::Vector{<:Integer},

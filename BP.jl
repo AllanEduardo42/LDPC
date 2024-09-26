@@ -1,7 +1,7 @@
 ################################################################################
 # Allan Eduardo Feitosa
 # 27 ago 2024
-# Main loop of the SPA algorithm
+# Main loop of the BP routine
 
 include("simple_horizontal_update.jl")
 include("vertical_update_and_MAP.jl")
@@ -9,11 +9,13 @@ include("llr_horizontal_update.jl")
 include("llr_vertical_update_and_MAP.jl")
 include("calc_syndrome.jl")
 include("LBP.jl")
+include("iLBP.jl")
 include("RBP.jl")
-include("RBP_R.jl")
+include("lRBP.jl")
+include("flooding.jl")
 
 function 
-    SPA!(
+    BP!(
         mode::String,
         test::Bool,
         max::Integer,
@@ -48,66 +50,19 @@ function
 
     for i in 1:max
 
-        if mode == "TNH"
-            llr_horizontal_update_tnh!(
-                Lr,
-                Lq,
-                checks2nodes,
-                Lrn
-            )
-            llr_vertical_update_and_MAP!(
-                Lq,
+        if mode == "FLOO"
+            flooding!(
                 d,
+                Lq,
                 Lr,
                 Lf,
-                nodes2checks
-            )  
-        elseif mode == "ALT"
-            llr_horizontal_update_alt!(
-                Lr,
-                Lq,
                 checks2nodes,
-                Lrn,
-                sn
-            )
-            llr_vertical_update_and_MAP!(
-                Lq,
-                d,
-                Lr,
-                Lf,
-                nodes2checks
-            )  
-        elseif mode == "TAB"
-            llr_horizontal_update_tab!(
-                Lr,
-                Lq,
-                checks2nodes,
+                nodes2checks,
                 Lrn,
                 sn,
                 phi
-            )
-            llr_vertical_update_and_MAP!(
-                Lq,
-                d,
-                Lr,
-                Lf,
-                nodes2checks
             )  
-        elseif mode == "MIN"
-            min_sum!(
-                Lr,
-                Lq,
-                checks2nodes,
-                sn
-            )
-            llr_vertical_update_and_MAP!(
-                Lq,
-                d,
-                Lr,
-                Lf,
-                nodes2checks
-            )        
-        elseif mode == "LBP"
+        elseif mode == "_LBP"
             LBP!(
                 d,
                 Lr,
@@ -116,10 +71,21 @@ function
                 checks2nodes,
                 nodes2checks,
                 Lrn
+            )   
+        elseif mode == "ILBP"
+            iLBP!(
+                d,
+                Lr,
+                Lq,
+                Lf,
+                checks2nodes,
+                nodes2checks,
+                Lrn,
+                syndrome
             )
-        elseif mode == "RBP"
+        elseif mode == "LRBP"
             Edges .*= 0
-            RBP!(
+            lRBP!(
                 d,
                 Lr,
                 max_coords,
@@ -135,9 +101,9 @@ function
             )
             # reset penalties
             reset_penalties!(penalty,checks2nodes)
-        elseif mode == "RBP_R"
+        elseif mode == "_RBP"
             Edges .*= 0
-            RBP_R!(
+            RBP!(
                 d,
                 Lr,
                 max_coords,

@@ -1,12 +1,12 @@
 
 ################################################################################
 # Allan Eduardo Feitosa
-# 22 set 2024
+# 23 set 2024
 # RBP Sum-Product Algorithm using min-sum to calculate the residues
 
-include("min_sum.jl")
+include("min_sum_RBP.jl")
 include("llr_horizontal_update.jl")
-include("MAP.jl")
+include("llr_vertical_update_and_MAP.jl")
 include("RBP_vertical_update.jl")
 
 function
@@ -22,11 +22,23 @@ function
         Edges::Matrix{<:Integer},
         penalty::Matrix{<:AbstractFloat},
         penalty_factor::AbstractFloat,
-        num_edges::Integer
+        num_edges::Integer,
+        R::Matrix{<:AbstractFloat}
     )
 
     e = 1
     while e <= num_edges
+
+        max_residue = find_max_residue_coords!(
+                                            max_coords,
+                                            R,
+                                            penalty,
+                                            checks2nodes
+                        )
+
+        if max_residue == 0.0 # if RBP has converged
+            break
+        end
 
         (cmax,nmax) = max_coords
         penalty[cmax,nmax] *= penalty_factor
@@ -37,7 +49,9 @@ function
             nmax,
             Lr[cmax,nmax]
         )
-        max_residue = 0.0
+        # we don't use the check-to-node message correspoding to (cmax,nmax) anymore.
+        # Thus we make the largest residue equal to zero:
+        R[cmax,nmax] = 0.0
         
         _checks = nodes2checks[nmax]
         for check in _checks
@@ -51,10 +65,10 @@ function
                                             )
                 # find max ΔLr[node,check], node ≠ nmax, check ≠ cmax
                 _nodes = checks2nodes[check]
-                max_residue = min_sum_RBP!(
-                    max_coords,
-                    max_residue,
-                    penalty,
+                # if any new residue estimate is larger than the previously estimated maximum 
+                # residue than update the value of max_residue and max_coords.
+                min_sum_RBP!(
+                    R,
                     view(Lr,check,:),
                     view(Lq,check,:),
                     sn,
@@ -65,11 +79,7 @@ function
             end
         end
 
-        if max_residue == 0.0
-            break
-        end
-
-        e += 1
+        e +=1
 
     end
 
@@ -80,4 +90,30 @@ function
         Lr
     )
 
+end
+
+function
+    find_max_residue_coords!(
+        max_coords::Vector{<:Integer},
+        R::Matrix{<:AbstractFloat},
+        penalty::Matrix{<:AbstractFloat},
+        checks2nodes::Vector{Vector{T}} where {T<:Integer}
+    )
+
+    check = 0
+    max_residue = 0
+    x = 0.0
+    for nodes in checks2nodes
+        check += 1
+        for node in nodes
+            x = R[check,node]*penalty[check,node]
+            if x > max_residue
+                max_residue = x
+                max_coords[1] = check
+                max_coords[2] = node
+            end
+        end
+    end
+
+    return max_residue
 end

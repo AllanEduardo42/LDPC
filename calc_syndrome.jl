@@ -33,11 +33,24 @@ function
     check = 0
     for nodes in checks2nodes
         check += 1
-        for node in nodes
-            @inbounds syndrome[check] ⊻= d[node]
-        end
+        @inbounds syndrome[check] = _calc_syndrome(d,nodes)
     end
 
     return syndrome
 
 end
+
+function 
+    _calc_syndrome(
+        d::Vector{Bool},
+        nodes::Vector{<:Integer}
+    )
+
+    syndrome = false
+    for node in nodes
+        @inbounds syndrome ⊻= d[node]
+    end
+
+    return syndrome
+end
+    
