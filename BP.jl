@@ -59,7 +59,7 @@ function
                 sn,
                 phi
             )  
-        elseif mode == "oLBP"
+        elseif mode == "LBP"
             LBP!(
                 d,
                 Lr,
@@ -102,7 +102,7 @@ function
             )
             # reset penalties
             reset_penalties!(Factors,checks2nodes)
-        elseif mode == "oRBP"
+        elseif mode == "RBP"
             Edges .*= 0
             RBP!(
                 d,

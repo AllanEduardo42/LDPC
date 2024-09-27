@@ -29,9 +29,9 @@ function
     Random.seed!(SEED)
 
     ################################ CHECK MODE ####################################
-    if (mode ≠ "MKAY") && (mode ≠ "FTNH") && (mode ≠ "FALT") &&
-       (mode ≠ "FTAB") && (mode ≠ "FMSM") && (mode ≠ "oLBP") &&
-       (mode ≠ "iLBP") && (mode ≠ "oRBP") && (mode ≠ "LRBP")
+    if (mode ≠ "MKAY") && (mode ≠ "TANH") && (mode ≠ "LBP") &&
+       (mode ≠ "ALTN") && (mode ≠ "TABL") && (mode ≠ "RBP") && 
+       (mode ≠ "MSUM") && (mode ≠ "iLBP") && (mode ≠ "LRBP")
         throw(
             ArgumentError(
                 "$mode is not a valid mode"
@@ -80,13 +80,13 @@ function
     Lq, Lr = (mode != "MKAY") ? (H*0.0,H*0.0) : (zeros(M,N,2),zeros(M,N,2))
 
     # Set variables that depend on the mode
-    if mode == "FTNH" || mode == "oLBP" || mode == "iLBP"
+    if mode == "TANH" || mode == "LBP" || mode == "iLBP"
         Lrn = zeros(N)
         sn = nothing
-    elseif mode == "FALT" || mode == "FTAB"
+    elseif mode == "ALTN" || mode == "TABL"
         Lrn = zeros(N)
         sn = zeros(Bool,N)
-    elseif mode == "FMSM" || mode == "oRBP" || mode == "LRBP"
+    elseif mode == "MSUM" || mode == "RBP" || mode == "LRBP"
         Lrn = nothing
         sn = zeros(Bool,N)
     else
@@ -94,21 +94,21 @@ function
         sn = nothing
     end
  
-    Ldn, visited_nodes = (mode == "oLBP" || mode == "iLBP") ?
+    Ldn, visited_nodes = (mode == "LBP" || mode == "iLBP") ?
         (zeros(N),zeros(Bool,N)) : (nothing,nothing)
 
-    phi = (mode == "FTAB") ? lookupTable() : nothing
+    phi = (mode == "TABL") ? lookupTable() : nothing
 
-    Residues = (mode == "oRBP") ? H*0.0 : nothing
+    Residues = (mode == "RBP") ? H*0.0 : nothing
 
     Edges, maxcoords, Factors, pfactor, num_edges  = 
-        (mode == "oRBP" || mode == "LRBP") ? 
-        (H*0, [1,1], 1.0*H, PENALTY, sum(H))  : 
+        (mode == "RBP" || mode == "LRBP") ? 
+        (H*0, [1,1], 1.0*H, DECAYCTE, sum(H))  : 
         (nothing,nothing,nothing,nothing,nothing)
     
-    # unity the 5 flooding methods 
-    _mode = (mode == "MKAY" || mode == "FTNH" || mode == "FALT" ||
-             mode == "FTAB" || mode == "FMSM") ? "FLOO" : mode
+    # unify the 5 flooding methods 
+    _mode = (mode == "MKAY" || mode == "TANH" || mode == "ALTN" ||
+             mode == "TABL" || mode == "MSUM") ? "FLOO" : mode
 
     ######################### FIRST RECEIVED SIGNAL ############################
     # In order to allow a test with a given received signal t_test, the first
@@ -139,7 +139,7 @@ function
 
             # init the llr priors
             calc_Lf!(Lf,t,σ[k]^2)
-            if mode == "FTAB"
+            if mode == "TABL"
                 # scale for table
                 Lf .*= SIZE_per_RANGE
             end            
@@ -157,7 +157,7 @@ function
                     checks2nodes
                 )
             end
-            if mode == "oRBP"
+            if mode == "RBP"
                 # initialize the matrix of residues
                 min_sum_RBP_init!(
                     Residues,
@@ -216,7 +216,7 @@ function
     end
 
     if TEST
-        if mode == "oRBP" || mode == "LRBP"
+        if mode == "RBP" || mode == "LRBP"
             return Lr, Lq, Edges
         else
             return Lr, Lq
