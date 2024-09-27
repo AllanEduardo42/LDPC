@@ -13,17 +13,17 @@ using SparseArrays
 
 ################################ BP MODE FLAGS ################################
 
- LBP = true
-iLBP = true
+ LBP = false
+iLBP = false
  RBP = true
-LRBP = true
+LRBP = false
 
 ############################# FLOODING MODE FLAGS ##############################
 MKAY = false
 TANH = true
-ALTN = true
-TABL = true
-MSUM = true
+ALTN = false
+TABL = false
+MSUM = false
 
 ################################### PLOTTING ###################################
 
@@ -184,7 +184,7 @@ if RBP
         H,
         Checks2nodes,
         Nodes2checks,
-        " RBP",
+        "RBP",
         1,
         1
     )

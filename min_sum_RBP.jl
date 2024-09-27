@@ -10,8 +10,8 @@ function
         max_coords::Vector{<:Integer},
         max_residue::AbstractFloat,
         penalty::Matrix{<:AbstractFloat},
-        Lr::AbstractVector{<:AbstractFloat},                           
-        Lq::AbstractVector{<:AbstractFloat},
+        Lr::Matrix{<:AbstractFloat},                           
+        Lq::Matrix{<:AbstractFloat},
         sn::Vector{Bool},
         nodes::Vector{<:Integer},
         nmax::Integer,
@@ -20,7 +20,7 @@ function
     
     x = 0.0
     y = 0.0
-    args = _min_sum!(Lq,sn,nodes)
+    args = _min_sum!(Lq,check,sn,nodes)
     for node in nodes
         if node ≠ nmax
             x = __min_sum!(node,sn[node],args...)
@@ -50,7 +50,7 @@ function
     check = 0
     for nodes in checks2nodes
         check += 1
-        args = _min_sum!(view(Lq,check,:),sn,nodes)
+        args = _min_sum!(Lq,check,sn,nodes)
         for node in nodes
             x = __min_sum!(node,sn[node],args...)
             y = abs(x) 
@@ -66,9 +66,9 @@ end
 ### specialized method for the RBP algorithm
 function
     min_sum_RBP!(
-        R::Matrix{<:AbstractFloat},
-        Lr::AbstractVector{<:AbstractFloat},                           
-        Lq::AbstractVector{<:AbstractFloat},
+        Residues::Matrix{<:AbstractFloat},
+        Lr::Matrix{<:AbstractFloat},                           
+        Lq::Matrix{<:AbstractFloat},
         sn::Vector{Bool},
         nodes::Vector{<:Integer},
         nmax::Integer,
@@ -76,11 +76,11 @@ function
     )
     
     x = 0.0
-    args = _min_sum!(Lq,sn,nodes)
+    args = _min_sum!(Lq,check,sn,nodes)
     for node in nodes
         if node ≠ nmax
             x = __min_sum!(node,sn[node],args...)
-            R[check,node] = abs(x - Lr[node]) 
+            Residues[check,node] = abs(x - Lr[check,node]) 
         end
     end
 
@@ -88,7 +88,7 @@ end
 
 function
     min_sum_RBP_init!(     
-        R::Matrix{<:AbstractFloat},                    
+        Residues::Matrix{<:AbstractFloat},                    
         Lq::Matrix{<:AbstractFloat},
         sn::Vector{<:Integer},
         checks2nodes::Vector{Vector{T}} where {T<:Integer}
@@ -98,10 +98,10 @@ function
     check = 0
     for nodes in checks2nodes
         check += 1
-        args = _min_sum!(view(Lq,check,:),sn,nodes)
+        args = _min_sum!(Lq,check,sn,nodes)
         for node in nodes
             x = __min_sum!(node,sn[node],args...)
-            R[check,node] = abs(x) 
+            Residues[check,node] = abs(x) 
         end
     end
 end

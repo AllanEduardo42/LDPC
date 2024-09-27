@@ -9,26 +9,28 @@ include("min_sum.jl")
 ########################### SPA USING MKAY's METHOD ############################
 function
     update_check2nodes_messages!(
-        vr::AbstractMatrix{<:AbstractFloat},
-        vδq::AbstractVector{<:AbstractFloat},
+        r::Array{<:AbstractFloat,3},
+        δq::Matrix{<:AbstractFloat},
+        check::Integer,
         nodes::Vector{<:Integer},     
     )
     δr = 1
     for node in nodes
-        @inbounds δr *= vδq[node]
+        @inbounds δr *= δq[check,node]
     end
     for node in nodes
-        x = δr/(vδq[node] + eps())        
-        @inbounds vr[node,1] = 0.5*(1+x)
-        @inbounds vr[node,2] = 0.5*(1-x)
+        x = δr/(δq[check,node] + eps())        
+        @inbounds r[check,node,1] = 0.5*(1+x)
+        @inbounds r[check,node,2] = 0.5*(1-x)
     end
 end
 
 ######################### SPA USING HYPERBOLIC TANGENT #########################
 function
     update_check2nodes_messages!(
-        vLr::AbstractVector{<:AbstractFloat},
-        vLq::AbstractVector{<:AbstractFloat},
+        Lr::Matrix{<:AbstractFloat},
+        Lq::Matrix{<:AbstractFloat},
+        check::Integer,
         nodes::Vector{<:Integer},
         Lrn::Vector{<:AbstractFloat},
         sn::Nothing,
@@ -36,13 +38,13 @@ function
     )
     pLr = 1.0
     for node in nodes
-        @inbounds @fastmath Lrn[node] = tanh(0.5*vLq[node])
+        @inbounds @fastmath Lrn[node] = tanh(0.5*Lq[check,node])
         @inbounds @fastmath pLr *= Lrn[node]
     end
     for node in nodes
         @inbounds @fastmath x = pLr/Lrn[node]
         if abs(x) < 1 # controls divergent values of Lr
-            @inbounds @fastmath vLr[node] = 2*atanh(x)
+            @inbounds @fastmath Lr[check,node] = 2*atanh(x)
         end
     end
 end
@@ -73,8 +75,9 @@ end
 
 function 
     update_check2nodes_messages!(
-        vLr::AbstractVector{<:AbstractFloat},
-        vLq::AbstractVector{<:AbstractFloat},
+        Lr::Matrix{<:AbstractFloat},
+        Lq::Matrix{<:AbstractFloat},
+        check::Integer,
         nodes::Vector{<:Integer},
         Lrn::Vector{<:AbstractFloat},
         sn::Vector{Bool},
@@ -84,13 +87,13 @@ function
     sLr = 0.0
     s = false
     for node in nodes
-        @inbounds Lrn[node], sn[node], s = phi_sign!(vLq[node],s,phi)
+        @inbounds Lrn[node], sn[node], s = phi_sign!(Lq[check,node],s,phi)
         @inbounds @fastmath sLr += Lrn[node] 
     end
     for node in nodes
         x = abs(sLr - Lrn[node])
         if x > 0 # (Inf restriction)
-            @inbounds vLr[node] = (1 - 2*(sn[node] ⊻ s))*ϕ(x,phi)
+            @inbounds Lr[check,node] = (1 - 2*(sn[node] ⊻ s))*ϕ(x,phi)
         end
     end    
 end
@@ -100,16 +103,17 @@ end
 
 function
     update_check2nodes_messages!(
-        vLr::AbstractVector{<:AbstractFloat},
-        vLq::AbstractVector{<:AbstractFloat},
+        Lr::Matrix{<:AbstractFloat},
+        Lq::Matrix{<:AbstractFloat},
+        check::Integer,
         nodes::Vector{<:Integer},
         Lrn::Nothing,
         sn::Vector{Bool},
         phi::Nothing        
     )
-    args = _min_sum!(vLq,sn,nodes)
+    args = _min_sum!(Lq,check,sn,nodes)
     for node in nodes
-        vLr[node] = __min_sum!(node,sn[node],args...)
+        Lr[check,node] = __min_sum!(node,sn[node],args...)
     end 
 
 end
@@ -117,7 +121,8 @@ end
 ### The function below is used in the RBP algorithm
 function
     update_check2node_message!(
-        vLq::AbstractVector{<:AbstractFloat},
+        Lq::Matrix{<:AbstractFloat},
+        check::Integer,
         nodes::Vector{<:Integer},
         _node::Integer,
         Lr::AbstractFloat
@@ -125,7 +130,7 @@ function
     pLr = 1.0
     for node in nodes
         if node != _node
-            @inbounds @fastmath pLr *= tanh(0.5*vLq[node])
+            @inbounds @fastmath pLr *= tanh(0.5*Lq[check,node])
         end
     end
 

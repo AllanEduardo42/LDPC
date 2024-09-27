@@ -24,8 +24,9 @@ function
     for nodes in checks2nodes
         check += 1
         update_check2nodes_messages!(
-            view(Lr,check,:),
-            view(Lq,check,:),
+            Lr,
+            Lq,
+            check,
             nodes,
             Lrn,
             sn,
@@ -38,9 +39,10 @@ function
     for checks in nodes2checks
         node += 1
         _, d[node] = update_node2checks_messages!(
-                        view(Lq,:,node),
-                        view(Lr,:,node),
+                        Lq,
+                        Lr,
                         Lf[node],
+                        node,
                         checks
                     )
     end
@@ -67,8 +69,9 @@ function
     for nodes in checks2nodes
         check += 1
         update_check2nodes_messages!(
-            view(r,check,:,:),
-            view(δq,check,:),
+            r,
+            δq,
+            check,
             nodes
         )
     end
@@ -80,9 +83,10 @@ function
         node += 1
         @inbounds Ld = f[node,:]
         d[node] = update_node2checks_messages!(
-            view(q,:,node,:),
-            view(r,:,node,:),
+            q,
+            r,
             Ld,
+            node,
             checks
         )
     end

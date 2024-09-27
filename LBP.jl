@@ -39,9 +39,10 @@ function
                 Lq[check,node] = Ldn[node] - Lr[check,node]
             else
                 Ldn[node], d[node] = update_node2checks_messages!(
-                    view(Lq,:,node),
-                    view(Lr,:,node),
+                    Lq,
+                    Lr,
                     Lf[node],
+                    node,
                     nodes2checks[node]
                 )
                 visited_nodes[node] = true

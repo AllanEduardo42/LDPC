@@ -31,7 +31,8 @@ function
         Factors[cmax,nmax] *= pfactor
         Edges[cmax,nmax] += 1
         Lr[cmax,nmax] = update_check2node_message!(
-            view(Lq,cmax,:),
+            Lq,
+            cmax,
             checks2nodes[cmax],
             nmax,
             Lr[cmax,nmax]
@@ -44,9 +45,10 @@ function
                 # vertical update of Lq[check,nmax], check ≠ cmax
                 @inbounds Lq[check,nmax] =  update_node2check_message(
                                                 _checks,
+                                                nmax,
                                                 check,
                                                 ΔLf[nmax],
-                                                view(Lr,:,nmax)
+                                                Lr
                                             )
                 # find max ΔLr[node,check], node ≠ nmax, check ≠ cmax
                 _nodes = checks2nodes[check]
@@ -54,8 +56,8 @@ function
                     max_coords,
                     max_residue,
                     Factors,
-                    view(Lr,check,:),
-                    view(Lq,check,:),
+                    Lr,
+                    Lq,
                     sn,
                     _nodes,
                     nmax,

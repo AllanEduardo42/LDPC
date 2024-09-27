@@ -12,7 +12,7 @@ function
     RBP!(
         d::Vector{Bool},
         Lr::Matrix{<:AbstractFloat},
-        max_coords::Vector{<:Integer},
+        maxcoords::Vector{<:Integer},
         Lq::Matrix{<:AbstractFloat},
         ΔLf::Vector{<:AbstractFloat},
         checks2nodes::Vector{Vector{T}} where {T<:Integer},
@@ -22,15 +22,15 @@ function
         Factors::Matrix{<:AbstractFloat},
         pfactor::AbstractFloat,
         num_edges::Integer,
-        R::Matrix{<:AbstractFloat}
+        Residues::Matrix{<:AbstractFloat}
     )
 
     e = 1
     while e <= num_edges
 
         max_residue = find_max_residue_coords!(
-                                            max_coords,
-                                            R,
+                                            maxcoords,
+                                            Residues,
                                             Factors,
                                             checks2nodes
                         )
@@ -39,18 +39,19 @@ function
             break
         end
 
-        (cmax,nmax) = max_coords
+        (cmax,nmax) = maxcoords
         Factors[cmax,nmax] *= pfactor
         Edges[cmax,nmax] += 1
         Lr[cmax,nmax] = update_check2node_message!(
-            view(Lq,cmax,:),
+            Lq,
+            cmax,
             checks2nodes[cmax],
             nmax,
             Lr[cmax,nmax]
         )
         # we don't use the check-to-node message correspoding to (cmax,nmax) anymore.
         # Thus we make the largest residue equal to zero:
-        R[cmax,nmax] = 0.0
+        Residues[cmax,nmax] = 0.0
         
         _checks = nodes2checks[nmax]
         for check in _checks
@@ -58,18 +59,19 @@ function
                 # vertical update of Lq[check,nmax], check ≠ cmax
                 @inbounds Lq[check,nmax] =  update_node2check_message(
                                                 _checks,
+                                                nmax,
                                                 check,
                                                 ΔLf[nmax],
-                                                view(Lr,:,nmax)
+                                                Lr,
                                             )
                 # find max ΔLr[node,check], node ≠ nmax, check ≠ cmax
                 _nodes = checks2nodes[check]
                 # if any new residue estimate is larger than the previously estimated maximum 
-                # residue than update the value of max_residue and max_coords.
+                # residue than update the value of max_residue and maxcoords.
                 min_sum_RBP!(
-                    R,
-                    view(Lr,check,:),
-                    view(Lq,check,:),
+                    Residues,
+                    Lr,
+                    Lq,
                     sn,
                     _nodes,
                     nmax,
@@ -93,8 +95,8 @@ end
 
 function
     find_max_residue_coords!(
-        max_coords::Vector{<:Integer},
-        R::Matrix{<:AbstractFloat},
+        maxcoords::Vector{<:Integer},
+        Residues::Matrix{<:AbstractFloat},
         Factors::Matrix{<:AbstractFloat},
         checks2nodes::Vector{Vector{T}} where {T<:Integer}
     )
@@ -105,11 +107,11 @@ function
     for nodes in checks2nodes
         check += 1
         for node in nodes
-            x = R[check,node]*Factors[check,node]
+            x = Residues[check,node]*Factors[check,node]
             if x > max_residue
                 max_residue = x
-                max_coords[1] = check
-                max_coords[2] = node
+                maxcoords[1] = check
+                maxcoords[2] = node
             end
         end
     end
