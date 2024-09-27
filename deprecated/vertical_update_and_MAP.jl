@@ -36,20 +36,3 @@ function
     return d
 end
 
-function
-    init_q!(
-        q::Array{<:AbstractFloat,3},
-        f::Matrix{<:AbstractFloat},
-        nodes2checks::Vector{Vector{T}} where {T<:Integer}
-    )
-   
-    node = 0
-    for checks in nodes2checks
-        node += 1
-        for check in checks
-            @inbounds q[check,node,1] = f[node,1]
-            @inbounds q[check,node,2] = f[node,2]
-        end
-    end
-
-end

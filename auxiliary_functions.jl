@@ -34,16 +34,34 @@ function find_checks2nodes(H::BitMatrix)
 end
 
 function 
-    llr_init_q!(
+    init_Lq!(
         Lq::Matrix{<:AbstractFloat},
-        ΔLf::Vector{<:AbstractFloat},
+        Lf::Vector{<:AbstractFloat},
         nodes2checks::Vector{Vector{T}} where {T<:Integer}
     )
     node = 0
     for checks in nodes2checks
         node += 1
         for check in checks
-            @inbounds Lq[check,node] = ΔLf[node]
+            @inbounds Lq[check,node] = Lf[node]
         end
     end
+end
+
+function
+    init_Lq!(
+        Lq::Array{<:AbstractFloat,3},
+        Lf::Matrix{<:AbstractFloat},
+        nodes2checks::Vector{Vector{T}} where {T<:Integer}
+    )
+   
+    node = 0
+    for checks in nodes2checks
+        node += 1
+        for check in checks
+            @inbounds Lq[check,node,1] = Lf[node,1]
+            @inbounds Lq[check,node,2] = Lf[node,2]
+        end
+    end
+
 end

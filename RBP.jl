@@ -5,9 +5,8 @@
 # RBP Sum-Product Algorithm using min-sum to calculate the residues
 
 include("min_sum_RBP.jl")
-include("check2node_llr.jl")
-include("node2check_llr_and_MAP.jl")
-include("RBP_vertical_update.jl")
+include("update_check2nodes_messages.jl")
+include("update_node2checks_messages.jl")
 
 function
     RBP!(
@@ -20,8 +19,8 @@ function
         nodes2checks::Vector{Vector{T}} where {T<:Integer},
         sn::Vector{Bool},
         Edges::Matrix{<:Integer},
-        penalty::Matrix{<:AbstractFloat},
-        penalty_factor::AbstractFloat,
+        Factors::Matrix{<:AbstractFloat},
+        pfactor::AbstractFloat,
         num_edges::Integer,
         R::Matrix{<:AbstractFloat}
     )
@@ -32,7 +31,7 @@ function
         max_residue = find_max_residue_coords!(
                                             max_coords,
                                             R,
-                                            penalty,
+                                            Factors,
                                             checks2nodes
                         )
 
@@ -41,9 +40,9 @@ function
         end
 
         (cmax,nmax) = max_coords
-        penalty[cmax,nmax] *= penalty_factor
+        Factors[cmax,nmax] *= pfactor
         Edges[cmax,nmax] += 1
-        Lr[cmax,nmax] = check2node_llr_one_check_only!(
+        Lr[cmax,nmax] = update_check2node_message!(
             view(Lq,cmax,:),
             checks2nodes[cmax],
             nmax,
@@ -57,7 +56,7 @@ function
         for check in _checks
             if check ≠ cmax
                 # vertical update of Lq[check,nmax], check ≠ cmax
-                @inbounds Lq[check,nmax] =  RBP_vertical_update(
+                @inbounds Lq[check,nmax] =  update_node2check_message(
                                                 _checks,
                                                 check,
                                                 ΔLf[nmax],
@@ -96,7 +95,7 @@ function
     find_max_residue_coords!(
         max_coords::Vector{<:Integer},
         R::Matrix{<:AbstractFloat},
-        penalty::Matrix{<:AbstractFloat},
+        Factors::Matrix{<:AbstractFloat},
         checks2nodes::Vector{Vector{T}} where {T<:Integer}
     )
 
@@ -106,7 +105,7 @@ function
     for nodes in checks2nodes
         check += 1
         for node in nodes
-            x = R[check,node]*penalty[check,node]
+            x = R[check,node]*Factors[check,node]
             if x > max_residue
                 max_residue = x
                 max_coords[1] = check

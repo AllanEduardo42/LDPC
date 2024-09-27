@@ -3,8 +3,8 @@
 # 17 set 2024
 # LBP Sum-Product Algorithm
 
-include("check2node_llr.jl")
-include("node2check_llr_and_MAP.jl")
+include("update_check2nodes_messages.jl")
+include("update_node2checks_messages.jl")
 
 function
     LBP!(
@@ -38,7 +38,7 @@ function
             if visited_nodes[node]
                 Lq[check,node] = Ldn[node] - Lr[check,node]
             else
-                Ldn[node], _ = node2check_llr_and_MAP!(
+                Ldn[node], d[node] = update_node2checks_messages!(
                     view(Lq,:,node),
                     view(Lr,:,node),
                     Lf[node],
@@ -47,9 +47,8 @@ function
                 visited_nodes[node] = true
             end
         end
-        #horizontal update
         ################### original implementation ############################
-        # check2node_llr!(
+        # update_check2nodes_messages!(
         #     view(Lr,check,:),
         #     view(Lq,check,:),
         #     nodes,

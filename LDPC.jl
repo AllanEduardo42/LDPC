@@ -13,16 +13,17 @@ using SparseArrays
 
 ################################ BP MODE FLAGS ################################
 
-_LBP = false
-ILBP = true
-_RBP = false
-LRBP = false
+oLBP = true
+iLBP = true
+oRBP = true
+LRBP = true
 
 ############################# FLOODING MODE FLAGS ##############################
-FTNH = false
-FALT = false
-FTAB = false
-FMSM = false
+MKAY = false
+FTNH = true
+FALT = true
+FTAB = true
+FMSM = true
 
 ################################### PLOTTING ###################################
 
@@ -46,7 +47,7 @@ RANGE::Int64 = 20
 
 SIZE_per_RANGE::Float64 = SIZE/RANGE
 
-NREALS::Int = 1000
+NREALS::Int = 100
 MAX::Int = 30
 MAX_RBP::Int = 5
 
@@ -91,9 +92,21 @@ Nodes2checks  = find_nodes2checks(H)
 Checks2nodes  = find_checks2nodes(H)
 
 ############################## JULIA COMPILATION ###############################
-
+if MKAY
+    R, Q, = performance_estimation(
+        C,
+        [Sigma[LR_idx]],
+        H,
+        Checks2nodes,
+        Nodes2checks,
+        "MKAY",
+        1,
+        1;
+        printing=true
+    )
+end
 if FTNH
-    R, Lr_ftnh, Q, Lq_ftnh = performance_estimation(
+    Lr_ftnh, Lq_ftnh = performance_estimation(
         C,
         [Sigma[LR_idx]],
         H,
@@ -101,12 +114,11 @@ if FTNH
         Nodes2checks,
         "FTNH",
         1,
-        1;
-        printing=false
+        1
     )
 end
 if FALT
-    R, Lr_falt, Q, Lq_falt = performance_estimation(
+    Lr_falt, Lq_falt = performance_estimation(
         C,
         [Sigma[LR_idx]],
         H,
@@ -118,7 +130,7 @@ if FALT
     )
 end
 if FTAB
-    R, Lr_ftab, Q, Lq_ftab = performance_estimation(
+    Lr_ftab, Lq_ftab = performance_estimation(
         C,
         [Sigma[LR_idx]],
         H,
@@ -130,7 +142,7 @@ if FTAB
     )
 end
 if FMSM
-    R, Lr_msum, Q, Lq_msum = performance_estimation(
+    Lr_msum, Lq_msum = performance_estimation(
         C,
         [Sigma[LR_idx]],
         H,
@@ -141,44 +153,44 @@ if FMSM
         1
     )
 end
-if _LBP
-    R, Lr_lbp, Q, Lq_lbp = performance_estimation(
+if oLBP
+    Lr_lbp, Lq_lbp = performance_estimation(
         C,
         [Sigma[LR_idx]],
         H,
         Checks2nodes,
         Nodes2checks,
-        "_LBP",
+        "oLBP",
         1,
         1
     )
 end
-if _LBP
-    R, Lr_ilbp, Q, Lq_ilbp = performance_estimation(
+if oLBP
+    Lr_ilbp, Lq_ilbp = performance_estimation(
         C,
         [Sigma[LR_idx]],
         H,
         Checks2nodes,
         Nodes2checks,
-        "ILBP",
+        "iLBP",
         1,
         1
     )
 end
-if _RBP
-    R, Lr_rbp, Q, Lq_rbp, Edges = performance_estimation(
+if oRBP
+    Lr_rbp, Lq_rbp, Edges = performance_estimation(
         C,
         [Sigma[LR_idx]],
         H,
         Checks2nodes,
         Nodes2checks,
-        "_RBP",
+        "oRBP",
         1,
         1
     )
 end
 if LRBP
-    R, Lr_lrbp, Q, Lq_lrbp, lEdges = performance_estimation(
+    Lr_lrbp, Lq_lrbp, lEdges = performance_estimation(
         C,
         [Sigma[LR_idx]],
         H,
@@ -192,6 +204,20 @@ end
                              
 ########################### PERFORMANCE SIMULATION ############################
 if NREALS > 1
+    if MKAY
+        @time FER, BER, Iters = 
+            performance_estimation(
+                C,
+                Sigma,
+                H,
+                Checks2nodes,
+                Nodes2checks,
+                "MKAY",
+                NREALS,
+                MAX
+            )
+        ;
+    end
     if FTNH
         @time FER_ftnh, BER_ftnh, Iters_ftnh = 
             performance_estimation(
@@ -248,7 +274,7 @@ if NREALS > 1
             )
         ;
     end
-    if _LBP
+    if oLBP
         @time FER_lbp, BER_lbp, Iters_lbp = 
             performance_estimation(
                 C,
@@ -256,13 +282,13 @@ if NREALS > 1
                 H,
                 Checks2nodes,
                 Nodes2checks,
-                "_LBP",
+                "oLBP",
                 NREALS,
                 MAX
             )
         ;
     end
-    if ILBP
+    if iLBP
         @time FER_ilbp, BER_ilbp, Iters_ilbp = 
             performance_estimation(
                 C,
@@ -270,13 +296,13 @@ if NREALS > 1
                 H,
                 Checks2nodes,
                 Nodes2checks,
-                "ILBP",
+                "iLBP",
                 NREALS,
                 MAX
             )
         ;
     end
-    if _RBP
+    if oRBP
         @time FER_rbp, BER_rbp, Iters_rbp = 
             performance_estimation(
                 C,
@@ -284,7 +310,7 @@ if NREALS > 1
                 H,
                 Checks2nodes,
                 Nodes2checks,
-                "_RBP",
+                "oRBP",
                 NREALS,
                 MAX_RBP
             )
@@ -309,9 +335,13 @@ if NREALS > 1
     lim = log10(1/NREALS)
     yaxis = Vector{Vector{Float64}}(undef,0)
     fer_labels = Vector{String}(undef,0)
+    if MKAY
+        append!(yaxis,[FER])
+        push!(fer_labels,"SPA FL (McKay)")
+    end
     if FTNH
         append!(yaxis,[FER_ftnh])
-        push!(fer_labels,"SPA FL (THN)")
+        push!(fer_labels,"SPA FL (tanh)")
     end
     if FALT
         append!(yaxis,[FER_falt])
@@ -325,15 +355,15 @@ if NREALS > 1
         append!(yaxis,[FER_msum])
         push!(fer_labels,"MIN SUM")
     end
-    if _LBP
+    if oLBP
         append!(yaxis,[FER_lbp])
         push!(fer_labels,"SPA LBP")
     end
-    if ILBP
+    if iLBP
         append!(yaxis,[FER_ilbp])
-        push!(fer_labels,"SPA ILBP")
+        push!(fer_labels,"SPA iLBP")
     end
-    if _RBP
+    if oRBP
         append!(yaxis,[FER_rbp])
         push!(fer_labels,"SPA RBP")
     end
@@ -361,6 +391,18 @@ if NREALS > 1
     )
 
     if PLOT_BER
+        if MKAY
+            display(
+                plot(
+                    1:MAX,
+                    BER,
+                    label=ber_labels,
+                    lw=2,
+                    title="BER SPA FL (MKAY)",
+                    ylims=(lim-1,0)
+                )
+            )
+        end
         if FTNH
             display(
                 plot(
@@ -409,7 +451,7 @@ if NREALS > 1
                 )
             )
         end
-        if _LBP
+        if oLBP
             display(
                 plot(
                     1:MAX,
@@ -421,19 +463,19 @@ if NREALS > 1
                 )
             )
         end
-        if ILBP
+        if iLBP
             display(
                 plot(
                     1:MAX,
                     BER_ilbp,
                     label=ber_labels,
                     lw=2,
-                    title="BER SPA ILBP",
+                    title="BER SPA iLBP",
                     ylims=(lim-1,0)
                 )
             )
         end
-        if _RBP
+        if oRBP
             display(
                 plot(
                     1:MAX_RBP,

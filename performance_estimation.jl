@@ -29,8 +29,9 @@ function
     Random.seed!(SEED)
 
     ################################ CHECK MODE ####################################
-    if (mode ≠ "FTNH") && (mode ≠ "FALT") && (mode ≠ "FTAB") && (mode ≠ "FMSM") &&
-       (mode ≠ "_LBP") && (mode ≠ "ILBP") && (mode ≠ "_RBP") && (mode ≠ "LRBP")
+    if (mode ≠ "MKAY") && (mode ≠ "FTNH") && (mode ≠ "FALT") &&
+       (mode ≠ "FTAB") && (mode ≠ "FMSM") && (mode ≠ "oLBP") &&
+       (mode ≠ "iLBP") && (mode ≠ "oRBP") && (mode ≠ "LRBP")
         throw(
             ArgumentError(
                 "$mode is not a valid mode"
@@ -64,7 +65,7 @@ function
     syndrome = ones(Bool,M)
 
     # prior llr-probabilitities
-    Lf = Vector{Float64}(undef,N)
+    Lf = (mode != "MKAY") ? Vector{Float64}(undef,N) : Matrix{Float64}(undef,N,2)
 
     # noise
     noise = Vector{Float64}(undef,N)
@@ -76,38 +77,38 @@ function
     bit_error = Vector{Bool}(undef,N) 
 
     # Vertical and horizontal update matrices
-    Lq = H*0.0
-    Lr = H*0.0
-
-    # variables used only if testing
-    f = TEST ? zeros(N,2) : nothing
-    q,r = TEST ? (zeros(M,N,2),zeros(M,N,2)) : (nothing,nothing)
+    Lq, Lr = (mode != "MKAY") ? (H*0.0,H*0.0) : (zeros(M,N,2),zeros(M,N,2))
 
     # Set variables that depend on the mode
-    if mode == "FTNH" || mode == "_LBP" || mode == "ILBP"
+    if mode == "FTNH" || mode == "oLBP" || mode == "iLBP"
         Lrn = zeros(N)
         sn = nothing
     elseif mode == "FALT" || mode == "FTAB"
         Lrn = zeros(N)
         sn = zeros(Bool,N)
-    elseif mode == "FMSM" || mode == "_RBP" || mode == "LRBP"
+    elseif mode == "FMSM" || mode == "oRBP" || mode == "LRBP"
         Lrn = nothing
         sn = zeros(Bool,N)
+    else
+        Lrn = nothing
+        sn = nothing
     end
+ 
+    Ldn, visited_nodes = (mode == "oLBP" || mode == "iLBP") ?
+        (zeros(N),zeros(Bool,N)) : (nothing,nothing)
 
-    Ldn = (mode == "_LBP" || mode == "ILBP") ? zeros(N) : nothing
-    visited_nodes = (mode == "_LBP" || mode == "ILBP")  ? zeros(Bool,N) : nothing
     phi = (mode == "FTAB") ? lookupTable() : nothing
-    ftab_factor = (mode == "FTAB") ? true : false
-    R = (mode == "_RBP") ? H*0.0 : nothing
-    Edges = (mode == "_RBP" || mode == "LRBP") ? H*0 : nothing
-    max_coords = (mode == "_RBP" || mode == "LRBP") ? [1,1] : nothing
-    penalty = (mode == "_RBP" || mode == "LRBP") ? 1.0*H : nothing
-    penalty_factor = (mode == "_RBP" || mode == "LRBP") ? PENALTY : nothing
-    num_edges = (mode == "_RBP" || mode == "LRBP") ? sum(H) : nothing
+
+    Residues = (mode == "oRBP") ? H*0.0 : nothing
+
+    Edges, maxcoords, Factors, pfactor, num_edges  = 
+        (mode == "oRBP" || mode == "LRBP") ? 
+        (H*0, [1,1], 1.0*H, PENALTY, sum(H))  : 
+        (nothing,nothing,nothing,nothing,nothing)
     
-    # the 4 flooding methods 
-    mode = (mode == "FTNH" || mode == "FALT" || mode == "FTAB" || mode == "FMSM") ? "FLOO" : mode
+    # unity the 5 flooding methods 
+    _mode = (mode == "MKAY" || mode == "FTNH" || mode == "FALT" ||
+             mode == "FTAB" || mode == "FMSM") ? "FLOO" : mode
 
     ######################### FIRST RECEIVED SIGNAL ############################
     # In order to allow a test with a given received signal t_test, the first
@@ -127,12 +128,6 @@ function
             # the received signal is the test signal
             t = t_test
         end
-        # init the priors for test
-        calc_f!(f,t,σ[1]^2)
-        # init matrix q
-        init_q!(q,f,nodes2checks)
-        # init matrix r
-        r = zeros(M,N,2)
     else
         # generate the first received signal outside the main loop
         received!(t,noise,σ[1],u)
@@ -144,28 +139,28 @@ function
 
             # init the llr priors
             calc_Lf!(Lf,t,σ[k]^2)
-            if ftab_factor
+            if mode == "FTAB"
                 # scale for table
                 Lf .*= SIZE_per_RANGE
             end            
             # initialize matrix Lr
             Lr .*= 0
             # initialize matrix Lq
-            llr_init_q!(Lq,Lf,nodes2checks)
+            init_Lq!(Lq,Lf,nodes2checks)
 
             if mode == "LRBP"
-                # find max_coords for the first update
+                # find the coordenades of the maximum residue
                 min_sum_lRBP_init!(
-                    max_coords,
+                    maxcoords,
                     Lq,
                     sn,
                     checks2nodes
                 )
             end
-            if mode == "_RBP"
-                # initialize the matrix of residues R
+            if mode == "oRBP"
+                # initialize the matrix of residues
                 min_sum_RBP_init!(
-                    R,
+                    Residues,
                     Lq,
                     sn,
                     checks2nodes
@@ -174,7 +169,7 @@ function
             # SPA routine
             DECODED, i = 
             BP!(
-                mode,
+                _mode,
                 TEST,
                 max,
                 syndrome,
@@ -190,15 +185,12 @@ function
                 Lrn,
                 sn,
                 phi,
-                f,
-                q,
-                r,
                 printing,
-                R,
+                Residues,
                 Edges,
-                max_coords,
-                penalty,
-                penalty_factor,
+                maxcoords,
+                Factors,
+                pfactor,
                 num_edges,
                 Ldn,
                 visited_nodes
@@ -224,10 +216,10 @@ function
     end
 
     if TEST
-        if mode == "_RBP" || mode == "LRBP"
-            return r, Lr, q, Lq, Edges
+        if mode == "oRBP" || mode == "LRBP"
+            return Lr, Lq, Edges
         else
-            return r, Lr, q, Lq
+            return Lr, Lq
         end
     else
         return log10.(FER), log10.(BER), iters

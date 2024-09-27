@@ -21,7 +21,7 @@ SIZE::Int = 1024
 RANGE::Float64 = 20
 SIZE_per_RANGE::Float64 = SIZE/RANGE
 
-MODE::String = "FTAB"
+MODE::String = "MKAY"
 
 H = BitMatrix(
      [0 1 0 1 0 1 1 1 0 0 0 1;
@@ -58,7 +58,7 @@ C = gf2_mat_mult(Matrix(G), Message)
 t = [1.3129, 2.6584, 0.7413, 2.1745, 0.5981, −0.8323, −0.3962, −1.7586,
 1.4905, 0.4084, −0.9290, 1.0765]
 
-R, LR, Q, LQQ = 
+Lr, Lq = 
     performance_estimation(
         C,
         σ,
@@ -73,11 +73,10 @@ R, LR, Q, LQQ =
     )
 ;
 if MODE == "FTAB"
-    LR /= SIZE_per_RANGE
-    LQQ /= SIZE_per_RANGE
+    Lr /= SIZE_per_RANGE
+    Lq /= SIZE_per_RANGE
 end
 
-logQ = log.(Q[:,:,1]./Q[:,:,2])
-logR = log.(R[:,:,1]./R[:,:,2]);
-
-R
+if MODE == "MKAY"
+    logR = log.(Lr[:,:,1]./Lr[:,:,2])
+end

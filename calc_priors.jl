@@ -17,7 +17,7 @@ function
 end
 
 function
-    calc_f!(
+    calc_Lf!(
         f::Matrix{<:AbstractFloat},
         t::Vector{<:AbstractFloat},
         σ²::AbstractFloat

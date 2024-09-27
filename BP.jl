@@ -3,8 +3,8 @@
 # 27 ago 2024
 # Main loop of the BP routine
 
-include("simple_horizontal_update.jl")
-include("vertical_update_and_MAP.jl")
+include("update_check2nodes_messages.jl")
+include("update_node2checks_messages.jl")
 include("flooding.jl")
 include("calc_syndrome.jl")
 include("LBP.jl")
@@ -22,23 +22,20 @@ function
         c::Vector{Bool},
         bit_error::Vector{Bool},
         ber::Vector{<:AbstractFloat},
-        Lf::Vector{<:AbstractFloat},
-        Lq::Matrix{<:AbstractFloat},
-        Lr::Matrix{<:AbstractFloat},      
+        Lf::Array{<:AbstractFloat},
+        Lq::Array{<:AbstractFloat},
+        Lr::Array{<:AbstractFloat},      
         checks2nodes::Vector{Vector{T}} where {T<:Integer},
         nodes2checks::Vector{Vector{T}} where {T<:Integer},
         Lrn::Union{Vector{<:AbstractFloat},Nothing},
         sn::Union{Vector{Bool},Nothing},        
         phi::Union{Vector{<:AbstractFloat},Nothing},
-        f::Union{Matrix{<:AbstractFloat},Nothing},
-        q::Union{Array{<:AbstractFloat,3},Nothing},
-        r::Union{Array{<:AbstractFloat,3},Nothing},
         printing::Union{Bool,Nothing},        
-        R::Union{Matrix{<:AbstractFloat},Nothing},
+        Residues::Union{Matrix{<:AbstractFloat},Nothing},
         Edges::Union{Matrix{<:Integer},Nothing},
-        max_coords::Union{Vector{<:Integer},Nothing},
-        penalty::Union{Matrix{<:AbstractFloat},Nothing},
-        penalty_factor::Union{AbstractFloat,Nothing},
+        maxcoords::Union{Vector{<:Integer},Nothing},
+        Factors::Union{Matrix{<:AbstractFloat},Nothing},
+        pfactors::Union{AbstractFloat,Nothing},
         num_edges::Union{Integer,Nothing},
         Ldn::Union{Vector{<:AbstractFloat},Nothing},
         visited_nodes::Union{Vector{Bool},Nothing}
@@ -62,7 +59,7 @@ function
                 sn,
                 phi
             )  
-        elseif mode == "_LBP"
+        elseif mode == "oLBP"
             LBP!(
                 d,
                 Lr,
@@ -74,7 +71,7 @@ function
                 Ldn,
                 visited_nodes
             )   
-        elseif mode == "ILBP"
+        elseif mode == "iLBP"
             iLBP!(
                 d,
                 Lr,
@@ -92,38 +89,38 @@ function
             lRBP!(
                 d,
                 Lr,
-                max_coords,
+                maxcoords,
                 Lq,
                 Lf,
                 checks2nodes,
                 nodes2checks,
                 sn,
                 Edges,
-                penalty,
-                penalty_factor,
+                Factors,
+                pfactors,
                 num_edges
             )
             # reset penalties
-            reset_penalties!(penalty,checks2nodes)
-        elseif mode == "_RBP"
+            reset_penalties!(Factors,checks2nodes)
+        elseif mode == "oRBP"
             Edges .*= 0
             RBP!(
                 d,
                 Lr,
-                max_coords,
+                maxcoords,
                 Lq,
                 Lf,
                 checks2nodes,
                 nodes2checks,
                 sn,
                 Edges,
-                penalty,
-                penalty_factor,
+                Factors,
+                pfactors,
                 num_edges,
-                R
+                Residues
             )
             # reset penalties
-            reset_penalties!(penalty,checks2nodes)
+            reset_penalties!(Factors,checks2nodes)
         end
 
         calc_syndrome!(
@@ -132,31 +129,10 @@ function
             checks2nodes
         )
 
-        if test            
-            ### Conventional simplified SPA
-            δQ = q[:,:,1]-q[:,:,2]    
-            simple_horizontal_update!(
-                r,
-                δQ,
-                checks2nodes
-            )
-            d_test = vertical_update_and_MAP!(
-                q,
-                r,
-                f,
-                nodes2checks
-            )
-            syndrome_test = calc_syndrome(
-                d_test,
-                checks2nodes
-            )
-            if printing
-                println("Iteration #$i")    
-                println("MAP SIMPLE estimate: $d_test")    
-                println("MAP Δ-LLRs estimate: $d")    
-                println("MAP SIMPLE syndrome: $syndrome_test")    
-                println("LLR Δ-LLRs syndrome: $syndrome")    
-            end
+        if test && printing
+                println("Iteration #$i")     
+                println("MAP estimate: $d")      
+                println("Syndrome: $syndrome")    
         else
             if FIRST && iszero(syndrome)
                 FIRST = false
@@ -176,7 +152,7 @@ end
 
 function 
     reset_penalties!(
-        penalty::Matrix{<:AbstractFloat},
+        Factors::Matrix{<:AbstractFloat},
         checks2nodes::Vector{Vector{T}} where {T<:Integer}
     )
 
@@ -184,7 +160,7 @@ function
     for nodes in checks2nodes
         check += 1
         for node in nodes
-            penalty[check,node] = 1.0
+            Factors[check,node] = 1.0
         end
     end
 end

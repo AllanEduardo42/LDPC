@@ -5,9 +5,8 @@
 # local RBP Sum-Product Algorithm using min-sum to calculate the residues
 
 include("min_sum.jl")
-include("check2node_llr.jl")
-include("node2check_llr_and_MAP.jl")
-include("RBP_vertical_update.jl")
+include("update_check2nodes_messages.jl")
+include("update_node2checks_messages.jl")
 
 function
     lRBP!(
@@ -20,8 +19,8 @@ function
         nodes2checks::Vector{Vector{T}} where {T<:Integer},
         sn::Vector{Bool},
         Edges::Matrix{<:Integer},
-        penalty::Matrix{<:AbstractFloat},
-        penalty_factor::AbstractFloat,
+        Factors::Matrix{<:AbstractFloat},
+        pfactor::AbstractFloat,
         num_edges::Integer
     )
 
@@ -29,9 +28,9 @@ function
     while e <= num_edges
 
         (cmax,nmax) = max_coords
-        penalty[cmax,nmax] *= penalty_factor
+        Factors[cmax,nmax] *= pfactor
         Edges[cmax,nmax] += 1
-        Lr[cmax,nmax] = check2node_llr_one_check_only!(
+        Lr[cmax,nmax] = update_check2node_message!(
             view(Lq,cmax,:),
             checks2nodes[cmax],
             nmax,
@@ -43,7 +42,7 @@ function
         for check in _checks
             if check ≠ cmax
                 # vertical update of Lq[check,nmax], check ≠ cmax
-                @inbounds Lq[check,nmax] =  RBP_vertical_update(
+                @inbounds Lq[check,nmax] =  update_node2check_message(
                                                 _checks,
                                                 check,
                                                 ΔLf[nmax],
@@ -54,7 +53,7 @@ function
                 max_residue = min_sum_lRBP!(
                     max_coords,
                     max_residue,
-                    penalty,
+                    Factors,
                     view(Lr,check,:),
                     view(Lq,check,:),
                     sn,

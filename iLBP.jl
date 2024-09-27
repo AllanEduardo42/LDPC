@@ -3,8 +3,8 @@
 # 26 set 2024
 # instantaneos LBP Sum-Product Algorithm
 
-include("check2node_llr.jl")
-include("node2check_llr_and_MAP.jl")
+include("update_check2nodes_messages.jl")
+include("update_node2checks_messages.jl")
 
 function
     iLBP!(
@@ -29,7 +29,7 @@ function
             if visited_nodes[node]
                 Lq[check,node] = Ldn[node] - Lr[check,node]
             else
-                Ldn[node], d[node] = node2check_llr_and_MAP!(
+                Ldn[node], d[node] = update_node2checks_messages!(
                     view(Lq,:,node),
                     view(Lr,:,node),
                     Lf[node],

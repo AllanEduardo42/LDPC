@@ -2,13 +2,31 @@
 # Allan Eduardo Feitosa
 # 26 set 2024
 # Horizontal update of the LLR
-# There are 3 different methods for SPA: tanh, alternative and table
+# There are 4 different methods for SPA: Mckay, tanh, alternative and table
 
 include("min_sum.jl")
 
+########################### SPA USING MKAY's METHOD ############################
+function
+    update_check2nodes_messages!(
+        vr::AbstractMatrix{<:AbstractFloat},
+        vδq::AbstractVector{<:AbstractFloat},
+        nodes::Vector{<:Integer},     
+    )
+    δr = 1
+    for node in nodes
+        @inbounds δr *= vδq[node]
+    end
+    for node in nodes
+        x = δr/(vδq[node] + eps())        
+        @inbounds vr[node,1] = 0.5*(1+x)
+        @inbounds vr[node,2] = 0.5*(1-x)
+    end
+end
+
 ######################### SPA USING HYPERBOLIC TANGENT #########################
 function
-    check2node_llr!(
+    update_check2nodes_messages!(
         vLr::AbstractVector{<:AbstractFloat},
         vLq::AbstractVector{<:AbstractFloat},
         nodes::Vector{<:Integer},
@@ -54,7 +72,7 @@ function
 end
 
 function 
-    check2node_llr!(
+    update_check2nodes_messages!(
         vLr::AbstractVector{<:AbstractFloat},
         vLq::AbstractVector{<:AbstractFloat},
         nodes::Vector{<:Integer},
@@ -81,7 +99,7 @@ end
 
 
 function
-    check2node_llr!(
+    update_check2nodes_messages!(
         vLr::AbstractVector{<:AbstractFloat},
         vLq::AbstractVector{<:AbstractFloat},
         nodes::Vector{<:Integer},
@@ -98,7 +116,7 @@ end
 
 ### The function below is used in the RBP algorithm
 function
-    check2node_llr_one_check_only!(
+    update_check2node_message!(
         vLq::AbstractVector{<:AbstractFloat},
         nodes::Vector{<:Integer},
         _node::Integer,
