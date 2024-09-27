@@ -13,17 +13,17 @@ using SparseArrays
 
 ################################ BP MODE FLAGS ################################
 
- LBP = false
-iLBP = false
+ LBP = true
+iLBP = true
  RBP = true
-LRBP = false
+LRBP = true
 
 ############################# FLOODING MODE FLAGS ##############################
-MKAY = false
+MKAY = true
 TANH = true
-ALTN = false
-TABL = false
-MSUM = false
+ALTN = true
+TABL = true
+MSUM = true
 
 ################################### PLOTTING ###################################
 
@@ -32,8 +32,7 @@ HISTOGRAMS = false
 
 ################################ INCLUDED FILES ################################
 
-include("auxiliary_functions.jl")
-include("performance_estimation.jl")
+include("performance_simulation.jl")
 include("PEG.jl")
 include("GF2_functions.jl")
 
@@ -86,249 +85,74 @@ SNR_db = collect(0:1:8)
 SNR = exp10.(SNR_db/10)
 Sigma = 1 ./ sqrt.(SNR)
 
-############################# AUXILIARY CONSTANTS ##############################
-
-Nodes2checks  = find_nodes2checks(H)
-Checks2nodes  = find_checks2nodes(H)
-
 ############################## JULIA COMPILATION ###############################
 if MKAY
-    R, Q, = performance_estimation(
-        C,
-        [Sigma[LR_idx]],
-        H,
-        Checks2nodes,
-        Nodes2checks,
-        "MKAY",
-        1,
-        1;
-        printing=true
-    )
+    R, Q, = performance_simulation(C,[Sigma[LR_idx]],H,"MKAY",1,1;printing=true)
 end
 if TANH
-    Lr_ftnh, Lq_ftnh = performance_estimation(
-        C,
-        [Sigma[LR_idx]],
-        H,
-        Checks2nodes,
-        Nodes2checks,
-        "TANH",
-        1,
-        1
-    )
+    Lr_tanh, Lq_tanh = performance_simulation(C,[Sigma[LR_idx]],H,"TANH",1,1)
 end
 if ALTN
-    Lr_falt, Lq_falt = performance_estimation(
-        C,
-        [Sigma[LR_idx]],
-        H,
-        Checks2nodes,
-        Nodes2checks,
-        "ALTN",
-        1,
-        1
-    )
+    Lr_altn, Lq_altn = performance_simulation(C,[Sigma[LR_idx]],H,"ALTN",1,1)
 end
 if TABL
-    Lr_ftab, Lq_ftab = performance_estimation(
-        C,
-        [Sigma[LR_idx]],
-        H,
-        Checks2nodes,
-        Nodes2checks,
-        "TABL",
-        1,
-        1
-    )
+    Lr_tabl, Lq_tabl = performance_simulation(C,[Sigma[LR_idx]],H,"TABL",1,1)
 end
 if MSUM
-    Lr_msum, Lq_msum = performance_estimation(
-        C,
-        [Sigma[LR_idx]],
-        H,
-        Checks2nodes,
-        Nodes2checks,
-        "MSUM",
-        1,
-        1
-    )
+    Lr_msum, Lq_msum = performance_simulation(C,[Sigma[LR_idx]],H,"MSUM",1,1)
 end
 if  LBP
-    Lr_lbp, Lq_lbp = performance_estimation(
-        C,
-        [Sigma[LR_idx]],
-        H,
-        Checks2nodes,
-        Nodes2checks,
-        "LBP",
-        1,
-        1
-    )
+      Lr_lbp, Lq_lbp = performance_simulation(C,[Sigma[LR_idx]],H, "LBP",1,1)
 end
 if iLBP
-    Lr_ilbp, Lq_ilbp = performance_estimation(
-        C,
-        [Sigma[LR_idx]],
-        H,
-        Checks2nodes,
-        Nodes2checks,
-        "iLBP",
-        1,
-        1
-    )
+    Lr_ilbp, Lq_ilbp = performance_simulation(C,[Sigma[LR_idx]],H,"iLBP",1,1)
 end
 if RBP
-    Lr_rbp, Lq_rbp, Edges = performance_estimation(
-        C,
-        [Sigma[LR_idx]],
-        H,
-        Checks2nodes,
-        Nodes2checks,
-        "RBP",
-        1,
-        1
-    )
+    Lr_rbp, Lq_rbp, Edges = 
+                       performance_simulation(C,[Sigma[LR_idx]],H, "RBP",1,1)
 end
 if LRBP
-    Lr_lrbp, Lq_lrbp, lEdges = performance_estimation(
-        C,
-        [Sigma[LR_idx]],
-        H,
-        Checks2nodes,
-        Nodes2checks,
-        "LRBP",
-        1,
-        1
-    )
+    Lr_lrbp, Lq_lrbp, lEdges = 
+                       performance_simulation(C,[Sigma[LR_idx]],H,"LRBP",1,1)
 end
                              
-########################### PERFORMANCE SIMULATION ############################
+############################ PERFORMANCE SIMULATION ############################
 if NREALS > 1
     if MKAY
         @time FER, BER, Iters = 
-            performance_estimation(
-                C,
-                Sigma,
-                H,
-                Checks2nodes,
-                Nodes2checks,
-                "MKAY",
-                NREALS,
-                MAX
-            )
-        ;
+            performance_simulation(C,Sigma,H,"MKAY",NREALS,MAX)
     end
     if TANH
-        @time FER_ftnh, BER_ftnh, Iters_ftnh = 
-            performance_estimation(
-                C,
-                Sigma,
-                H,
-                Checks2nodes,
-                Nodes2checks,
-                "TANH",
-                NREALS,
-                MAX
-            )
-        ;
+        @time FER_tanh, BER_tanh, Iters_tanh = 
+            performance_simulation(C,Sigma,H,"TANH",NREALS,MAX)
     end
     if ALTN
-        @time FER_falt, BER_falt, Iters_falt = 
-            performance_estimation(
-                C,
-                Sigma,
-                H,
-                Checks2nodes,
-                Nodes2checks,
-                "ALTN",
-                NREALS,
-                MAX
-            )
-        ;
+        @time FER_altn, BER_altn, Iters_altn = 
+            performance_simulation(C,Sigma,H,"ALTN",NREALS,MAX)
     end
     if TABL
-        @time FER_ftab, BER_ftab, Iters_ftab = 
-            performance_estimation(
-                C,
-                Sigma,
-                H,
-                Checks2nodes,
-                Nodes2checks,
-                "TABL",
-                NREALS,
-                MAX
-            )
-        ;
+        @time FER_tabl, BER_tabl, Iters_tabl = 
+            performance_simulation(C,Sigma,H,"TABL",NREALS,MAX)
     end
     if MSUM
         @time FER_msum, BER_msum, Iters_msum = 
-            performance_estimation(
-                C,
-                Sigma,
-                H,
-                Checks2nodes,
-                Nodes2checks,
-                "MSUM",
-                NREALS,
-                MAX
-            )
-        ;
+            performance_simulation(C,Sigma,H,"MSUM",NREALS,MAX)
     end
     if  LBP
         @time FER_lbp, BER_lbp, Iters_lbp = 
-            performance_estimation(
-                C,
-                Sigma,
-                H,
-                Checks2nodes,
-                Nodes2checks,
-                "LBP",
-                NREALS,
-                MAX
-            )
-        ;
+            performance_simulation(C,Sigma,H, "LBP",NREALS,MAX)
     end
     if iLBP
         @time FER_ilbp, BER_ilbp, Iters_ilbp = 
-            performance_estimation(
-                C,
-                Sigma,
-                H,
-                Checks2nodes,
-                Nodes2checks,
-                "iLBP",
-                NREALS,
-                MAX
-            )
-        ;
+            performance_simulation(C,Sigma,H,"iLBP",NREALS,MAX)
     end
     if  RBP
         @time FER_rbp, BER_rbp, Iters_rbp = 
-            performance_estimation(
-                C,
-                Sigma,
-                H,
-                Checks2nodes,
-                Nodes2checks,
-                "RBP",
-                NREALS,
-                MAX_RBP
-            )
-        ;
+            performance_simulation(C,Sigma,H,"RBP",NREALS,MAX_RBP)
     end
     if LRBP
         @time FER_lrbp, BER_lrbp, Iters_lrbp = 
-            performance_estimation(
-                C,
-                Sigma,
-                H,
-                Checks2nodes,
-                Nodes2checks,
-                "LRBP",
-                NREALS,
-                MAX_RBP
-            )
-        ;
+            performance_simulation(C,Sigma,H,"LRBP",NREALS,MAX_RBP)
     end
     ################################### PLOTTING ###################################
     plotlyjs()
@@ -340,15 +164,15 @@ if NREALS > 1
         push!(fer_labels,"SPA FL (McKay)")
     end
     if TANH
-        append!(yaxis,[FER_ftnh])
+        append!(yaxis,[FER_tanh])
         push!(fer_labels,"SPA FL (tanh)")
     end
     if ALTN
-        append!(yaxis,[FER_falt])
+        append!(yaxis,[FER_altn])
         push!(fer_labels,"SPA FL (alt)")
     end
     if TABL
-        append!(yaxis,[FER_ftab])
+        append!(yaxis,[FER_tabl])
         push!(fer_labels,"SPA FL (table)")
     end
     if MSUM
@@ -407,7 +231,7 @@ if NREALS > 1
             display(
                 plot(
                     1:MAX,
-                    BER_ftnh,
+                    BER_tanh,
                     label=ber_labels,
                     lw=2,
                     title="BER SPA FL (tanh)",
@@ -419,7 +243,7 @@ if NREALS > 1
             display(
                 plot(
                     1:MAX,
-                    BER_falt,
+                    BER_altn,
                     label=ber_labels,
                     lw=2,
                     title="BER SPA FL (alt)",
@@ -431,7 +255,7 @@ if NREALS > 1
             display(
                 plot(
                     1:MAX,
-                    BER_ftab,
+                    BER_tabl,
                     label=ber_labels,
                     lw=2,
                     title="BER SPA FL (table)",
@@ -505,7 +329,7 @@ if NREALS > 1
         for i in eachindex(SNR)
             display(
                 histogram(
-                    [Iters_ftnh[i,:] Iters_ilbp[i,:]],
+                    [Iters_tanh[i,:] Iters_ilbp[i,:]],
                     layout=grid(2,1),
                     xlims=(0,MAX+1),
                     labels=["Flooding" "LRBP"],

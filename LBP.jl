@@ -3,8 +3,7 @@
 # 17 set 2024
 # LBP Sum-Product Algorithm
 
-include("update_check2nodes_messages.jl")
-include("update_node2checks_messages.jl")
+include("update_Lq.jl")
 
 function
     LBP!(
@@ -12,73 +11,39 @@ function
         Lr::Matrix{<:AbstractFloat},
         Lq::Matrix{<:AbstractFloat},
         Lf::Vector{<:AbstractFloat},
-        checks2nodes::Vector{Vector{T}} where {T<:Integer},
-        nodes2checks::Vector{Vector{T}} where {T<:Integer},
+        cn2vn::Vector{Vector{T}} where {T<:Integer},
+        vn2cn::Vector{Vector{T}} where {T<:Integer},
         Lrn::Vector{<:AbstractFloat},
         Ldn::Vector{<:AbstractFloat},
-        visited_nodes::Vector{Bool}
+        visited_vns::Vector{Bool}
     )
 
-    visited_nodes .*= false
-    check = 0
-    for nodes in checks2nodes
-        check += 1
-        # vertical update
-        ################### original implementation ############################
-        # for node in nodes # every node in Neighborhood(check)
-        #     Lq[check,node] = Lf[node]
-        #     for c in nodes2checks[node]
-        #         if c ≠ check
-        #             Lq[check,node] += Lr[c,node]
-        #         end
-        #     end
-        # end
-        ##################### new implementation ###############################        
-        for node in nodes # every node in Neighborhood(check)
-            if visited_nodes[node]
-                Lq[check,node] = Ldn[node] - Lr[check,node]
+    visited_vns .*= false
+    for m in eachindex(cn2vn)
+        # Lq updates       
+        for n in cn2vn[m] # every n in Neighborhood(m)
+            if visited_vns[n]
+                Lq[n,m] = Ldn[n] - Lr[m,n]
             else
-                Ldn[node], d[node] = update_node2checks_messages!(
-                    Lq,
-                    Lr,
-                    Lf[node],
-                    node,
-                    nodes2checks[node]
-                )
-                visited_nodes[node] = true
+                Ldn[n], d[n] = update_Lq!(Lq,Lr,Lf[n],n,vn2cn)
+                visited_vns[n] = true
             end
         end
-        ################### original implementation ############################
-        # update_check2nodes_messages!(
-        #     view(Lr,check,:),
-        #     view(Lq,check,:),
-        #     nodes,
-        #     Lrn,
-        #     nothing,
-        #     nothing
-        # )
-        ##################### new implementation ###############################
+        # Lr updates
         pLr = 1.0
-        for node in nodes
-            @inbounds @fastmath Lrn[node] = tanh(0.5*Lq[check,node])
-            @inbounds @fastmath pLr *= Lrn[node]
+        for n in cn2vn[m]
+            @inbounds @fastmath Lrn[n] = tanh(0.5*Lq[n,m])
+            @inbounds @fastmath pLr *= Lrn[n]
         end
-        for node in nodes
-            @inbounds @fastmath x = pLr/Lrn[node]
+        for n in cn2vn[m]
+            @inbounds @fastmath x = pLr/Lrn[n]
             if abs(x) < 1 # controls divergent values of Lr
-                Ldn[node] -= Lr[check,node]
-                @inbounds @fastmath Lr[check,node] = 2*atanh(x)
-                Ldn[node] += Lr[check,node]
-                d[node] = signbit(Ldn[node])
+                Ldn[n] -= Lr[m,n]
+                @inbounds @fastmath Lr[m,n] = 2*atanh(x)
+                Ldn[n] += Lr[m,n]
+                d[n] = signbit(Ldn[n])
             end
         end
     end
 
-    ####################### original implementation ############################
-    # MAP!(
-    #     d,
-    #     nodes2checks,
-    #     Lf,
-    #     Lr
-    # )
 end

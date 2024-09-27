@@ -3,8 +3,8 @@
 # 27 set 2024
 # Flooding Sum-Product Algorithm
 
-include("update_check2nodes_messages.jl")
-include("update_node2checks_messages.jl")
+include("update_Lr.jl")
+include("update_Lq.jl")
 
 function
     flooding!(
@@ -12,39 +12,25 @@ function
         Lq::Matrix{<:AbstractFloat},
         Lr::Matrix{<:AbstractFloat},
         Lf::Vector{<:AbstractFloat},
-        checks2nodes::Vector{Vector{T}} where {T<:Integer},
-        nodes2checks::Vector{Vector{T}} where {T<:Integer},
+        cn2vn::Vector{Vector{T}} where {T<:Integer},
+        vn2cn::Vector{Vector{T}} where {T<:Integer},
         Lrn::Union{Vector{<:AbstractFloat},Nothing},
-        sn::Union{Vector{Bool},Nothing},
+        signs::Union{Vector{Bool},Nothing},
         phi::Union{Vector{<:AbstractFloat},Nothing}
     )
 
-    # horizontal update
-    check = 0
-    for nodes in checks2nodes
-        check += 1
-        update_check2nodes_messages!(
-            Lr,
-            Lq,
-            check,
-            nodes,
-            Lrn,
-            sn,
-            phi
-        )
+    # Lr update
+    for m in eachindex(cn2vn)
+
+        update_Lr!(Lr,Lq,m,cn2vn,Lrn,signs,phi)
+
     end
 
-    # vertical update
-    node = 0
-    for checks in nodes2checks
-        node += 1
-        _, d[node] = update_node2checks_messages!(
-                        Lq,
-                        Lr,
-                        Lf[node],
-                        node,
-                        checks
-                    )
+    # Lq update
+    for n in eachindex(vn2cn)
+
+        _, d[n] = update_Lq!(Lq,Lr,Lf[n],n,vn2cn,Lrn)
+        
     end
 end
 
@@ -56,38 +42,27 @@ function
         q::Array{<:AbstractFloat,3},
         r::Array{<:AbstractFloat,3},
         f::Matrix{<:AbstractFloat},
-        checks2nodes::Vector{Vector{T}} where {T<:Integer},
-        nodes2checks::Vector{Vector{T}} where {T<:Integer},
+        cn2vn::Vector{Vector{T}} where {T<:Integer},
+        vn2cn::Vector{Vector{T}} where {T<:Integer},
         Lrn::Nothing,
-        sn::Nothing,
+        signs::Nothing,
         phi::Nothing
     )
 
-    # horizontal update
-    check = 0
+    # horizontal update 
     δq = q[:,:,1]-q[:,:,2]  
-    for nodes in checks2nodes
-        check += 1
-        update_check2nodes_messages!(
-            r,
-            δq,
-            check,
-            nodes
-        )
+
+    for m in eachindex(cn2vn)
+
+        update_Lr!(r,δq,m,cn2vn)
+
     end
 
     # vertical update
-    node = 0
+
     Ld = zeros(2)
-    for checks in nodes2checks
-        node += 1
-        @inbounds Ld = f[node,:]
-        d[node] = update_node2checks_messages!(
-            q,
-            r,
-            Ld,
-            node,
-            checks
-        )
+    for n in eachindex(vn2cn)
+        @inbounds Ld = f[n,:]
+        d[n] = update_Lq!(q,r,Ld,n,vn2cn)
     end
 end

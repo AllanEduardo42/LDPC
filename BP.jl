@@ -3,14 +3,15 @@
 # 27 ago 2024
 # Main loop of the BP routine
 
-include("update_check2nodes_messages.jl")
-include("update_node2checks_messages.jl")
+include("auxiliary_functions.jl")
+include("update_Lr.jl")
+include("update_Lq.jl")
 include("flooding.jl")
 include("calc_syndrome.jl")
 include("LBP.jl")
 include("iLBP.jl")
 include("RBP.jl")
-include("lRBP.jl")
+include("LRBP.jl")
 
 function 
     BP!(
@@ -25,10 +26,10 @@ function
         Lf::Array{<:AbstractFloat},
         Lq::Array{<:AbstractFloat},
         Lr::Array{<:AbstractFloat},      
-        checks2nodes::Vector{Vector{T}} where {T<:Integer},
-        nodes2checks::Vector{Vector{T}} where {T<:Integer},
+        cn2vn::Vector{Vector{T}} where {T<:Integer},
+        vn2cn::Vector{Vector{T}} where {T<:Integer},
         Lrn::Union{Vector{<:AbstractFloat},Nothing},
-        sn::Union{Vector{Bool},Nothing},        
+        signs::Union{Vector{Bool},Nothing},        
         phi::Union{Vector{<:AbstractFloat},Nothing},
         printing::Union{Bool,Nothing},        
         Residues::Union{Matrix{<:AbstractFloat},Nothing},
@@ -38,7 +39,7 @@ function
         pfactors::Union{AbstractFloat,Nothing},
         num_edges::Union{Integer,Nothing},
         Ldn::Union{Vector{<:AbstractFloat},Nothing},
-        visited_nodes::Union{Vector{Bool},Nothing}
+        visited_vns::Union{Vector{Bool},Nothing}
     )
              
     index = max
@@ -48,60 +49,11 @@ function
     for i in 1:max
 
         if mode == "FLOO"
-            flooding!(
-                d,
-                Lq,
-                Lr,
-                Lf,
-                checks2nodes,
-                nodes2checks,
-                Lrn,
-                sn,
-                phi
-            )  
+            flooding!(d,Lq,Lr,Lf,cn2vn,vn2cn,Lrn,signs,phi)  
         elseif mode == "LBP"
-            LBP!(
-                d,
-                Lr,
-                Lq,
-                Lf,
-                checks2nodes,
-                nodes2checks,
-                Lrn,
-                Ldn,
-                visited_nodes
-            )   
+            LBP!(d,Lr,Lq,Lf,cn2vn,vn2cn,Lrn,Ldn,visited_vns)   
         elseif mode == "iLBP"
-            iLBP!(
-                d,
-                Lr,
-                Lq,
-                Lf,
-                checks2nodes,
-                nodes2checks,
-                Lrn,
-                syndrome,
-                Ldn,
-                visited_nodes
-            )
-        elseif mode == "LRBP"
-            Edges .*= 0
-            lRBP!(
-                d,
-                Lr,
-                maxcoords,
-                Lq,
-                Lf,
-                checks2nodes,
-                nodes2checks,
-                sn,
-                Edges,
-                Factors,
-                pfactors,
-                num_edges
-            )
-            # reset penalties
-            reset_penalties!(Factors,checks2nodes)
+            iLBP!(d,Lr,Lq,Lf,cn2vn,vn2cn,Lrn,syndrome,Ldn,visited_vns)
         elseif mode == "RBP"
             Edges .*= 0
             RBP!(
@@ -110,24 +62,38 @@ function
                 maxcoords,
                 Lq,
                 Lf,
-                checks2nodes,
-                nodes2checks,
-                sn,
+                cn2vn,
+                vn2cn,
+                signs,
                 Edges,
                 Factors,
                 pfactors,
                 num_edges,
                 Residues
             )
-            # reset penalties
-            reset_penalties!(Factors,checks2nodes)
+            # reset factors
+            reset_factors!(Factors,cn2vn)
+        elseif mode == "LRBP"
+            Edges .*= 0
+            LRBP!(
+                d,
+                Lr,
+                maxcoords,
+                Lq,
+                Lf,
+                cn2vn,
+                vn2cn,
+                signs,
+                Edges,
+                Factors,
+                pfactors,
+                num_edges
+            )
+            # reset factors
+            reset_factors!(Factors,cn2vn)
         end
 
-        calc_syndrome!(
-            syndrome,
-            d,
-            checks2nodes
-        )
+        calc_syndrome!(syndrome,d,cn2vn)
 
         if test && printing
                 println("Iteration #$i")     
@@ -148,19 +114,4 @@ function
 
     return DECODED, index
 
-end
-
-function 
-    reset_penalties!(
-        Factors::Matrix{<:AbstractFloat},
-        checks2nodes::Vector{Vector{T}} where {T<:Integer}
-    )
-
-    check = 0
-    for nodes in checks2nodes
-        check += 1
-        for node in nodes
-            Factors[check,node] = 1.0
-        end
-    end
 end

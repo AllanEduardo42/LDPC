@@ -7,57 +7,56 @@ include("min_sum.jl")
 
 function
     min_sum_lRBP!(
-        max_coords::Vector{<:Integer},
-        max_residue::AbstractFloat,
-        penalty::Matrix{<:AbstractFloat},
+        maxcoords::Vector{<:Integer},
+        maxresidue::AbstractFloat,
+        Factors::Matrix{<:AbstractFloat},
         Lr::Matrix{<:AbstractFloat},                           
         Lq::Matrix{<:AbstractFloat},
-        sn::Vector{Bool},
-        nodes::Vector{<:Integer},
-        nmax::Integer,
-        check::Integer
+        signs::Vector{Bool},
+        vnmax::Integer,
+        m::Integer,
+        cn2vn::Vector{Vector{T}} where {T<:Integer}       
     )
     
     x = 0.0
     y = 0.0
-    args = _min_sum!(Lq,check,sn,nodes)
-    for node in nodes
-        if node ≠ nmax
-            x = __min_sum!(node,sn[node],args...)
-            y = abs(x - Lr[node])*penalty[check,node]
-            if y > max_residue
-                max_residue = y
-                max_coords[1] = check
-                max_coords[2] = node
+    args = _min_sum!(Lq,m,signs,cn2vn[m])
+    for n in cn2vn[m]
+        if n ≠ vnmax
+            x = __min_sum!(n,signs[n],args...)
+            y = abs(x - Lr[n])*Factors[m,n]
+            if y > maxresidue
+                maxresidue = y
+                maxcoords[1] = m
+                maxcoords[2] = n
             end
         end
     end
 
-    return max_residue
+    return maxresidue
 end
 
 function
     min_sum_lRBP_init!(          
-        max_coords::Vector{<:Integer},              
+        maxcoords::Vector{<:Integer},              
         Lq::Matrix{<:AbstractFloat},
-        sn::Vector{Bool},
-        checks2nodes::Vector{Vector{T}} where {T<:Integer}
+        signs::Vector{Bool},
+        cn2vn::Vector{Vector{T}} where {T<:Integer}
     )
     
     x = 0.0
     y = 0.0
-    max_residue = 0.0
-    check = 0
-    for nodes in checks2nodes
-        check += 1
-        args = _min_sum!(Lq,check,sn,nodes)
-        for node in nodes
-            x = __min_sum!(node,sn[node],args...)
+    maxresidue = 0.0
+    for m in eachindex(cn2vn)
+        cn2vn[m] = cn2vn[m]
+        args = _min_sum!(Lq,signs,m,cn2vn)
+        for n in cn2vn[m]
+            x = __min_sum!(n,signs[n],args...)
             y = abs(x) 
-            if y > max_residue
-                max_residue = y
-                max_coords[1] = check
-                max_coords[2] = node
+            if y > maxresidue
+                maxresidue = y
+                maxcoords[1] = m
+                maxcoords[2] = n
             end
         end
     end
@@ -69,18 +68,18 @@ function
         Residues::Matrix{<:AbstractFloat},
         Lr::Matrix{<:AbstractFloat},                           
         Lq::Matrix{<:AbstractFloat},
-        sn::Vector{Bool},
-        nodes::Vector{<:Integer},
-        nmax::Integer,
-        check::Integer
+        signs::Vector{Bool},
+        vnmax::Integer,
+        m::Integer,
+        cn2vn::Vector{Vector{T}} where {T<:Integer}
     )
     
     x = 0.0
-    args = _min_sum!(Lq,check,sn,nodes)
-    for node in nodes
-        if node ≠ nmax
-            x = __min_sum!(node,sn[node],args...)
-            Residues[check,node] = abs(x - Lr[check,node]) 
+    args = _min_sum!(Lq,signs,m,cn2vn)
+    for n in cn2vn[m]
+        if n ≠ vnmax
+            x = __min_sum!(n,signs[n],args...)
+            Residues[m,n] = abs(x - Lr[m,n]) 
         end
     end
 
@@ -90,18 +89,17 @@ function
     min_sum_RBP_init!(     
         Residues::Matrix{<:AbstractFloat},                    
         Lq::Matrix{<:AbstractFloat},
-        sn::Vector{<:Integer},
-        checks2nodes::Vector{Vector{T}} where {T<:Integer}
+        signs::Vector{<:Integer},
+        cn2vn::Vector{Vector{T}} where {T<:Integer}
     )
     
     x = 0.0
-    check = 0
-    for nodes in checks2nodes
-        check += 1
-        args = _min_sum!(Lq,check,sn,nodes)
-        for node in nodes
-            x = __min_sum!(node,sn[node],args...)
-            Residues[check,node] = abs(x) 
+
+    for m in eachindex(cn2vn)
+        args = _min_sum!(Lq,signs,m,cn2vn)
+        for n in cn2vn[m]
+            x = __min_sum!(n,signs[n],args...)
+            Residues[m,n] = abs(x) 
         end
     end
 end

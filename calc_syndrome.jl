@@ -3,50 +3,31 @@
 # 19 sep 2024
 # Function to calculate the syndrome in the LDPC-SPA decode algorithm
 
-"""Return the syndrome H*d, where H is the parity check matrix and d an estimate
+"""Return the syndrome H*d, where H is the parity cn matrix and d an estimate
 of the transmited codeword."""
 function 
     calc_syndrome!(
         syndrome::Vector{Bool},
         d::Vector{Bool},
-        checks2nodes::Vector{Vector{T}} where {T<:Integer}
+        cn2vn::Vector{Vector{T}} where {T<:Integer}
     )
 
     syndrome .*= false
-    check = 0
-    for nodes in checks2nodes
-        check += 1
-        @inbounds syndrome[check] = _calc_syndrome(d,nodes)
+    for cn in eachindex(cn2vn)
+        @inbounds syndrome[cn] = _calc_syndrome(d,cn2vn[cn])
     end
     
 end
 
 function 
-    calc_syndrome(
-        d::Vector{Bool},
-        checks2nodes::Vector{Vector{T}} where {T<:Integer}
-    )
-
-    syndrome = zeros(Bool,length(checks2nodes))
-    check = 0
-    for nodes in checks2nodes
-        check += 1
-        @inbounds syndrome[check] = _calc_syndrome(d,nodes)
-    end
-
-    return syndrome
-
-end
-
-function 
     _calc_syndrome(
         d::Vector{Bool},
-        nodes::Vector{<:Integer}
+        varnodes_cn::Vector{<:Integer}
     )
 
     syndrome = false
-    for node in nodes
-        @inbounds syndrome ⊻= d[node]
+    for cn in varnodes_cn
+        @inbounds syndrome ⊻= d[cn]
     end
 
     return syndrome

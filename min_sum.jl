@@ -4,25 +4,25 @@
 # Horizontal update of the LLR based MIN SUM Algorithm
 
 function abs_sign!(Lq::AbstractFloat,s::Bool)
-    sn = signbit(Lq)
-    return abs(Lq), sn, s ⊻ sn
+    signs = signbit(Lq)
+    return abs(Lq), signs, s ⊻ signs
 end
 
 function _min_sum!(                           
     Lq::Matrix{<:AbstractFloat},
-    check::Integer,
-    sn::Vector{Bool},
-    nodes::Vector{<:Integer},        
+    signs::Vector{Bool},
+    m::Integer,
+    cn2vn::Vector{Vector{T}} where {T<:Integer},   
     )
 
     s = false
     minL = Inf
     minL2 = Inf
     max_idx = 0
-    for node in nodes
-        @inbounds β, sn[node], s = abs_sign!(Lq[check,node],s)
+    for n in cn2vn[m]
+        @inbounds β, signs[n], s = abs_sign!(Lq[n,m],s)
         if β < minL
-            max_idx = node
+            max_idx = n
             minL, minL2 = β, minL
         elseif β < minL2
             minL2 = β
@@ -35,18 +35,18 @@ end
 
 function 
     __min_sum!(
-        node::Integer,
-        sn::Bool,
+        n::Integer,
+        signs::Bool,
         minL::AbstractFloat,
         minL2::AbstractFloat,
         s::Bool,
         max_idx::Integer
     )
 
-    if node == max_idx #(pick the second least Lq)
-        return (1 - 2*(sn ⊻ s))*minL2
+    if n == max_idx #(pick the second least Lq)
+        return (1 - 2*(signs ⊻ s))*minL2
     else
-        return (1 - 2*(sn ⊻ s))*minL
+        return (1 - 2*(signs ⊻ s))*minL
     end
 
 end

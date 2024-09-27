@@ -124,31 +124,3 @@ function
     unique!(x)
 
 end
-
-# function node_degrees(M, N, λ, ρ)
-
-#     # d = zeros(Int, N)
-#     Nv = zeros(Int, length(λ))
-#     Nc = zeros(Int, length(ρ))
-#     Λ = 0
-#     for i in eachindex(λ)
-#         Λ += λ[i]/i
-#     end
-#     R = 0
-#     for i in eachindex(ρ)
-#         R += ρ[i]/i
-#     end
-
-#     H = round(Int,(M/R + N/Λ)/2)
-
-#     for i in eachindex(λ)
-#         Nv[i] = round(Int, H*λ[i]/i)
-#     end
-
-#     for i in eachindex(ρ)
-#         Nc[i] = round(Int,H*ρ[i]/i)
-#     end
-
-#     return Nv, Nc
-
-# end

@@ -4,32 +4,32 @@
 # Auxiliary functions
 
 """For each column j of matrix H, find the indices i where H[i,j] = 1, and 
-return a vector "nodes2checks" where nodes2checks[j] is a vector containing the
+return a vector "vn2cn" where vn2cn[j] is a vector containing the
 indices i where H[i,j] = 1"""
-function find_nodes2checks(H::BitMatrix)
+function make_vn2cn_list(H::BitMatrix)
 
     N = size(H,2)
-    nodes2checks = Vector{Vector{Int}}()
-    for n in 1:N
-        push!(nodes2checks,findall(x -> x == true, H[:,n]))
+    vn2cn = Vector{Vector{Int}}()
+    for vn in 1:N
+        push!(vn2cn,findall(x -> x == true, H[:,vn]))
     end
 
-    return nodes2checks
+    return vn2cn
 
 end
 
 """For each row i of matrix H, find the indices j where H[i,j] = 1, and 
-return a vector "checks2nodes" where checks2nodes[i] is a vector containing the
+return a vector "cn2vn" where cn2vn[i] is a vector containing the
 indices j where H[i,j] = 1"""
-function find_checks2nodes(H::BitMatrix)
+function make_cn2vn_list(H::BitMatrix)
 
     M = size(H,1)
-    checks2nodes = Vector{Vector{Int}}()
-    for m in 1:M
-        push!(checks2nodes,findall(x -> x == true, H[m,:]))
+    cn2vn = Vector{Vector{Int}}()
+    for cn in 1:M
+        push!(cn2vn,findall(x -> x == true, H[cn,:]))
     end
 
-    return checks2nodes
+    return cn2vn
 
 end
 
@@ -37,13 +37,12 @@ function
     init_Lq!(
         Lq::Matrix{<:AbstractFloat},
         Lf::Vector{<:AbstractFloat},
-        nodes2checks::Vector{Vector{T}} where {T<:Integer}
+        vn2cn::Vector{Vector{T}} where {T<:Integer}
     )
-    node = 0
-    for checks in nodes2checks
-        node += 1
-        for check in checks
-            @inbounds Lq[check,node] = Lf[node]
+    
+    for vn in eachindex(vn2cn)
+        for cn in vn2cn[vn]
+            @inbounds Lq[vn,cn] = Lf[vn]
         end
     end
 end
@@ -52,16 +51,40 @@ function
     init_Lq!(
         Lq::Array{<:AbstractFloat,3},
         Lf::Matrix{<:AbstractFloat},
-        nodes2checks::Vector{Vector{T}} where {T<:Integer}
+        vn2cn::Vector{Vector{T}} where {T<:Integer}
     )
    
-    node = 0
-    for checks in nodes2checks
-        node += 1
-        for check in checks
-            @inbounds Lq[check,node,1] = Lf[node,1]
-            @inbounds Lq[check,node,2] = Lf[node,2]
+    for vn in eachindex(vn2cn)
+        for cn in vn2cn[vn]
+            @inbounds Lq[vn,cn,1] = Lf[vn,1]
+            @inbounds Lq[vn,cn,2] = Lf[vn,2]
         end
     end
 
+end
+
+function
+    received_signal!(
+        t::Vector{<:AbstractFloat},
+        noise::Vector{<:AbstractFloat},
+        σ::AbstractFloat,
+        u::Vector{<:AbstractFloat})
+
+    randn!(noise)
+    @fastmath noise .*= σ
+    @fastmath t .= u .+ noise
+
+end
+
+function 
+    reset_factors!(
+        Factors::Matrix{<:AbstractFloat},
+        cn2vn::Vector{Vector{T}} where {T<:Integer}
+    )
+
+    for cn in eachindex(cn2vn)
+        for vn in cn2vn[cn]
+            Factors[cn,vn] = 1.0
+        end
+    end
 end

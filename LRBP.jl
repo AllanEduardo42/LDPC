@@ -1,13 +1,13 @@
 
 ################################################################################
 # Allan Eduardo Feitosa
-# 23 set 2024
-# RBP Sum-Product Algorithm using min-sum to calculate the residues
+# 26 set 2024
+# local RBP Sum-Product Algorithm using min-sum to calculate the residues
 
-include("min_sum_RBP.jl")
+include("min_sum.jl")
 
 function
-    RBP!(
+    LRBP!(
         d::Vector{Bool},
         Lr::Matrix{<:AbstractFloat},
         maxcoords::Vector{<:Integer},
@@ -19,18 +19,11 @@ function
         Edges::Matrix{<:Integer},
         Factors::Matrix{<:AbstractFloat},
         pfactor::AbstractFloat,
-        num_edges::Integer,
-        Residues::Matrix{<:AbstractFloat}
+        num_edges::Integer
     )
 
     e = 1
     while e <= num_edges
-
-        max_residue = find_max_residue_coords!(maxcoords,Residues,Factors,cn2vn)
-
-        if max_residue == 0.0 # if RBP has converged
-            break
-        end
 
         (cnmax,vnmax) = maxcoords
         Factors[cnmax,vnmax] *= pfactor
@@ -45,54 +38,40 @@ function
         if abs(pLr) < 1 
             @inbounds @fastmath Lr[cnmax,vnmax] = 2*atanh(pLr)
         end
-        # we don't use the m-to-n message correspoding to (cnmax,vnmax) anymore.
-        # Thus we make the largest residue equal to zero:
-        Residues[cnmax,vnmax] = 0.0
+        maxresidue = 0.0
         
         checknodes_vnmax = vn2cn[vnmax]
         for m in checknodes_vnmax
             if m ≠ cnmax
-                # update Lq[vnmax,m], ∀cn ≠ cnmax
+                # vertical update of Lq[vnmax,m], ∀cn ≠ cnmax
                 @inbounds Lq[vnmax,m] = Lf[vnmax]
                 for m2 in checknodes_vnmax
                     if m2 ≠ m
                         @inbounds @fastmath Lq[vnmax,m] += Lr[m2,vnmax]
                     end
                 end
-                # if any new residue estimate is larger than the previously estimated maximum 
-                # residue than update the value of max_residue and maxcoords.
-                min_sum_RBP!(Residues,Lr,Lq,signs,vnmax,m,cn2vn)
+                maxresidue = min_sum_lRBP!(
+                    maxcoords,
+                    maxresidue,
+                    Factors,
+                    Lr,
+                    Lq,
+                    signs,
+                    vnmax,
+                    m,
+                    cn2vn
+                )
             end
         end
 
-        e +=1
+        if maxresidue == 0.0
+            break
+        end
+
+        e += 1
 
     end
 
     MAP!(d,vn2cn,Lf,Lr)
 
-end
-
-function
-    find_max_residue_coords!(
-        maxcoords::Vector{<:Integer},
-        Residues::Matrix{<:AbstractFloat},
-        Factors::Matrix{<:AbstractFloat},
-        cn2vn::Vector{Vector{T}} where {T<:Integer}
-    )
-
-    max_residue = 0
-    x = 0.0
-    for m in eachindex(cn2vn)
-        for n in cn2vn[m]
-            x = Residues[m,n]*Factors[m,n]
-            if x > max_residue
-                max_residue = x
-                maxcoords[1] = m
-                maxcoords[2] = n
-            end
-        end
-    end
-
-    return max_residue
 end
