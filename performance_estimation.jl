@@ -95,6 +95,8 @@ function
         sn = zeros(Bool,N)
     end
 
+    Ldn = (mode == "_LBP" || mode == "ILBP") ? zeros(N) : nothing
+    visited_nodes = (mode == "_LBP" || mode == "ILBP")  ? zeros(Bool,N) : nothing
     phi = (mode == "FTAB") ? lookupTable() : nothing
     ftab_factor = (mode == "FTAB") ? true : false
     R = (mode == "_RBP") ? H*0.0 : nothing
@@ -197,7 +199,9 @@ function
                 max_coords,
                 penalty,
                 penalty_factor,
-                num_edges
+                num_edges,
+                Ldn,
+                visited_nodes
                 )                
 
             # bit error rate

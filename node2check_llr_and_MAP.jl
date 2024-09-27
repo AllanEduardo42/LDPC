@@ -8,30 +8,29 @@ function
     node2check_llr_and_MAP!(
         vLq::AbstractVector{<:AbstractFloat},
         vLr::AbstractVector{<:AbstractFloat},
-        ΔLf::AbstractFloat,
-        checks::Vector{<:Integer};
-        MAP = true
+        Lf::AbstractFloat,
+        checks::Vector{<:Integer}
     )
 
     Ld = calc_Ld(
         checks,
-        ΔLf,
+        Lf,
         vLr
     )
     for check in checks
         @inbounds @fastmath vLq[check] = Ld - vLr[check]
     end
 
-    return MAP ? signbit(Ld) : nothing
+    return Ld, signbit(Ld)
 end
 
 function 
     calc_Ld(
         checks::Vector{<:Integer},
-        ΔLf::AbstractFloat,
+        Lf::AbstractFloat,
         vLr::AbstractVector{<:AbstractFloat}
     )
-    Ld = ΔLf
+    Ld = Lf
     for check in checks
         @inbounds @fastmath Ld += vLr[check]
     end
@@ -44,7 +43,7 @@ function
     MAP!(
         d::Vector{Bool},
         nodes2checks::Vector{Vector{T}} where {T<:Integer},
-        ΔLf::Vector{<:AbstractFloat},
+        Lf::Vector{<:AbstractFloat},
         Lr::Matrix{<:AbstractFloat}
     )
     
@@ -54,7 +53,7 @@ function
         node += 1
         Ld = calc_Ld(
                     checks,
-                    ΔLf[node],
+                    Lf[node],
                     view(Lr,:,node)
                 )
         @inbounds d[node] = signbit(Ld)

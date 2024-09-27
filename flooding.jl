@@ -37,7 +37,7 @@ function
     node = 0
     for checks in nodes2checks
         node += 1
-        d[node] = node2check_llr_and_MAP!(
+        _, d[node] = node2check_llr_and_MAP!(
                         view(Lq,:,node),
                         view(Lr,:,node),
                         Lf[node],

@@ -39,7 +39,9 @@ function
         max_coords::Union{Vector{<:Integer},Nothing},
         penalty::Union{Matrix{<:AbstractFloat},Nothing},
         penalty_factor::Union{AbstractFloat,Nothing},
-        num_edges::Union{Integer,Nothing}
+        num_edges::Union{Integer,Nothing},
+        Ldn::Union{Vector{<:AbstractFloat},Nothing},
+        visited_nodes::Union{Vector{Bool},Nothing}
     )
              
     index = max
@@ -68,7 +70,9 @@ function
                 Lf,
                 checks2nodes,
                 nodes2checks,
-                Lrn
+                Lrn,
+                Ldn,
+                visited_nodes
             )   
         elseif mode == "ILBP"
             iLBP!(
@@ -79,7 +83,9 @@ function
                 checks2nodes,
                 nodes2checks,
                 Lrn,
-                syndrome
+                syndrome,
+                Ldn,
+                visited_nodes
             )
         elseif mode == "LRBP"
             Edges .*= 0

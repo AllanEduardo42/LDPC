@@ -13,13 +13,13 @@ using SparseArrays
 
 ################################ BP MODE FLAGS ################################
 
-_LBP = true
+_LBP = false
 ILBP = true
 _RBP = false
-LRBP = true
+LRBP = false
 
 ############################# FLOODING MODE FLAGS ##############################
-FTNH = true
+FTNH = false
 FALT = false
 FTAB = false
 FMSM = false
@@ -46,7 +46,7 @@ RANGE::Int64 = 20
 
 SIZE_per_RANGE::Float64 = SIZE/RANGE
 
-NREALS::Int = 10000
+NREALS::Int = 1000
 MAX::Int = 30
 MAX_RBP::Int = 5
 
