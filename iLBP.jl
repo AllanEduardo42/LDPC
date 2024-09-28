@@ -29,12 +29,7 @@ function
                 Ldn[n], d[n] = update_Lq!(Lq,Lr,Lf[n],n,vn2cn,Lrn)
                 visited_vns[n] = true
             end
-        end
-        # calc syndrome
-        @inbounds syndrome[m] = _calc_syndrome(d,cn2vn[m])
-        if iszero(syndrome)
-            break
-        end            
+        end          
         # Lr updates
         pLr = 1.0
         for n in cn2vn[m]
@@ -50,6 +45,11 @@ function
                 d[n] = signbit(Ldn[n])
             end
         end
+        # calc syndrome
+        @inbounds syndrome[m] = _calc_syndrome(d,cn2vn[m])
+        if iszero(syndrome)
+            break
+        end 
     end
 
 end

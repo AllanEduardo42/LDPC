@@ -103,7 +103,7 @@ function
         signs = nothing
     end
 
-    Ldn, visited_vns = (mode == "LBP" || mode == "iLBP") ?
+    Ldn, visited_vns = (mode == "LBP" || mode == "iLBP" || mode == "LRBP") ?
         (zeros(N),zeros(Bool,N)) : (nothing,nothing)
 
     phi = (mode == "TABL") ? lookupTable() : nothing

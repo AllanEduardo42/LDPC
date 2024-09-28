@@ -89,7 +89,9 @@ function
                 Edges,
                 Factors,
                 pfactors,
-                num_edges
+                num_edges,
+                Ldn,
+                syndrome
             )
             # reset factors
             reset_factors!(Factors,cn2vn)

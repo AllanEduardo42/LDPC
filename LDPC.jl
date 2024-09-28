@@ -14,9 +14,9 @@ using SparseArrays
 ################################ BP MODE FLAGS ################################
 
  LBP = false
-iLBP = false
- RBP = true
-LRBP = true
+iLBP = true
+ RBP = false
+LRBP = false
 
 ############################# FLOODING MODE FLAGS ##############################
 MKAY = false

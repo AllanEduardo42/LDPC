@@ -19,7 +19,9 @@ function
         Edges::Matrix{<:Integer},
         Factors::Matrix{<:AbstractFloat},
         pfactor::AbstractFloat,
-        num_edges::Integer
+        num_edges::Integer,
+        Ldn::Vector{<:AbstractFloat},
+        syndrome::Vector{Bool}
     )
 
     e = 1
@@ -28,15 +30,21 @@ function
         (cnmax,vnmax) = maxcoords
         Factors[cnmax,vnmax] *= pfactor
         Edges[cnmax,vnmax] += 1
+        
         ### update Lr[cnmax,vnmax]
         update_Lr!(Lr,Lq,cnmax,vnmax,cn2vn)
 
         maxresidue = 0.0
-        
+
+        # update of Lq[vnmax,m], ∀m ≠ cnmax
+        Ldn[vnmax] = Lf[vnmax]
+        for m in vn2cn[vnmax]
+            Ldn[vnmax] += Lr[m,vnmax]
+            d[vnmax] = signbit(Ldn[vnmax])
+        end
         for m in vn2cn[vnmax]
             if m ≠ cnmax
-                # update of Lq[vnmax,m], ∀cn ≠ cnmax
-                update_Lq!(Lq,Lr,Lf,m,vnmax,vn2cn)
+                Lq[vnmax,m] = Ldn[vnmax] - Lr[m,vnmax]
                 maxresidue = minsum_LRBP!(
                     maxcoords,
                     maxresidue,
@@ -48,7 +56,7 @@ function
                     m,
                     cn2vn
                 )
-            end
+            end            
         end
 
         if maxresidue == 0.0
@@ -58,7 +66,5 @@ function
         e += 1
 
     end
-
-    MAP!(d,vn2cn,Lf,Lr)
 
 end
