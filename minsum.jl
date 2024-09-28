@@ -8,7 +8,7 @@ function abs_sign!(Lq::AbstractFloat,s::Bool)
     return abs(Lq), signs, s ⊻ signs
 end
 
-function _min_sum!(                           
+function _minsum!(                           
     Lq::Matrix{<:AbstractFloat},
     signs::Vector{Bool},
     m::Integer,
@@ -34,7 +34,7 @@ function _min_sum!(
 end
 
 function 
-    __min_sum!(
+    __minsum!(
         n::Integer,
         signs::Bool,
         minL::AbstractFloat,

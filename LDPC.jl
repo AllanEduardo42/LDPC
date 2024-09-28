@@ -13,17 +13,20 @@ using SparseArrays
 
 ################################ BP MODE FLAGS ################################
 
- LBP = true
-iLBP = true
+ LBP = false
+iLBP = false
  RBP = true
 LRBP = true
 
 ############################# FLOODING MODE FLAGS ##############################
-MKAY = true
+MKAY = false
 TANH = true
-ALTN = true
-TABL = true
-MSUM = true
+ALTN = false
+TABL = false
+MSUM = false
+
+# fast flooding update when using tanh mode (default:true)
+FAST = true
 
 ################################### PLOTTING ###################################
 
@@ -52,6 +55,7 @@ MAX_RBP::Int = 5
 
 LR_idx::Int = 9;
 DECAYCTE::Float64 = 0.9
+SAMPLESIZE::Int = 52
 
 #################################### CODING ####################################
 

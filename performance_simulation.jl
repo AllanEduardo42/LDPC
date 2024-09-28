@@ -7,8 +7,8 @@ include("auxiliary_functions.jl")
 include("lookupTable.jl")
 include("BP.jl")
 include("calc_priors.jl")
-include("min_sum.jl")
-include("min_sum_RBP.jl")
+include("minsum.jl")
+include("minsum_RBP.jl")
 
 function 
     performance_simulation(
@@ -86,7 +86,11 @@ function
 
     # Set variables that depend on the mode
     if mode == "TANH" || mode == "LBP" || mode == "iLBP"
-        Lrn = zeros(N)
+        if mode == "TANH" && !(FAST)
+            Lrn = nothing
+        else
+            Lrn = zeros(N)
+        end
         signs = nothing
     elseif mode == "ALTN" || mode == "TABL"
         Lrn = zeros(N)
@@ -98,13 +102,14 @@ function
         Lrn = nothing
         signs = nothing
     end
- 
+
     Ldn, visited_vns = (mode == "LBP" || mode == "iLBP") ?
         (zeros(N),zeros(Bool,N)) : (nothing,nothing)
 
     phi = (mode == "TABL") ? lookupTable() : nothing
 
-    Residues = (mode == "RBP") ? H*0.0 : nothing
+    Residues, samples = (mode == "RBP") ? 
+        (H*0.0, Vector{Int}(undef,SAMPLESIZE)) : (nothing,nothing)
 
     Edges, maxcoords, Factors, pfactor, num_edges  = 
         (mode == "RBP" || mode == "LRBP") ? 
@@ -155,11 +160,11 @@ function
 
             if mode == "LRBP"
                 # find the coordenades of the maximum residue
-                min_sum_lRBP_init!(maxcoords,Lq,signs,cn2vn)
+                minsum_lRBP_init!(maxcoords,Lq,signs,cn2vn)
             end
             if mode == "RBP"
                 # initialize the matrix of residues
-                min_sum_RBP_init!(Residues,Lq,signs,cn2vn)
+                minsum_RBP_init!(Residues,Lq,signs,cn2vn)
             end       
             # SPA routine
             DECODED, i = BP!(
@@ -187,7 +192,8 @@ function
                             pfactor,
                             num_edges,
                             Ldn,
-                            visited_vns
+                            visited_vns,
+                            samples
                         )                
 
             # bit error rate

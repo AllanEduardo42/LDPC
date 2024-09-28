@@ -39,7 +39,8 @@ function
         pfactors::Union{AbstractFloat,Nothing},
         num_edges::Union{Integer,Nothing},
         Ldn::Union{Vector{<:AbstractFloat},Nothing},
-        visited_vns::Union{Vector{Bool},Nothing}
+        visited_vns::Union{Vector{Bool},Nothing},
+        samples::Union{Vector{<:Integer},Nothing}
     )
              
     index = max
@@ -69,7 +70,8 @@ function
                 Factors,
                 pfactors,
                 num_edges,
-                Residues
+                Residues,
+                samples
             )
             # reset factors
             reset_factors!(Factors,cn2vn)

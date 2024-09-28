@@ -3,10 +3,10 @@
 # 24 set 2024
 # Specialized methods for the RBP algorithm
 
-include("min_sum.jl")
+include("minsum.jl")
 
 function
-    min_sum_lRBP!(
+    minsum_LRBP!(
         maxcoords::Vector{<:Integer},
         maxresidue::AbstractFloat,
         Factors::Matrix{<:AbstractFloat},
@@ -20,11 +20,11 @@ function
     
     x = 0.0
     y = 0.0
-    args = _min_sum!(Lq,m,signs,cn2vn[m])
+    args = _minsum!(Lq,signs,m,cn2vn)
     for n in cn2vn[m]
         if n ≠ vnmax
-            x = __min_sum!(n,signs[n],args...)
-            y = abs(x - Lr[n])*Factors[m,n]
+            x = __minsum!(n,signs[n],args...)
+            y = abs(x - Lr[m,n])*Factors[m,n]
             if y > maxresidue
                 maxresidue = y
                 maxcoords[1] = m
@@ -37,7 +37,7 @@ function
 end
 
 function
-    min_sum_lRBP_init!(          
+    minsum_lRBP_init!(          
         maxcoords::Vector{<:Integer},              
         Lq::Matrix{<:AbstractFloat},
         signs::Vector{Bool},
@@ -49,9 +49,9 @@ function
     maxresidue = 0.0
     for m in eachindex(cn2vn)
         cn2vn[m] = cn2vn[m]
-        args = _min_sum!(Lq,signs,m,cn2vn)
+        args = _minsum!(Lq,signs,m,cn2vn)
         for n in cn2vn[m]
-            x = __min_sum!(n,signs[n],args...)
+            x = __minsum!(n,signs[n],args...)
             y = abs(x) 
             if y > maxresidue
                 maxresidue = y
@@ -64,8 +64,9 @@ end
 
 ### specialized method for the RBP algorithm
 function
-    min_sum_RBP!(
+    minsum_RBP!(
         Residues::Matrix{<:AbstractFloat},
+        Factors::Matrix{<:AbstractFloat},
         Lr::Matrix{<:AbstractFloat},                           
         Lq::Matrix{<:AbstractFloat},
         signs::Vector{Bool},
@@ -75,18 +76,18 @@ function
     )
     
     x = 0.0
-    args = _min_sum!(Lq,signs,m,cn2vn)
+    args = _minsum!(Lq,signs,m,cn2vn)
     for n in cn2vn[m]
         if n ≠ vnmax
-            x = __min_sum!(n,signs[n],args...)
-            Residues[m,n] = abs(x - Lr[m,n]) 
+            x = __minsum!(n,signs[n],args...)
+            Residues[m,n] = abs(x - Lr[m,n])*Factors[m,n]
         end
     end
 
 end
 
 function
-    min_sum_RBP_init!(     
+    minsum_RBP_init!(     
         Residues::Matrix{<:AbstractFloat},                    
         Lq::Matrix{<:AbstractFloat},
         signs::Vector{<:Integer},
@@ -96,9 +97,9 @@ function
     x = 0.0
 
     for m in eachindex(cn2vn)
-        args = _min_sum!(Lq,signs,m,cn2vn)
+        args = _minsum!(Lq,signs,m,cn2vn)
         for n in cn2vn[m]
-            x = __min_sum!(n,signs[n],args...)
+            x = __minsum!(n,signs[n],args...)
             Residues[m,n] = abs(x) 
         end
     end

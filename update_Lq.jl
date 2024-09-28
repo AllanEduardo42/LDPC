@@ -10,22 +10,25 @@ function
     update_Lq!(
         q::Array{<:AbstractFloat,3},
         r::Array{<:AbstractFloat,3},
-        Ld::Vector{<:AbstractFloat},
+        f::Vector{<:AbstractFloat},
         n::Integer,
         vn2cn::Vector{Vector{T}} where {T<:Integer}
     )
 
-    
+    Ld = zeros(2)
     for m in vn2cn[n]
+        Ld .= f
+        for m2 in vn2cn[n]
+            if m2 ≠ m
+                @inbounds @fastmath Ld[1] *= r[m2,n,1]
+                @inbounds @fastmath Ld[2] *= r[m2,n,2]
+            end
+        end
+        @fastmath a = sum(Ld)
+        @inbounds @fastmath q[n,m,1] = Ld[1]/a
+        @inbounds @fastmath q[n,m,2] = Ld[2]/a
         @inbounds @fastmath Ld[1] *= r[m,n,1]
         @inbounds @fastmath Ld[2] *= r[m,n,2]
-    end
-    for m in vn2cn[n]
-        @inbounds @fastmath q1 = Ld[1] / (r[m,n,1] + eps())  
-        @inbounds @fastmath q2 = Ld[2] / (r[m,n,2] + eps())  
-        @fastmath a = q1 + q2
-        @inbounds @fastmath q[n,m,1] = q1/a
-        @inbounds @fastmath q[n,m,2] = q2/a
     end
 
     return signbit(Ld[1]-Ld[2])
@@ -104,7 +107,7 @@ function
             end
         end
     end
-    @inbounds Ld = ΔLf[n]
+    @inbounds Ld = Lf[n]
     for m in vn2cn[n]
         Ld += Lr[m,n]
     end

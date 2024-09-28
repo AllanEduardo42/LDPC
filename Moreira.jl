@@ -9,7 +9,7 @@ using LinearAlgebra
 
 include("GF2_functions.jl")
 include("auxiliary_functions.jl")
-include("performance_estimation.jl")
+include("performance_simulation.jl")
 
 PRINTING::Bool = true
 SEED::Int = 1
@@ -18,7 +18,7 @@ MAX::Int = 3
 NREALS::Int = 1
 
 SIZE::Int = 1024
-RANGE::Float64 = 20
+RANGE::Int = 20
 SIZE_per_RANGE::Float64 = SIZE/RANGE
 
 MODE::String = "MKAY"
@@ -33,9 +33,6 @@ H = BitMatrix(
       0 1 0 0 0 1 0 1 1 1 0 0;
       0 0 0 0 1 0 0 0 1 0 1 1]
     )
-
-Nodes2checks  = find_nodes2checks(H)
-Checks2nodes  = find_checks2nodes(H)
 
 M,N = size(H)
 K = N - M
@@ -59,18 +56,7 @@ t = [1.3129, 2.6584, 0.7413, 2.1745, 0.5981, −0.8323, −0.3962, −1.7586,
 1.4905, 0.4084, −0.9290, 1.0765]
 
 Lr, Lq = 
-    performance_estimation(
-        C,
-        σ,
-        H,
-        Checks2nodes,
-        Nodes2checks,
-        MODE,
-        1,
-        MAX;
-        t_test=t,
-        printing=PRINTING
-    )
+    performance_simulation(C,σ,H,MODE,1,MAX;t_test=t,printing=PRINTING)
 ;
 if MODE == "FTAB"
     Lr /= SIZE_per_RANGE

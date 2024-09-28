@@ -25,7 +25,7 @@ function
             if visited_vns[n]
                 Lq[n,m] = Ldn[n] - Lr[m,n]
             else
-                Ldn[n], d[n] = update_Lq!(Lq,Lr,Lf[n],n,vn2cn)
+                Ldn[n], d[n] = update_Lq!(Lq,Lr,Lf[n],n,vn2cn,Lrn)
                 visited_vns[n] = true
             end
         end

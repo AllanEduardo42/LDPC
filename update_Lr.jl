@@ -4,7 +4,7 @@
 # Horizontal update of the LLR
 # There are 4 different methods for SPA: Mckay, tanh, alternative and table
 
-include("min_sum.jl")
+include("minsum.jl")
 
 ########################### SPA USING MKAY's METHOD ############################
 function
@@ -14,15 +14,20 @@ function
         m::Integer,
         cn2vn::Vector{Vector{T}} where {T<:Integer},     
     )
-    δr = 1
+    
     for n in cn2vn[m]
-        @inbounds δr *= δq[n,m]
+        δr = 1
+        for n2 in cn2vn[m]
+            if n2 ≠ n
+                @inbounds δr *= δq[n2,m]
+            end
+        end
+        @inbounds r[m,n,1] = 0.5*(1+δr)
+        @inbounds r[m,n,2] = 0.5*(1-δr)
     end
-    for n in cn2vn[m]
-        x = δr/(δq[n,m] + eps())        
-        @inbounds r[m,n,1] = 0.5*(1+x)
-        @inbounds r[m,n,2] = 0.5*(1-x)
-    end
+   
+        
+
 end
 
 ######################### SPA USING HYPERBOLIC TANGENT #########################
@@ -134,9 +139,9 @@ function
         signs::Vector{Bool},
         phi::Nothing        
     )
-    args = _min_sum!(Lq,signs,m,cn2vn)
+    args = _minsum!(Lq,signs,m,cn2vn)
     for n in cn2vn[m]
-        Lr[m,n] = __min_sum!(n,signs[n],args...)
+        Lr[m,n] = __minsum!(n,signs[n],args...)
     end 
 
 end
