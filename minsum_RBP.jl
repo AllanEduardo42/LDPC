@@ -6,7 +6,8 @@
 include("minsum.jl")
 
 function
-    minsum_LRBP!(
+    minsum_RBP!(
+        Residues::Nothing,
         maxcoords::Vector{<:Integer},
         maxresidue::AbstractFloat,
         Factors::Matrix{<:AbstractFloat},
@@ -37,7 +38,35 @@ function
 end
 
 function
-    minsum_lRBP_init!(          
+    minsum_RBP!(
+        Residues::Matrix{<:AbstractFloat},
+        maxcoords::Vector{<:Integer},
+        maxresidue::AbstractFloat,
+        Factors::Matrix{<:AbstractFloat},
+        Lr::Matrix{<:AbstractFloat},                           
+        Lq::Matrix{<:AbstractFloat},
+        signs::Vector{Bool},
+        vnmax::Integer,
+        m::Integer,
+        cn2vn::Vector{Vector{T}} where {T<:Integer}
+    )
+    
+    x = 0.0
+    args = _minsum!(Lq,signs,m,cn2vn)
+    for n in cn2vn[m]
+        if n ≠ vnmax
+            x = __minsum!(n,signs[n],args...)
+            Residues[m,n] = abs(x - Lr[m,n])*Factors[m,n]
+        end
+    end
+
+    return maxresidue
+
+end
+
+function
+    minsum_RBP_init!(    
+        Residues::Nothing,      
         maxcoords::Vector{<:Integer},              
         Lq::Matrix{<:AbstractFloat},
         signs::Vector{Bool},
@@ -63,32 +92,12 @@ function
 end
 
 ### specialized method for the RBP algorithm
-function
-    minsum_RBP!(
-        Residues::Matrix{<:AbstractFloat},
-        Factors::Matrix{<:AbstractFloat},
-        Lr::Matrix{<:AbstractFloat},                           
-        Lq::Matrix{<:AbstractFloat},
-        signs::Vector{Bool},
-        vnmax::Integer,
-        m::Integer,
-        cn2vn::Vector{Vector{T}} where {T<:Integer}
-    )
-    
-    x = 0.0
-    args = _minsum!(Lq,signs,m,cn2vn)
-    for n in cn2vn[m]
-        if n ≠ vnmax
-            x = __minsum!(n,signs[n],args...)
-            Residues[m,n] = abs(x - Lr[m,n])*Factors[m,n]
-        end
-    end
 
-end
 
 function
     minsum_RBP_init!(     
-        Residues::Matrix{<:AbstractFloat},                    
+        Residues::Matrix{<:AbstractFloat}, 
+        maxcoords::Vector{<:Integer},                   
         Lq::Matrix{<:AbstractFloat},
         signs::Vector{<:Integer},
         cn2vn::Vector{Vector{T}} where {T<:Integer}

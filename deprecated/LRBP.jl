@@ -16,12 +16,10 @@ function
         cn2vn::Vector{Vector{T}} where {T<:Integer},
         vn2cn::Vector{Vector{T}} where {T<:Integer},
         signs::Vector{Bool},
-        Edges::Matrix{<:Integer},
         Factors::Matrix{<:AbstractFloat},
         pfactor::AbstractFloat,
         num_edges::Integer,
-        Ldn::Vector{<:AbstractFloat},
-        syndrome::Vector{Bool}
+        Ldn::Vector{<:AbstractFloat}
     )
 
     e = 1
@@ -29,7 +27,6 @@ function
 
         (cnmax,vnmax) = maxcoords
         Factors[cnmax,vnmax] *= pfactor
-        Edges[cnmax,vnmax] += 1
         
         ### update Lr[cnmax,vnmax]
         update_Lr!(Lr,Lq,cnmax,vnmax,cn2vn)
@@ -45,6 +42,7 @@ function
         for m in vn2cn[vnmax]
             if m ≠ cnmax
                 Lq[vnmax,m] = Ldn[vnmax] - Lr[m,vnmax]
+                # update_Lq!(Lq,Lr,Lf,m,vnmax,vn2cn)
                 maxresidue = minsum_LRBP!(
                     maxcoords,
                     maxresidue,
@@ -66,5 +64,7 @@ function
         e += 1
 
     end
+
+    # MAP!(d,vn2cn,Lf,Lr)
 
 end

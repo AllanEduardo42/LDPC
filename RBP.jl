@@ -16,55 +16,83 @@ function
         cn2vn::Vector{Vector{T}} where {T<:Integer},
         vn2cn::Vector{Vector{T}} where {T<:Integer},
         signs::Vector{Bool},
-        Edges::Matrix{<:Integer},
         Factors::Matrix{<:AbstractFloat},
-        pfactor::AbstractFloat,
+        factor::AbstractFloat,
         num_edges::Integer,
-        Residues::Matrix{<:AbstractFloat},
-        samples::Vector{<:Integer}
+        Ldn::Vector{<:AbstractFloat},
+        Residues::Union{Matrix{<:AbstractFloat},Nothing},
+        samples::Union{Vector{<:Integer},Nothing},
+        rng_sample::AbstractRNG,
+        lrbp::Bool
     )
 
     e = 1
     while e <= num_edges
 
-        maxresidue = find_maxresidue_coords!(
-            maxcoords,
-            Residues,
-            cn2vn,
-            samples)
+        if !lrbp
 
-        if maxresidue == 0.0 # if RBP has converged
-            break
+            maxresidue = find_maxresidue_coords!(
+                maxcoords,
+                Residues,
+                cn2vn,
+                samples,
+                rng_sample)
+
+            if maxresidue == 0.0 # if RBP has converged
+                break
+            end
         end
 
         (cnmax,vnmax) = maxcoords
-        Factors[cnmax,vnmax] *= pfactor
-        Edges[cnmax,vnmax] += 1
+        Factors[cnmax,vnmax] *= factor
         ### update Lr[cnmax,vnmax]
         update_Lr!(Lr,Lq,cnmax,vnmax,cn2vn)
 
         # we don't use the m-to-n message correspoding to (cnmax,vnmax) anymore.
         # Thus we make the largest residue equal to zero:
-        Residues[cnmax,vnmax] = 0.0
+        if lrbp
+            maxresidue = 0.0
+        else
+            Residues[cnmax,vnmax] = 0.0
+        end
         
-        checknodes_vnmax = vn2cn[vnmax]
-        for m in checknodes_vnmax
+        # update d[vnmax]
+        Ldn[vnmax] = Lf[vnmax]
+        for m in vn2cn[vnmax]
+            Ldn[vnmax] += Lr[m,vnmax]
+            d[vnmax] = signbit(Ldn[vnmax])
+        end
+
+        for m in vn2cn[vnmax]
             if m ≠ cnmax
-                # update Lq[vnmax,m], ∀cn ≠ cnmax
-                update_Lq!(Lq,Lr,Lf,m,vnmax,vn2cn)
+                # update Lq[vnmax,m], ∀m ≠ cnmax
+                Lq[vnmax,m] = Ldn[vnmax] - Lr[m,vnmax]
                 # if any new residue estimate is larger than the previously estimated maximum 
                 # residue than update the value of maxresidue and maxcoords.
-                minsum_RBP!(Residues,Factors,Lr,Lq,signs,vnmax,m,cn2vn)
+                maxresidue = minsum_RBP!(
+                Residues,
+                maxcoords,
+                maxresidue,
+                Factors,
+                Lr,
+                Lq,
+                signs,
+                vnmax,
+                m,
+                cn2vn)
             end
+        end
+
+        if maxresidue == 0.0
+            break
         end
 
         e +=1
 
     end
 
-    MAP!(d,vn2cn,Lf,Lr)
-
 end
+
 function 
     update_Lr!(
         Lr::Matrix{<:AbstractFloat},
@@ -85,22 +113,29 @@ function
     end
 end
 
-function 
-    update_Lq!(
-        Lq::Matrix{<:AbstractFloat},
-        Lr::Matrix{<:AbstractFloat},
-        Lf::Vector{<:AbstractFloat},
-        m::Integer,
-        vnmax::Integer,
-        vn2cn::Vector{Vector{T}} where {T<:Integer}
+function
+    find_maxresidue_coords!(
+        maxcoords::Vector{<:Integer},
+        Residues::Matrix{<:AbstractFloat},
+        cn2vn::Vector{Vector{T}} where {T<:Integer},
+        samples::Vector{<:Integer},
+        rng_sample::AbstractRNG
     )
 
-    @inbounds Lq[vnmax,m] = Lf[vnmax]
-    for m2 in vn2cn[vnmax]
-        if m2 ≠ m
-            @inbounds @fastmath Lq[vnmax,m] += Lr[m2,vnmax]
+    maxresidue = 0
+    M = size(Residues,1)
+    rand!(rng_sample,samples,1:M)
+    for m in samples
+        for n in cn2vn[m]
+            if Residues[m,n] > maxresidue
+                maxresidue = Residues[m,n]
+                maxcoords[1] = m
+                maxcoords[2] = n
+            end
         end
     end
+
+    return maxresidue
 end
 
 function
@@ -108,12 +143,12 @@ function
         maxcoords::Vector{<:Integer},
         Residues::Matrix{<:AbstractFloat},
         cn2vn::Vector{Vector{T}} where {T<:Integer},
-        samples::Vector{<:Integer}
+        samples::Nothing,
+        rng_sample::AbstractRNG
     )
 
     maxresidue = 0
-    rand!(samples,1:size(Residues,1))
-    for m in samples
+    for m in eachindex(cn2vn)
         for n in cn2vn[m]
             if Residues[m,n] > maxresidue
                 maxresidue = Residues[m,n]

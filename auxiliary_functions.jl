@@ -68,9 +68,10 @@ function
         t::Vector{<:AbstractFloat},
         noise::Vector{<:AbstractFloat},
         σ::AbstractFloat,
-        u::Vector{<:AbstractFloat})
+        u::Vector{<:AbstractFloat},
+        rng_noise::AbstractRNG)
 
-    randn!(noise)
+    randn!(rng_noise,noise)
     @fastmath noise .*= σ
     @fastmath t .= u .+ noise
 

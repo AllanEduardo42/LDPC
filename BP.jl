@@ -9,9 +9,7 @@ include("update_Lq.jl")
 include("flooding.jl")
 include("calc_syndrome.jl")
 include("LBP.jl")
-include("iLBP.jl")
 include("RBP.jl")
-include("LRBP.jl")
 
 function 
     BP!(
@@ -34,14 +32,14 @@ function
         phi::Union{Vector{<:AbstractFloat},Nothing},
         printing::Union{Bool,Nothing},        
         Residues::Union{Matrix{<:AbstractFloat},Nothing},
-        Edges::Union{Matrix{<:Integer},Nothing},
         maxcoords::Union{Vector{<:Integer},Nothing},
         Factors::Union{Matrix{<:AbstractFloat},Nothing},
-        pfactors::Union{AbstractFloat,Nothing},
+        rbpfactor::Union{AbstractFloat,Nothing},
         num_edges::Union{Integer,Nothing},
         Ldn::Union{Vector{<:AbstractFloat},Nothing},
         visited_vns::Union{Vector{Bool},Nothing},
-        samples::Union{Vector{<:Integer},Nothing}
+        samples::Union{Vector{<:Integer},Nothing},
+        rgn_sample::Union{AbstractRNG,Nothing}
     )
              
     index = max
@@ -56,12 +54,20 @@ function
 
         if mode == "FLOO"
             flooding!(d,Lq,Lr,Lf,cn2vn,vn2cn,Lrn,signs,phi)  
-        elseif mode == "LBP"
-            LBP!(d,Lr,Lq,Lf,cn2vn,vn2cn,Lrn,Ldn,visited_vns)   
-        elseif mode == "iLBP"
-            iLBP!(d,Lr,Lq,Lf,cn2vn,vn2cn,Lrn,syndrome,Ldn,visited_vns)
-        elseif mode == "RBP"
-            Edges .*= 0
+        elseif mode == "LBP" || mode == "iLBP"
+            LBP!(d,
+                 Lr,
+                 Lq,
+                 Lf,
+                 cn2vn,
+                 vn2cn,
+                 Lrn,
+                 syndrome,
+                 Ldn,
+                 visited_vns,
+                 mode == "iLBP"
+            )   
+        elseif mode == "RBP" || mode == "LRBP"
             RBP!(
                 d,
                 Lr,
@@ -71,32 +77,14 @@ function
                 cn2vn,
                 vn2cn,
                 signs,
-                Edges,
                 Factors,
-                pfactors,
-                num_edges,
-                Residues,
-                samples
-            )
-            # reset factors
-            reset_factors!(Factors,cn2vn)
-        elseif mode == "LRBP"
-            Edges .*= 0
-            LRBP!(
-                d,
-                Lr,
-                maxcoords,
-                Lq,
-                Lf,
-                cn2vn,
-                vn2cn,
-                signs,
-                Edges,
-                Factors,
-                pfactors,
+                rbpfactor,
                 num_edges,
                 Ldn,
-                syndrome
+                Residues,
+                samples,
+                rgn_sample,
+                mode == "LRBP"
             )
             # reset factors
             reset_factors!(Factors,cn2vn)

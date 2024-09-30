@@ -14,8 +14,10 @@ function
         cn2vn::Vector{Vector{T}} where {T<:Integer},
         vn2cn::Vector{Vector{T}} where {T<:Integer},
         Lrn::Vector{<:AbstractFloat},
+        syndrome::Vector{Bool},
         Ldn::Vector{<:AbstractFloat},
-        visited_vns::Vector{Bool}
+        visited_vns::Vector{Bool},
+        ilbp::Bool
     )
 
     visited_vns .*= false
@@ -44,6 +46,14 @@ function
                 d[n] = signbit(Ldn[n])
             end
         end
+        if ilbp
+            # calc syndrome
+            @inbounds syndrome[m] = _calc_syndrome(d,cn2vn[m])
+            if iszero(syndrome)
+                # println("iLBP: stopped at m=$m ")
+                # println()
+                break
+            end
+        end
     end
-
 end

@@ -71,22 +71,6 @@ function
 
 end
 
-function 
-    MAP!(
-        d::Vector{Bool},
-        vn2cn::Vector{Vector{T}} where {T<:Integer},
-        Lf::Vector{<:AbstractFloat},
-        Lr::Matrix{<:AbstractFloat}
-    )
-    
-    Ld = 0.0
-    for n in eachindex(vn2cn)
-        Ld = calc_Ld(n,vn2cn,Lf[n],Lr)
-        @inbounds d[n] = signbit(Ld)
-    end
-
-end
-
 ######################### SPA USING LLRs METHOD VER 2 ##########################
 
 function

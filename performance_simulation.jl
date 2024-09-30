@@ -10,26 +10,29 @@ include("calc_priors.jl")
 include("minsum.jl")
 include("minsum_RBP.jl")
 
-function 
+function
     performance_simulation(
         c::Vector{Bool},
         snr::Vector{<:Real},
         H::BitMatrix,
         mode::String,
         nreals::Integer,
-        max::Integer;
+        max::Integer,
+        rgn_seed_noise::Integer;
+        rng_seed_sample=1234,
         t_test=nothing,
         printing=false,
         stop=false
     )
 
+    rng_noise = Xoshiro(rgn_seed_noise)
+
+    rng_sample = Xoshiro(rng_seed_sample)
+
     # if nreals = 1, execute testing mode
     TEST = (nreals == 1) ? true : false
     # transform snr in standard deviations
     σ = 1 ./ sqrt.(exp10.(snr/10))
-
-    # set random seed
-    Random.seed!(SEED)
 
     ################################ CHECK MODE ################################
     if (mode ≠ "MKAY") && (mode ≠ "TANH") && (mode ≠ "LBP") &&
@@ -105,18 +108,30 @@ function
         signs = nothing
     end
 
-    Ldn, visited_vns = (mode == "LBP" || mode == "iLBP" || mode == "LRBP") ?
-        (zeros(N),zeros(Bool,N)) : (nothing,nothing)
+    visited_vns = (mode == "LBP" || mode == "iLBP") ? zeros(Bool,N) : nothing
+
+    Ldn = (mode == "LBP" || mode == "iLBP" || mode == "RBP" || mode == "LRBP") ?
+          zeros(N) : nothing
 
     phi = (mode == "TABL") ? lookupTable() : nothing
 
-    Residues, samples = (mode == "RBP") ? 
-        (H*0.0, Vector{Int}(undef,SAMPLESIZE)) : (nothing,nothing)
+    Residues = (mode == "RBP") ? H*0.0 : nothing
+    
+    samples = (mode == "RBP" && SAMPLESIZE != 0) ?
+              Vector{Int}(undef,SAMPLESIZE) : nothing
 
-    Edges, maxcoords, Factors, pfactor, num_edges  = 
+    if mode == "RBP"
+        rbpfactor = DECAYRBP
+    elseif mode == "LRBP"
+        rbpfactor = DECAYLRBP
+    else
+        rbpfactor = nothing
+    end
+
+    maxcoords, Factors, num_edges  = 
         (mode == "RBP" || mode == "LRBP") ? 
-        (H*0, [1,1], 1.0*H, DECAYCTE, sum(H))  : 
-        (nothing,nothing,nothing,nothing,nothing)
+        ([1,1], 1.0*H, sum(H)) : 
+        (nothing,nothing,nothing)
     
     # unify the 5 flooding methods 
     _mode = (mode == "MKAY" || mode == "TANH" || mode == "ALTN" ||
@@ -128,7 +143,7 @@ function
     if TEST
         if t_test === nothing # if no test signal was provided:
             # generate a received signal
-            received_signal!(t,noise,σ[1],u)
+            received_signal!(t,noise,σ[1],u,rng_noise)
         elseif length(t_test) != N
             # if a received test signal was given but with wrong size
             throw(
@@ -142,48 +157,53 @@ function
         end
     else
         # generate the first received signal outside the main loop
-        received_signal!(t,noise,σ[1],u)
+        received_signal!(t,noise,σ[1],u,rng_noise)
     end
 
     ############################## MAIN LOOP ##################################
-    if TEST 
+    if TEST && printing
+        println()
         println(
-"###################### Starting simulation(Testing mode) ######################"
-    )
-    else
+"###################### Starting simulation (Testing mode) ######################"
+        )
+        println()
+    elseif !TEST
+        println()
         println(
-"################## Starting simulation(# of trials: $nreals) ##################"
-    )
+"############################# Starting simulation #############################"
+        )
+        println()
+        println("Number of trials: $nreals")
     end
-    println()
-    if _mode == "FLOO"
-        print("Message passing protocol: Flooding (using ")
-        if mode == "MKAY"
-            println("Mckay's SPA method)")
-        elseif mode == "TANH"
-            println("LLR-SPA calculated by tanh)")
-        elseif mode == "ALTN"
-            println("LLR-SPA calculated by ϕ function)")
-        elseif mode == "TABL"
-            println("LLR-SPA precalculated in look-up table)")
-        elseif mode == "MSUM"
-            println("LLRs calculated by min-sum algorithm)")
+    if !TEST || printing
+        if _mode == "FLOO"
+            print("Message passing protocol: Flooding (using ")
+            if mode == "MKAY"
+                println("Mckay's SPA method)")
+            elseif mode == "TANH"
+                println("LLR-SPA calculated by tanh)")
+            elseif mode == "ALTN"
+                println("LLR-SPA calculated by ϕ function)")
+            elseif mode == "TABL"
+                println("LLR-SPA precalculated in look-up table)")
+            elseif mode == "MSUM"
+                println("LLRs calculated by min-sum algorithm)")
+            end
+        elseif mode == "LBP"
+            println("Message passing protocol: LBP")
+        elseif mode == "iLBP"
+            println("Message passing protocol: iLBP")
+        elseif mode == "RBP"
+            println("Message passing protocol: RBP")
+        elseif mode == "LRBP"
+            println("Message passing protocol: LRBP")
         end
-    elseif mode == "LBP"
-        println("Message passing protocol: LBP")
-    elseif mode == "iLBP"
-        println("Message passing protocol: iLBP")
-    elseif mode == "RBP"
-        println("Message passing protocol: RBP")
-    elseif mode == "LRBP"
-        print("Message passing protocol: LRBP")
+
+        println("Maximum number of iterations: $max")
+        println("Simulated for SNR (dB): $snr")
+        println("Stop at zero syndrome ? $stop")
+        println()
     end
-
-    println("Maximum number of iterations: $max")
-    println("Simulated for SNR (dB): $snr")
-    println("Stop at zero syndrome ? $stop")
-    println()
-
     for k in eachindex(σ)
         for j in 1:nreals
 
@@ -198,14 +218,9 @@ function
             # initialize matrix Lq
             init_Lq!(Lq,Lf,vn2cn)
 
-            if mode == "LRBP"
-                # find the coordenades of the maximum residue
-                minsum_lRBP_init!(maxcoords,Lq,signs,cn2vn)
-            end
-            if mode == "RBP"
-                # initialize the matrix of residues
-                minsum_RBP_init!(Residues,Lq,signs,cn2vn)
-            end       
+            if mode == "RBP" || mode == "LRBP"
+                minsum_RBP_init!(Residues, maxcoords,Lq,signs,cn2vn)
+            end      
             # SPA routine
             DECODED, i = BP!(
                             _mode,
@@ -227,14 +242,14 @@ function
                             phi,
                             printing,
                             Residues,
-                            Edges,
                             maxcoords,
                             Factors,
-                            pfactor,
+                            rbpfactor,
                             num_edges,
                             Ldn,
                             visited_vns,
-                            samples
+                            samples,
+                            rng_sample
                         )                
 
             # bit error rate
@@ -248,7 +263,7 @@ function
             end
 
             # received signal for the next realization (j+1)
-            received_signal!(t,noise,σ[k],u)
+            received_signal!(t,noise,σ[k],u,rng_noise)
 
         end
 
@@ -257,11 +272,7 @@ function
     end
 
     if TEST
-        if mode == "RBP" || mode == "LRBP"
-            return Lr, Lq, Edges
-        else
-            return Lr, Lq
-        end
+        return Lr, Lq
     else
         return log10.(FER), log10.(BER), iters
     end
