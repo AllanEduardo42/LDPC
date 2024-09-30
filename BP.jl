@@ -16,6 +16,7 @@ include("LRBP.jl")
 function 
     BP!(
         mode::String,
+        stop::Bool,
         test::Bool,
         max::Integer,
         syndrome::Vector{Bool},
@@ -48,6 +49,10 @@ function
     DECODED = false
 
     for i in 1:max
+
+        if test && printing  
+            println("### Iteration #$i ###")
+        end
 
         if mode == "FLOO"
             flooding!(d,Lq,Lr,Lf,cn2vn,vn2cn,Lrn,signs,phi)  
@@ -99,16 +104,36 @@ function
 
         calc_syndrome!(syndrome,d,cn2vn)
 
-        if test && printing
-                println("Iteration #$i")     
-                println("MAP estimate: $d")      
-                println("Syndrome: $syndrome")    
+        if test && printing    
+                println("Max LLR estimate errors: ")
+                for j in eachindex(d)
+                    print(Int(d[j] != c[j]))
+                    if j%80 == 0
+                        println()
+                    end
+                end     
+                println() 
+                println("Syndrome: ")
+                for j in eachindex(syndrome)
+                    print(Int(syndrome[j]))
+                    if j%80 == 0
+                        println()
+                    end
+                end     
+                println()
+                if iszero(syndrome) && stop
+                    break
+                end
+                println()     
         else
             if FIRST && iszero(syndrome)
                 FIRST = false
                 index = i
                 if d == c
                     DECODED = true
+                end
+                if stop
+                    break
                 end
             end
             bit_error .= (d .≠ c)

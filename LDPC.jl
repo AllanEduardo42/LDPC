@@ -20,13 +20,19 @@ LRBP = false
 
 ############################# FLOODING MODE FLAGS ##############################
 MKAY = false
-TANH = true
+TANH = false
 ALTN = false
 TABL = false
 MSUM = false
 
 # fast flooding update when using tanh mode (default:true)
 FAST = true
+
+########################## PRINTING IN TEST MODE FLAG ##########################
+PRINTING = true
+
+####################### STOP WHEN SYNDROME IS ZERO FLAG ########################
+STOP = true
 
 ################################### PLOTTING ###################################
 
@@ -49,15 +55,19 @@ RANGE::Int64 = 20
 
 SIZE_per_RANGE::Float64 = SIZE/RANGE
 
-NREALS::Int = 100
+NREALS::Int = 1
 MAX::Int = 30
 MAX_RBP::Int = 5
 
-LR_idx::Int = 9;
+LR_idx::Int = 4;
 DECAYCTE::Float64 = 0.9
 SAMPLESIZE::Int = 52
 
-#################################### CODING ####################################
+#################################### NOISE #####################################
+
+SNR = collect(0:1:8)
+
+############################# PARITY-CHECK MATRIX #############################
 
 ### PEG Algorithm
 
@@ -69,94 +79,123 @@ D = rand([2,3,4],N)
 
 H, girth = PEG!(D,M)
 
-println("girth = ", girth)
-
 G = gf2_nullspace(H)
 
-K = size(G,2)
+############################# MESSAGE AND CODEWORD #############################
 
-println("K = ", K)
+Message = rand(Bool,N-M)
 
-Message = rand(Bool,K)
+Codeword = gf2_mat_mult(Matrix(G), Message)
 
-### codeword
+######################### PRINT INFORMATION ON SCREEN #########################
 
-C = gf2_mat_mult(Matrix(G), Message)
-
-#################################### NOISE #####################################
-
-SNR_db = collect(0:1:8)
-SNR = exp10.(SNR_db/10)
-Sigma = 1 ./ sqrt.(SNR)
+println()
+println(
+"############################### LDPC parameters ###############################"
+)
+println()
+println("Parity Check Matrix: $M x $N")
+println()
+display(sparse(H))
+println()
+println("Graph girth = ", girth)
+println()
+println("Message:")
+for i in eachindex(Message)
+    print(Int(Message[i]))
+    if i%80 == 0
+        println()
+    end
+end
+println()
+println()
+println("Codeword:")
+for i in eachindex(Codeword)
+    print(Int(Codeword[i]))
+    if i%80 == 0
+        println()
+    end
+end
+println()
+println()
 
 ############################## JULIA COMPILATION ###############################
 if MKAY
-    R, Q, = performance_simulation(C,[Sigma[LR_idx]],H,"MKAY",1,1;printing=true)
+    Lr_mkay, Lq_mkay = performance_simulation(Codeword,[SNR[LR_idx]],H,"MKAY",1,MAX;
+                                              printing=PRINTING, stop=STOP)
 end
 if TANH
-    Lr_tanh, Lq_tanh = performance_simulation(C,[Sigma[LR_idx]],H,"TANH",1,1)
+    Lr_tanh, Lq_tanh = performance_simulation(Codeword,[SNR[LR_idx]],H,"TANH",1,MAX;
+                                              printing=PRINTING, stop=STOP)
 end
 if ALTN
-    Lr_altn, Lq_altn = performance_simulation(C,[Sigma[LR_idx]],H,"ALTN",1,1)
+    Lr_altn, Lq_altn = performance_simulation(Codeword,[SNR[LR_idx]],H,"ALTN",1,MAX;
+                                              printing=PRINTING, stop=STOP)
 end
 if TABL
-    Lr_tabl, Lq_tabl = performance_simulation(C,[Sigma[LR_idx]],H,"TABL",1,1)
+    Lr_tabl, Lq_tabl = performance_simulation(Codeword,[SNR[LR_idx]],H,"TABL",1,MAX;
+                                              printing=PRINTING, stop=STOP)
 end
 if MSUM
-    Lr_msum, Lq_msum = performance_simulation(C,[Sigma[LR_idx]],H,"MSUM",1,1)
+    Lr_msum, Lq_msum = performance_simulation(Codeword,[SNR[LR_idx]],H,"MSUM",1,MAX;
+                                              printing=PRINTING, stop=STOP)
 end
 if  LBP
-      Lr_lbp, Lq_lbp = performance_simulation(C,[Sigma[LR_idx]],H, "LBP",1,1)
+      Lr_lbp, Lq_lbp = performance_simulation(Codeword,[SNR[LR_idx]],H, "LBP",1,MAX;
+                                              printing=PRINTING, stop=STOP)
 end
 if iLBP
-    Lr_ilbp, Lq_ilbp = performance_simulation(C,[Sigma[LR_idx]],H,"iLBP",1,1)
+    Lr_ilbp, Lq_ilbp = performance_simulation(Codeword,[SNR[LR_idx]],H,"iLBP",1,MAX;
+                                              printing=PRINTING, stop=STOP)
 end
 if RBP
     Lr_rbp, Lq_rbp, Edges = 
-                       performance_simulation(C,[Sigma[LR_idx]],H, "RBP",1,1)
+                       performance_simulation(Codeword,[SNR[LR_idx]],H, "RBP",1,MAX_RBP;
+                                              printing=PRINTING, stop=STOP)
 end
 if LRBP
     Lr_lrbp, Lq_lrbp, lEdges = 
-                       performance_simulation(C,[Sigma[LR_idx]],H,"LRBP",1,1)
+                       performance_simulation(Codeword,[SNR[LR_idx]],H,"LRBP",1,MAX_RBP;
+                                              printing=PRINTING, stop=STOP)
 end
                              
 ############################ PERFORMANCE SIMULATION ############################
 if NREALS > 1
     if MKAY
         @time FER, BER, Iters = 
-            performance_simulation(C,Sigma,H,"MKAY",NREALS,MAX)
+            performance_simulation(Codeword,SNR,H,"MKAY",NREALS,MAX)
     end
     if TANH
         @time FER_tanh, BER_tanh, Iters_tanh = 
-            performance_simulation(C,Sigma,H,"TANH",NREALS,MAX)
+            performance_simulation(Codeword,SNR,H,"TANH",NREALS,MAX)
     end
     if ALTN
         @time FER_altn, BER_altn, Iters_altn = 
-            performance_simulation(C,Sigma,H,"ALTN",NREALS,MAX)
+            performance_simulation(Codeword,SNR,H,"ALTN",NREALS,MAX)
     end
     if TABL
         @time FER_tabl, BER_tabl, Iters_tabl = 
-            performance_simulation(C,Sigma,H,"TABL",NREALS,MAX)
+            performance_simulation(Codeword,SNR,H,"TABL",NREALS,MAX)
     end
     if MSUM
         @time FER_msum, BER_msum, Iters_msum = 
-            performance_simulation(C,Sigma,H,"MSUM",NREALS,MAX)
+            performance_simulation(Codeword,SNR,H,"MSUM",NREALS,MAX)
     end
     if  LBP
         @time FER_lbp, BER_lbp, Iters_lbp = 
-            performance_simulation(C,Sigma,H, "LBP",NREALS,MAX)
+            performance_simulation(Codeword,SNR,H, "LBP",NREALS,MAX)
     end
     if iLBP
         @time FER_ilbp, BER_ilbp, Iters_ilbp = 
-            performance_simulation(C,Sigma,H,"iLBP",NREALS,MAX)
+            performance_simulation(Codeword,SNR,H,"iLBP",NREALS,MAX)
     end
     if  RBP
         @time FER_rbp, BER_rbp, Iters_rbp = 
-            performance_simulation(C,Sigma,H,"RBP",NREALS,MAX_RBP)
+            performance_simulation(Codeword,SNR,H,"RBP",NREALS,MAX_RBP)
     end
     if LRBP
         @time FER_lrbp, BER_lrbp, Iters_lrbp = 
-            performance_simulation(C,Sigma,H,"LRBP",NREALS,MAX_RBP)
+            performance_simulation(Codeword,SNR,H,"LRBP",NREALS,MAX_RBP)
     end
     ################################### PLOTTING ###################################
     plotlyjs()

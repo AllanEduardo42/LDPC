@@ -13,21 +13,25 @@ include("minsum_RBP.jl")
 function 
     performance_simulation(
         c::Vector{Bool},
-        σ::Vector{<:AbstractFloat},
+        snr::Vector{<:Real},
         H::BitMatrix,
         mode::String,
         nreals::Integer,
         max::Integer;
         t_test=nothing,
         printing=false,
+        stop=false
     )
 
+    # if nreals = 1, execute testing mode
     TEST = (nreals == 1) ? true : false
+    # transform snr in standard deviations
+    σ = 1 ./ sqrt.(exp10.(snr/10))
 
     # set random seed
     Random.seed!(SEED)
 
-    ################################ CHECK MODE ####################################
+    ################################ CHECK MODE ################################
     if (mode ≠ "MKAY") && (mode ≠ "TANH") && (mode ≠ "LBP") &&
        (mode ≠ "ALTN") && (mode ≠ "TABL") && (mode ≠ "RBP") && 
        (mode ≠ "MSUM") && (mode ≠ "iLBP") && (mode ≠ "LRBP")
@@ -38,19 +42,17 @@ function
         )
     end
 
-    ############################### constants ##################################
+    ############################### CONSTANTS ##################################
 
     # BPKS
     u = Float64.(2*c .- 1)
     # divisor
-    divisor = nreals * N
-
-    ############################# AUXILIARY CONSTANTS ##############################
-
+    divisor = nreals * N 
+    # list of checks and variables nodes
     vn2cn  = make_vn2cn_list(H)
     cn2vn  = make_cn2vn_list(H)
 
-    ############################# preallocation ################################
+    ############################# PREALLOCATIONS ################################
 
     # frame error rate
     FER = zeros(length(σ))
@@ -144,6 +146,44 @@ function
     end
 
     ############################## MAIN LOOP ##################################
+    if TEST 
+        println(
+"###################### Starting simulation(Testing mode) ######################"
+    )
+    else
+        println(
+"################## Starting simulation(# of trials: $nreals) ##################"
+    )
+    end
+    println()
+    if _mode == "FLOO"
+        print("Message passing protocol: Flooding (using ")
+        if mode == "MKAY"
+            println("Mckay's SPA method)")
+        elseif mode == "TANH"
+            println("LLR-SPA calculated by tanh)")
+        elseif mode == "ALTN"
+            println("LLR-SPA calculated by ϕ function)")
+        elseif mode == "TABL"
+            println("LLR-SPA precalculated in look-up table)")
+        elseif mode == "MSUM"
+            println("LLRs calculated by min-sum algorithm)")
+        end
+    elseif mode == "LBP"
+        println("Message passing protocol: LBP")
+    elseif mode == "iLBP"
+        println("Message passing protocol: iLBP")
+    elseif mode == "RBP"
+        println("Message passing protocol: RBP")
+    elseif mode == "LRBP"
+        print("Message passing protocol: LRBP")
+    end
+
+    println("Maximum number of iterations: $max")
+    println("Simulated for SNR (dB): $snr")
+    println("Stop at zero syndrome ? $stop")
+    println()
+
     for k in eachindex(σ)
         for j in 1:nreals
 
@@ -169,6 +209,7 @@ function
             # SPA routine
             DECODED, i = BP!(
                             _mode,
+                            stop,
                             TEST,
                             max,
                             syndrome,

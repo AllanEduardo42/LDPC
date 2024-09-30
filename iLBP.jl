@@ -26,7 +26,7 @@ function
             if visited_vns[n]
                 Lq[n,m] = Ldn[n] - Lr[m,n]
             else
-                Ldn[n], d[n] = update_Lq!(Lq,Lr,Lf[n],n,vn2cn,Lrn)
+                Ldn[n], _ = update_Lq!(Lq,Lr,Lf[n],n,vn2cn,Lrn)
                 visited_vns[n] = true
             end
         end          
@@ -48,6 +48,8 @@ function
         # calc syndrome
         @inbounds syndrome[m] = _calc_syndrome(d,cn2vn[m])
         if iszero(syndrome)
+            println("iLBP: stopped at m=$m ")
+            println()
             break
         end 
     end
