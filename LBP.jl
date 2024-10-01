@@ -4,6 +4,7 @@
 # LBP Sum-Product Algorithm
 
 include("update_Lq.jl")
+include("calc_syndrome.jl")
 
 function
     LBP!(
@@ -24,26 +25,26 @@ function
     for m in eachindex(cn2vn)
         # Lq updates       
         for n in cn2vn[m] # every n in Neighborhood(m)
-            if visited_vns[n]
-                Lq[n,m] = Ldn[n] - Lr[m,n]
+            if @inbounds visited_vns[n]
+                @fastmath Lq[n,m] = Ldn[n] - Lr[m,n]
             else
-                Ldn[n], d[n] = update_Lq!(Lq,Lr,Lf[n],n,vn2cn,Lrn)
-                visited_vns[n] = true
+                @inbounds Ldn[n], d[n] = update_Lq!(Lq,Lr,Lf[n],n,vn2cn,Lrn)
+                @inbounds visited_vns[n] = true
             end
         end
         # Lr updates
         pLr = 1.0
         for n in cn2vn[m]
-            @inbounds @fastmath Lrn[n] = tanh(0.5*Lq[n,m])
-            @inbounds @fastmath pLr *= Lrn[n]
+            @fastmath @inbounds Lrn[n] = tanh(0.5*Lq[n,m])
+            @fastmath @inbounds pLr *= Lrn[n]
         end
         for n in cn2vn[m]
-            @inbounds @fastmath x = pLr/Lrn[n]
-            if abs(x) < 1 # controls divergent values of Lr
-                Ldn[n] -= Lr[m,n]
-                @inbounds @fastmath Lr[m,n] = 2*atanh(x)
-                Ldn[n] += Lr[m,n]
-                d[n] = signbit(Ldn[n])
+            @fastmath @inbounds x = pLr/Lrn[n]
+            if @fastmath abs(x) < 1 # controls divergent values of Lr
+                @fastmath @inbounds Ldn[n] -= Lr[m,n]
+                @fastmath @inbounds Lr[m,n] = 2*atanh(x)
+                @fastmath @inbounds Ldn[n] += Lr[m,n]
+                @inbounds d[n] = signbit(Ldn[n])
             end
         end
         if ilbp

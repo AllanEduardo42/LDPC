@@ -168,13 +168,13 @@ function
 ########################## PRINT SIMULATION DETAILS ############################
     if test && printing
         println()
-        println("""###################### Starting simulation (Testing mode) ###
-        ###################""")
+        print("###################### Starting simulation (Testing mode) #####")
+        println("#################")
         println()
     elseif !test
         println()
-        println("""############################# Starting simulation ###########
-        ###################""")
+        print("############################# Starting simulation #############")
+        println("#################")
         println()
         println("Number of trials: $nreals")
     end

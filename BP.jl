@@ -126,15 +126,15 @@ function
             if FIRST && iszero(syndrome)
                 FIRST = false
                 index = i
-                if d == c
+                if @fastmath d == c
                     DECODED = true
                 end
                 if stop
                     break
                 end
             end
-            bit_error .= (d .≠ c)
-            ber[i] = sum(bit_error)
+            @fastmath bit_error .= (d .≠ c)
+            @fastmath @inbounds ber[i] = sum(bit_error)
         end
     end
 

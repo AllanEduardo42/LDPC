@@ -5,7 +5,7 @@
 
 function abs_sign!(Lq::AbstractFloat,s::Bool)
     signs = signbit(Lq)
-    return abs(Lq), signs, s ⊻ signs
+    return @fastmath abs(Lq), signs, @fastmath s ⊻ signs
 end
 
 function _minsum!(                           
@@ -21,10 +21,10 @@ function _minsum!(
     max_idx = 0
     for n in cn2vn[m]
         @inbounds β, signs[n], s = abs_sign!(Lq[n,m],s)
-        if β < minL
+        if @fastmath β < minL
             max_idx = n
             minL, minL2 = β, minL
-        elseif β < minL2
+        elseif @fastmath β < minL2
             minL2 = β
         end
     end
@@ -44,9 +44,9 @@ function
     )
 
     if n == max_idx #(pick the second least Lq)
-        return (1 - 2*(signs ⊻ s))*minL2
+        return @fastmath (1 - 2*(signs ⊻ s))*minL2
     else
-        return (1 - 2*(signs ⊻ s))*minL
+        return @fastmath (1 - 2*(signs ⊻ s))*minL
     end
 
 end

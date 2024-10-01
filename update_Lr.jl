@@ -19,11 +19,11 @@ function
         δr = 1
         for n2 in cn2vn[m]
             if n2 ≠ n
-                @inbounds δr *= δq[n2,m]
+                @fastmath @inbounds δr *= δq[n2,m]
             end
         end
-        @inbounds r[m,n,1] = 0.5*(1+δr)
-        @inbounds r[m,n,2] = 0.5*(1-δr)
+        @fastmath @inbounds r[m,n,1] = 0.5*(1+δr)
+        @fastmath @inbounds r[m,n,2] = 0.5*(1-δr)
     end
    
         
@@ -43,13 +43,13 @@ function
     )
     pLr = 1.0
     for n in cn2vn[m]
-        @inbounds @fastmath Lrn[n] = tanh(0.5*Lq[n,m])
-        @inbounds @fastmath pLr *= Lrn[n]
+        @fastmath @inbounds Lrn[n] = tanh(0.5*Lq[n,m])
+        @fastmath @inbounds pLr *= Lrn[n]
     end
     for n in cn2vn[m]
-        @inbounds @fastmath x = pLr/Lrn[n]
-        if abs(x) < 1 # controls divergent values of Lr
-            @inbounds @fastmath Lr[m,n] = 2*atanh(x)
+        @fastmath @inbounds x = pLr/Lrn[n]
+        if @fastmath abs(x) < 1 # controls divergent values of Lr
+            @fastmath @inbounds Lr[m,n] = 2*atanh(x)
         end
     end
 end
@@ -71,10 +71,10 @@ function
         @inbounds Lr[m,n] = 1.0
         for n2 in cn2vn[m]
             if n2 ≠ n
-                @inbounds @fastmath Lr[m,n] *= tanh(0.5*Lq[n2,m])
+                @fastmath @inbounds Lr[m,n] *= tanh(0.5*Lq[n2,m])
             end
         end
-        @inbounds @fastmath Lr[m,n] = 2*atanh(Lr[m,n])
+        @fastmath @inbounds Lr[m,n] = 2*atanh(Lr[m,n])
     end
 end
 
@@ -116,11 +116,11 @@ function
     s = false
     for n in cn2vn[m]
         @inbounds Lrn[n], signs[n], s = phi_sign!(Lq[n,m],s,phi)
-        @inbounds @fastmath sLr += Lrn[n] 
+        @fastmath @inbounds sLr += Lrn[n] 
     end
     for n in cn2vn[m]
-        x = abs(sLr - Lrn[n])
-        if x > 0 # (Inf restriction)
+        @fastmath @inbounds x = abs(sLr - Lrn[n])
+        if @fastmath x > 0 # (Inf restriction)
             @inbounds Lr[m,n] = (1 - 2*(signs[n] ⊻ s))*ϕ(x,phi)
         end
     end    
@@ -141,7 +141,7 @@ function
     )
     args = _minsum!(Lq,signs,m,cn2vn)
     for n in cn2vn[m]
-        Lr[m,n] = __minsum!(n,signs[n],args...)
+        @inbounds Lr[m,n] = __minsum!(n,signs[n],args...)
     end 
 
 end

@@ -3,7 +3,7 @@
 # 19 sep 2024
 # Function to calculate the syndrome in the LDPC-SPA decode algorithm
 
-"""Return the syndrome H*d, where H is the parity cn matrix and d an estimate
+"""Return the syndrome H*d, where H is the parity n matrix and d an estimate
 of the transmited codeword."""
 function 
     calc_syndrome!(
@@ -13,8 +13,8 @@ function
     )
 
     syndrome .*= false
-    for cn in eachindex(cn2vn)
-        @inbounds syndrome[cn] = _calc_syndrome(d,cn2vn[cn])
+    for n in eachindex(cn2vn)
+        @inbounds syndrome[n] = _calc_syndrome(d,cn2vn[n])
     end
     
 end
@@ -26,8 +26,8 @@ function
     )
 
     syndrome = false
-    for cn in varnodes_cn
-        @inbounds syndrome ⊻= d[cn]
+    for n in varnodes_cn
+        @inbounds syndrome ⊻= d[n]
     end
 
     return syndrome

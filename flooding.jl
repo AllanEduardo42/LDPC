@@ -29,7 +29,7 @@ function
     # Lq update
     for n in eachindex(vn2cn)
 
-        _, d[n] = update_Lq!(Lq,Lr,Lf[n],n,vn2cn,Lrn)
+        @inbounds _, d[n] = update_Lq!(Lq,Lr,Lf[n],n,vn2cn,Lrn)
         
     end
 end
@@ -50,7 +50,7 @@ function
     )
 
     # horizontal update 
-    δq = q[:,:,1]-q[:,:,2]  
+    @fastmath @inbounds δq = q[:,:,1]-q[:,:,2]  
 
     for m in eachindex(cn2vn)
 
@@ -61,8 +61,11 @@ function
     # vertical update
 
     Ld = zeros(2)
+    
     for n in eachindex(vn2cn)
+        
         @inbounds Ld = f[n,:]
-        d[n] = update_Lq!(q,r,Ld,n,vn2cn)
+        @inbounds d[n] = update_Lq!(q,r,Ld,n,vn2cn)
+
     end
 end

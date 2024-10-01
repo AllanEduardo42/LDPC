@@ -13,17 +13,17 @@ using SparseArrays
 
 ################################ BP MODE FLAGS ################################
 
- LBP::Bool = false
-iLBP::Bool = false
+ LBP::Bool = true
+iLBP::Bool = true
  RBP::Bool = true
 LRBP::Bool = true
 
 ############################# FLOODING MODE FLAGS ##############################
-MKAY::Bool = false
-TANH::Bool = false
-ALTN::Bool = false
-TABL::Bool = false
-MSUM::Bool = false
+MKAY::Bool = true
+TANH::Bool = true
+ALTN::Bool = true
+TABL::Bool = true
+MSUM::Bool = true
 
 # fast flooding update when using tanh mode (default:true)
 FAST::Bool = true
@@ -93,12 +93,10 @@ Message::Vector{Bool} = rand(rgn_message,Bool,N-M)
 
 Codeword = gf2_mat_mult(Matrix(G), Message)
 
-######################### PRINT INFORMATION ON SCREEN #########################
-
+######################### PRINT INFORMATION ON SCREEN ##########################
 println()
-println(
-"############################### LDPC parameters ###############################"
-)
+print("############################### LDPC parameters #######################")
+println("#########")
 println()
 println("Parity Check Matrix: $M x $N")
 println()

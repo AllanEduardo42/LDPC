@@ -44,17 +44,17 @@ function
         end
 
         (cnmax,vnmax) = maxcoords
-        Factors[cnmax,vnmax] *= factor
+        @fastmath @inbounds Factors[cnmax,vnmax] *= factor
 
         ### update Lr[cnmax,vnmax]
         pLr = 1.0
         for n in cn2vn[cnmax]
             if n != vnmax
-                @inbounds @fastmath pLr *= tanh(0.5*Lq[n,cnmax])
+                @fastmath @inbounds pLr *= tanh(0.5*Lq[n,cnmax])
             end
         end    
-        if abs(pLr) < 1 
-            @inbounds @fastmath Lr[cnmax,vnmax] = 2*atanh(pLr)
+        if @fastmath abs(pLr) < 1 
+            @fastmath @inbounds Lr[cnmax,vnmax] = 2*atanh(pLr)
         end
 
         # we don't use the m-to-n message correspoding to (cnmax,vnmax) anymore.
@@ -62,20 +62,20 @@ function
         if lrbp
             maxresidue = 0.0
         else
-            Residues[cnmax,vnmax] = 0.0
+            @inbounds Residues[cnmax,vnmax] = 0.0
         end
         
         # update Ldn[vmax] and d[vnmax]
-        Ldn[vnmax] = Lf[vnmax]
+        @inbounds Ldn[vnmax] = Lf[vnmax]
         for m in vn2cn[vnmax]
-            Ldn[vnmax] += Lr[m,vnmax]
-            d[vnmax] = signbit(Ldn[vnmax])
+            @fastmath @inbounds Ldn[vnmax] += Lr[m,vnmax]
+            @fastmath @inbounds d[vnmax] = signbit(Ldn[vnmax])
         end
 
         for m in vn2cn[vnmax]
             if m ≠ cnmax
                 # update vn2cn messages Lq[vnmax,m], ∀m ≠ cnmax
-                Lq[vnmax,m] = Ldn[vnmax] - Lr[m,vnmax]
+                @fastmath @inbounds Lq[vnmax,m] = Ldn[vnmax] - Lr[m,vnmax]
                 # if any new residue estimate is larger than the previously estimated maximum 
                 # residue than update the value of maxresidue and maxcoords.
                 maxresidue = minsum_RBP!(
@@ -116,10 +116,10 @@ function
     rand!(rng_sample,samples,1:M)
     for m in samples
         for n in cn2vn[m]
-            if Residues[m,n] > maxresidue
-                maxresidue = Residues[m,n]
-                maxcoords[1] = m
-                maxcoords[2] = n
+            if @fastmath @inbounds Residues[m,n] > maxresidue
+                @inbounds maxresidue = Residues[m,n]
+                @inbounds maxcoords[1] = m
+                @inbounds maxcoords[2] = n
             end
         end
     end
@@ -139,10 +139,10 @@ function
     maxresidue = 0
     for m in eachindex(cn2vn)
         for n in cn2vn[m]
-            if Residues[m,n] > maxresidue
-                maxresidue = Residues[m,n]
-                maxcoords[1] = m
-                maxcoords[2] = n
+            if @fastmath @inbounds Residues[m,n] > maxresidue
+                @inbounds maxresidue = Residues[m,n]
+                @inbounds maxcoords[1] = m
+                @inbounds maxcoords[2] = n
             end
         end
     end

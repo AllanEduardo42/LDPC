@@ -3,6 +3,8 @@
 # 27 ago 2024
 # Auxiliary functions
 
+using Random
+
 """For each column j of matrix H, find the indices i where H[i,j] = 1, and 
 return a vector "vn2cn" where vn2cn[j] is a vector containing the
 indices i where H[i,j] = 1"""
@@ -10,8 +12,8 @@ function make_vn2cn_list(H::BitMatrix)
 
     N = size(H,2)
     vn2cn = Vector{Vector{Int}}()
-    for vn in 1:N
-        push!(vn2cn,findall(x -> x == true, H[:,vn]))
+    for n in 1:N
+        @inbounds push!(vn2cn,findall(x -> x == true, H[:,n]))
     end
 
     return vn2cn
@@ -25,8 +27,8 @@ function make_cn2vn_list(H::BitMatrix)
 
     M = size(H,1)
     cn2vn = Vector{Vector{Int}}()
-    for cn in 1:M
-        push!(cn2vn,findall(x -> x == true, H[cn,:]))
+    for m in 1:M
+        @inbounds push!(cn2vn,findall(x -> x == true, H[m,:]))
     end
 
     return cn2vn
@@ -40,9 +42,9 @@ function
         vn2cn::Vector{Vector{T}} where {T<:Integer}
     )
     
-    for vn in eachindex(vn2cn)
-        for cn in vn2cn[vn]
-            @inbounds Lq[vn,cn] = Lf[vn]
+    for n in eachindex(vn2cn)
+        for m in vn2cn[n]
+            @inbounds Lq[n,m] = Lf[n]
         end
     end
 end
@@ -54,10 +56,10 @@ function
         vn2cn::Vector{Vector{T}} where {T<:Integer}
     )
    
-    for vn in eachindex(vn2cn)
-        for cn in vn2cn[vn]
-            @inbounds Lq[vn,cn,1] = Lf[vn,1]
-            @inbounds Lq[vn,cn,2] = Lf[vn,2]
+    for n in eachindex(vn2cn)
+        for m in vn2cn[n]
+            @inbounds Lq[n,m,1] = Lf[n,1]
+            @inbounds Lq[n,m,2] = Lf[n,2]
         end
     end
 
@@ -83,9 +85,9 @@ function
         cn2vn::Vector{Vector{T}} where {T<:Integer}
     )
 
-    for cn in eachindex(cn2vn)
-        for vn in cn2vn[cn]
-            Factors[cn,vn] = 1.0
+    for m in eachindex(cn2vn)
+        for n in cn2vn[m]
+            @inbounds Factors[m,n] = 1.0
         end
     end
 end

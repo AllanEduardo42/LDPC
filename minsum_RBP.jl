@@ -24,12 +24,12 @@ function
     args = _minsum!(Lq,signs,m,cn2vn)
     for n in cn2vn[m]
         if n ≠ vnmax
-            x = __minsum!(n,signs[n],args...)
-            y = abs(x - Lr[m,n])*Factors[m,n]
-            if y > maxresidue
+            @inbounds x = __minsum!(n,signs[n],args...)
+            @fastmath @inbounds y = abs(x - Lr[m,n])*Factors[m,n]
+            if @fastmath y > maxresidue
                 maxresidue = y
-                maxcoords[1] = m
-                maxcoords[2] = n
+                @inbounds maxcoords[1] = m
+                @inbounds maxcoords[2] = n
             end
         end
     end
@@ -55,8 +55,8 @@ function
     args = _minsum!(Lq,signs,m,cn2vn)
     for n in cn2vn[m]
         if n ≠ vnmax
-            x = __minsum!(n,signs[n],args...)
-            Residues[m,n] = abs(x - Lr[m,n])*Factors[m,n]
+            @inbounds x = __minsum!(n,signs[n],args...)
+            @fastmath @inbounds Residues[m,n] = abs(x - Lr[m,n])*Factors[m,n]
         end
     end
 
@@ -77,15 +77,14 @@ function
     y = 0.0
     maxresidue = 0.0
     for m in eachindex(cn2vn)
-        cn2vn[m] = cn2vn[m]
         args = _minsum!(Lq,signs,m,cn2vn)
         for n in cn2vn[m]
-            x = __minsum!(n,signs[n],args...)
-            y = abs(x) 
-            if y > maxresidue
+            @inbounds x = __minsum!(n,signs[n],args...)
+            @fastmath y = abs(x) 
+            if @fastmath y > maxresidue
                 maxresidue = y
-                maxcoords[1] = m
-                maxcoords[2] = n
+                @inbounds maxcoords[1] = m
+                @inbounds maxcoords[2] = n
             end
         end
     end
@@ -108,8 +107,8 @@ function
     for m in eachindex(cn2vn)
         args = _minsum!(Lq,signs,m,cn2vn)
         for n in cn2vn[m]
-            x = __minsum!(n,signs[n],args...)
-            Residues[m,n] = abs(x) 
+            @inbounds x = __minsum!(n,signs[n],args...)
+            @fastmath @inbounds Residues[m,n] = abs(x) 
         end
     end
 end
