@@ -112,3 +112,51 @@ function
         end
     end
 end
+
+function
+    find_maxresidue_coords!(
+        maxcoords::Vector{<:Integer},
+        Residues::Matrix{<:AbstractFloat},
+        cn2vn::Vector{Vector{T}} where {T<:Integer},
+        samples::Vector{<:Integer},
+        rng_sample::AbstractRNG
+    )
+
+    maxresidue = 0
+    M = size(Residues,1)
+    rand!(rng_sample,samples,1:M)
+    for m in samples
+        for n in cn2vn[m]
+            if @fastmath @inbounds Residues[m,n] > maxresidue
+                @inbounds maxresidue = Residues[m,n]
+                @inbounds maxcoords[1] = m
+                @inbounds maxcoords[2] = n
+            end
+        end
+    end
+
+    return maxresidue
+end
+
+function
+    find_maxresidue_coords!(
+        maxcoords::Vector{<:Integer},
+        Residues::Matrix{<:AbstractFloat},
+        cn2vn::Vector{Vector{T}} where {T<:Integer},
+        samples::Nothing,
+        rng_sample::AbstractRNG
+    )
+
+    maxresidue = 0
+    for m in eachindex(cn2vn)
+        for n in cn2vn[m]
+            if @fastmath @inbounds Residues[m,n] > maxresidue
+                @inbounds maxresidue = Residues[m,n]
+                @inbounds maxcoords[1] = m
+                @inbounds maxcoords[2] = n
+            end
+        end
+    end
+
+    return maxresidue
+end

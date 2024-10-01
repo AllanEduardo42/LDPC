@@ -16,14 +16,15 @@ using SparseArrays
  LBP::Bool = true
 iLBP::Bool = true
  RBP::Bool = true
+RRBP::Bool = true
 LRBP::Bool = true
 
 ############################# FLOODING MODE FLAGS ##############################
-MKAY::Bool = true
+MKAY::Bool = false
 TANH::Bool = true
-ALTN::Bool = true
-TABL::Bool = true
-MSUM::Bool = true
+ALTN::Bool = false
+TABL::Bool = false
+MSUM::Bool = false
 
 # fast flooding update when using tanh mode (default:true)
 FAST::Bool = true
@@ -58,13 +59,14 @@ RANGE::Int64 = 20
 
 SIZE_per_RANGE::Float64 = SIZE/RANGE
 
-NREALS::Int = 100
+NREALS::Int = 1000
 MAX::Int = 30
 MAXRBP::Int = 5
 
 DECAYRBP::Float64 = 0.9
 DECAYLRBP::Float64 = 1
-SAMPLESIZE::Int = 0
+DECAYRRBP::Float64 = 1
+SAMPLESIZE::Int = 51
 
 #################################### NOISE #####################################
 
@@ -209,6 +211,17 @@ if RBP
                                               1,
                                               MAXRBP,
                                               SEED_NOISE;
+                                              printing=PRINTING,
+                                              stop=STOP)
+end
+if RRBP
+    Lr_rrbp, Lq_rrbp = performance_simulation(Codeword,
+                                              SNRTEST,
+                                              H,
+                                              "RRBP",
+                                              1,
+                                              MAXRBP,
+                                              SEED_NOISE;
                                               rng_seed_sample=SEED_SAMPL,
                                               printing=PRINTING,
                                               stop=STOP)
@@ -313,8 +326,19 @@ if NREALS > 1
                                    NREALS,
                                    MAXRBP,
                                    SEED_NOISE;
-                                   stop=STOP,
-                                   rng_seed_sample=SEED_SAMPL)
+                                   stop=STOP)
+    end
+    if  RRBP
+        @time FER_rrbp, BER_rrbp, Iters_rrbp = 
+            performance_simulation(Codeword,
+                                   SNR,
+                                   H,
+                                   "RRBP",
+                                   NREALS,
+                                   MAXRBP,
+                                   SEED_NOISE;
+                                   rng_seed_sample=SEED_SAMPL,
+                                   stop=STOP)
     end
     if LRBP
         @time FER_lrbp, BER_lrbp, Iters_lrbp = 
@@ -363,6 +387,10 @@ if NREALS > 1
     if RBP
         append!(yaxis,[FER_rbp])
         push!(fer_labels,"SPA RBP")
+    end
+    if RRBP
+        append!(yaxis,[FER_rrbp])
+        push!(fer_labels,"SPA RRBP")
     end
     if LRBP
         append!(yaxis,[FER_lrbp])
@@ -480,6 +508,18 @@ if NREALS > 1
                     label=ber_labels,
                     lw=2,
                     title="BER SPA RBP (decay cte = $DECAYRBP)",
+                    ylims=(lim-1,0)
+                )
+            )
+        end
+        if RRBP
+            display(
+                plot(
+                    1:MAXRBP,
+                    BER_rrbp,
+                    label=ber_labels,
+                    lw=2,
+                    title="BER SPA RRBP (decay cte = $DECAYRRBP)",
                     ylims=(lim-1,0)
                 )
             )

@@ -4,7 +4,7 @@
 # 23 set 2024
 # RBP Sum-Product Algorithm using min-sum to calculate the residues
 
-include("minsum_RBP.jl")
+include("RBP_functions.jl")
 
 function
     RBP!(
@@ -17,7 +17,7 @@ function
         vn2cn::Vector{Vector{T}} where {T<:Integer},
         signs::Vector{Bool},
         Factors::Matrix{<:AbstractFloat},
-        factor::AbstractFloat,
+        rbpfactor::AbstractFloat,
         num_edges::Integer,
         Ldn::Vector{<:AbstractFloat},
         Residues::Union{Matrix{<:AbstractFloat},Nothing},
@@ -44,7 +44,7 @@ function
         end
 
         (cnmax,vnmax) = maxcoords
-        @fastmath @inbounds Factors[cnmax,vnmax] *= factor
+        @fastmath @inbounds Factors[cnmax,vnmax] *= rbpfactor
 
         ### update Lr[cnmax,vnmax]
         pLr = 1.0
@@ -100,52 +100,4 @@ function
 
     end
 
-end
-
-function
-    find_maxresidue_coords!(
-        maxcoords::Vector{<:Integer},
-        Residues::Matrix{<:AbstractFloat},
-        cn2vn::Vector{Vector{T}} where {T<:Integer},
-        samples::Vector{<:Integer},
-        rng_sample::AbstractRNG
-    )
-
-    maxresidue = 0
-    M = size(Residues,1)
-    rand!(rng_sample,samples,1:M)
-    for m in samples
-        for n in cn2vn[m]
-            if @fastmath @inbounds Residues[m,n] > maxresidue
-                @inbounds maxresidue = Residues[m,n]
-                @inbounds maxcoords[1] = m
-                @inbounds maxcoords[2] = n
-            end
-        end
-    end
-
-    return maxresidue
-end
-
-function
-    find_maxresidue_coords!(
-        maxcoords::Vector{<:Integer},
-        Residues::Matrix{<:AbstractFloat},
-        cn2vn::Vector{Vector{T}} where {T<:Integer},
-        samples::Nothing,
-        rng_sample::AbstractRNG
-    )
-
-    maxresidue = 0
-    for m in eachindex(cn2vn)
-        for n in cn2vn[m]
-            if @fastmath @inbounds Residues[m,n] > maxresidue
-                @inbounds maxresidue = Residues[m,n]
-                @inbounds maxcoords[1] = m
-                @inbounds maxcoords[2] = n
-            end
-        end
-    end
-
-    return maxresidue
 end

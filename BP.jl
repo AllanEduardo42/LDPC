@@ -6,6 +6,7 @@
 include("auxiliary_functions.jl")
 include("update_Lr.jl")
 include("update_Lq.jl")
+include("minsum.jl")
 include("flooding.jl")
 include("calc_syndrome.jl")
 include("LBP.jl")
@@ -13,6 +14,7 @@ include("RBP.jl")
 
 function 
     BP!(
+        supermode::String,
         mode::String,
         stop::Bool,
         test::Bool,
@@ -52,7 +54,7 @@ function
             println("### Iteration #$i ###")
         end
 
-        if mode == "FLOO"
+        if supermode == "FLOO"
             flooding!(d,
                       Lq,
                       Lr,
@@ -63,7 +65,7 @@ function
                       signs,
                       phi
             )  
-        elseif mode == "LBP" || mode == "iLBP"
+        elseif supermode == "LBP"
             LBP!(d,
                  Lr,
                  Lq,
@@ -76,7 +78,7 @@ function
                  visited_vns,
                  mode == "iLBP"
             )   
-        elseif mode == "RBP" || mode == "LRBP"
+        elseif supermode == "RBP"
             RBP!(
                 d,
                 Lr,

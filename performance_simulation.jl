@@ -7,8 +7,6 @@ include("auxiliary_functions.jl")
 include("lookupTable.jl")
 include("BP.jl")
 include("calc_Lf.jl")
-include("minsum.jl")
-include("minsum_RBP.jl")
 
 function
     performance_simulation(
@@ -32,14 +30,27 @@ function
     rng_sample = Xoshiro(rng_seed_sample)
 
 ############################### CHECK VALID MODE ###############################
-    if (mode ≠ "MKAY") && (mode ≠ "TANH") && (mode ≠ "LBP") &&
-        (mode ≠ "ALTN") && (mode ≠ "TABL") && (mode ≠ "RBP") && 
-        (mode ≠ "MSUM") && (mode ≠ "iLBP") && (mode ≠ "LRBP")
+    if mode == "MKAY" || mode == "TANH" || mode == "ALTN" || mode == "TABL" ||
+       mode == "MSUM"
+        
+        supermode = "FLOO"
+
+    elseif mode == "LBP" || mode == "iLBP"
+
+        supermode = "LBP"
+    
+    elseif mode == "RBP" || mode == "LRBP" || mode == "RRBP"
+        
+        supermode = "RBP"
+
+    else
+
         throw(
             ArgumentError(
                 "$mode is not a valid mode"
             )
         )
+
     end
 
 ################################## CONSTANTS ###################################
@@ -93,17 +104,13 @@ function
     Lq, Lr = (mode != "MKAY") ? (H'*0.0,H*0.0) : (zeros(N,M,2),zeros(M,N,2))
 
     # Set variables Lrn and signs depending on the mode (also used for dispatch)
-    if mode == "TANH" || mode == "LBP" || mode == "iLBP"
-        if mode == "TANH" && !(FAST)
-            Lrn = nothing
-        else
-            Lrn = zeros(N)
-        end
+    if (mode == "TANH" && FAST) || mode == "LBP" || mode == "iLBP"
+        Lrn = zeros(N) 
         signs = nothing
     elseif mode == "ALTN" || mode == "TABL"
         Lrn = zeros(N)
         signs = zeros(Bool,N)
-    elseif mode == "MSUM" || mode == "RBP" || mode == "LRBP"
+    elseif mode == "MSUM" || supermode == "RBP"
         Lrn = nothing
         signs = zeros(Bool,N)
     else
@@ -113,34 +120,36 @@ function
 
    # Set other variables that depend on the mode
 
-    visited_vns = (mode == "LBP" || mode == "iLBP") ? zeros(Bool,N) : nothing
+    visited_vns = (supermode == "LBP") ? zeros(Bool,N) : nothing
 
-    Ldn = (mode == "LBP" || mode == "iLBP" || mode == "RBP" || mode == "LRBP") ?
-          zeros(N) : nothing
+    if supermode == "LBP" || supermode == "RBP"       
+        Ldn = zeros(N)
+    else
+        Ldn = nothing
+    end
 
     phi = (mode == "TABL") ? lookupTable() : nothing
 
-    Residues = (mode == "RBP") ? H*0.0 : nothing
+    Residues = (mode == "RBP" || mode == "RRBP") ? H*0.0 : nothing
 
-    samples = (mode == "RBP" && SAMPLESIZE != 0) ?
+    samples = (mode == "RRBP" && SAMPLESIZE != 0) ?
                 Vector{Int}(undef,SAMPLESIZE) : nothing
 
-    if mode == "RBP"
-        rbpfactor = DECAYRBP
-    elseif mode == "LRBP"
-        rbpfactor = DECAYLRBP
+    if supermode == "RBP"
+        if mode == "RBP"
+            rbpfactor = DECAYRBP
+        elseif mode == "LRBP"
+            rbpfactor = DECAYLRBP
+        elseif mode == "RRBP"
+            rbpfactor = DECAYRRBP
+        end
     else
         rbpfactor = nothing
     end
 
-    maxcoords, Factors, num_edges  = 
-        (mode == "RBP" || mode == "LRBP") ? 
-        ([1,1], 1.0*H, sum(H)) : 
+    maxcoords, Factors, num_edges = (supermode == "RBP") ? 
+        ([0,0], 1.0*H, sum(H)) : 
         (nothing,nothing,nothing)
-
-    # unify the 5 flooding methods 
-    _mode = (mode == "MKAY" || mode == "TANH" || mode == "ALTN" ||
-                mode == "TABL" || mode == "MSUM") ? "FLOO" : mode
 
     ######################### FIRST RECEIVED SIGNAL ############################
     # In order to allow to test with a given received signal t_test, the first
@@ -179,7 +188,7 @@ function
         println("Number of trials: $nreals")
     end
     if !test || printing
-        if _mode == "FLOO"
+        if supermode == "FLOO"
             print("Message passing protocol: Flooding (using ")
             if mode == "MKAY"
                 println("Mckay's SPA method)")
@@ -200,6 +209,8 @@ function
             println("Message passing protocol: RBP")
         elseif mode == "LRBP"
             println("Message passing protocol: LRBP")
+        elseif mode == "RRBP"
+            println("Message passing protocol: RRBP")
         end
 
         println("Maximum number of iterations: $max")
@@ -224,12 +235,13 @@ function
             # initialize matrix Lq
             init_Lq!(Lq,Lf,vn2cn)
 
-            if mode == "RBP" || mode == "LRBP"
+            if supermode == "RBP"
                 minsum_RBP_init!(Residues,maxcoords,Lq,signs,cn2vn)
             end      
             # SPA routine
             DECODED, i = BP!(
-                            _mode,
+                            supermode,
+                            mode,
                             stop,
                             test,
                             max,
