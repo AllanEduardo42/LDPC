@@ -53,7 +53,16 @@ function
         end
 
         if mode == "FLOO"
-            flooding!(d,Lq,Lr,Lf,cn2vn,vn2cn,Lrn,signs,phi)  
+            flooding!(d,
+                      Lq,
+                      Lr,
+                      Lf,
+                      cn2vn,
+                      vn2cn,
+                      Lrn,
+                      signs,
+                      phi
+            )  
         elseif mode == "LBP" || mode == "iLBP"
             LBP!(d,
                  Lr,

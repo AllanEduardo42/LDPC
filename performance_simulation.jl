@@ -6,7 +6,7 @@
 include("auxiliary_functions.jl")
 include("lookupTable.jl")
 include("BP.jl")
-include("calc_priors.jl")
+include("calc_Lf.jl")
 include("minsum.jl")
 include("minsum_RBP.jl")
 
@@ -25,19 +25,16 @@ function
         stop=false
     )
 
+########################## SET RANDOM GENERADOR SEEDS ##########################
+
     rng_noise = Xoshiro(rgn_seed_noise)
 
     rng_sample = Xoshiro(rng_seed_sample)
 
-    # if nreals = 1, execute testing mode
-    TEST = (nreals == 1) ? true : false
-    # transform snr in standard deviations
-    σ = 1 ./ sqrt.(exp10.(snr/10))
-
-    ################################ CHECK MODE ################################
+############################### CHECK VALID MODE ###############################
     if (mode ≠ "MKAY") && (mode ≠ "TANH") && (mode ≠ "LBP") &&
-       (mode ≠ "ALTN") && (mode ≠ "TABL") && (mode ≠ "RBP") && 
-       (mode ≠ "MSUM") && (mode ≠ "iLBP") && (mode ≠ "LRBP")
+        (mode ≠ "ALTN") && (mode ≠ "TABL") && (mode ≠ "RBP") && 
+        (mode ≠ "MSUM") && (mode ≠ "iLBP") && (mode ≠ "LRBP")
         throw(
             ArgumentError(
                 "$mode is not a valid mode"
@@ -45,8 +42,13 @@ function
         )
     end
 
-    ############################### CONSTANTS ##################################
-
+################################## CONSTANTS ###################################
+    
+    # if nreals = 1, set test mode
+    test = (nreals == 1) ? true : false
+    # transform snr in standard deviations
+    variances = 1 ./ (exp10.(snr/10))
+    stdevs = sqrt.(variances)
     # BPKS
     u = Float64.(2*c .- 1)
     # divisor
@@ -58,22 +60,22 @@ function
     ############################# PREALLOCATIONS ################################
 
     # frame error rate
-    FER = zeros(length(σ))
+    FER = zeros(length(stdevs))
 
     # bit error rate
     ber = zeros(max)    
-    BER = zeros(max,length(σ))
+    BER = zeros(max,length(stdevs))
 
     # iteration in which SPA stopped
-    iters = zeros(Int, length(σ), nreals)
+    iters = Matrix{Int}(undef, length(stdevs), nreals)
 
-    # MAP estimate
+    # estimate
     d = Vector{Bool}(undef,N)
 
     # syndrome
     syndrome = ones(Bool,M)
 
-    # prior llr-probabilitities
+    # prior llr (if mode == "MKAY" just the prior probabilities)
     Lf = (mode != "MKAY") ? Vector{Float64}(undef,N) : Matrix{Float64}(undef,N,2)
 
     # noise
@@ -87,9 +89,10 @@ function
 
     # Lq -> matrix of vn2cn messages (N x M)
     # Lr -> matrix of cn2vn messages (M x N)
+    # if mode == "MKAY" the are matrices for bit = 0 and bit = 1
     Lq, Lr = (mode != "MKAY") ? (H'*0.0,H*0.0) : (zeros(N,M,2),zeros(M,N,2))
 
-    # Set variables that depend on the mode
+    # Set variables Lrn and signs depending on the mode (also used for dispatch)
     if mode == "TANH" || mode == "LBP" || mode == "iLBP"
         if mode == "TANH" && !(FAST)
             Lrn = nothing
@@ -108,6 +111,8 @@ function
         signs = nothing
     end
 
+   # Set other variables that depend on the mode
+
     visited_vns = (mode == "LBP" || mode == "iLBP") ? zeros(Bool,N) : nothing
 
     Ldn = (mode == "LBP" || mode == "iLBP" || mode == "RBP" || mode == "LRBP") ?
@@ -116,9 +121,9 @@ function
     phi = (mode == "TABL") ? lookupTable() : nothing
 
     Residues = (mode == "RBP") ? H*0.0 : nothing
-    
+
     samples = (mode == "RBP" && SAMPLESIZE != 0) ?
-              Vector{Int}(undef,SAMPLESIZE) : nothing
+                Vector{Int}(undef,SAMPLESIZE) : nothing
 
     if mode == "RBP"
         rbpfactor = DECAYRBP
@@ -132,50 +137,48 @@ function
         (mode == "RBP" || mode == "LRBP") ? 
         ([1,1], 1.0*H, sum(H)) : 
         (nothing,nothing,nothing)
-    
+
     # unify the 5 flooding methods 
     _mode = (mode == "MKAY" || mode == "TANH" || mode == "ALTN" ||
-             mode == "TABL" || mode == "MSUM") ? "FLOO" : mode
+                mode == "TABL" || mode == "MSUM") ? "FLOO" : mode
 
     ######################### FIRST RECEIVED SIGNAL ############################
-    # In order to allow a test with a given received signal t_test, the first
-    # received signal t is set outside the main loop.
-    if TEST
+    # In order to allow to test with a given received signal t_test, the first
+    # received signal t must be set outside the main loop.
+    if test
         if t_test === nothing # if no test signal was provided:
-            # generate a received signal
-            received_signal!(t,noise,σ[1],u,rng_noise)
+            # generate a new received signal
+            received_signal!(t,noise,stdevs[1],u,rng_noise)
         elseif length(t_test) != N
-            # if a received test signal was given but with wrong size
+            # if a received test signal was given, but with wrong length
             throw(
                 DimensionMismatch(
                     "length(t_test) should be $N, not $(length(t_test))"
                 )
             )
         else
-            # the received signal is the test signal
+            # the received signal is the given test signal
             t = t_test
         end
     else
         # generate the first received signal outside the main loop
-        received_signal!(t,noise,σ[1],u,rng_noise)
+        received_signal!(t,noise,stdevs[1],u,rng_noise)
     end
 
-    ############################## MAIN LOOP ##################################
-    if TEST && printing
+########################## PRINT SIMULATION DETAILS ############################
+    if test && printing
         println()
-        println(
-"###################### Starting simulation (Testing mode) ######################"
-        )
+        println("""###################### Starting simulation (Testing mode) ###
+        ###################""")
         println()
-    elseif !TEST
+    elseif !test
         println()
-        println(
-"############################# Starting simulation #############################"
-        )
+        println("""############################# Starting simulation ###########
+        ###################""")
         println()
         println("Number of trials: $nreals")
     end
-    if !TEST || printing
+    if !test || printing
         if _mode == "FLOO"
             print("Message passing protocol: Flooding (using ")
             if mode == "MKAY"
@@ -204,11 +207,14 @@ function
         println("Stop at zero syndrome ? $stop")
         println()
     end
-    for k in eachindex(σ)
+
+################################## MAIN LOOP ###################################
+    
+    for k in eachindex(stdevs)
         for j in 1:nreals
 
             # init the llr priors
-            calc_Lf!(Lf,t,σ[k]^2)
+            calc_Lf!(Lf,t,variances[k])
             if mode == "TABL"
                 # scale for table
                 Lf .*= SIZE_per_RANGE
@@ -219,13 +225,13 @@ function
             init_Lq!(Lq,Lf,vn2cn)
 
             if mode == "RBP" || mode == "LRBP"
-                minsum_RBP_init!(Residues, maxcoords,Lq,signs,cn2vn)
+                minsum_RBP_init!(Residues,maxcoords,Lq,signs,cn2vn)
             end      
             # SPA routine
             DECODED, i = BP!(
                             _mode,
                             stop,
-                            TEST,
+                            test,
                             max,
                             syndrome,
                             d,
@@ -263,7 +269,7 @@ function
             end
 
             # received signal for the next realization (j+1)
-            received_signal!(t,noise,σ[k],u,rng_noise)
+            received_signal!(t,noise,stdevs[k],u,rng_noise)
 
         end
 
@@ -271,7 +277,7 @@ function
 
     end
 
-    if TEST
+    if test
         return Lr, Lq
     else
         return log10.(FER), log10.(BER), iters

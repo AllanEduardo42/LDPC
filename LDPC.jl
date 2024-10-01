@@ -13,10 +13,10 @@ using SparseArrays
 
 ################################ BP MODE FLAGS ################################
 
- LBP::Bool = true
-iLBP::Bool = true
- RBP::Bool = false
-LRBP::Bool = false
+ LBP::Bool = false
+iLBP::Bool = false
+ RBP::Bool = true
+LRBP::Bool = true
 
 ############################# FLOODING MODE FLAGS ##############################
 MKAY::Bool = false
@@ -58,7 +58,7 @@ RANGE::Int64 = 20
 
 SIZE_per_RANGE::Float64 = SIZE/RANGE
 
-NREALS::Int = 1000
+NREALS::Int = 100
 MAX::Int = 30
 MAXRBP::Int = 5
 
@@ -320,8 +320,14 @@ if NREALS > 1
     end
     if LRBP
         @time FER_lrbp, BER_lrbp, Iters_lrbp = 
-            performance_simulation(Codeword,SNR,H,"LRBP",NREALS,MAXRBP,SEED_NOISE;
-                                                                      stop=STOP)
+            performance_simulation(Codeword,
+                                   SNR,
+                                   H,
+                                   "LRBP",
+                                   NREALS,
+                                   MAXRBP,
+                                   SEED_NOISE;
+                                   stop=STOP)
     end
     ################################### PLOTTING ###################################
     plotlyjs()

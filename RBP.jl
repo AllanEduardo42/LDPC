@@ -45,8 +45,17 @@ function
 
         (cnmax,vnmax) = maxcoords
         Factors[cnmax,vnmax] *= factor
+
         ### update Lr[cnmax,vnmax]
-        update_Lr!(Lr,Lq,cnmax,vnmax,cn2vn)
+        pLr = 1.0
+        for n in cn2vn[cnmax]
+            if n != vnmax
+                @inbounds @fastmath pLr *= tanh(0.5*Lq[n,cnmax])
+            end
+        end    
+        if abs(pLr) < 1 
+            @inbounds @fastmath Lr[cnmax,vnmax] = 2*atanh(pLr)
+        end
 
         # we don't use the m-to-n message correspoding to (cnmax,vnmax) anymore.
         # Thus we make the largest residue equal to zero:
@@ -56,7 +65,7 @@ function
             Residues[cnmax,vnmax] = 0.0
         end
         
-        # update d[vnmax]
+        # update Ldn[vmax] and d[vnmax]
         Ldn[vnmax] = Lf[vnmax]
         for m in vn2cn[vnmax]
             Ldn[vnmax] += Lr[m,vnmax]
@@ -65,7 +74,7 @@ function
 
         for m in vn2cn[vnmax]
             if m ≠ cnmax
-                # update Lq[vnmax,m], ∀m ≠ cnmax
+                # update vn2cn messages Lq[vnmax,m], ∀m ≠ cnmax
                 Lq[vnmax,m] = Ldn[vnmax] - Lr[m,vnmax]
                 # if any new residue estimate is larger than the previously estimated maximum 
                 # residue than update the value of maxresidue and maxcoords.
@@ -83,7 +92,7 @@ function
             end
         end
 
-        if maxresidue == 0.0
+        if maxresidue == 0.0 #breaks the loop in LRBP mode
             break
         end
 
@@ -91,26 +100,6 @@ function
 
     end
 
-end
-
-function 
-    update_Lr!(
-        Lr::Matrix{<:AbstractFloat},
-        Lq::Matrix{<:AbstractFloat},
-        cnmax::Integer,
-        vnmax::Integer,
-        cn2vn::Vector{Vector{T}} where {T<:Integer}
-    )
-
-    pLr = 1.0
-    for n in cn2vn[cnmax]
-        if n != vnmax
-            @inbounds @fastmath pLr *= tanh(0.5*Lq[n,cnmax])
-        end
-    end    
-    if abs(pLr) < 1 
-        @inbounds @fastmath Lr[cnmax,vnmax] = 2*atanh(pLr)
-    end
 end
 
 function

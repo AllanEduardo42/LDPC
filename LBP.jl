@@ -50,8 +50,6 @@ function
             # calc syndrome
             @inbounds syndrome[m] = _calc_syndrome(d,cn2vn[m])
             if iszero(syndrome)
-                # println("iLBP: stopped at m=$m ")
-                # println()
                 break
             end
         end
