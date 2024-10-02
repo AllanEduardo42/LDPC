@@ -12,22 +12,24 @@ using Plots
 using SparseArrays
 using CSV, DataFrames
 
-SAVE = true
+const INF = typemax(Int64)
+
+SAVE = false
 
 ################################ BP MODE FLAGS ################################
 
- LBP::Bool = true
-iLBP::Bool = true
+ LBP::Bool = false
+iLBP::Bool = false
  RBP::Bool = true
-RRBP::Bool = true
-LRBP::Bool = true
+RRBP::Bool = false
+LRBP::Bool = false
 
 ############################# FLOODING MODE FLAGS ##############################
-MKAY::Bool = true
-TANH::Bool = true
-ALTN::Bool = true
-TABL::Bool = true
-MSUM::Bool = true
+MKAY::Bool = false
+TANH::Bool = false
+ALTN::Bool = false
+TABL::Bool = false
+MSUM::Bool = false
 
 # fast flooding update when using tanh mode (default:true)
 FAST::Bool = true
@@ -62,7 +64,7 @@ RANGE::Int64 = 20
 
 SIZE_per_RANGE::Float64 = SIZE/RANGE
 
-NREALS::Int = 100
+NREALS::Int = 1
 MAX::Int = 30
 MAXRBP::Int = 6
 
@@ -73,7 +75,7 @@ SAMPLESIZE::Int = 51
 
 #################################### NOISE #####################################
 
-SNR = collect(1:1:4)
+SNR = collect(1:1:5)
 
 ############################# PARITY-CHECK MATRIX #############################
 
@@ -424,10 +426,12 @@ if NREALS > 1
             p = plot(
                 1:MAX,
                 BER_mkay,
+                
+                xlabel="Iteration",
                 label=ber_labels,
                 lw=2,
                 title="BER Flooding (McKay)",
-                ylims=(lim-2,0)
+                ylims=(lim-1,0)
             )
             display(p)
             SAVE ? savefig(p,"BER_FLMKAY.svg") : nothing
@@ -436,10 +440,11 @@ if NREALS > 1
             p = plot(
                 1:MAX,
                 BER_tanh,
+                xlabel="Iteration",
                 label=ber_labels,
                 lw=2,
                 title="BER Flooding (tanh)",
-                ylims=(lim-2,0)
+                ylims=(lim-1,0)
             )
             display(p)
             SAVE ? savefig(p,"BER_FLTANH.svg") : nothing
@@ -448,10 +453,11 @@ if NREALS > 1
             p = plot(
                 1:MAX,
                 BER_altn,
+                xlabel="Iteration",
                 label=ber_labels,
                 lw=2,
                 title="BER Flooding (alt)",
-                ylims=(lim-2,0)
+                ylims=(lim-1,0)
             )
             display(p)
             SAVE ? savefig(p,"BER_FLALTN.svg") : nothing
@@ -460,10 +466,11 @@ if NREALS > 1
             p = plot(
                 1:MAX,
                 BER_tabl,
+                xlabel="Iteration",
                 label=ber_labels,
                 lw=2,
                 title="BER Flooding (table)",
-                ylims=(lim-2,0)
+                ylims=(lim-1,0)
             )
             display(p)
             SAVE ? savefig(p,"BER_FLTABL.svg") : nothing
@@ -472,10 +479,11 @@ if NREALS > 1
             p = plot(
                 1:MAX,
                 BER_msum,
+                xlabel="Iteration",
                 label=ber_labels,
                 lw=2,
                 title="BER Min-Sum",
-                ylims=(lim-2,0)
+                ylims=(lim-1,0)
             )
             display(p)
             SAVE ? savefig(p,"BER_MINSUM.svg") : nothing
@@ -484,10 +492,11 @@ if NREALS > 1
             p = plot(
                 1:MAX,
                 BER_lbp,
+                xlabel="Iteration",
                 label=ber_labels,
                 lw=2,
                 title="BER LBP",
-                ylims=(lim-2,0)
+                ylims=(lim-1,0)
             )
             display(p)
             SAVE ? savefig(p,"BER_LBP.svg") : nothing
@@ -496,10 +505,11 @@ if NREALS > 1
             p = plot(
                 1:MAX,
                 BER_ilbp,
+                xlabel="Iteration",
                 label=ber_labels,
                 lw=2,
                 title="BER iLBP",
-                ylims=(lim-2,0)
+                ylims=(lim-1,0)
             )
             display(p)
             SAVE ? savefig(p,"BER_iLBP.svg") : nothing
@@ -508,10 +518,11 @@ if NREALS > 1
             p = plot(
                 1:MAXRBP,
                 BER_rbp,
+                xlabel="Iteration",
                 label=ber_labels,
                 lw=2,
-                title="BER RBP (decay cte = $DECAYRBP)",
-                ylims=(lim-2,0)
+                title="BER RBP (decay factor = $DECAYRBP)",
+                ylims=(lim-1,0)
             )
             display(p)
             SAVE ? savefig(p,"BER_RBP.svg") : nothing
@@ -520,10 +531,11 @@ if NREALS > 1
             p = plot(
                 1:MAXRBP,
                 BER_rrbp,
+                xlabel="Iteration",
                 label=ber_labels,
                 lw=2,
-                title="BER RRBP (decay cte = $DECAYRRBP)",
-                ylims=(lim-2,0)
+                title="BER RRBP (decay factor = $DECAYRRBP)",
+                ylims=(lim-1,0)
             )
             display(p)
             SAVE ? savefig(p,"BER_RRBP.svg") : nothing
@@ -532,10 +544,11 @@ if NREALS > 1
             p = plot(
                 1:MAXRBP,
                 BER_lrbp,
+                xlabel="Iteration",
                 label=ber_labels,
                 lw=2,
-                title="BER LRBP (decay cte = $DECAYLRBP)",
-                ylims=(lim-2,0)
+                title="BER LRBP (decay factor = $DECAYLRBP)",
+                ylims=(lim-1,0)
             )
             display(p)
             SAVE ? savefig(p,"BER_LRBP.svg") : nothing

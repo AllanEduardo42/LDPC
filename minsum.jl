@@ -4,8 +4,9 @@
 # Horizontal update of the LLR based MIN SUM Algorithm
 
 function abs_sign!(Lq::AbstractFloat,s::Bool)
-    signs = signbit(Lq)
-    return @fastmath abs(Lq), signs, @fastmath s ⊻ signs
+    sig = signbit(Lq)
+    @fastmath ab = abs(Lq)
+    return ab, sig, s ⊻ sig
 end
 
 function _minsum!(                           
@@ -16,8 +17,8 @@ function _minsum!(
     )
 
     s = false
-    minL = Inf
-    minL2 = Inf
+    minL = INF
+    minL2 = INF
     max_idx = 0
     for n in cn2vn[m]
         @inbounds β, signs[n], s = abs_sign!(Lq[n,m],s)
@@ -36,7 +37,7 @@ end
 function 
     __minsum!(
         n::Integer,
-        signs::Bool,
+        sig::Bool,
         minL::AbstractFloat,
         minL2::AbstractFloat,
         s::Bool,
@@ -44,9 +45,9 @@ function
     )
 
     if n == max_idx #(pick the second least Lq)
-        return @fastmath (1 - 2*(signs ⊻ s))*minL2
+        return @fastmath (1 - 2*(sig ⊻ s))*minL2
     else
-        return @fastmath (1 - 2*(signs ⊻ s))*minL
+        return @fastmath (1 - 2*(sig ⊻ s))*minL
     end
 
 end

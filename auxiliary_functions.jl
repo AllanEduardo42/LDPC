@@ -78,16 +78,3 @@ function
     @fastmath t .= u .+ noise
 
 end
-
-function 
-    reset_factors!(
-        Factors::Matrix{<:AbstractFloat},
-        cn2vn::Vector{Vector{T}} where {T<:Integer}
-    )
-
-    for m in eachindex(cn2vn)
-        for n in cn2vn[m]
-            @inbounds Factors[m,n] = 1.0
-        end
-    end
-end

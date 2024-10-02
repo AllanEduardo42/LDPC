@@ -122,8 +122,8 @@ function
         rng_sample::AbstractRNG
     )
 
-    maxresidue = 0
-    M = size(Residues,1)
+    maxresidue = 0.0
+    M = length(cn2vn)
     rand!(rng_sample,samples,1:M)
     for m in samples
         for n in cn2vn[m]
@@ -148,7 +148,7 @@ function
         rng_sample::AbstractRNG
     )
 
-    maxresidue = 0
+    maxresidue = 0.0
     for m in eachindex(cn2vn)
         for n in cn2vn[m]
             @inbounds residue = Residues[m,n]

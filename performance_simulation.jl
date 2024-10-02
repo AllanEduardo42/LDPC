@@ -268,6 +268,7 @@ function
                             Residues,
                             maxcoords,
                             Factors,
+                            H,
                             rbpfactor,
                             num_edges,
                             Ldn,

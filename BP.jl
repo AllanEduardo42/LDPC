@@ -3,7 +3,6 @@
 # 27 ago 2024
 # Main loop of the BP routine
 
-include("auxiliary_functions.jl")
 include("update_Lr.jl")
 include("update_Lq.jl")
 include("minsum.jl")
@@ -36,6 +35,7 @@ function
         Residues::Union{Matrix{<:AbstractFloat},Nothing},
         maxcoords::Union{Vector{<:Integer},Nothing},
         Factors::Union{Matrix{<:AbstractFloat},Nothing},
+        H::BitMatrix,
         rbpfactor::Union{AbstractFloat,Nothing},
         num_edges::Union{Integer,Nothing},
         Ldn::Union{Vector{<:AbstractFloat},Nothing},
@@ -98,7 +98,7 @@ function
                 mode == "LRBP"
             )
             # reset factors
-            reset_factors!(Factors,cn2vn)
+            Factors[H] .= 1.0
         end
 
         calc_syndrome!(syndrome,d,cn2vn)
