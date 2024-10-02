@@ -127,8 +127,9 @@ function
     rand!(rng_sample,samples,1:M)
     for m in samples
         for n in cn2vn[m]
-            if @fastmath @inbounds Residues[m,n] > maxresidue
-                @inbounds maxresidue = Residues[m,n]
+            @inbounds residue = Residues[m,n]
+            if @fastmath residue > maxresidue
+                maxresidue = residue
                 @inbounds maxcoords[1] = m
                 @inbounds maxcoords[2] = n
             end
@@ -150,8 +151,9 @@ function
     maxresidue = 0
     for m in eachindex(cn2vn)
         for n in cn2vn[m]
-            if @fastmath @inbounds Residues[m,n] > maxresidue
-                @inbounds maxresidue = Residues[m,n]
+            @inbounds residue = Residues[m,n]
+            if @fastmath residue > maxresidue
+                maxresidue = residue
                 @inbounds maxcoords[1] = m
                 @inbounds maxcoords[2] = n
             end

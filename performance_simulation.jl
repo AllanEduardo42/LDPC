@@ -208,14 +208,20 @@ function
         elseif mode == "RBP"
             println("Message passing protocol: RBP")
         elseif mode == "LRBP"
-            println("Message passing protocol: LRBP")
+            println("Message passing protocol: Local RBP")
         elseif mode == "RRBP"
-            println("Message passing protocol: RRBP")
+            println("Message passing protocol: Randomized RBP")
         end
 
         println("Maximum number of iterations: $max")
         println("Simulated for SNR (dB): $snr")
         println("Stop at zero syndrome ? $stop")
+        if supermode == "RBP"
+            println("Decaying factor: $rbpfactor")
+            if mode == "RRBP"
+                println("Sample size: $SAMPLESIZE")
+            end
+        end
         println()
     end
 

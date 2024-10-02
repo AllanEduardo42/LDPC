@@ -10,6 +10,9 @@ using Random
 using Statistics
 using Plots
 using SparseArrays
+using CSV, DataFrames
+
+SAVE = true
 
 ################################ BP MODE FLAGS ################################
 
@@ -20,11 +23,11 @@ RRBP::Bool = true
 LRBP::Bool = true
 
 ############################# FLOODING MODE FLAGS ##############################
-MKAY::Bool = false
+MKAY::Bool = true
 TANH::Bool = true
-ALTN::Bool = false
-TABL::Bool = false
-MSUM::Bool = false
+ALTN::Bool = true
+TABL::Bool = true
+MSUM::Bool = true
 
 # fast flooding update when using tanh mode (default:true)
 FAST::Bool = true
@@ -59,18 +62,18 @@ RANGE::Int64 = 20
 
 SIZE_per_RANGE::Float64 = SIZE/RANGE
 
-NREALS::Int = 1000
+NREALS::Int = 100
 MAX::Int = 30
-MAXRBP::Int = 5
+MAXRBP::Int = 6
 
 DECAYRBP::Float64 = 0.9
-DECAYLRBP::Float64 = 1
-DECAYRRBP::Float64 = 1
+DECAYLRBP::Float64 = 0.9
+DECAYRRBP::Float64 = 0.9
 SAMPLESIZE::Int = 51
 
 #################################### NOISE #####################################
 
-SNR = collect(0:1:8)
+SNR = collect(1:1:4)
 
 ############################# PARITY-CHECK MATRIX #############################
 
@@ -351,26 +354,26 @@ if NREALS > 1
                                    SEED_NOISE;
                                    stop=STOP)
     end
-    ################################### PLOTTING ###################################
+################################### PLOTTING ###################################
     plotlyjs()
     lim = log10(1/NREALS)
     yaxis = Vector{Vector{Float64}}(undef,0)
     fer_labels = Vector{String}(undef,0)
     if MKAY
         append!(yaxis,[FER_mkay])
-        push!(fer_labels,"SPA FL (McKay)")
+        push!(fer_labels,"Flooding (McKay)")
     end
     if TANH
         append!(yaxis,[FER_tanh])
-        push!(fer_labels,"SPA FL (tanh)")
+        push!(fer_labels,"Flooding (tanh)")
     end
     if ALTN
         append!(yaxis,[FER_altn])
-        push!(fer_labels,"SPA FL (alt)")
+        push!(fer_labels,"Flooding (alt)")
     end
     if TABL
         append!(yaxis,[FER_tabl])
-        push!(fer_labels,"SPA FL (table)")
+        push!(fer_labels,"Flooding (table)")
     end
     if MSUM
         append!(yaxis,[FER_msum])
@@ -386,15 +389,15 @@ if NREALS > 1
     end
     if RBP
         append!(yaxis,[FER_rbp])
-        push!(fer_labels,"SPA RBP")
+        push!(fer_labels,"SPA RBP ($DECAYRBP)")
     end
     if RRBP
         append!(yaxis,[FER_rrbp])
-        push!(fer_labels,"SPA RRBP")
+        push!(fer_labels,"SPA RRBP ($DECAYRRBP)")
     end
     if LRBP
         append!(yaxis,[FER_lrbp])
-        push!(fer_labels,"SPA LRBP")
+        push!(fer_labels,"SPA LRBP ($DECAYLRBP)")
     end
     fer_labels = permutedims(fer_labels)
 
@@ -404,8 +407,7 @@ if NREALS > 1
     end
     ber_labels = permutedims(ber_labels)
 
-    display(
-        plot(
+    p = plot(
             SNR,yaxis,
             xlabel="SNR (dB)",
             label=fer_labels,
@@ -413,128 +415,130 @@ if NREALS > 1
             title="FER (Graph girth = $girth)",
             ylims=(lim,0)
         )
-    )
+
+    display(p)
+    SAVE ? savefig(p, "FER.svg") : nothing
 
     if PLOTBER && !STOP
         if MKAY
-            display(
-                plot(
-                    1:MAX,
-                    BER_mkay,
-                    label=ber_labels,
-                    lw=2,
-                    title="BER SPA FL (McKay)",
-                    ylims=(lim-1,0)
-                )
+            p = plot(
+                1:MAX,
+                BER_mkay,
+                label=ber_labels,
+                lw=2,
+                title="BER Flooding (McKay)",
+                ylims=(lim-2,0)
             )
+            display(p)
+            SAVE ? savefig(p,"BER_FLMKAY.svg") : nothing
         end
         if TANH
-            display(
-                plot(
-                    1:MAX,
-                    BER_tanh,
-                    label=ber_labels,
-                    lw=2,
-                    title="BER SPA FL (tanh)",
-                    ylims=(lim-1,0)
-                )
+            p = plot(
+                1:MAX,
+                BER_tanh,
+                label=ber_labels,
+                lw=2,
+                title="BER Flooding (tanh)",
+                ylims=(lim-2,0)
             )
+            display(p)
+            SAVE ? savefig(p,"BER_FLTANH.svg") : nothing
         end
         if ALTN
-            display(
-                plot(
-                    1:MAX,
-                    BER_altn,
-                    label=ber_labels,
-                    lw=2,
-                    title="BER SPA FL (alt)",
-                    ylims=(lim-1,0)
-                )
+            p = plot(
+                1:MAX,
+                BER_altn,
+                label=ber_labels,
+                lw=2,
+                title="BER Flooding (alt)",
+                ylims=(lim-2,0)
             )
+            display(p)
+            SAVE ? savefig(p,"BER_FLALTN.svg") : nothing
         end
         if TABL
-            display(
-                plot(
-                    1:MAX,
-                    BER_tabl,
-                    label=ber_labels,
-                    lw=2,
-                    title="BER SPA FL (table)",
-                    ylims=(lim-1,0)
-                )
+            p = plot(
+                1:MAX,
+                BER_tabl,
+                label=ber_labels,
+                lw=2,
+                title="BER Flooding (table)",
+                ylims=(lim-2,0)
             )
+            display(p)
+            SAVE ? savefig(p,"BER_FLTABL.svg") : nothing
         end
         if MSUM
-            display(
-                plot(
-                    1:MAX,
-                    BER_msum,
-                    label=ber_labels,
-                    lw=2,
-                    title="BER MIN SUM",
-                    ylims=(lim-1,0)
-                )
+            p = plot(
+                1:MAX,
+                BER_msum,
+                label=ber_labels,
+                lw=2,
+                title="BER Min-Sum",
+                ylims=(lim-2,0)
             )
+            display(p)
+            SAVE ? savefig(p,"BER_MINSUM.svg") : nothing
         end
         if  LBP
-            display(
-                plot(
-                    1:MAX,
-                    BER_lbp,
-                    label=ber_labels,
-                    lw=2,
-                    title="BER SPA LBP",
-                    ylims=(lim-1,0)
-                )
+            p = plot(
+                1:MAX,
+                BER_lbp,
+                label=ber_labels,
+                lw=2,
+                title="BER LBP",
+                ylims=(lim-2,0)
             )
+            display(p)
+            SAVE ? savefig(p,"BER_LBP.svg") : nothing
         end
         if iLBP
-            display(
-                plot(
-                    1:MAX,
-                    BER_ilbp,
-                    label=ber_labels,
-                    lw=2,
-                    title="BER SPA iLBP",
-                    ylims=(lim-1,0)
-                )
+            p = plot(
+                1:MAX,
+                BER_ilbp,
+                label=ber_labels,
+                lw=2,
+                title="BER iLBP",
+                ylims=(lim-2,0)
             )
+            display(p)
+            SAVE ? savefig(p,"BER_iLBP.svg") : nothing
         end
         if  RBP
-            display(
-                plot(
-                    1:MAXRBP,
-                    BER_rbp,
-                    label=ber_labels,
-                    lw=2,
-                    title="BER SPA RBP (decay cte = $DECAYRBP)",
-                    ylims=(lim-1,0)
-                )
+            p = plot(
+                1:MAXRBP,
+                BER_rbp,
+                label=ber_labels,
+                lw=2,
+                title="BER RBP (decay cte = $DECAYRBP)",
+                ylims=(lim-2,0)
             )
+            display(p)
+            SAVE ? savefig(p,"BER_RBP.svg") : nothing
         end
         if RRBP
-            display(
-                plot(
-                    1:MAXRBP,
-                    BER_rrbp,
-                    label=ber_labels,
-                    lw=2,
-                    title="BER SPA RRBP (decay cte = $DECAYRRBP)",
-                    ylims=(lim-1,0)
-                )
+            p = plot(
+                1:MAXRBP,
+                BER_rrbp,
+                label=ber_labels,
+                lw=2,
+                title="BER RRBP (decay cte = $DECAYRRBP)",
+                ylims=(lim-2,0)
             )
+            display(p)
+            SAVE ? savefig(p,"BER_RRBP.svg") : nothing
         end
         if LRBP
-            display(
-                plot(
-                    1:MAXRBP,
-                    BER_lrbp,
-                    label=ber_labels,
-                    lw=2,
-                    title="BER SPA LRBP (decay cte = $DECAYLRBP)",
-                    ylims=(lim-1,0)
-                )
+            p = plot(
+                1:MAXRBP,
+                BER_lrbp,
+                label=ber_labels,
+                lw=2,
+                title="BER LRBP (decay cte = $DECAYLRBP)",
+                ylims=(lim-2,0)
             )
+            display(p)
+            SAVE ? savefig(p,"BER_LRBP.svg") : nothing
         end
     end
 
@@ -551,4 +555,74 @@ if NREALS > 1
             )
         end
     end
+
+    if SAVE
+    
+        fers = []
+        for i in eachindex(yaxis)
+            push!(fers,(fer_labels[i],yaxis[i]))
+        end
+        FERS = Dict(fers)
+
+        CSV.write("FERS.csv", DataFrame(FERS), header=true)
+
+        bers = []
+        padding = zeros(MAX-MAXRBP)
+        if MKAY
+            for i in eachindex(SNR)
+                push!(bers,("Mckay (SNR=$(SNR[i]))",BER_mkay[:,i]))
+            end
+        end
+        if TANH
+            for i in eachindex(SNR)
+                push!(bers,("tanh (SNR=$(SNR[i]))",BER_tanh[:,i]))
+            end
+        end
+        if ALTN
+            for i in eachindex(SNR)
+                push!(bers,("altn (SNR=$(SNR[i]))",BER_altn[:,i]))
+            end
+        end
+        if TABL
+            for i in eachindex(SNR)
+                push!(bers,("tabl (SNR=$(SNR[i]))",BER_tabl[:,i]))
+            end
+        end
+        if MSUM
+            for i in eachindex(SNR)
+                push!(bers,("msum (SNR=$(SNR[i]))",BER_msum[:,i]))
+            end
+        end
+        if LBP
+            for i in eachindex(SNR)
+                push!(bers,("LBP (SNR=$(SNR[i]))",BER_lbp[:,i]))
+            end
+        end
+        if iLBP
+            for i in eachindex(SNR)
+                push!(bers,("iLBP (SNR=$(SNR[i]))",BER_ilbp[:,i]))
+            end
+        end
+        if RBP
+            for i in eachindex(SNR)
+                push!(bers,("RBP (SNR=$(SNR[i]))",[BER_rbp[:,i];padding]))
+            end
+        end
+        if RRBP
+            for i in eachindex(SNR)
+                push!(bers,("RRBP (SNR=$(SNR[i]))",[BER_rrbp[:,i];padding]))
+            end
+        end
+        if LRBP
+            for i in eachindex(SNR)
+                push!(bers,("RRBP (SNR=$(SNR[i]))",[BER_lrbp[:,i];padding]))
+            end
+        end
+
+        BERS = Dict(bers)
+
+        CSV.write("BERS.csv", DataFrame(BERS), header=true)
+
+    end
+
 end
