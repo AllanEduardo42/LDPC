@@ -20,13 +20,13 @@ SAVE = false
 
  LBP::Bool = false
 iLBP::Bool = false
- RBP::Bool = true
+ RBP::Bool = false
 RRBP::Bool = false
 LRBP::Bool = false
 
 ############################# FLOODING MODE FLAGS ##############################
 MKAY::Bool = false
-TANH::Bool = false
+TANH::Bool = true
 ALTN::Bool = false
 TABL::Bool = false
 MSUM::Bool = false
@@ -64,7 +64,7 @@ RANGE::Int64 = 20
 
 SIZE_per_RANGE::Float64 = SIZE/RANGE
 
-NREALS::Int = 100
+NREALS::Int = 1000
 MAX::Int = 30
 MAXRBP::Int = 6
 

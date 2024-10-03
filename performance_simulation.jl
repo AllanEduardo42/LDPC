@@ -22,12 +22,7 @@ function
         printing=false,
         stop=false
     )
-
-########################## SET RANDOM GENERADOR SEEDS ##########################
-
-    rng_noise = Xoshiro(rgn_seed_noise)
-
-    rng_sample = (mode == "RRBP") ? Xoshiro(rng_seed_sample) : nothing
+    
 
 ############################### CHECK VALID MODE ###############################
     if mode == "MKAY" || mode == "TANH" || mode == "ALTN" || mode == "TABL" ||
@@ -55,6 +50,7 @@ function
 
 ################################## CONSTANTS ###################################
     
+    K = length(snr)
     # if nreals = 1, set test mode
     test = (nreals == 1) ? true : false
     # transform snr in standard deviations
@@ -71,14 +67,14 @@ function
     ############################# PREALLOCATIONS ################################
 
     # frame error rate
-    FER = zeros(length(stdevs))
+    FER = zeros(K)
 
     # bit error rate
     ber = zeros(max)    
-    BER = zeros(max,length(stdevs))
+    BER = zeros(max,K)
 
     # iteration in which SPA stopped
-    iters = Matrix{Int}(undef, length(stdevs), nreals)
+    iters = Matrix{Int}(undef, K, nreals)
 
     # estimate
     d = Vector{Bool}(undef,N)
@@ -151,29 +147,6 @@ function
         ([0,0], 1.0*H, sum(H)) : 
         (nothing,nothing,nothing)
 
-    ######################### FIRST RECEIVED SIGNAL ############################
-    # In order to allow to test with a given received signal t_test, the first
-    # received signal t must be set outside the main loop.
-    if test
-        if t_test === nothing # if no test signal was provided:
-            # generate a new received signal
-            received_signal!(t,noise,stdevs[1],u,rng_noise)
-        elseif length(t_test) != N
-            # if a received test signal was given, but with wrong length
-            throw(
-                DimensionMismatch(
-                    "length(t_test) should be $N, not $(length(t_test))"
-                )
-            )
-        else
-            # the received signal is the given test signal
-            t = t_test
-        end
-    else
-        # generate the first received signal outside the main loop
-        received_signal!(t,noise,stdevs[1],u,rng_noise)
-    end
-
 ########################## PRINT SIMULATION DETAILS ############################
     if test && printing
         println()
@@ -227,7 +200,35 @@ function
 
 ################################## MAIN LOOP ###################################
     
-    for k in eachindex(stdevs)
+    for k in 1:K
+
+        rng_noise = Xoshiro(rgn_seed_noise)
+
+        rng_sample = (mode == "RRBP") ? Xoshiro(rng_seed_sample) : nothing
+
+    ######################### FIRST RECEIVED SIGNAL ############################
+    # In order to allow to test with a given received signal t_test, the first
+    # received signal t must be set outside the main loop.
+        if test
+            if t_test === nothing # if no test signal was provided:
+                # generate a new received signal
+                received_signal!(t,noise,stdevs[k],u,rng_noise)
+            elseif length(t_test) != N
+                # if a received test signal was given, but with wrong length
+                throw(
+                    DimensionMismatch(
+                        "length(t_test) should be $N, not $(length(t_test))"
+                    )
+                )
+            else
+                # the received signal is the given test signal
+                t = t_test
+            end
+        else
+            # generate the first received signal outside the main loop
+            received_signal!(t,noise,stdevs[k],u,rng_noise)
+        end        
+
         for j in 1:nreals
 
             # init the llr priors
