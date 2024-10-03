@@ -18,11 +18,11 @@ SAVE = false
 
 ################################ BP MODE FLAGS ################################
 
- LBP::Bool = false
-iLBP::Bool = false
- RBP::Bool = false
-RRBP::Bool = false
-LRBP::Bool = false
+ LBP::Bool = true
+iLBP::Bool = true
+ RBP::Bool = true
+RRBP::Bool = true
+LRBP::Bool = true
 
 ############################# FLOODING MODE FLAGS ##############################
 MKAY::Bool = false
@@ -36,7 +36,7 @@ FAST::Bool = true
 
 ################################## TEST MODE ##################################
 PRINTING::Bool = false
-SNRTEST = [4]
+SNRTEST = 4
 
 ####################### STOP WHEN SYNDROME IS ZERO FLAG ########################
 STOP::Bool = false
@@ -64,7 +64,7 @@ RANGE::Int64 = 20
 
 SIZE_per_RANGE::Float64 = SIZE/RANGE
 
-NREALS::Int = 1000
+NREALS::Int = 10000
 MAX::Int = 30
 MAXRBP::Int = 6
 
@@ -75,7 +75,7 @@ SAMPLESIZE::Int = 51
 
 #################################### NOISE #####################################
 
-SNR = collect(1:1:5)
+SNR = collect(1:1:4)
 
 ############################# PARITY-CHECK MATRIX #############################
 
@@ -245,9 +245,11 @@ end
                              
 ############################ PERFORMANCE SIMULATION ############################
 if NREALS > 1
-    for i in eachindex(SNR)
-        if MKAY
-            @time FER_mkay[i], BER_mkay[:,i], Iters_mkay[i,:] = 
+    K = length(SNR)
+    if MKAY
+        FER_mkay, BER_mkay, Iters_mkay = zeros(K), zeros(MAX,K), zeros(K,NREALS)
+        @time Threads.@threads for i in eachindex(SNR)
+            FER_mkay[i], BER_mkay[:,i], Iters_mkay[i,:] = 
                 performance_simulation(Codeword,
                                     SNR[i],
                                     H,
@@ -257,105 +259,132 @@ if NREALS > 1
                                     SEED_NOISE;
                                     stop=STOP)
         end
-        if TANH
-            @time FER_tanh[i], BER_tanh[:,i], Iters_tanh[i,:] = 
-                performance_simulation(Codeword,
-                                    SNR[i],
-                                    H,
-                                    "TANH",
-                                    NREALS,
-                                    MAX,
-                                    SEED_NOISE;
-                                    stop=STOP)
+    end
+    if TANH
+        FER_tanh, BER_tanh, Iters_tanh = zeros(K), zeros(MAX,K), zeros(K,NREALS)
+        @time Threads.@threads for i in eachindex(SNR)
+        FER_tanh[i], BER_tanh[:,i], Iters_tanh[i,:] = 
+            performance_simulation(Codeword,
+                                SNR[i],
+                                H,
+                                "TANH",
+                                NREALS,
+                                MAX,
+                                SEED_NOISE;
+                                stop=STOP)
         end
-        if ALTN
-            @time FER_altn[i], BER_altn[:,i], Iters_altn[i,:] = 
-                performance_simulation(Codeword,
-                                    SNR[i],
-                                    H,
-                                    "ALTN",
-                                    NREALS,
-                                    MAX,
-                                    SEED_NOISE;
-                                    stop=STOP)
+    end
+    if ALTN
+        FER_altn, BER_altn, Iters_altn = zeros(K), zeros(MAX,K), zeros(K,NREALS)
+        @time Threads.@threads for i in eachindex(SNR)
+        FER_altn[i], BER_altn[:,i], Iters_altn[i,:] = 
+            performance_simulation(Codeword,
+                                SNR[i],
+                                H,
+                                "ALTN",
+                                NREALS,
+                                MAX,
+                                SEED_NOISE;
+                                stop=STOP)
         end
-        if TABL
-            @time FER_tabl[i], BER_tabl[:,i], Iters_tabl[i,:] = 
-                performance_simulation(Codeword,
-                                    SNR[i],
-                                    H,
-                                    "TABL",
-                                    NREALS,
-                                    MAX,
-                                    SEED_NOISE;
-                                    stop=STOP)
+    end
+    if TABL
+        FER_tabl, BER_tabl, Iters_tabl = zeros(K), zeros(MAX,K), zeros(K,NREALS)
+        @time Threads.@threads for i in eachindex(SNR)
+        FER_tabl[i], BER_tabl[:,i], Iters_tabl[i,:] = 
+            performance_simulation(Codeword,
+                                SNR[i],
+                                H,
+                                "TABL",
+                                NREALS,
+                                MAX,
+                                SEED_NOISE;
+                                stop=STOP)
         end
-        if MSUM
-            @time FER_msum[i], BER_msum[:,i], Iters_msum[i,:] = 
-                performance_simulation(Codeword,
-                                    SNR[i],
-                                    H,
-                                    "MSUM",
-                                    NREALS,
-                                    MAX,
-                                    SEED_NOISE;
-                                    stop=STOP)
+    end
+    if MSUM
+        FER_msum, BER_msum, Iters_msum = zeros(K), zeros(MAX,K), zeros(K,NREALS)
+        @time Threads.@threads for i in eachindex(SNR)
+        FER_msum[i], BER_msum[:,i], Iters_msum[i,:] = 
+            performance_simulation(Codeword,
+                                SNR[i],
+                                H,
+                                "MSUM",
+                                NREALS,
+                                MAX,
+                                SEED_NOISE;
+                                stop=STOP)
         end
-        if  LBP
-            @time FER_lbp[i], BER_lbp[:,i], Iters_lbp[i,:] = 
-                performance_simulation(Codeword,
-                                    SNR[i],
-                                    H,
-                                    "LBP",
-                                    NREALS,
-                                    MAX,
-                                    SEED_NOISE;
-                                    stop=STOP)
+    end
+    if  LBP
+        FER_lbp, BER_lbp, Iters_lbp = zeros(K), zeros(MAX,K), zeros(K,NREALS)
+        @time Threads.@threads for i in eachindex(SNR)
+        FER_lbp[i], BER_lbp[:,i], Iters_lbp[i,:] = 
+            performance_simulation(Codeword,
+                                SNR[i],
+                                H,
+                                "LBP",
+                                NREALS,
+                                MAX,
+                                SEED_NOISE;
+                                stop=STOP)
         end
-        if iLBP
-            @time FER_ilbp[i], BER_ilbp[:,i], Iters_ilbp[i,:] = 
-                performance_simulation(Codeword,
-                                    SNR[i],
-                                    H,
-                                    "iLBP",
-                                    NREALS,
-                                    MAX,
-                                    SEED_NOISE;
-                                    stop=STOP)
+    end
+    if iLBP
+        FER_ilbp, BER_ilbp, Iters_ilbp = zeros(K), zeros(MAX,K), zeros(K,NREALS)
+        @time Threads.@threads for i in eachindex(SNR)
+        FER_ilbp[i], BER_ilbp[:,i], Iters_ilbp[i,:] = 
+            performance_simulation(Codeword,
+                                SNR[i],
+                                H,
+                                "iLBP",
+                                NREALS,
+                                MAX,
+                                SEED_NOISE;
+                                stop=STOP)
         end
-        if  RBP
-            @time FER_rbp[i], BER_rbp[:,i], Iters_rbp[i,:] = 
-                performance_simulation(Codeword,
-                                    SNR[i],
-                                    H,
-                                    "RBP",
-                                    NREALS,
-                                    MAXRBP,
-                                    SEED_NOISE;
-                                    stop=STOP)
+    end
+    if  RBP
+        FER_rbp, BER_rbp, Iters_rbp = zeros(K), zeros(MAXRBP,K), zeros(K,NREALS)
+        @time Threads.@threads for i in eachindex(SNR)
+        FER_rbp[i], BER_rbp[:,i], Iters_rbp[i,:] = 
+            performance_simulation(Codeword,
+                                SNR[i],
+                                H,
+                                "RBP",
+                                NREALS,
+                                MAXRBP,
+                                SEED_NOISE;
+                                stop=STOP)
         end
-        if  RRBP
-            @time FER_rrbp[i], BER_rrbp[:,i], Iters_rrbp[i,:] = 
-                performance_simulation(Codeword,
-                                    SNR[i],
-                                    H,
-                                    "RRBP",
-                                    NREALS,
-                                    MAXRBP,
-                                    SEED_NOISE;
-                                    rng_seed_sample=SEED_SAMPL,
-                                    stop=STOP)
+    end
+    if  RRBP
+        FER_rrbp, BER_rrbp, Iters_rrbp = zeros(K), zeros(MAXRBP,K), zeros(K,NREALS)
+        @time Threads.@threads for i in eachindex(SNR)
+        FER_rrbp[i], BER_rrbp[:,i], Iters_rrbp[i,:] = 
+            performance_simulation(Codeword,
+                                SNR[i],
+                                H,
+                                "RRBP",
+                                NREALS,
+                                MAXRBP,
+                                SEED_NOISE;
+                                rng_seed_sample=SEED_SAMPL,
+                                stop=STOP)
         end
-        if LRBP
-            @time FER_lrbp[i], BER_lrbp[:,i], Iters_lrbp[i,:] = 
-                performance_simulation(Codeword,
-                                    SNR[i],
-                                    H,
-                                    "LRBP",
-                                    NREALS,
-                                    MAXRBP,
-                                    SEED_NOISE;
-                                    stop=STOP)
+    end
+    if LRBP
+        FER_lrbp, BER_lrbp, Iters_lrbp = zeros(K), zeros(MAXRBP,K), zeros(K,NREALS)
+        @time Threads.@threads for i in eachindex(SNR)
+        FER_lrbp[i], BER_lrbp[:,i], Iters_lrbp[i,:] = 
+            performance_simulation(Codeword,
+                                SNR[i],
+                                H,
+                                "LRBP",
+                                NREALS,
+                                MAXRBP,
+                                SEED_NOISE;
+                                stop=STOP)
         end
     end
 ################################### PLOTTING ###################################

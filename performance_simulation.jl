@@ -148,55 +148,55 @@ function
         (nothing,nothing,nothing)
 
 ########################## PRINT SIMULATION DETAILS ############################
-    if test && printing
-        println()
-        print("###################### Starting simulation (Testing mode) #####")
-        println("#################")
-        println()
-    elseif !test
-        println()
-        print("############################# Starting simulation #############")
-        println("#################")
-        println()
-        println("Number of trials: $nreals")
-    end
-    if !test || printing
-        if supermode == "FLOO"
-            print("Message passing protocol: Flooding (using ")
-            if mode == "MKAY"
-                println("Mckay's SPA method)")
-            elseif mode == "TANH"
-                println("LLR-SPA calculated by tanh)")
-            elseif mode == "ALTN"
-                println("LLR-SPA calculated by ϕ function)")
-            elseif mode == "TABL"
-                println("LLR-SPA precalculated in look-up table)")
-            elseif mode == "MSUM"
-                println("LLRs calculated by min-sum algorithm)")
-            end
-        elseif mode == "LBP"
-            println("Message passing protocol: LBP")
-        elseif mode == "iLBP"
-            println("Message passing protocol: iLBP")
-        elseif mode == "RBP"
-            println("Message passing protocol: RBP")
-        elseif mode == "LRBP"
-            println("Message passing protocol: Local RBP")
-        elseif mode == "RRBP"
-            println("Message passing protocol: Randomized RBP")
-        end
+    # if test && printing
+    #     println()
+    #     print("###################### Starting simulation (Testing mode) #####")
+    #     println("#################")
+    #     println()
+    # elseif !test
+    #     println()
+    #     print("############################# Starting simulation #############")
+    #     println("#################")
+    #     println()
+    #     println("Number of trials: $nreals")
+    # end
+    # if !test || printing
+    #     if supermode == "FLOO"
+    #         print("Message passing protocol: Flooding (using ")
+    #         if mode == "MKAY"
+    #             println("Mckay's SPA method)")
+    #         elseif mode == "TANH"
+    #             println("LLR-SPA calculated by tanh)")
+    #         elseif mode == "ALTN"
+    #             println("LLR-SPA calculated by ϕ function)")
+    #         elseif mode == "TABL"
+    #             println("LLR-SPA precalculated in look-up table)")
+    #         elseif mode == "MSUM"
+    #             println("LLRs calculated by min-sum algorithm)")
+    #         end
+    #     elseif mode == "LBP"
+    #         println("Message passing protocol: LBP")
+    #     elseif mode == "iLBP"
+    #         println("Message passing protocol: iLBP")
+    #     elseif mode == "RBP"
+    #         println("Message passing protocol: RBP")
+    #     elseif mode == "LRBP"
+    #         println("Message passing protocol: Local RBP")
+    #     elseif mode == "RRBP"
+    #         println("Message passing protocol: Randomized RBP")
+    #     end
 
-        println("Maximum number of iterations: $max")
-        println("Simulated for SNR (dB): $snr")
-        println("Stop at zero syndrome ? $stop")
-        if supermode == "RBP"
-            println("Decaying factor: $rbpfactor")
-            if mode == "RRBP"
-                println("Sample size: $SAMPLESIZE")
-            end
-        end
-        println()
-    end
+    #     println("Maximum number of iterations: $max")
+    #     println("Simulated for SNR (dB): $snr")
+    #     println("Stop at zero syndrome ? $stop")
+    #     if supermode == "RBP"
+    #         println("Decaying factor: $rbpfactor")
+    #         if mode == "RRBP"
+    #             println("Sample size: $SAMPLESIZE")
+    #         end
+    #     end
+    #     println()
+    # end
 
 ################################## MAIN LOOP ###################################
     
