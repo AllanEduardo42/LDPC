@@ -88,7 +88,7 @@ rng_graph = Xoshiro(SEED_GRAPH)
 
 D = rand(rng_graph,[2,3,4],N)
 
-H, girth = PEG!(D,M)
+H, girth = PEG(D,M)
 
 G = gf2_nullspace(H)
 

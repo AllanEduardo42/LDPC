@@ -4,10 +4,7 @@
 # PEG Algorithm
 
 function 
-    PEG!(
-        d::Vector{<:Integer},
-        M::Integer
-    )
+    PEG(d::Vector{<:Integer},M::Integer)
 
     sort!(d)
     N = length(d)
