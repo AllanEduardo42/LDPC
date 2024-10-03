@@ -8,5 +8,6 @@
           "column": 40,    // spacing of 2st column from left
           "color": "#00000085"
         },
-     ],
+    ],
+    "julia.NumThreads": 32,
 }

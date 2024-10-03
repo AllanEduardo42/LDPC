@@ -11,7 +11,7 @@ include("calc_Lf.jl")
 function
     performance_simulation(
         c::Vector{Bool},
-        snr::Vector{<:Real},
+        snr::Real,
         H::BitMatrix,
         mode::String,
         nreals::Integer,
@@ -50,12 +50,12 @@ function
 
 ################################## CONSTANTS ###################################
     
-    K = length(snr)
+
     # if nreals = 1, set test mode
     test = (nreals == 1) ? true : false
     # transform snr in standard deviations
-    variances = 1 ./ (exp10.(snr/10))
-    stdevs = sqrt.(variances)
+    variance = 1 ./ (exp10.(snr/10))
+    stdev = sqrt.(variance)
     # BPKS
     u = Float64.(2*c .- 1)
     # divisor
@@ -67,14 +67,14 @@ function
     ############################# PREALLOCATIONS ################################
 
     # frame error rate
-    FER = zeros(K)
+    FER = 0
 
     # bit error rate
+    BER = zeros(max)
     ber = zeros(max)    
-    BER = zeros(max,K)
 
     # iteration in which SPA stopped
-    iters = Matrix{Int}(undef, K, nreals)
+    iters = Vector{Int}(undef, nreals)
 
     # estimate
     d = Vector{Bool}(undef,N)
@@ -200,102 +200,99 @@ function
 
 ################################## MAIN LOOP ###################################
     
-    for k in 1:K
+    rng_noise = Xoshiro(rgn_seed_noise)
 
-        rng_noise = Xoshiro(rgn_seed_noise)
-
-        rng_sample = (mode == "RRBP") ? Xoshiro(rng_seed_sample) : nothing
+    rng_sample = (mode == "RRBP") ? Xoshiro(rng_seed_sample) : nothing
 
     ######################### FIRST RECEIVED SIGNAL ############################
     # In order to allow to test with a given received signal t_test, the first
     # received signal t must be set outside the main loop.
-        if test
-            if t_test === nothing # if no test signal was provided:
-                # generate a new received signal
-                received_signal!(t,noise,stdevs[k],u,rng_noise)
-            elseif length(t_test) != N
-                # if a received test signal was given, but with wrong length
-                throw(
-                    DimensionMismatch(
-                        "length(t_test) should be $N, not $(length(t_test))"
-                    )
+    if test
+        if t_test === nothing # if no test signal was provided:
+            # generate a new received signal
+            received_signal!(t,noise,stdev,u,rng_noise)
+        elseif length(t_test) != N
+            # if a received test signal was given, but with wrong length
+            throw(
+                DimensionMismatch(
+                    "length(t_test) should be $N, not $(length(t_test))"
                 )
-            else
-                # the received signal is the given test signal
-                t = t_test
-            end
+            )
         else
-            # generate the first received signal outside the main loop
-            received_signal!(t,noise,stdevs[k],u,rng_noise)
-        end        
+            # the received signal is the given test signal
+            t = t_test
+        end
+    else
+        # generate the first received signal outside the main loop
+        received_signal!(t,noise,stdev,u,rng_noise)
+    end        
 
-        for j in 1:nreals
+    for j in 1:nreals
 
-            # init the llr priors
-            calc_Lf!(Lf,t,variances[k])
-            if mode == "TABL"
-                # scale for table
-                Lf .*= SIZE_per_RANGE
-            end            
-            # initialize matrix Lr
-            Lr .*= 0
-            # initialize matrix Lq
-            init_Lq!(Lq,Lf,vn2cn)
+        # init the llr priors
+        calc_Lf!(Lf,t,variance)
+        if mode == "TABL"
+            # scale for table
+            Lf .*= SIZE_per_RANGE
+        end            
+        # initialize matrix Lr
+        Lr .*= 0
+        # initialize matrix Lq
+        init_Lq!(Lq,Lf,vn2cn)
 
-            if supermode == "RBP"
-                minsum_RBP_init!(Residues,maxcoords,Lq,signs,cn2vn)
-            end      
-            # SPA routine
-            DECODED, i = BP!(
-                            supermode,
-                            mode,
-                            stop,
-                            test,
-                            max,
-                            syndrome,
-                            d,
-                            c,
-                            bit_error,
-                            ber,
-                            Lf,
-                            Lq,
-                            Lr,
-                            cn2vn,
-                            vn2cn,
-                            Lrn,
-                            signs,
-                            phi,
-                            printing,
-                            Residues,
-                            maxcoords,
-                            Factors,
-                            H,
-                            rbpfactor,
-                            num_edges,
-                            Ldn,
-                            visited_vns,
-                            samples,
-                            rng_sample
-                        )                
+        if supermode == "RBP"
+            minsum_RBP_init!(Residues,maxcoords,Lq,signs,cn2vn)
+        end      
+        # SPA routine
+        DECODED, i = BP!(
+                        supermode,
+                        mode,
+                        stop,
+                        test,
+                        max,
+                        syndrome,
+                        d,
+                        c,
+                        bit_error,
+                        ber,
+                        Lf,
+                        Lq,
+                        Lr,
+                        cn2vn,
+                        vn2cn,
+                        Lrn,
+                        signs,
+                        phi,
+                        printing,
+                        Residues,
+                        maxcoords,
+                        Factors,
+                        H,
+                        rbpfactor,
+                        num_edges,
+                        Ldn,
+                        visited_vns,
+                        samples,
+                        rng_sample
+                    )                
 
-            # bit error rate
-            @fastmath ber ./= divisor
-            @inbounds  @fastmath @. BER[:,k] += ber
-            # iteration in which SPA stopped (iszero(syndrome) = true)
-            @inbounds iters[k,j] = i
-            if !(DECODED)
-                # frame error rate
-                @inbounds FER[k] += 1
-            end
-
-            # received signal for the next realization (j+1)
-            received_signal!(t,noise,stdevs[k],u,rng_noise)
-
+        # bit error rate
+        @fastmath ber ./= divisor
+        @inbounds  @fastmath @. BER += ber
+        # iteration in which SPA stopped (iszero(syndrome) = true)
+        @inbounds iters[j] = i
+        if !(DECODED)
+            # frame error rate
+            @inbounds FER += 1
         end
 
-        @inbounds @fastmath FER[k] /= NREALS
+        # received signal for the next realization (j+1)
+        received_signal!(t,noise,stdev,u,rng_noise)
 
     end
+
+    @inbounds @fastmath FER /= NREALS
+
 
     if test
         return Lr, Lq

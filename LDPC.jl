@@ -245,116 +245,118 @@ end
                              
 ############################ PERFORMANCE SIMULATION ############################
 if NREALS > 1
-    if MKAY
-        @time FER_mkay, BER_mkay, Iters_mkay = 
-            performance_simulation(Codeword,
-                                   SNR,
-                                   H,
-                                   "MKAY",
-                                   NREALS,
-                                   MAX,
-                                   SEED_NOISE;
-                                   stop=STOP)
-    end
-    if TANH
-        @time FER_tanh, BER_tanh, Iters_tanh = 
-            performance_simulation(Codeword,
-                                   SNR,
-                                   H,
-                                   "TANH",
-                                   NREALS,
-                                   MAX,
-                                   SEED_NOISE;
-                                   stop=STOP)
-    end
-    if ALTN
-        @time FER_altn, BER_altn, Iters_altn = 
-            performance_simulation(Codeword,
-                                   SNR,
-                                   H,
-                                   "ALTN",
-                                   NREALS,
-                                   MAX,
-                                   SEED_NOISE;
-                                   stop=STOP)
-    end
-    if TABL
-        @time FER_tabl, BER_tabl, Iters_tabl = 
-            performance_simulation(Codeword,
-                                   SNR,
-                                   H,
-                                   "TABL",
-                                   NREALS,
-                                   MAX,
-                                   SEED_NOISE;
-                                   stop=STOP)
-    end
-    if MSUM
-        @time FER_msum, BER_msum, Iters_msum = 
-            performance_simulation(Codeword,
-                                   SNR,
-                                   H,
-                                   "MSUM",
-                                   NREALS,
-                                   MAX,
-                                   SEED_NOISE;
-                                   stop=STOP)
-    end
-    if  LBP
-        @time FER_lbp, BER_lbp, Iters_lbp = 
-            performance_simulation(Codeword,
-                                  SNR,
-                                  H,
-                                  "LBP",
-                                  NREALS,
-                                  MAX,
-                                  SEED_NOISE;
-                                  stop=STOP)
-    end
-    if iLBP
-        @time FER_ilbp, BER_ilbp, Iters_ilbp = 
-            performance_simulation(Codeword,
-                                   SNR,
-                                   H,
-                                   "iLBP",
-                                   NREALS,
-                                   MAX,
-                                   SEED_NOISE;
-                                   stop=STOP)
-    end
-    if  RBP
-        @time FER_rbp, BER_rbp, Iters_rbp = 
-            performance_simulation(Codeword,
-                                   SNR,
-                                   H,
-                                   "RBP",
-                                   NREALS,
-                                   MAXRBP,
-                                   SEED_NOISE;
-                                   stop=STOP)
-    end
-    if  RRBP
-        @time FER_rrbp, BER_rrbp, Iters_rrbp = 
-            performance_simulation(Codeword,
-                                   SNR,
-                                   H,
-                                   "RRBP",
-                                   NREALS,
-                                   MAXRBP,
-                                   SEED_NOISE;
-                                   rng_seed_sample=SEED_SAMPL,
-                                   stop=STOP)
-    end
-    if LRBP
-        @time FER_lrbp, BER_lrbp, Iters_lrbp = 
-            performance_simulation(Codeword,
-                                   SNR,
-                                   H,
-                                   "LRBP",
-                                   NREALS,
-                                   MAXRBP,
-                                   SEED_NOISE;
-                                   stop=STOP)
+    for i in eachindex(SNR)
+        if MKAY
+            @time FER_mkay[i], BER_mkay[:,i], Iters_mkay[i,:] = 
+                performance_simulation(Codeword,
+                                    SNR[i],
+                                    H,
+                                    "MKAY",
+                                    NREALS,
+                                    MAX,
+                                    SEED_NOISE;
+                                    stop=STOP)
+        end
+        if TANH
+            @time FER_tanh[i], BER_tanh[:,i], Iters_tanh[i,:] = 
+                performance_simulation(Codeword,
+                                    SNR[i],
+                                    H,
+                                    "TANH",
+                                    NREALS,
+                                    MAX,
+                                    SEED_NOISE;
+                                    stop=STOP)
+        end
+        if ALTN
+            @time FER_altn[i], BER_altn[:,i], Iters_altn[i,:] = 
+                performance_simulation(Codeword,
+                                    SNR[i],
+                                    H,
+                                    "ALTN",
+                                    NREALS,
+                                    MAX,
+                                    SEED_NOISE;
+                                    stop=STOP)
+        end
+        if TABL
+            @time FER_tabl[i], BER_tabl[:,i], Iters_tabl[i,:] = 
+                performance_simulation(Codeword,
+                                    SNR[i],
+                                    H,
+                                    "TABL",
+                                    NREALS,
+                                    MAX,
+                                    SEED_NOISE;
+                                    stop=STOP)
+        end
+        if MSUM
+            @time FER_msum[i], BER_msum[:,i], Iters_msum[i,:] = 
+                performance_simulation(Codeword,
+                                    SNR[i],
+                                    H,
+                                    "MSUM",
+                                    NREALS,
+                                    MAX,
+                                    SEED_NOISE;
+                                    stop=STOP)
+        end
+        if  LBP
+            @time FER_lbp[i], BER_lbp[:,i], Iters_lbp[i,:] = 
+                performance_simulation(Codeword,
+                                    SNR[i],
+                                    H,
+                                    "LBP",
+                                    NREALS,
+                                    MAX,
+                                    SEED_NOISE;
+                                    stop=STOP)
+        end
+        if iLBP
+            @time FER_ilbp[i], BER_ilbp[:,i], Iters_ilbp[i,:] = 
+                performance_simulation(Codeword,
+                                    SNR[i],
+                                    H,
+                                    "iLBP",
+                                    NREALS,
+                                    MAX,
+                                    SEED_NOISE;
+                                    stop=STOP)
+        end
+        if  RBP
+            @time FER_rbp[i], BER_rbp[:,i], Iters_rbp[i,:] = 
+                performance_simulation(Codeword,
+                                    SNR[i],
+                                    H,
+                                    "RBP",
+                                    NREALS,
+                                    MAXRBP,
+                                    SEED_NOISE;
+                                    stop=STOP)
+        end
+        if  RRBP
+            @time FER_rrbp[i], BER_rrbp[:,i], Iters_rrbp[i,:] = 
+                performance_simulation(Codeword,
+                                    SNR[i],
+                                    H,
+                                    "RRBP",
+                                    NREALS,
+                                    MAXRBP,
+                                    SEED_NOISE;
+                                    rng_seed_sample=SEED_SAMPL,
+                                    stop=STOP)
+        end
+        if LRBP
+            @time FER_lrbp[i], BER_lrbp[:,i], Iters_lrbp[i,:] = 
+                performance_simulation(Codeword,
+                                    SNR[i],
+                                    H,
+                                    "LRBP",
+                                    NREALS,
+                                    MAXRBP,
+                                    SEED_NOISE;
+                                    stop=STOP)
+        end
     end
 ################################### PLOTTING ###################################
     plotlyjs()
