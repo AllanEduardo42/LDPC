@@ -64,7 +64,7 @@ RANGE::Int64 = 20
 
 SIZE_per_RANGE::Float64 = SIZE/RANGE
 
-NREALS::Int = 1
+NREALS::Int = 100
 MAX::Int = 30
 MAXRBP::Int = 6
 

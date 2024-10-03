@@ -90,9 +90,6 @@ function
     end
 end
 
-### specialized method for the RBP algorithm
-
-
 function
     minsum_RBP_init!(     
         Residues::Matrix{<:AbstractFloat}, 
@@ -145,7 +142,7 @@ function
         Residues::Matrix{<:AbstractFloat},
         cn2vn::Vector{Vector{T}} where {T<:Integer},
         samples::Nothing,
-        rng_sample::AbstractRNG
+        rng_sample::Nothing
     )
 
     maxresidue = 0.0

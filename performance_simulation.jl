@@ -27,7 +27,7 @@ function
 
     rng_noise = Xoshiro(rgn_seed_noise)
 
-    rng_sample = Xoshiro(rng_seed_sample)
+    rng_sample = (mode == "RRBP") ? Xoshiro(rng_seed_sample) : nothing
 
 ############################### CHECK VALID MODE ###############################
     if mode == "MKAY" || mode == "TANH" || mode == "ALTN" || mode == "TABL" ||

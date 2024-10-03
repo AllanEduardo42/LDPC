@@ -22,7 +22,7 @@ function
         Ldn::Vector{<:AbstractFloat},
         Residues::Union{Matrix{<:AbstractFloat},Nothing},
         samples::Union{Vector{<:Integer},Nothing},
-        rng_sample::AbstractRNG,
+        rng_sample::Union{AbstractRNG,Nothing},
         lrbp::Bool
     )
 
