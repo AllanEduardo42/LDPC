@@ -1,32 +1,28 @@
 ################################################################################
 # Allan Eduardo Feitosa
-# 27 ago 2024
-# Functions to estimate the LPCD performance (FER BER x SNR)
+# 3 out 2024
+# First layer of the routine to estimate the LPDC performance (FER BER x SNR)
 
-include("auxiliary_functions.jl")
-include("lookupTable.jl")
-include("BP.jl")
-include("calc_Lf.jl")
+include("performance_simulation_core.jl")
 
-function
+function 
     performance_simulation(
-        c::Vector{Bool},
-        snr::Real,
+        codeword::Vector{Bool},
+        snr::Vector{<:Real},
         H::BitMatrix,
         mode::String,
         nreals::Integer,
         max::Integer,
+        stop::Bool,
         rgn_seed_noise::Integer;
         rng_seed_sample=1234,
         t_test=nothing,
-        printing=false,
-        stop=false
+        printing=false    
     )
-    
 
 ############################### CHECK VALID MODE ###############################
     if mode == "MKAY" || mode == "TANH" || mode == "ALTN" || mode == "TABL" ||
-       mode == "MSUM"
+        mode == "MSUM"
         
         supermode = "FLOO"
 
@@ -48,89 +44,10 @@ function
 
     end
 
-################################## CONSTANTS ###################################
+########################## PRINT SIMULATION DETAILS ############################
     
-
     # if nreals = 1, set test mode
-    test = (nreals == 1) ? true : false
-    # transform snr in standard deviations
-    variance = 1 ./ (exp10.(snr/10))
-    stdev = sqrt.(variance)
-    # BPKS
-    u = Float64.(2*c .- 1)
-    # divisor
-    divisor = nreals * N 
-    # list of checks and variables nodes
-    vn2cn  = make_vn2cn_list(H)
-    cn2vn  = make_cn2vn_list(H)
-
-    ############################# PREALLOCATIONS ################################
-
-    # frame error rate
-    FER = 0
-
-    # bit error rate
-    BER = zeros(max)
-    ber = zeros(max)    
-
-    # iteration in which SPA stopped
-    iters = Vector{Int}(undef, nreals)
-
-    # estimate
-    d = Vector{Bool}(undef,N)
-
-    # syndrome
-    syndrome = ones(Bool,M)
-
-    # prior llr (if mode == "MKAY" just the prior probabilities)
-    Lf = (mode != "MKAY") ? Vector{Float64}(undef,N) : Matrix{Float64}(undef,N,2)
-
-    # noise
-    noise = Vector{Float64}(undef,N)
-
-    # received signal
-    t = Vector{Float64}(undef,N)
-
-    # bit-error
-    bit_error = Vector{Bool}(undef,N) 
-
-    # Lq -> matrix of vn2cn messages (N x M)
-    # Lr -> matrix of cn2vn messages (M x N)
-    # if mode == "MKAY" the are matrices for bit = 0 and bit = 1
-    Lq, Lr = (mode != "MKAY") ? (H'*0.0,H*0.0) : (zeros(N,M,2),zeros(M,N,2))
-
-    # Set variables Lrn and signs depending on the mode (also used for dispatch)
-    if (mode == "TANH" && FAST) || mode == "LBP" || mode == "iLBP"
-        Lrn = zeros(N) 
-        signs = nothing
-    elseif mode == "ALTN" || mode == "TABL"
-        Lrn = zeros(N)
-        signs = zeros(Bool,N)
-    elseif mode == "MSUM" || supermode == "RBP"
-        Lrn = nothing
-        signs = zeros(Bool,N)
-    else
-        Lrn = nothing
-        signs = nothing
-    end
-
-   # Set other variables that depend on the mode
-
-    visited_vns = (supermode == "LBP") ? zeros(Bool,N) : nothing
-
-    if supermode == "LBP" || supermode == "RBP"       
-        Ldn = zeros(N)
-    else
-        Ldn = nothing
-    end
-
-    phi = (mode == "TABL") ? lookupTable() : nothing
-
-    Residues = (mode == "RBP" || mode == "RRBP") ? H*0.0 : nothing
-
-    samples = (mode == "RRBP" && SAMPLESIZE != 0) ?
-                Vector{Int}(undef,SAMPLESIZE) : nothing
-
+    test = (nreals < 2) ? true : false
     if supermode == "RBP"
         if mode == "RBP"
             rbpfactor = DECAYRBP
@@ -138,166 +55,102 @@ function
             rbpfactor = DECAYLRBP
         elseif mode == "RRBP"
             rbpfactor = DECAYRRBP
-        end
+        end           
     else
         rbpfactor = nothing
-    end
-
-    maxcoords, Factors, num_edges = (supermode == "RBP") ? 
-        ([0,0], 1.0*H, sum(H)) : 
-        (nothing,nothing,nothing)
-
-########################## PRINT SIMULATION DETAILS ############################
-    # if test && printing
-    #     println()
-    #     print("###################### Starting simulation (Testing mode) #####")
-    #     println("#################")
-    #     println()
-    # elseif !test
-    #     println()
-    #     print("############################# Starting simulation #############")
-    #     println("#################")
-    #     println()
-    #     println("Number of trials: $nreals")
-    # end
-    # if !test || printing
-    #     if supermode == "FLOO"
-    #         print("Message passing protocol: Flooding (using ")
-    #         if mode == "MKAY"
-    #             println("Mckay's SPA method)")
-    #         elseif mode == "TANH"
-    #             println("LLR-SPA calculated by tanh)")
-    #         elseif mode == "ALTN"
-    #             println("LLR-SPA calculated by ϕ function)")
-    #         elseif mode == "TABL"
-    #             println("LLR-SPA precalculated in look-up table)")
-    #         elseif mode == "MSUM"
-    #             println("LLRs calculated by min-sum algorithm)")
-    #         end
-    #     elseif mode == "LBP"
-    #         println("Message passing protocol: LBP")
-    #     elseif mode == "iLBP"
-    #         println("Message passing protocol: iLBP")
-    #     elseif mode == "RBP"
-    #         println("Message passing protocol: RBP")
-    #     elseif mode == "LRBP"
-    #         println("Message passing protocol: Local RBP")
-    #     elseif mode == "RRBP"
-    #         println("Message passing protocol: Randomized RBP")
-    #     end
-
-    #     println("Maximum number of iterations: $max")
-    #     println("Simulated for SNR (dB): $snr")
-    #     println("Stop at zero syndrome ? $stop")
-    #     if supermode == "RBP"
-    #         println("Decaying factor: $rbpfactor")
-    #         if mode == "RRBP"
-    #             println("Sample size: $SAMPLESIZE")
-    #         end
-    #     end
-    #     println()
-    # end
-
-################################## MAIN LOOP ###################################
+    end    
     
-    rng_noise = Xoshiro(rgn_seed_noise)
-
-    rng_sample = (mode == "RRBP") ? Xoshiro(rng_seed_sample) : nothing
-
-    ######################### FIRST RECEIVED SIGNAL ############################
-    # In order to allow to test with a given received signal t_test, the first
-    # received signal t must be set outside the main loop.
-    if test
-        if t_test === nothing # if no test signal was provided:
-            # generate a new received signal
-            received_signal!(t,noise,stdev,u,rng_noise)
-        elseif length(t_test) != N
-            # if a received test signal was given, but with wrong length
-            throw(
-                DimensionMismatch(
-                    "length(t_test) should be $N, not $(length(t_test))"
-                )
-            )
-        else
-            # the received signal is the given test signal
-            t = t_test
-        end
-    else
-        # generate the first received signal outside the main loop
-        received_signal!(t,noise,stdev,u,rng_noise)
-    end        
-
-    for j in 1:nreals
-
-        # init the llr priors
-        calc_Lf!(Lf,t,variance)
-        if mode == "TABL"
-            # scale for table
-            Lf .*= SIZE_per_RANGE
-        end            
-        # initialize matrix Lr
-        Lr .*= 0
-        # initialize matrix Lq
-        init_Lq!(Lq,Lf,vn2cn)
-
-        if supermode == "RBP"
-            minsum_RBP_init!(Residues,maxcoords,Lq,signs,cn2vn)
-        end      
-        # SPA routine
-        DECODED, i = BP!(
-                        supermode,
-                        mode,
-                        stop,
-                        test,
-                        max,
-                        syndrome,
-                        d,
-                        c,
-                        bit_error,
-                        ber,
-                        Lf,
-                        Lq,
-                        Lr,
-                        cn2vn,
-                        vn2cn,
-                        Lrn,
-                        signs,
-                        phi,
-                        printing,
-                        Residues,
-                        maxcoords,
-                        Factors,
-                        H,
-                        rbpfactor,
-                        num_edges,
-                        Ldn,
-                        visited_vns,
-                        samples,
-                        rng_sample
-                    )                
-
-        # bit error rate
-        @fastmath ber ./= divisor
-        @inbounds  @fastmath @. BER += ber
-        # iteration in which SPA stopped (iszero(syndrome) = true)
-        @inbounds iters[j] = i
-        if !(DECODED)
-            # frame error rate
-            @inbounds FER += 1
+    if test && printing
+        println()
+        print("###################### Starting simulation (Testing mode) #####")
+        println("#################")
+        println()
+    elseif !test
+        println()
+        print("############################# Starting simulation #############")
+        println("#################")
+        println()
+        println("Number of trials: $nreals")
+    end
+    if !test || printing
+        if supermode == "FLOO"
+            print("Message passing protocol: Flooding (using ")
+            if mode == "MKAY"
+                println("Mckay's SPA method)")
+            elseif mode == "TANH"
+                println("LLR-SPA calculated by tanh)")
+            elseif mode == "ALTN"
+                println("LLR-SPA calculated by ϕ function)")
+            elseif mode == "TABL"
+                println("LLR-SPA precalculated in look-up table)")
+            elseif mode == "MSUM"
+                println("LLRs calculated by min-sum algorithm)")
+            end
+        elseif mode == "LBP"
+            println("Message passing protocol: LBP")
+        elseif mode == "iLBP"
+            println("Message passing protocol: iLBP")
+        elseif mode == "RBP"
+            println("Message passing protocol: RBP")
+        elseif mode == "LRBP"
+            println("Message passing protocol: Local RBP")
+        elseif mode == "RRBP"
+            println("Message passing protocol: Randomized RBP")
         end
 
-        # received signal for the next realization (j+1)
-        received_signal!(t,noise,stdev,u,rng_noise)
-
+        println("Maximum number of iterations: $max")
+        println("Simulated for SNR (dB): $snr")
+        println("Stop at zero syndrome ? $stop")
+        (supermode == "RBP") ? println("Decaying factor: $rbpfactor") : nothing
+        (mode == "RRBP") ? println("Sample size: $SAMPLESIZE") : nothing 
+        println()
     end
 
-    @inbounds @fastmath FER /= NREALS
+    if !test
 
+        K = length(SNR)
+        FER, BER, Iters = zeros(K), zeros(max,K), zeros(K,nreals)
+        Threads.@threads for i in eachindex(SNR)
+            FER[i], BER[:,i], Iters[i,:] = 
+                performance_simulation_core(
+                                    codeword,
+                                    snr[i],
+                                    H,
+                                    mode,
+                                    supermode,
+                                    nreals,
+                                    max,
+                                    stop,
+                                    rbpfactor,
+                                    rgn_seed_noise,
+                                    rng_seed_sample,
+                                    test,
+                                    t_test,
+                                    printing)
+        end
 
-    if test
-        return Lr, Lq
+        return FER, BER, Iters
+    
     else
-        return log10.(FER), log10.(BER), iters
+
+        Lr, Lq = performance_simulation_core(
+                                    codeword,
+                                    snr[1],
+                                    H,
+                                    mode,
+                                    supermode,
+                                    nreals,
+                                    max,
+                                    stop,
+                                    rbpfactor,
+                                    rgn_seed_noise,
+                                    rng_seed_sample,
+                                    test,
+                                    t_test,
+                                    printing)
+        
+        return Lr, Lq
+        
     end
 
 end

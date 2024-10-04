@@ -12,69 +12,66 @@ using Plots
 using SparseArrays
 using CSV, DataFrames
 
-const INF = typemax(Int64)
-
-SAVE = false
-
-################################ BP MODE FLAGS ################################
-
- LBP::Bool = true
-iLBP::Bool = true
- RBP::Bool = true
-RRBP::Bool = true
-LRBP::Bool = true
-
-############################# FLOODING MODE FLAGS ##############################
-MKAY::Bool = false
-TANH::Bool = true
-ALTN::Bool = false
-TABL::Bool = false
-MSUM::Bool = false
-
-# fast flooding update when using tanh mode (default:true)
-FAST::Bool = true
-
-################################## TEST MODE ##################################
-PRINTING::Bool = false
-SNRTEST = 4
-
-####################### STOP WHEN SYNDROME IS ZERO FLAG ########################
-STOP::Bool = false
-
-################################### PLOTTING ###################################
-
-PLOTBER::Bool = true
-HISTOGRAMS::Bool = false
-
 ################################ INCLUDED FILES ################################
 
 include("performance_simulation.jl")
 include("PEG.jl")
 include("GF2_functions.jl")
 
+################################ BP MODE FLAGS ################################
+
+LBP::Bool = true
+iLBP::Bool = true
+ RBP::Bool = true
+RRBP::Bool = true
+LRBP::Bool = true
+
+############################# FLOODING MODE FLAGS ##############################
+
+MKAY::Bool = false
+TANH::Bool = true
+ALTN::Bool = false
+TABL::Bool = false
+MSUM::Bool = false
+FAST::Bool = true # fast flooding update when using tanh mode (default:true)
+
+################################ CONTROL FLAGS #################################
+
+SAVE = true
+PRINTING::Bool = false
+PLOTBER::Bool = true
+HISTOGRAMS::Bool = false
+
 ############################# SIMULATION CONSTANTS #############################
 
+const INF = typemax(Int64)
+
+# Seeds
 SEED_NOISE::Int64 = 1428
 SEED_GRAPH::Int64 = 5714
 SEED_SAMPL::Int64 = 2857
 SEED_MESSA::Int64 = 9999
 
+# LookupTable
 SIZE::Int64 = 1024
 RANGE::Int64 = 20
-
 SIZE_per_RANGE::Float64 = SIZE/RANGE
 
-NREALS::Int = 10000
+# Number of realizations and iterations
+NREALS::Int = 100_000
 MAX::Int = 30
 MAXRBP::Int = 6
+STOP::Bool = false # stop simulation at zero syndrome (if true, BER curves are 
+# not printed)
 
+# decaying factor for RBP
 DECAYRBP::Float64 = 0.9
 DECAYLRBP::Float64 = 0.9
 DECAYRRBP::Float64 = 0.9
 SAMPLESIZE::Int = 51
 
-#################################### NOISE #####################################
-
+##################################### SNR ######################################
+SNRTEST = [4]
 SNR = collect(1:1:4)
 
 ############################# PARITY-CHECK MATRIX #############################
@@ -138,9 +135,9 @@ if MKAY
                                               "MKAY",
                                               1,
                                               MAX,
+                                              STOP,
                                               SEED_NOISE;
-                                              printing=PRINTING,
-                                              stop=STOP)
+                                              printing=PRINTING)
 end
 if TANH
     Lr_tanh, Lq_tanh = performance_simulation(Codeword,
@@ -149,9 +146,9 @@ if TANH
                                               "TANH",
                                               1,
                                               MAX,
+                                              STOP,
                                               SEED_NOISE;
-                                              printing=PRINTING, 
-                                              stop=STOP)
+                                              printing=PRINTING)
 end
 if ALTN
     Lr_altn, Lq_altn = performance_simulation(Codeword,
@@ -160,9 +157,9 @@ if ALTN
                                               "ALTN",
                                               1,
                                               MAX,
+                                              STOP,
                                               SEED_NOISE;
-                                              printing=PRINTING, 
-                                              stop=STOP)
+                                              printing=PRINTING)
 end
 if TABL
     Lr_tabl, Lq_tabl = performance_simulation(Codeword,
@@ -171,9 +168,9 @@ if TABL
                                               "TABL",
                                               1,
                                               MAX,
+                                              STOP,
                                               SEED_NOISE;
-                                              printing=PRINTING,
-                                              stop=STOP)
+                                              printing=PRINTING)
 end
 if MSUM
     Lr_msum, Lq_msum = performance_simulation(Codeword,
@@ -182,9 +179,9 @@ if MSUM
                                               "MSUM",
                                               1,
                                               MAX,
+                                              STOP,
                                               SEED_NOISE;
-                                              printing=PRINTING,
-                                              stop=STOP)
+                                              printing=PRINTING)
 end
 if  LBP
       Lr_lbp, Lq_lbp = performance_simulation(Codeword,
@@ -193,9 +190,9 @@ if  LBP
                                               "LBP",
                                               1,
                                               MAX,
+                                              STOP,
                                               SEED_NOISE;
-                                              printing=PRINTING,
-                                              stop=STOP)
+                                              printing=PRINTING)
 end
 if iLBP
     Lr_ilbp, Lq_ilbp = performance_simulation(Codeword,
@@ -204,9 +201,9 @@ if iLBP
                                               "iLBP",
                                               1,
                                               MAX,
+                                              STOP,
                                               SEED_NOISE;
-                                              printing=PRINTING,
-                                              stop=STOP)
+                                              printing=PRINTING)
 end
 if RBP
     Lr_rbp, Lq_rbp =   performance_simulation(Codeword,
@@ -215,9 +212,9 @@ if RBP
                                               "RBP",
                                               1,
                                               MAXRBP,
+                                              STOP,
                                               SEED_NOISE;
-                                              printing=PRINTING,
-                                              stop=STOP)
+                                              printing=PRINTING)
 end
 if RRBP
     Lr_rrbp, Lq_rrbp = performance_simulation(Codeword,
@@ -226,10 +223,10 @@ if RRBP
                                               "RRBP",
                                               1,
                                               MAXRBP,
+                                              STOP,
                                               SEED_NOISE;
                                               rng_seed_sample=SEED_SAMPL,
-                                              printing=PRINTING,
-                                              stop=STOP)
+                                              printing=PRINTING)
 end
 if LRBP
     Lr_lrbp, Lq_lrbp = performance_simulation(Codeword,
@@ -238,154 +235,123 @@ if LRBP
                                               "LRBP",
                                               1,
                                               MAXRBP,
+                                              STOP,
                                               SEED_NOISE;
-                                              printing=PRINTING,
-                                              stop=STOP)
+                                              printing=PRINTING)
 end
                              
 ############################ PERFORMANCE SIMULATION ############################
 if NREALS > 1
-    K = length(SNR)
     if MKAY
-        FER_mkay, BER_mkay, Iters_mkay = zeros(K), zeros(MAX,K), zeros(K,NREALS)
-        @time Threads.@threads for i in eachindex(SNR)
-            FER_mkay[i], BER_mkay[:,i], Iters_mkay[i,:] = 
-                performance_simulation(Codeword,
-                                    SNR[i],
-                                    H,
-                                    "MKAY",
-                                    NREALS,
-                                    MAX,
-                                    SEED_NOISE;
-                                    stop=STOP)
-        end
+        @time FER_mkay, BER_mkay, Iters_mkay  = performance_simulation(
+            Codeword,
+            SNR,
+            H,
+            "MKAY",
+            NREALS,
+            MAX,
+            STOP,
+            SEED_NOISE)
     end
     if TANH
-        FER_tanh, BER_tanh, Iters_tanh = zeros(K), zeros(MAX,K), zeros(K,NREALS)
-        @time Threads.@threads for i in eachindex(SNR)
-        FER_tanh[i], BER_tanh[:,i], Iters_tanh[i,:] = 
-            performance_simulation(Codeword,
-                                SNR[i],
-                                H,
-                                "TANH",
-                                NREALS,
-                                MAX,
-                                SEED_NOISE;
-                                stop=STOP)
-        end
+        @time FER_tanh, BER_tanh, Iters_tanh =performance_simulation(
+            Codeword,
+            SNR,
+            H,
+            "TANH",
+            NREALS,
+            MAX,
+            STOP,
+            SEED_NOISE)
     end
     if ALTN
-        FER_altn, BER_altn, Iters_altn = zeros(K), zeros(MAX,K), zeros(K,NREALS)
-        @time Threads.@threads for i in eachindex(SNR)
-        FER_altn[i], BER_altn[:,i], Iters_altn[i,:] = 
-            performance_simulation(Codeword,
-                                SNR[i],
-                                H,
-                                "ALTN",
-                                NREALS,
-                                MAX,
-                                SEED_NOISE;
-                                stop=STOP)
-        end
+        @time FER_altn, BER_altn, Iters_altn = performance_simulation(
+            Codeword,
+            SNR,
+            H,
+            "ALTN",
+            NREALS,
+            MAX,
+            STOP,
+            SEED_NOISE)
     end
     if TABL
-        FER_tabl, BER_tabl, Iters_tabl = zeros(K), zeros(MAX,K), zeros(K,NREALS)
-        @time Threads.@threads for i in eachindex(SNR)
-        FER_tabl[i], BER_tabl[:,i], Iters_tabl[i,:] = 
-            performance_simulation(Codeword,
-                                SNR[i],
-                                H,
-                                "TABL",
-                                NREALS,
-                                MAX,
-                                SEED_NOISE;
-                                stop=STOP)
-        end
+        @time FER_tabl, BER_tabl, Iters_tabl = performance_simulation(
+            Codeword,
+            SNR,
+            H,
+            "TABL",
+            NREALS,
+            MAX,
+            STOP,
+            SEED_NOISE)
     end
     if MSUM
-        FER_msum, BER_msum, Iters_msum = zeros(K), zeros(MAX,K), zeros(K,NREALS)
-        @time Threads.@threads for i in eachindex(SNR)
-        FER_msum[i], BER_msum[:,i], Iters_msum[i,:] = 
-            performance_simulation(Codeword,
-                                SNR[i],
-                                H,
-                                "MSUM",
-                                NREALS,
-                                MAX,
-                                SEED_NOISE;
-                                stop=STOP)
-        end
+        @time FER_msum, BER_msum, Iters_msum = performance_simulation(
+            Codeword,
+            SNR,
+            H,
+            "MSUM",
+            NREALS,
+            MAX,
+            STOP,
+            SEED_NOISE)
     end
     if  LBP
-        FER_lbp, BER_lbp, Iters_lbp = zeros(K), zeros(MAX,K), zeros(K,NREALS)
-        @time Threads.@threads for i in eachindex(SNR)
-        FER_lbp[i], BER_lbp[:,i], Iters_lbp[i,:] = 
-            performance_simulation(Codeword,
-                                SNR[i],
-                                H,
-                                "LBP",
-                                NREALS,
-                                MAX,
-                                SEED_NOISE;
-                                stop=STOP)
-        end
+        @time FER_lbp, BER_lbp, Iters_lbp = performance_simulation(
+            Codeword,
+            SNR,
+            H,
+            "LBP",
+            NREALS,
+            MAX,
+            STOP,
+            SEED_NOISE)
     end
     if iLBP
-        FER_ilbp, BER_ilbp, Iters_ilbp = zeros(K), zeros(MAX,K), zeros(K,NREALS)
-        @time Threads.@threads for i in eachindex(SNR)
-        FER_ilbp[i], BER_ilbp[:,i], Iters_ilbp[i,:] = 
-            performance_simulation(Codeword,
-                                SNR[i],
-                                H,
-                                "iLBP",
-                                NREALS,
-                                MAX,
-                                SEED_NOISE;
-                                stop=STOP)
-        end
+        @time FER_ilbp, BER_ilbp, Iters_ilbp = performance_simulation(
+            Codeword,
+            SNR,
+            H,
+            "iLBP",
+            NREALS,
+            MAX,
+            STOP,
+            SEED_NOISE)
     end
     if  RBP
-        FER_rbp, BER_rbp, Iters_rbp = zeros(K), zeros(MAXRBP,K), zeros(K,NREALS)
-        @time Threads.@threads for i in eachindex(SNR)
-        FER_rbp[i], BER_rbp[:,i], Iters_rbp[i,:] = 
-            performance_simulation(Codeword,
-                                SNR[i],
-                                H,
-                                "RBP",
-                                NREALS,
-                                MAXRBP,
-                                SEED_NOISE;
-                                stop=STOP)
-        end
+        @time FER_rbp, BER_rbp, Iters_rbp = performance_simulation(
+            Codeword,
+            SNR,
+            H,
+            "RBP",
+            NREALS,
+            MAXRBP,
+            STOP,
+            SEED_NOISE)
     end
     if  RRBP
-        FER_rrbp, BER_rrbp, Iters_rrbp = zeros(K), zeros(MAXRBP,K), zeros(K,NREALS)
-        @time Threads.@threads for i in eachindex(SNR)
-        FER_rrbp[i], BER_rrbp[:,i], Iters_rrbp[i,:] = 
-            performance_simulation(Codeword,
-                                SNR[i],
-                                H,
-                                "RRBP",
-                                NREALS,
-                                MAXRBP,
-                                SEED_NOISE;
-                                rng_seed_sample=SEED_SAMPL,
-                                stop=STOP)
-        end
+        @time FER_rrbp, BER_rrbp, Iters_rrbp = performance_simulation(
+            Codeword,
+            SNR,
+            H,
+            "RRBP",
+            NREALS,
+            MAXRBP,
+            STOP,
+            SEED_NOISE;
+            rng_seed_sample=SEED_SAMPL)
     end
     if LRBP
-        FER_lrbp, BER_lrbp, Iters_lrbp = zeros(K), zeros(MAXRBP,K), zeros(K,NREALS)
-        @time Threads.@threads for i in eachindex(SNR)
-        FER_lrbp[i], BER_lrbp[:,i], Iters_lrbp[i,:] = 
-            performance_simulation(Codeword,
-                                SNR[i],
-                                H,
-                                "LRBP",
-                                NREALS,
-                                MAXRBP,
-                                SEED_NOISE;
-                                stop=STOP)
-        end
+        @time FER_lrbp, BER_lrbp, Iters_lrbp = performance_simulation(
+            Codeword,
+            SNR,
+            H,
+            "LRBP",
+            NREALS,
+            MAXRBP,
+            STOP,
+            SEED_NOISE)
     end
 ################################### PLOTTING ###################################
     plotlyjs()
@@ -450,7 +416,7 @@ if NREALS > 1
         )
 
     display(p)
-    SAVE ? savefig(p, "FER.svg") : nothing
+    SAVE ? savefig(p, "FER.png") : nothing
 
     if PLOTBER && !STOP
         if MKAY
@@ -462,10 +428,10 @@ if NREALS > 1
                 label=ber_labels,
                 lw=2,
                 title="BER Flooding (McKay)",
-                ylims=(lim-1,0)
+                ylims=(lim-2,0)
             )
             display(p)
-            SAVE ? savefig(p,"BER_FLMKAY.svg") : nothing
+            SAVE ? savefig(p,"BER_FLMKAY.png") : nothing
         end
         if TANH
             p = plot(
@@ -475,10 +441,10 @@ if NREALS > 1
                 label=ber_labels,
                 lw=2,
                 title="BER Flooding (tanh)",
-                ylims=(lim-1,0)
+                ylims=(lim-2,0)
             )
             display(p)
-            SAVE ? savefig(p,"BER_FLTANH.svg") : nothing
+            SAVE ? savefig(p,"BER_FLTANH.png") : nothing
         end
         if ALTN
             p = plot(
@@ -488,10 +454,10 @@ if NREALS > 1
                 label=ber_labels,
                 lw=2,
                 title="BER Flooding (alt)",
-                ylims=(lim-1,0)
+                ylims=(lim-2,0)
             )
             display(p)
-            SAVE ? savefig(p,"BER_FLALTN.svg") : nothing
+            SAVE ? savefig(p,"BER_FLALTN.png") : nothing
         end
         if TABL
             p = plot(
@@ -501,10 +467,10 @@ if NREALS > 1
                 label=ber_labels,
                 lw=2,
                 title="BER Flooding (table)",
-                ylims=(lim-1,0)
+                ylims=(lim-2,0)
             )
             display(p)
-            SAVE ? savefig(p,"BER_FLTABL.svg") : nothing
+            SAVE ? savefig(p,"BER_FLTABL.png") : nothing
         end
         if MSUM
             p = plot(
@@ -514,10 +480,10 @@ if NREALS > 1
                 label=ber_labels,
                 lw=2,
                 title="BER Min-Sum",
-                ylims=(lim-1,0)
+                ylims=(lim-2,0)
             )
             display(p)
-            SAVE ? savefig(p,"BER_MINSUM.svg") : nothing
+            SAVE ? savefig(p,"BER_MINSUM.png") : nothing
         end
         if  LBP
             p = plot(
@@ -527,10 +493,10 @@ if NREALS > 1
                 label=ber_labels,
                 lw=2,
                 title="BER LBP",
-                ylims=(lim-1,0)
+                ylims=(lim-2,0)
             )
             display(p)
-            SAVE ? savefig(p,"BER_LBP.svg") : nothing
+            SAVE ? savefig(p,"BER_LBP.png") : nothing
         end
         if iLBP
             p = plot(
@@ -540,10 +506,10 @@ if NREALS > 1
                 label=ber_labels,
                 lw=2,
                 title="BER iLBP",
-                ylims=(lim-1,0)
+                ylims=(lim-2,0)
             )
             display(p)
-            SAVE ? savefig(p,"BER_iLBP.svg") : nothing
+            SAVE ? savefig(p,"BER_iLBP.png") : nothing
         end
         if  RBP
             p = plot(
@@ -553,10 +519,10 @@ if NREALS > 1
                 label=ber_labels,
                 lw=2,
                 title="BER RBP (decay factor = $DECAYRBP)",
-                ylims=(lim-1,0)
+                ylims=(lim-2,0)
             )
             display(p)
-            SAVE ? savefig(p,"BER_RBP.svg") : nothing
+            SAVE ? savefig(p,"BER_RBP.png") : nothing
         end
         if RRBP
             p = plot(
@@ -566,10 +532,10 @@ if NREALS > 1
                 label=ber_labels,
                 lw=2,
                 title="BER RRBP (decay factor = $DECAYRRBP)",
-                ylims=(lim-1,0)
+                ylims=(lim-2,0)
             )
             display(p)
-            SAVE ? savefig(p,"BER_RRBP.svg") : nothing
+            SAVE ? savefig(p,"BER_RRBP.png") : nothing
         end
         if LRBP
             p = plot(
@@ -579,10 +545,10 @@ if NREALS > 1
                 label=ber_labels,
                 lw=2,
                 title="BER LRBP (decay factor = $DECAYLRBP)",
-                ylims=(lim-1,0)
+                ylims=(lim-2,0)
             )
             display(p)
-            SAVE ? savefig(p,"BER_LRBP.svg") : nothing
+            SAVE ? savefig(p,"BER_LRBP.png") : nothing
         end
     end
 
@@ -594,7 +560,7 @@ if NREALS > 1
                     layout=grid(2,1),
                     xlims=(0,MAX+1),
                     labels=["Flooding" "LRBP"],
-                    title="SNR (dB) = $(SNR[i])"
+                    title="SNR (dB) = $(SNR)"
                 )
             )
         end
@@ -614,52 +580,52 @@ if NREALS > 1
         padding = zeros(MAX-MAXRBP)
         if MKAY
             for i in eachindex(SNR)
-                push!(bers,("Mckay (SNR=$(SNR[i]))",BER_mkay[:,i]))
+                push!(bers,("Mckay (SNR=$(SNR))",BER_mkay[:,i]))
             end
         end
         if TANH
             for i in eachindex(SNR)
-                push!(bers,("tanh (SNR=$(SNR[i]))",BER_tanh[:,i]))
+                push!(bers,("tanh (SNR=$(SNR))",BER_tanh[:,i]))
             end
         end
         if ALTN
             for i in eachindex(SNR)
-                push!(bers,("altn (SNR=$(SNR[i]))",BER_altn[:,i]))
+                push!(bers,("altn (SNR=$(SNR))",BER_altn[:,i]))
             end
         end
         if TABL
             for i in eachindex(SNR)
-                push!(bers,("tabl (SNR=$(SNR[i]))",BER_tabl[:,i]))
+                push!(bers,("tabl (SNR=$(SNR))",BER_tabl[:,i]))
             end
         end
         if MSUM
             for i in eachindex(SNR)
-                push!(bers,("msum (SNR=$(SNR[i]))",BER_msum[:,i]))
+                push!(bers,("msum (SNR=$(SNR))",BER_msum[:,i]))
             end
         end
         if LBP
             for i in eachindex(SNR)
-                push!(bers,("LBP (SNR=$(SNR[i]))",BER_lbp[:,i]))
+                push!(bers,("LBP (SNR=$(SNR))",BER_lbp[:,i]))
             end
         end
         if iLBP
             for i in eachindex(SNR)
-                push!(bers,("iLBP (SNR=$(SNR[i]))",BER_ilbp[:,i]))
+                push!(bers,("iLBP (SNR=$(SNR))",BER_ilbp[:,i]))
             end
         end
         if RBP
             for i in eachindex(SNR)
-                push!(bers,("RBP (SNR=$(SNR[i]))",[BER_rbp[:,i];padding]))
+                push!(bers,("RBP (SNR=$(SNR))",[BER_rbp[:,i];padding]))
             end
         end
         if RRBP
             for i in eachindex(SNR)
-                push!(bers,("RRBP (SNR=$(SNR[i]))",[BER_rrbp[:,i];padding]))
+                push!(bers,("RRBP (SNR=$(SNR))",[BER_rrbp[:,i];padding]))
             end
         end
         if LRBP
             for i in eachindex(SNR)
-                push!(bers,("RRBP (SNR=$(SNR[i]))",[BER_lrbp[:,i];padding]))
+                push!(bers,("RRBP (SNR=$(SNR))",[BER_lrbp[:,i];padding]))
             end
         end
 
