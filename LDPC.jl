@@ -20,11 +20,11 @@ include("GF2_functions.jl")
 
 ################################ BP MODE FLAGS ################################
 
-LBP::Bool = true
-iLBP::Bool = true
+ LBP::Bool = false
+iLBP::Bool = false
  RBP::Bool = true
-RRBP::Bool = true
-LRBP::Bool = true
+RRBP::Bool = false
+LRBP::Bool = false
 
 ############################# FLOODING MODE FLAGS ##############################
 
@@ -33,11 +33,11 @@ TANH::Bool = true
 ALTN::Bool = false
 TABL::Bool = false
 MSUM::Bool = false
-FAST::Bool = true # fast flooding update when using tanh mode (default:true)
+FAST::Bool = true  # fast flooding update when using tanh mode (default:true)
 
 ################################ CONTROL FLAGS #################################
 
-SAVE = true
+SAVE = false
 PRINTING::Bool = false
 PLOTBER::Bool = true
 HISTOGRAMS::Bool = false
@@ -58,9 +58,9 @@ RANGE::Int64 = 20
 SIZE_per_RANGE::Float64 = SIZE/RANGE
 
 # Number of realizations and iterations
-NREALS::Int = 100_000
+NREALS::Int = 1000
 MAX::Int = 30
-MAXRBP::Int = 6
+MAXRBP::Int = 10
 STOP::Bool = false # stop simulation at zero syndrome (if true, BER curves are 
 # not printed)
 
@@ -254,7 +254,7 @@ if NREALS > 1
             SEED_NOISE)
     end
     if TANH
-        @time FER_tanh, BER_tanh, Iters_tanh =performance_simulation(
+        @time FER_tanh, BER_tanh, Iters_tanh = performance_simulation(
             Codeword,
             SNR,
             H,
