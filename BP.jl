@@ -9,6 +9,7 @@ include("minsum.jl")
 include("flooding.jl")
 include("calc_syndrome.jl")
 include("LBP.jl")
+# include("LBP_NO_OPT.jl")
 include("RBP.jl")
 
 function 

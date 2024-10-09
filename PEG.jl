@@ -8,27 +8,27 @@ function
 
     sort!(d)
     N = length(d)
-    H = BitArray(undef,M,N)
-    H *= false
+    H = falses(M,N)
     check_degrees = zeros(Int,M)
     girth = Inf
 
-    for i in 1:N
-        for k in 1:d[i]
+    for n in 1:N
+        for k in 1:d[n]
             if k == 1
-                _,j = findmin(check_degrees)
-                H[j,i] = 1
-                check_degrees[j] += 1
+                _,m = findmin(check_degrees)
+                H[m,n] = 1
+                check_degrees[m] += 1
             else
-                L0_checks = findall(isone,H[:,i])
+                L0_checks = findall(isone,H[:,n])
                 level = 
                     subtree!(
                         H,
                         M,
-                        i,
+                        n,
                         0,
                         check_degrees,
-                        L0_checks,[i],
+                        L0_checks,
+                        [n],
                         copy(L0_checks),
                         copy(L0_checks)
                     )
@@ -61,11 +61,11 @@ function
 
     STOPPED = false                     # flag: subtree stopped increasing
     level += 1                          # absolute level in the subtree
-    L1_checks = Vector{Int}(undef,0)  # checks in the current level
-    L1_nodes = Vector{Int}(undef,0)   # nodes in the current level
-    # L1_check_set = copy(L0_check_set)
+    L1_checks = Vector{Int}(undef,0)    # checks in the current level
+    L1_nodes = Vector{Int}(undef,0)     # nodes in the current level
+
     for check in L0_checks
-        row =  H[check,:]
+        row = H[check,:]
         row[parent_nodes] .= 0              # remove parent nodes
         check_nodes = findall(isone,row)    # nodes linked to the current check
         append_sort_unique!(L1_nodes,check_nodes)
@@ -86,8 +86,8 @@ function
     if STOPPED || len1 == M             # stopped increasing or all checks reached
         compl = collect(1:M)
         deleteat!(compl, L0_check_set)  # take the complement set
-        _,j = findmin(check_degrees[compl])
-        idx = compl[j]
+        _,m = findmin(check_degrees[compl])
+        idx = compl[m]
         H[idx,root] = 1
         check_degrees[idx] += 1
     else

@@ -1,95 +1,78 @@
-using Plots
-# using FastRunningMedian
+Residues = zeros(M,N)
 
-include("auxiliary_functions.jl")
-include("PEG.jl")
+num_edges = sum(H)
 
-println(Threads.nthreads())
+Residues[H] = randn(num_edges)
 
-function
-    find_maxresidue_coords_multi!(
-        Residues::Matrix{<:AbstractFloat},
-        maxcoordsth::Matrix{<:Integer},
-        chunks,
-        offsets
-    )
-    tasks = map(chunks,offsets) do chunk,offset
-        Threads.@spawn find_maxresidue_coords!(Residues,view(maxcoordsth,:,Threads.threadid()),chunk,offset)
+Ii = sortperm(Residues[H],rev=true)
+
+Ii_inv = sortperm(Ii)
+
+r = Residues[H][Ii]
+
+Addrs_inv = zeros(Int,M,N)
+Addrs = zeros(Int,2,num_edges)
+
+vn2cn = make_vn2cn_list(H)
+
+e = 0
+for n in eachindex(vn2cn)
+    for m in vn2cn[n]
+        global e +=1
+        Addrs_inv[m,n] = e
+        Addrs[1,e] = m
+        Addrs[2,e] = n
     end
-    maxresidues = fetch.(tasks)
-    a,b = findmax(maxresidues)
-    return a, maxcoordsth[:,b]
 end
 
-function
-    find_maxresidue_coords!(
-        Residues::Matrix{<:AbstractFloat},
-        maxcoords::AbstractVector{<:Integer},
-        cn2vn::AbstractVector{Vector{T}} where {T<:Integer},
-        offset::Integer,
-    )
+REALS = 10000
 
-    maxresidue = 0.0
-    for m in eachindex(cn2vn)
-        for n in cn2vn[m]
-            @inbounds residue = Residues[m+offset,n]
-            if @fastmath residue > maxresidue
-                maxresidue = residue
-                maxcoords[1] = m+offset
-                maxcoords[2] = n
+MIN = true
+
+for real in 1:REALS
+    local position = collect(1:num_edges)
+    n = rand(1:N)
+    m = rand(vn2cn[n])
+    Residues[m,n] = randn()
+    local idx = Ii_inv[Addrs_inv[m,n]]
+    r[idx] = Residues[m,n]
+    for e in eachindex(r)
+        if r[idx] > r[e]
+            if idx > e            
+                position[e:idx-1] .+= 1
+                position[idx] = e
+            else
+                position[idx] = e-1
+                position[idx+1:e-1] .-= 1              
             end
+            local v = sortperm(position)
+            global Ii = Ii[v]
+            global Ii_inv = sortperm(Ii)
+            global r = r[v]
+            global MIN = false
+            if r != sort(Residues[H],rev=true)
+                println("break 1 at real = ", real)
+                display((r .!= sort(Residues[H],rev=true))')
+                break
+            end
+            break
         end
     end
-
-    return maxresidue
+    if MIN
+        position[idx] = num_edges
+        position[idx+1:end] .-= 1
+        local v = sortperm(position)
+        global Ii = Ii[v]
+        global Ii_inv = sortperm(Ii)
+        global r = r[v]
+        if r != sort(Residues[H],rev=true)
+            println("break 2 at real = ", real)
+            display((r .!= sort(Residues[H],rev=true))')
+            break
+        end
+    end 
+    # if Ii != sortperm(Residues[H],rev=true)
+    #     println("break 1 at real = ", real)
+    #     break
+    # end
 end
-
-M = 512
-N = 1024
-SEED_GRAPH::Int64 = 5714
-rng_graph = Xoshiro(SEED_GRAPH)
-D = rand(rng_graph,[2,3,4],N)
-if !@isdefined(H) 
-    H,_ = PEG(D,M)
-end
-cn2vn  = make_cn2vn_list(H)
-Residues = 0.0*H
-Residues[H] = randn(sum(H))
-maxcoords = [0,0]
-
-num = length(cn2vn) ÷ Threads.nthreads()
-chunks = Iterators.partition(cn2vn,num)
-offsets = num*(0:Threads.nthreads()-1)
-maxcoordsth = zeros(Int,2,Threads.nthreads())
-
-@time a = find_maxresidue_coords!(Residues,maxcoords,cn2vn,0)
-@time b = find_maxresidue_coords_multi!(Residues,maxcoordsth,chunks,offsets)
-
-display((a,maxcoords))
-display(b)
-
-# R = 10000
-# t1 = zeros(length(10:10:R))
-# t2 = zeros(length(10:10:R))
-
-# j = 0
-# for r = 10:10:R
-#     global j += 1
-#     x = randn(r)
-#     t = @timed sum_single(x)
-#     t1[j] = t.time
-# end
-
-# j = 0
-# for r = 10:10:R
-#     global j += 1
-#     x = randn(r)
-#     t = @timed sum_multi_good(x)
-#     t2[j] = t.time
-
-# end
-
-# plotlyjs()
-
-# plot(20:10:R,running_median(t1[2:end],3),label="no threading")
-# plot!(20:10:R,running_median(t2[2:end],3),label="with threading")
