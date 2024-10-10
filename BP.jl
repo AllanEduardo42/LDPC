@@ -45,7 +45,7 @@ function
         rgn_sample::Union{AbstractRNG,Nothing}
     )
              
-    index = max
+    # index = max
     FIRST = true
     DECODED = false
 
@@ -128,7 +128,7 @@ function
         else
             if FIRST && iszero(syndrome)
                 FIRST = false
-                index = i
+                # index = i
                 if @fastmath d == c
                     DECODED = true
                 end
@@ -141,6 +141,7 @@ function
         end
     end
 
-    return DECODED, index
+    # return DECODED, index
+    return DECODED
 
 end

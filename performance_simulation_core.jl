@@ -19,8 +19,8 @@ function
         max::Integer,
         stop::Bool,
         rbpfactor::Union{AbstractFloat,Nothing},
-        rgn_seed_noise::Integer,
-        rng_seed_sample::Integer,
+        rng_noise::AbstractRNG,
+        rng_sample::Union{AbstractRNG,Nothing},
         test::Bool,
         t_test::Union{Vector{<:AbstractFloat},Nothing},
         printing::Bool
@@ -33,8 +33,6 @@ function
     stdev = sqrt.(variance)
     # BPKS
     u = Float64.(2*c .- 1)
-    # divisor
-    divisor = nreals * N 
     # list of checks and variables nodes
     vn2cn  = make_vn2cn_list(H)
     cn2vn  = make_cn2vn_list(H)
@@ -49,7 +47,7 @@ function
     ber = zeros(max)    
 
     # iteration in which SPA stopped
-    iters = Vector{Int}(undef, nreals)
+    # iters = Vector{Int}(undef, nreals)
 
     # estimate
     d = Vector{Bool}(undef,N)
@@ -111,10 +109,6 @@ function
         (nothing,nothing,nothing)
 
 ################################## MAIN LOOP ###################################
-    
-    rng_noise = Xoshiro(rgn_seed_noise)
-
-    rng_sample = (mode == "RRBP") ? Xoshiro(rng_seed_sample) : nothing
 
     ######################### FIRST RECEIVED SIGNAL ############################
     # In order to allow to test with a given received signal t_test, the first
@@ -153,50 +147,49 @@ function
         init_Lq!(Lq,Lf,vn2cn)
 
         if supermode == "RBP"
-            # minsum_RBP_init!(Residues,maxcoords,Lq,signs,cn2vn)
             init_residues!(Residues,maxcoords,Lq,signs,cn2vn)
         end      
         # SPA routine
-        DECODED, i = BP!(
-                        supermode,
-                        mode,
-                        stop,
-                        test,
-                        max,
-                        syndrome,
-                        d,
-                        c,
-                        bit_error,
-                        ber,
-                        Lf,
-                        Lq,
-                        Lr,
-                        cn2vn,
-                        vn2cn,
-                        Lrn,
-                        signs,
-                        phi,
-                        printing,
-                        Residues,
-                        maxcoords,
-                        Factors,
-                        H,
-                        rbpfactor,
-                        num_edges,
-                        Ldn,
-                        visited_vns,
-                        samples,
-                        rng_sample
-                    )                
+        # DECODED, i = BP!(
+        DECODED = BP!(
+                    supermode,
+                    mode,
+                    stop,
+                    test,
+                    max,
+                    syndrome,
+                    d,
+                    c,
+                    bit_error,
+                    ber,
+                    Lf,
+                    Lq,
+                    Lr,
+                    cn2vn,
+                    vn2cn,
+                    Lrn,
+                    signs,
+                    phi,
+                    printing,
+                    Residues,
+                    maxcoords,
+                    Factors,
+                    H,
+                    rbpfactor,
+                    num_edges,
+                    Ldn,
+                    visited_vns,
+                    samples,
+                    rng_sample
+                )                
 
         # bit error rate
-        @fastmath ber ./= divisor
-        @inbounds  @fastmath @. BER += ber
+        @fastmath @. BER += ber
         # iteration in which SPA stopped (iszero(syndrome) = true)
-        @inbounds iters[j] = i
+        # @inbounds iters[j] = i
         if !(DECODED)
             # frame error rate
-            @inbounds FER += 1
+            FER += 1
         end
 
         # received signal for the next realization (j+1)
@@ -204,13 +197,11 @@ function
 
     end
 
-    @inbounds @fastmath FER /= NREALS
-
-
     if test
         return Lr, Lq
     else
-        return log10.(FER), log10.(BER), iters
+        # return log10.(FER), log10.(BER), iters
+        return FER, BER
     end
 
 end

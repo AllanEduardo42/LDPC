@@ -107,31 +107,44 @@ function
     end
 
     if !test
-
+        NTH = 32
         K = length(SNR)
-        FER, BER, Iters = zeros(K), zeros(max,K), zeros(K,nreals)
-        Threads.@threads for i in eachindex(SNR)
-            FER[i], BER[:,i], Iters[i,:] = 
-                performance_simulation_core(
-                                    codeword,
-                                    snr[i],
-                                    H,
-                                    mode,
-                                    supermode,
-                                    nreals,
-                                    max,
-                                    stop,
-                                    rbpfactor,
-                                    rgn_seed_noise,
-                                    rng_seed_sample,
-                                    test,
-                                    t_test,
-                                    printing)
+        fer, ber = zeros(K,NTH), zeros(max,K,NTH)
+        # Threads.@threads 
+        for k in 1:K
+            rng_noise = Xoshiro(rgn_seed_noise)
+            rng_sample = (mode == "RRBP") ? Xoshiro(rng_seed_sample) : nothing
+            Threads.@threads for nth in 1:NTH
+                fer[k,nth], ber[:,k,nth] = 
+                    performance_simulation_core(
+                                        codeword,
+                                        snr[k],
+                                        H,
+                                        mode,
+                                        supermode,
+                                        nreals÷NTH,
+                                        max,
+                                        stop,
+                                        rbpfactor,
+                                        rng_noise,
+                                        rng_sample,
+                                        test,
+                                        t_test,
+                                        printing)
+            end
         end
 
-        return FER, BER, Iters
+        FER = zeros(K)
+        BER = zeros(max,K)
+        FER .= sum(fer,dims=2)/(nreals)
+        BER .= sum(ber,dims=3)/(nreals*N)
+
+        return log10.(FER), log10.(BER)
     
     else
+
+        rng_noise = Xoshiro(rgn_seed_noise)
+        rng_sample = (mode == "RRBP") ? Xoshiro(rng_seed_sample) : nothing
 
         Lr, Lq = performance_simulation_core(
                                     codeword,
@@ -143,8 +156,8 @@ function
                                     max,
                                     stop,
                                     rbpfactor,
-                                    rgn_seed_noise,
-                                    rng_seed_sample,
+                                    rng_noise,
+                                    rng_sample,
                                     test,
                                     t_test,
                                     printing)

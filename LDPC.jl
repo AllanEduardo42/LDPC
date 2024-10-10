@@ -23,8 +23,8 @@ include("GF2_functions.jl")
  LBP::Bool = false
 iLBP::Bool = false
  RBP::Bool = true
-RRBP::Bool = true
-LRBP::Bool = true
+RRBP::Bool = false
+LRBP::Bool = false
 
 ############################# FLOODING MODE FLAGS ##############################
 
@@ -58,7 +58,7 @@ RANGE::Int64 = 20
 SIZE_per_RANGE::Float64 = SIZE/RANGE
 
 # Number of realizations and iterations
-NREALS::Int = 100
+NREALS::Int = 960
 MAX::Int = 30
 MAXRBP::Int = 30
 STOP::Bool = false # stop simulation at zero syndrome (if true, BER curves are 
@@ -243,7 +243,7 @@ end
 ############################ PERFORMANCE SIMULATION ############################
 if NREALS > 1
     if MKAY
-        @time FER_mkay, BER_mkay, Iters_mkay  = performance_simulation(
+        @time FER_mkay, BER_mkay  = performance_simulation(
             Codeword,
             SNR,
             H,
@@ -254,7 +254,7 @@ if NREALS > 1
             SEED_NOISE)
     end
     if TANH
-        @time FER_tanh, BER_tanh, Iters_tanh = performance_simulation(
+        @time FER_tanh, BER_tanh = performance_simulation(
             Codeword,
             SNR,
             H,
@@ -265,7 +265,7 @@ if NREALS > 1
             SEED_NOISE)
     end
     if ALTN
-        @time FER_altn, BER_altn, Iters_altn = performance_simulation(
+        @time FER_altn, BER_altn = performance_simulation(
             Codeword,
             SNR,
             H,
@@ -276,7 +276,7 @@ if NREALS > 1
             SEED_NOISE)
     end
     if TABL
-        @time FER_tabl, BER_tabl, Iters_tabl = performance_simulation(
+        @time FER_tabl, BER_tabl = performance_simulation(
             Codeword,
             SNR,
             H,
@@ -287,7 +287,7 @@ if NREALS > 1
             SEED_NOISE)
     end
     if MSUM
-        @time FER_msum, BER_msum, Iters_msum = performance_simulation(
+        @time FER_msum, BER_msum = performance_simulation(
             Codeword,
             SNR,
             H,
@@ -298,7 +298,7 @@ if NREALS > 1
             SEED_NOISE)
     end
     if  LBP
-        @time FER_lbp, BER_lbp, Iters_lbp = performance_simulation(
+        @time FER_lbp, BER_lbp = performance_simulation(
             Codeword,
             SNR,
             H,
@@ -309,7 +309,7 @@ if NREALS > 1
             SEED_NOISE)
     end
     if iLBP
-        @time FER_ilbp, BER_ilbp, Iters_ilbp = performance_simulation(
+        @time FER_ilbp, BER_ilbp = performance_simulation(
             Codeword,
             SNR,
             H,
@@ -320,7 +320,7 @@ if NREALS > 1
             SEED_NOISE)
     end
     if  RBP
-        @time FER_rbp, BER_rbp, Iters_rbp = performance_simulation(
+        @time FER_rbp, BER_rbp = performance_simulation(
             Codeword,
             SNR,
             H,
@@ -331,7 +331,7 @@ if NREALS > 1
             SEED_NOISE)
     end
     if  RRBP
-        @time FER_rrbp, BER_rrbp, Iters_rrbp = performance_simulation(
+        @time FER_rrbp, BER_rrbp = performance_simulation(
             Codeword,
             SNR,
             H,
@@ -343,7 +343,7 @@ if NREALS > 1
             rng_seed_sample=SEED_SAMPL)
     end
     if LRBP
-        @time FER_lrbp, BER_lrbp, Iters_lrbp = performance_simulation(
+        @time FER_lrbp, BER_lrbp = performance_simulation(
             Codeword,
             SNR,
             H,
