@@ -79,16 +79,16 @@ function
                 # if any new residue estimate is larger than the previously estimated maximum 
                 # residue than update the value of maxresidue and maxcoords.
                 maxresidue = minsum_RBP!(
-                Residues,
-                maxcoords,
-                maxresidue,
-                Factors,
-                Lr,
-                Lq,
-                signs,
-                vnmax,
-                m,
-                cn2vn)
+                    Residues,
+                    maxcoords,
+                    maxresidue,
+                    Factors,
+                    Lr,
+                    Lq,
+                    signs,
+                    vnmax,
+                    m,
+                    cn2vn)
             end
         end
 

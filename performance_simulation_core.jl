@@ -153,7 +153,8 @@ function
         init_Lq!(Lq,Lf,vn2cn)
 
         if supermode == "RBP"
-            minsum_RBP_init!(Residues,maxcoords,Lq,signs,cn2vn)
+            # minsum_RBP_init!(Residues,maxcoords,Lq,signs,cn2vn)
+            init_residues!(Residues,maxcoords,Lq,signs,cn2vn)
         end      
         # SPA routine
         DECODED, i = BP!(

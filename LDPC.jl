@@ -22,9 +22,9 @@ include("GF2_functions.jl")
 
  LBP::Bool = false
 iLBP::Bool = false
- RBP::Bool = false
-RRBP::Bool = false
-LRBP::Bool = false
+ RBP::Bool = true
+RRBP::Bool = true
+LRBP::Bool = true
 
 ############################# FLOODING MODE FLAGS ##############################
 
@@ -58,9 +58,9 @@ RANGE::Int64 = 20
 SIZE_per_RANGE::Float64 = SIZE/RANGE
 
 # Number of realizations and iterations
-NREALS::Int = 10000
+NREALS::Int = 100
 MAX::Int = 30
-MAXRBP::Int = 10
+MAXRBP::Int = 30
 STOP::Bool = false # stop simulation at zero syndrome (if true, BER curves are 
 # not printed)
 
