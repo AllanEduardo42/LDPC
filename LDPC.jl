@@ -39,7 +39,7 @@ FAST::Bool = true  # fast flooding update when using tanh mode (default:true)
 
 ################################ CONTROL FLAGS #################################
 
-SAVE = false
+SAVE = true
 PRINTING::Bool = false
 
 ############################# SIMULATION CONSTANTS #############################
@@ -58,7 +58,7 @@ RANGE::Int64 = 20
 SIZE_per_RANGE::Float64 = SIZE/RANGE
 
 # Number of realizations and iterations
-NREALS::Int = 960
+NREALS::Int = 96
 NTHREADS::Int = min(32,NREALS)
 MAX::Int = 30
 MAXRBP::Int = 30
@@ -206,7 +206,7 @@ if NREALS > 1
                     ylims=(lim-2,0)
                 )
                 display(p)
-                SAVE ? savefig(p,"BER_FLMKAY.png") : nothing
+                SAVE ? savefig(p,"BER_"*mode[1]*".png") : nothing
             end
         end
     end
@@ -226,7 +226,7 @@ if NREALS > 1
             if mode[2]
                 for i in eachindex(SNR)
                     title = mode[1] * " (SNR=$(SNR))"
-                    push!(aux,(title,BER_mkay[:,i]))
+                    push!(aux,(title,BER[mode[1]][:,i]))
                 end
             end
         end
