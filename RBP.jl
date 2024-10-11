@@ -10,6 +10,7 @@ function
         Residues::Matrix{<:AbstractFloat},
         d::Vector{Bool},
         Lr::Matrix{<:AbstractFloat},
+        Ms::Matrix{<:AbstractFloat},
         maxcoords::Vector{<:Integer},
         Lq::Matrix{<:AbstractFloat},
         Lf::Vector{<:AbstractFloat},
@@ -21,8 +22,7 @@ function
         num_edges::Integer,
         Ldn::Vector{<:AbstractFloat},
         samples::Union{Vector{<:Integer},Nothing},
-        rng_sample::Union{AbstractRNG,Nothing},
-        Ms::Matrix{<:AbstractFloat}
+        rng_sample::Union{AbstractRNG,Nothing}
     )
 
     for e in 1:num_edges
@@ -40,8 +40,6 @@ function
 
         _RBP_update_Lr!(maxcoords,Factors,rbpfactor,cn2vn,Lq,Lr)
 
-        # we don't use the m-to-n message correspoding to (cnmax,vnmax) anymore.
-        # Thus we make the largest residue equal to zero:
         @inbounds Residues[maxcoords...] = 0.0
 
         _RBP_update_vn2cn!(Residues,
@@ -53,10 +51,10 @@ function
                            d,
                            vn2cn,
                            cn2vn,
+                           Ms,
                            Lr,
                            Lq,
-                           signs,
-                           Ms)
+                           signs)
     end
 end
 
@@ -65,6 +63,7 @@ function
         Residues::Nothing,
         d::Vector{Bool},
         Lr::Matrix{<:AbstractFloat},
+        Ms::Matrix{<:AbstractFloat},
         maxcoords::Vector{<:Integer},
         Lq::Matrix{<:AbstractFloat},
         Lf::Vector{<:AbstractFloat},
@@ -75,9 +74,8 @@ function
         rbpfactor::AbstractFloat,
         num_edges::Integer,
         Ldn::Vector{<:AbstractFloat},        
-        samples::Nothing,
-        rng_sample::Nothing,
-        Ms::Matrix{<:AbstractFloat}
+        ::Nothing,
+        ::Nothing
     )
 
     for e = 1:num_edges
@@ -93,10 +91,10 @@ function
                                         d,
                                         vn2cn,
                                         cn2vn,
+                                        Ms,
                                         Lr,
                                         Lq,
-                                        signs,
-                                        Ms)
+                                        signs)
 
         if maxresidue == 0.0 #breaks the loop in LRBP mode
             break
@@ -141,10 +139,10 @@ function
         d::Vector{Bool},
         vn2cn::Vector{Vector{T}} where {T<:Integer},
         cn2vn::Vector{Vector{T}} where {T<:Integer},
+        Ms::Matrix{<:AbstractFloat},
         Lr::Matrix{<:AbstractFloat},
         Lq::Matrix{<:AbstractFloat},
-        signs::Vector{Bool},
-        Ms::Matrix{<:AbstractFloat}
+        signs::Vector{Bool}        
     )
 
     # update Ldn[vmax] and d[vnmax]
@@ -166,13 +164,13 @@ function
                 maxcoords,
                 maxresidue,
                 Factors,
+                Ms,
                 Lr,
                 Lq,
                 signs,
                 vnmax,
                 m,
-                cn2vn,
-                Ms)
+                cn2vn)
         end
     end
 end

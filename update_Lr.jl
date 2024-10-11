@@ -38,8 +38,8 @@ function
         m::Integer,
         cn2vn::Vector{Vector{T}} where {T<:Integer},
         Lrn::Vector{<:AbstractFloat},
-        signs::Nothing,
-        phi::Nothing        
+        ::Nothing,
+        ::Nothing        
     )
     pLr = 1.0
     for n in cn2vn[m]
@@ -62,9 +62,9 @@ function
         Lq::Matrix{<:AbstractFloat},
         m::Integer,
         cn2vn::Vector{Vector{T}} where {T<:Integer},
-        Lrn::Nothing,
-        signs::Nothing,
-        phi::Nothing   
+        ::Nothing,
+        ::Nothing,
+        ::Nothing   
     )
 
     for n in cn2vn[m]
@@ -81,7 +81,7 @@ end
 
 ################# ALTERNATIVE TO HYPERBOLIC TANGENT AND TABLE ##################
 
-function ϕ(Lq::AbstractFloat, phi::Nothing)    
+function ϕ(Lq::AbstractFloat, ::Nothing)    
     @fastmath log(1 + 2/(exp(Lq)-1))
 end
 
@@ -135,9 +135,9 @@ function
         Lq::Matrix{<:AbstractFloat},
         m::Integer,
         cn2vn::Vector{Vector{T}} where {T<:Integer},
-        Lrn::Nothing,
+        ::Nothing,
         signs::Vector{Bool},
-        phi::Nothing        
+        ::Nothing        
     )
 
     minsum!(Lq,Lr,signs,m,cn2vn)

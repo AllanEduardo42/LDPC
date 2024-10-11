@@ -172,6 +172,7 @@ function
                     Lf,
                     Lq,
                     Lr,
+                    Ms,
                     cn2vn,
                     vn2cn,
                     Lrn,
@@ -187,8 +188,7 @@ function
                     Ldn,
                     visited_vns,
                     samples,
-                    rng_sample,
-                    Ms
+                    rng_sample
                 )                
 
         # bit error rate

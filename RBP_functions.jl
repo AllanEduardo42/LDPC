@@ -11,20 +11,21 @@ function
         maxcoords::Vector{<:Integer},
         maxresidue::AbstractFloat,
         Factors::Union{Matrix{<:AbstractFloat},Nothing},
+        Ms::Matrix{<:AbstractFloat},
         Lr::Union{Matrix{<:AbstractFloat},Nothing},                      
         Lq::Matrix{<:AbstractFloat},
         signs::Vector{Bool},
         vnmax::Integer,
         m::Integer,
-        cn2vn::Vector{Vector{T}} where {T<:Integer},
-        Ms::Matrix{<:AbstractFloat}       
+        cn2vn::Vector{Vector{T}} where {T<:Integer}             
     )
     
-    minsum!(Lq,Ms,signs,m,cn2vn)    
+    minsum!(Lq,Ms,signs,m,cn2vn)
+    x = 0.0    
     for n in cn2vn[m]
         if n ≠ vnmax
-            y = __minsum_RBP!(Ms[m,n],Factors,Lr,m,n)
-            maxresidue = _minsum_RBP!(Residues,maxcoords,maxresidue,m,n,y)
+            x = calc_residue(Ms,Factors,Lr,m,n)
+            maxresidue = findmaxresidue!(Residues,maxcoords,maxresidue,m,n,x)
         end
     end
 
@@ -32,61 +33,63 @@ function
 end
 
 function 
-    __minsum_RBP!(
-        x::AbstractFloat,
+    calc_residue(
+        Ms::Matrix{<:AbstractFloat},
         Factors::Matrix{<:AbstractFloat},
         Lr::Matrix{<:AbstractFloat},
         m::Integer,
         n::Integer
     )
 
-    @fastmath @inbounds y = abs(x - Lr[m,n])*Factors[m,n]
-
-    return y
+    @fastmath @inbounds return abs(Ms[m,n] - Lr[m,n])*Factors[m,n]
 
 end
 
+# for initialization (Lr[m,n] = 0.0 and Factors[m,n] = 1.0 ∀m,n)
 function 
-    __minsum_RBP!(
-        x::AbstractFloat,
-        Factors::Nothing,
-        Lr::Nothing,
+    calc_residue(
+        Ms::Matrix{<:AbstractFloat},
+        ::Nothing,
+        ::Nothing,
         m::Integer,
         n::Integer
     )
 
-    @fastmath y = abs(x)
-
-    return y
+    @fastmath @inbounds return abs(Ms[m,n])
 
 end
 
 function 
-    _minsum_RBP!(
+    findmaxresidue!(
         Residues::Matrix{<:AbstractFloat},
-        maxcoords::Vector{Int},
+        ::Vector{Int},
         maxresidue::AbstractFloat,
         m::Integer,
         n::Integer,
-        y::AbstractFloat
+        x::AbstractFloat
     )
 
-    @inbounds Residues[m,n] = y
+    @inbounds Residues[m,n] = x
+    # if @fastmath x > maxresidue
+    #     maxresidue = x
+    #     @inbounds maxcoords[1] = m
+    #     @inbounds maxcoords[2] = n
+    # end
 
     return maxresidue
 end
 
 function 
-    _minsum_RBP!(
-        Residues::Nothing,
+    findmaxresidue!(
+        ::Nothing,
         maxcoords::Vector{Int},
         maxresidue::AbstractFloat,
         m::Integer,
         n::Integer,
-        y::AbstractFloat
+        x::AbstractFloat
     )
-    if @fastmath y > maxresidue
-        maxresidue = y
+    if @fastmath x > maxresidue
+        maxresidue = x
         @inbounds maxcoords[1] = m
         @inbounds maxcoords[2] = n
     end
@@ -106,18 +109,18 @@ function
     
     maxresidue = 0.0
     for m in eachindex(cn2vn)
-        maxresidue = minsum_RBP!(
+        maxresidue = calc_residues!(
             Residues,
             maxcoords,
             maxresidue,
             nothing,
+            Ms,
             nothing,
             Lq,
             signs,
             0,
             m,
-            cn2vn,
-            Ms
+            cn2vn
         )
     end
 end
@@ -154,8 +157,8 @@ function
         maxcoords::Vector{<:Integer},
         Residues::Matrix{<:AbstractFloat},
         cn2vn::Vector{Vector{T}} where {T<:Integer},
-        samples::Nothing,
-        rng_sample::Nothing
+        ::Nothing,
+        ::Nothing
     )
 
     maxresidue = 0.0

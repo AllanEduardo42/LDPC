@@ -44,7 +44,7 @@ function
         Lf::AbstractFloat,
         n::Integer,
         vn2cn::Vector{Vector{T}} where {T<:Integer},
-        Lrn::Vector{<:AbstractFloat}
+        ::Vector{<:AbstractFloat}
     )
 
     Ld = calc_Ld(n,vn2cn,Lf,Lr)
@@ -80,7 +80,7 @@ function
         Lf::AbstractFloat,
         n::Integer,
         vn2cn::Vector{Vector{T}} where {T<:Integer},
-        Lrn::Nothing
+        ::Nothing
     )
 
     for m in vn2cn[n]

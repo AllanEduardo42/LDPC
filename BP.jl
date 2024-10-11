@@ -26,7 +26,8 @@ function
         ber::Vector{<:AbstractFloat},
         Lf::Array{<:AbstractFloat},
         Lq::Array{<:AbstractFloat},
-        Lr::Array{<:AbstractFloat},      
+        Lr::Array{<:AbstractFloat},
+        Ms::Union{Matrix{<:AbstractFloat},Nothing},      
         cn2vn::Vector{Vector{T}} where {T<:Integer},
         vn2cn::Vector{Vector{T}} where {T<:Integer},
         Lrn::Union{Vector{<:AbstractFloat},Nothing},
@@ -42,8 +43,7 @@ function
         Ldn::Union{Vector{<:AbstractFloat},Nothing},
         visited_vns::Union{Vector{Bool},Nothing},
         samples::Union{Vector{<:Integer},Nothing},
-        rgn_sample::Union{AbstractRNG,Nothing},
-        Ms::Union{Matrix{<:AbstractFloat},Nothing}
+        rgn_sample::Union{AbstractRNG,Nothing}
     )
              
     # index = max
@@ -85,6 +85,7 @@ function
                 Residues,
                 d,
                 Lr,
+                Ms,
                 maxcoords,
                 Lq,
                 Lf,
@@ -96,8 +97,7 @@ function
                 num_edges,
                 Ldn,
                 samples,
-                rgn_sample,
-                Ms
+                rgn_sample
             )
             # reset factors
             Factors[H] .= 1.0
