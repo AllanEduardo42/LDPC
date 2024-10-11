@@ -19,8 +19,8 @@ function
         max::Integer,
         stop::Bool,
         rbpfactor::Union{AbstractFloat,Nothing},
-        rng_noise::AbstractRNG,
-        rng_sample::Union{AbstractRNG,Nothing},
+        rgn_seed_noise::Integer,
+        rng_seed_sample::Integer,
         test::Bool,
         t_test::Union{Vector{<:AbstractFloat},Nothing},
         printing::Bool
@@ -50,7 +50,7 @@ function
     # iters = Vector{Int}(undef, nreals)
 
     # estimate
-    d = Vector{Bool}(undef,N)
+    d = zeros(Bool,N)
 
     # syndrome
     syndrome = ones(Bool,M)
@@ -71,6 +71,8 @@ function
     # Lr -> matrix of cn2vn messages (M x N)
     # if mode == "MKAY" the are matrices for bit = 0 and bit = 1
     Lq, Lr = (mode != "MKAY") ? (H'*0.0,H*0.0) : (zeros(N,M,2),zeros(M,N,2))
+
+    Ms = (supermode == "RBP") ? H*0.0 : nothing
 
     # Set variables Lrn and signs depending on the mode (also used for dispatch)
     if (mode == "TANH" && FAST) || mode == "LBP" || mode == "iLBP"
@@ -109,6 +111,10 @@ function
         (nothing,nothing,nothing)
 
 ################################## MAIN LOOP ###################################
+    
+    rng_noise = Xoshiro(rgn_seed_noise)
+
+    rng_sample = (mode == "RRBP") ? Xoshiro(rng_seed_sample) : nothing
 
     ######################### FIRST RECEIVED SIGNAL ############################
     # In order to allow to test with a given received signal t_test, the first
@@ -147,7 +153,8 @@ function
         init_Lq!(Lq,Lf,vn2cn)
 
         if supermode == "RBP"
-            init_residues!(Residues,maxcoords,Lq,signs,cn2vn)
+            # minsum_RBP_init!(Residues,maxcoords,Lq,signs,cn2vn)
+            init_residues!(Residues,maxcoords,Lq,signs,cn2vn,Ms)
         end      
         # SPA routine
         # DECODED, i = BP!(
@@ -180,7 +187,8 @@ function
                     Ldn,
                     visited_vns,
                     samples,
-                    rng_sample
+                    rng_sample,
+                    Ms
                 )                
 
         # bit error rate
@@ -196,6 +204,9 @@ function
         received_signal!(t,noise,stdev,u,rng_noise)
 
     end
+
+    # @inbounds @fastmath FER /= nreals
+
 
     if test
         return Lr, Lq

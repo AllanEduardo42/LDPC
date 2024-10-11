@@ -6,7 +6,7 @@
 include("minsum.jl")
 
 function
-    minsum_RBP!(
+    calc_residues!(
         Residues::Union{Matrix{<:AbstractFloat},Nothing},
         maxcoords::Vector{<:Integer},
         maxresidue::AbstractFloat,
@@ -16,16 +16,14 @@ function
         signs::Vector{Bool},
         vnmax::Integer,
         m::Integer,
-        cn2vn::Vector{Vector{T}} where {T<:Integer}       
+        cn2vn::Vector{Vector{T}} where {T<:Integer},
+        Ms::Matrix{<:AbstractFloat}       
     )
     
-    x = 0.0
-    y = 0.0
-    args = _minsum!(Lq,signs,m,cn2vn)
+    minsum!(Lq,Ms,signs,m,cn2vn)    
     for n in cn2vn[m]
         if n ≠ vnmax
-            @inbounds x = __minsum!(n,signs[n],args...)
-            y = __minsum_RBP!(x,Factors,Lr,m,n)
+            y = __minsum_RBP!(Ms[m,n],Factors,Lr,m,n)
             maxresidue = _minsum_RBP!(Residues,maxcoords,maxresidue,m,n,y)
         end
     end
@@ -102,7 +100,8 @@ function
         maxcoords::Vector{<:Integer},              
         Lq::Matrix{<:AbstractFloat},
         signs::Vector{Bool},
-        cn2vn::Vector{Vector{T}} where {T<:Integer}
+        cn2vn::Vector{Vector{T}} where {T<:Integer},
+        Ms::Matrix{<:AbstractFloat}
     )
     
     maxresidue = 0.0
@@ -117,7 +116,8 @@ function
             signs,
             0,
             m,
-            cn2vn
+            cn2vn,
+            Ms
         )
     end
 end

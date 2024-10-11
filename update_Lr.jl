@@ -139,9 +139,7 @@ function
         signs::Vector{Bool},
         phi::Nothing        
     )
-    args = _minsum!(Lq,signs,m,cn2vn)
-    for n in cn2vn[m]
-        @inbounds Lr[m,n] = __minsum!(n,signs[n],args...)
-    end 
+
+    minsum!(Lq,Lr,signs,m,cn2vn)
 
 end

@@ -42,7 +42,8 @@ function
         Ldn::Union{Vector{<:AbstractFloat},Nothing},
         visited_vns::Union{Vector{Bool},Nothing},
         samples::Union{Vector{<:Integer},Nothing},
-        rgn_sample::Union{AbstractRNG,Nothing}
+        rgn_sample::Union{AbstractRNG,Nothing},
+        Ms::Union{Matrix{<:AbstractFloat},Nothing}
     )
              
     # index = max
@@ -81,6 +82,7 @@ function
             )   
         elseif supermode == "RBP"
             RBP!(
+                Residues,
                 d,
                 Lr,
                 maxcoords,
@@ -93,10 +95,9 @@ function
                 rbpfactor,
                 num_edges,
                 Ldn,
-                Residues,
                 samples,
                 rgn_sample,
-                mode == "LRBP"
+                Ms
             )
             # reset factors
             Factors[H] .= 1.0

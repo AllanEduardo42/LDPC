@@ -19,17 +19,17 @@ include("PEG.jl")
 include("GF2_functions.jl")
 
 ################################ BP MODE FLAGS ################################
-
+false
  LBP::Bool = false
 iLBP::Bool = false
  RBP::Bool = true
-RRBP::Bool = false
-LRBP::Bool = false
+RRBP::Bool = true
+LRBP::Bool = true
 
 ############################# FLOODING MODE FLAGS ##############################
 
 MKAY::Bool = false
-TANH::Bool = true
+TANH::Bool = false
 ALTN::Bool = false
 TABL::Bool = false
 MSUM::Bool = false
@@ -58,7 +58,8 @@ RANGE::Int64 = 20
 SIZE_per_RANGE::Float64 = SIZE/RANGE
 
 # Number of realizations and iterations
-NREALS::Int = 960
+NREALS::Int = 96
+NTHREADS::Int = min(32,NREALS)
 MAX::Int = 30
 MAXRBP::Int = 30
 STOP::Bool = false # stop simulation at zero syndrome (if true, BER curves are 
@@ -71,7 +72,7 @@ DECAYRRBP::Float64 = 0.9
 SAMPLESIZE::Int = 51
 
 ##################################### SNR ######################################
-SNRTEST = [4]
+SNRTEST = [3]
 SNR = collect(1:1:4)
 
 ############################# PARITY-CHECK MATRIX #############################
@@ -127,6 +128,15 @@ end
 println()
 println()
 
+#################################### SEEDS #####################################
+
+rgn_noise_seeds = zeros(Int,NTHREADS)
+rgn_samples_seeds = zeros(Int,NTHREADS)
+for i in eachindex(rgn_noise_seeds)
+    rgn_noise_seeds[i] = SEED_NOISE + i - 1
+    rgn_samples_seeds[i] = SEED_SAMPL + i - 1
+end
+
 ############################## JULIA COMPILATION ###############################
 if MKAY
     Lr_mkay, Lq_mkay = performance_simulation(Codeword,
@@ -136,7 +146,7 @@ if MKAY
                                               1,
                                               MAX,
                                               STOP,
-                                              SEED_NOISE;
+                                              rgn_noise_seeds;
                                               printing=PRINTING)
 end
 if TANH
@@ -147,7 +157,7 @@ if TANH
                                               1,
                                               MAX,
                                               STOP,
-                                              SEED_NOISE;
+                                              rgn_noise_seeds;
                                               printing=PRINTING)
 end
 if ALTN
@@ -158,7 +168,7 @@ if ALTN
                                               1,
                                               MAX,
                                               STOP,
-                                              SEED_NOISE;
+                                              rgn_noise_seeds;
                                               printing=PRINTING)
 end
 if TABL
@@ -169,7 +179,7 @@ if TABL
                                               1,
                                               MAX,
                                               STOP,
-                                              SEED_NOISE;
+                                              rgn_noise_seeds;
                                               printing=PRINTING)
 end
 if MSUM
@@ -180,7 +190,7 @@ if MSUM
                                               1,
                                               MAX,
                                               STOP,
-                                              SEED_NOISE;
+                                              rgn_noise_seeds;
                                               printing=PRINTING)
 end
 if  LBP
@@ -191,7 +201,7 @@ if  LBP
                                               1,
                                               MAX,
                                               STOP,
-                                              SEED_NOISE;
+                                              rgn_noise_seeds;
                                               printing=PRINTING)
 end
 if iLBP
@@ -202,7 +212,7 @@ if iLBP
                                               1,
                                               MAX,
                                               STOP,
-                                              SEED_NOISE;
+                                              rgn_noise_seeds;
                                               printing=PRINTING)
 end
 if RBP
@@ -213,7 +223,7 @@ if RBP
                                               1,
                                               MAXRBP,
                                               STOP,
-                                              SEED_NOISE;
+                                              rgn_noise_seeds;
                                               printing=PRINTING)
 end
 if RRBP
@@ -224,8 +234,8 @@ if RRBP
                                               1,
                                               MAXRBP,
                                               STOP,
-                                              SEED_NOISE;
-                                              rng_seed_sample=SEED_SAMPL,
+                                              rgn_noise_seeds;
+                                              rgn_samples_seeds=rgn_samples_seeds,
                                               printing=PRINTING)
 end
 if LRBP
@@ -236,7 +246,7 @@ if LRBP
                                               1,
                                               MAXRBP,
                                               STOP,
-                                              SEED_NOISE;
+                                              rgn_noise_seeds;
                                               printing=PRINTING)
 end
                              
@@ -251,7 +261,7 @@ if NREALS > 1
             NREALS,
             MAX,
             STOP,
-            SEED_NOISE)
+            rgn_noise_seeds)
     end
     if TANH
         @time FER_tanh, BER_tanh = performance_simulation(
@@ -262,7 +272,7 @@ if NREALS > 1
             NREALS,
             MAX,
             STOP,
-            SEED_NOISE)
+            rgn_noise_seeds)
     end
     if ALTN
         @time FER_altn, BER_altn = performance_simulation(
@@ -273,7 +283,7 @@ if NREALS > 1
             NREALS,
             MAX,
             STOP,
-            SEED_NOISE)
+            rgn_noise_seeds)
     end
     if TABL
         @time FER_tabl, BER_tabl = performance_simulation(
@@ -284,7 +294,7 @@ if NREALS > 1
             NREALS,
             MAX,
             STOP,
-            SEED_NOISE)
+            rgn_noise_seeds)
     end
     if MSUM
         @time FER_msum, BER_msum = performance_simulation(
@@ -295,7 +305,7 @@ if NREALS > 1
             NREALS,
             MAX,
             STOP,
-            SEED_NOISE)
+            rgn_noise_seeds)
     end
     if  LBP
         @time FER_lbp, BER_lbp = performance_simulation(
@@ -306,7 +316,7 @@ if NREALS > 1
             NREALS,
             MAX,
             STOP,
-            SEED_NOISE)
+            rgn_noise_seeds)
     end
     if iLBP
         @time FER_ilbp, BER_ilbp = performance_simulation(
@@ -317,7 +327,7 @@ if NREALS > 1
             NREALS,
             MAX,
             STOP,
-            SEED_NOISE)
+            rgn_noise_seeds)
     end
     if  RBP
         @time FER_rbp, BER_rbp = performance_simulation(
@@ -328,7 +338,7 @@ if NREALS > 1
             NREALS,
             MAXRBP,
             STOP,
-            SEED_NOISE)
+            rgn_noise_seeds)
     end
     if  RRBP
         @time FER_rrbp, BER_rrbp = performance_simulation(
@@ -339,8 +349,8 @@ if NREALS > 1
             NREALS,
             MAXRBP,
             STOP,
-            SEED_NOISE;
-            rng_seed_sample=SEED_SAMPL)
+            rgn_noise_seeds;
+            rgn_samples_seeds=rgn_samples_seeds)
     end
     if LRBP
         @time FER_lrbp, BER_lrbp = performance_simulation(
@@ -351,7 +361,7 @@ if NREALS > 1
             NREALS,
             MAXRBP,
             STOP,
-            SEED_NOISE)
+            rgn_noise_seeds)
     end
 ################################### PLOTTING ###################################
     plotlyjs()

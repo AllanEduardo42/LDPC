@@ -1,13 +1,13 @@
-
 ################################################################################
 # Allan Eduardo Feitosa
-# 23 set 2024
+# 11 out 2024
 # RBP Sum-Product Algorithm using min-sum to calculate the residues
 
 include("RBP_functions.jl")
 
 function
     RBP!(
+        Residues::Matrix{<:AbstractFloat},
         d::Vector{Bool},
         Lr::Matrix{<:AbstractFloat},
         maxcoords::Vector{<:Integer},
@@ -20,84 +20,159 @@ function
         rbpfactor::AbstractFloat,
         num_edges::Integer,
         Ldn::Vector{<:AbstractFloat},
-        Residues::Union{Matrix{<:AbstractFloat},Nothing},
         samples::Union{Vector{<:Integer},Nothing},
         rng_sample::Union{AbstractRNG,Nothing},
-        lrbp::Bool
+        Ms::Matrix{<:AbstractFloat}
     )
 
-    e = 1
-    while e <= num_edges
+    for e in 1:num_edges
 
-        if !lrbp
+        maxresidue = find_maxresidue_coords!(
+            maxcoords,
+            Residues,
+            cn2vn,
+            samples,
+            rng_sample)
 
-            maxresidue = find_maxresidue_coords!(
-                maxcoords,
-                Residues,
-                cn2vn,
-                samples,
-                rng_sample)
-
-            if maxresidue == 0.0 # if RBP has converged
-                break
-            end
+        if maxresidue == 0.0 # if RBP has converged
+            break
         end
 
-        (cnmax,vnmax) = maxcoords
-        @fastmath @inbounds Factors[cnmax,vnmax] *= rbpfactor
-
-        ### update Lr[cnmax,vnmax]
-        pLr = 1.0
-        for n in cn2vn[cnmax]
-            if n != vnmax
-                @fastmath @inbounds pLr *= tanh(0.5*Lq[n,cnmax])
-            end
-        end    
-        if @fastmath abs(pLr) < 1 
-            @fastmath @inbounds Lr[cnmax,vnmax] = 2*atanh(pLr)
-        end
+        _RBP_update_Lr!(maxcoords,Factors,rbpfactor,cn2vn,Lq,Lr)
 
         # we don't use the m-to-n message correspoding to (cnmax,vnmax) anymore.
         # Thus we make the largest residue equal to zero:
-        if lrbp
-            maxresidue = 0.0
-        else
-            @inbounds Residues[cnmax,vnmax] = 0.0
-        end
-        
-        # update Ldn[vmax] and d[vnmax]
-        @inbounds Ldn[vnmax] = Lf[vnmax]
-        for m in vn2cn[vnmax]
-            @fastmath @inbounds Ldn[vnmax] += Lr[m,vnmax]
-            @fastmath @inbounds d[vnmax] = signbit(Ldn[vnmax])
-        end
+        @inbounds Residues[maxcoords...] = 0.0
 
-        for m in vn2cn[vnmax]
-            if m ≠ cnmax
-                # update vn2cn messages Lq[vnmax,m], ∀m ≠ cnmax
-                @fastmath @inbounds Lq[vnmax,m] = Ldn[vnmax] - Lr[m,vnmax]
-                # if any new residue estimate is larger than the previously estimated maximum 
-                # residue than update the value of maxresidue and maxcoords.
-                maxresidue = minsum_RBP!(
-                    Residues,
-                    maxcoords,
-                    maxresidue,
-                    Factors,
-                    Lr,
-                    Lq,
-                    signs,
-                    vnmax,
-                    m,
-                    cn2vn)
-            end
-        end
+        _RBP_update_vn2cn!(Residues,
+                           maxcoords,
+                           maxresidue,
+                           Factors,
+                           Lf,
+                           Ldn,
+                           d,
+                           vn2cn,
+                           cn2vn,
+                           Lr,
+                           Lq,
+                           signs,
+                           Ms)
+    end
+end
+
+function
+    RBP!(
+        Residues::Nothing,
+        d::Vector{Bool},
+        Lr::Matrix{<:AbstractFloat},
+        maxcoords::Vector{<:Integer},
+        Lq::Matrix{<:AbstractFloat},
+        Lf::Vector{<:AbstractFloat},
+        cn2vn::Vector{Vector{T}} where {T<:Integer},
+        vn2cn::Vector{Vector{T}} where {T<:Integer},
+        signs::Vector{Bool},
+        Factors::Matrix{<:AbstractFloat},
+        rbpfactor::AbstractFloat,
+        num_edges::Integer,
+        Ldn::Vector{<:AbstractFloat},        
+        samples::Nothing,
+        rng_sample::Nothing,
+        Ms::Matrix{<:AbstractFloat}
+    )
+
+    for e = 1:num_edges
+
+        _RBP_update_Lr!(maxcoords,Factors,rbpfactor,cn2vn,Lq,Lr)
+
+        maxresidue = _RBP_update_vn2cn!(Residues,
+                                        maxcoords,
+                                        0.0,
+                                        Factors,
+                                        Lf,
+                                        Ldn,
+                                        d,
+                                        vn2cn,
+                                        cn2vn,
+                                        Lr,
+                                        Lq,
+                                        signs,
+                                        Ms)
 
         if maxresidue == 0.0 #breaks the loop in LRBP mode
             break
         end
+    end
+end
 
-        e +=1
+function 
+    _RBP_update_Lr!(
+        maxcoords::Vector{<:Integer},
+        Factors::Matrix{<:AbstractFloat},
+        rbpfactor::AbstractFloat,
+        cn2vn::Vector{Vector{T}} where {T<:Integer},
+        Lq::Matrix{<:AbstractFloat},
+        Lr::Matrix{<:AbstractFloat}
+    )
 
+    (cnmax,vnmax) = maxcoords
+    @fastmath @inbounds Factors[cnmax,vnmax] *= rbpfactor
+
+    ### update Lr[cnmax,vnmax]
+    pLr = 1.0
+    for n in cn2vn[cnmax]
+        if n != vnmax
+            @fastmath @inbounds pLr *= tanh(0.5*Lq[n,cnmax])
+        end
+    end    
+    if @fastmath abs(pLr) < 1 
+        @fastmath @inbounds Lr[cnmax,vnmax] = 2*atanh(pLr)
     end
 
+end
+
+function 
+    _RBP_update_vn2cn!(
+        Residues::Union{Matrix{<:AbstractFloat},Nothing},
+        maxcoords::Vector{<:Integer},
+        maxresidue::AbstractFloat,
+        Factors::Matrix{<:AbstractFloat},
+        Lf::Vector{<:AbstractFloat},
+        Ldn::Vector{<:AbstractFloat},
+        d::Vector{Bool},
+        vn2cn::Vector{Vector{T}} where {T<:Integer},
+        cn2vn::Vector{Vector{T}} where {T<:Integer},
+        Lr::Matrix{<:AbstractFloat},
+        Lq::Matrix{<:AbstractFloat},
+        signs::Vector{Bool},
+        Ms::Matrix{<:AbstractFloat}
+    )
+
+    # update Ldn[vmax] and d[vnmax]
+    (cnmax,vnmax) = maxcoords
+    @inbounds Ldn[vnmax] = Lf[vnmax]
+    for m in vn2cn[vnmax]
+        @fastmath @inbounds Ldn[vnmax] += Lr[m,vnmax]
+        @fastmath @inbounds d[vnmax] = signbit(Ldn[vnmax])
+    end
+
+    for m in vn2cn[vnmax]
+        if m ≠ cnmax
+            # update vn2cn messages Lq[vnmax,m], ∀m ≠ cnmax
+            @fastmath @inbounds Lq[vnmax,m] = Ldn[vnmax] - Lr[m,vnmax]
+            # if any new residue estimate is larger than the previously estimated maximum 
+            # residue than update the value of maxresidue and maxcoords.
+            maxresidue = calc_residues!(
+                Residues,
+                maxcoords,
+                maxresidue,
+                Factors,
+                Lr,
+                Lq,
+                signs,
+                vnmax,
+                m,
+                cn2vn,
+                Ms)
+        end
+    end
 end

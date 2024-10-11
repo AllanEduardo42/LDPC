@@ -1,7 +1,7 @@
 ################################################################################
 # Allan Eduardo Feitosa
 # 22 set 2024
-# Horizontal update of the LLR based MIN SUM Algorithm
+# Horizontal update of the LMs based MIN SUM Algorithm
 
 function abs_sign!(Lq::AbstractFloat,s::Bool)
     sig = signbit(Lq)
@@ -9,11 +9,12 @@ function abs_sign!(Lq::AbstractFloat,s::Bool)
     return ab, sig, s ⊻ sig
 end
 
-function _minsum!(                           
+function minsum!(                           
     Lq::Matrix{<:AbstractFloat},
+    Ms::Matrix{<:AbstractFloat},
     signs::Vector{Bool},
     m::Integer,
-    cn2vn::Vector{Vector{T}} where {T<:Integer},   
+    cn2vn::Vector{Vector{T}} where {T<:Integer}   
     )
 
     s = false
@@ -30,24 +31,12 @@ function _minsum!(
         end
     end
 
-    return minL, minL2, s, max_idx
-
-end
-
-function 
-    __minsum!(
-        n::Integer,
-        sig::Bool,
-        minL::AbstractFloat,
-        minL2::AbstractFloat,
-        s::Bool,
-        max_idx::Integer
-    )
-
-    if n == max_idx #(pick the second least Lq)
-        return @fastmath (1 - 2*(sig ⊻ s))*minL2
-    else
-        return @fastmath (1 - 2*(sig ⊻ s))*minL
+    for n in cn2vn[m]
+        if n == max_idx #(pick the second least Lq)
+            @fastmath @inbounds Ms[m,n] = (1 - 2*(signs[n] ⊻ s))*minL2
+        else
+            @fastmath @inbounds Ms[m,n] = (1 - 2*(signs[n] ⊻ s))*minL
+        end
     end
 
 end

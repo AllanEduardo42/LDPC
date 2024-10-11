@@ -1,120 +1,103 @@
 
-include("MAP.jl")
-include("RBP_vertical_update.jl")
-include("RBP_findmax_ΔLr.jl")
+################################################################################
+# Allan Eduardo Feitosa
+# 23 set 2024
+# RBP Sum-Product Algorithm using min-sum to calculate the residues
+
+include("RBP_functions.jl")
 
 function
     RBP!(
         d::Vector{Bool},
         Lr::Matrix{<:AbstractFloat},
-        max_coords::Vector{<:Integer},
+        maxcoords::Vector{<:Integer},
         Lq::Matrix{<:AbstractFloat},
-        ΔLf::Vector{<:AbstractFloat},
-        checks2nodes::Vector{Vector{T}} where {T<:Integer},
-        nodes2checks::Vector{Vector{T}} where {T<:Integer},
-        Lrn::Vector{<:AbstractFloat},
-        R::Matrix{<:AbstractFloat}
+        Lf::Vector{<:AbstractFloat},
+        cn2vn::Vector{Vector{T}} where {T<:Integer},
+        vn2cn::Vector{Vector{T}} where {T<:Integer},
+        signs::Vector{Bool},
+        Factors::Matrix{<:AbstractFloat},
+        rbpfactor::AbstractFloat,
+        num_edges::Integer,
+        Ldn::Vector{<:AbstractFloat},
+        Residues::Union{Matrix{<:AbstractFloat},Nothing},
+        samples::Union{Vector{<:Integer},Nothing},
+        rng_sample::Union{AbstractRNG,Nothing},
+        lrbp::Bool
     )
 
-    max_residue = 0.0
-    check = 0
-    for nodes in checks2nodes
-        check+=1
-        max_residue =   RBP_findmax_ΔLr!(
-                                    nodes,
-                                    Lrn,
-                                    view(Lq,check,:),
-                                    view(Lr,check,:),
-                                    check,
-                                    0,
-                                    max_residue,
-                                    max_coords
-                                )
-        # calc_residues!(
-        #     nodes,
-        #     Lrn,
-        #     view(Lq,check,:),
-        #     view(Lr,check,:),
-        #     check,
-        #     0,
-        #     R
-        # )
-    end
+    e = 1
+    while e <= num_edges
 
-    # max_residue = find_max_residue(R,checks2nodes,max_coords)
+        if !lrbp
 
-    for m in 1:1531
+            maxresidue = find_maxresidue_coords!(
+                maxcoords,
+                Residues,
+                cn2vn,
+                samples,
+                rng_sample)
 
-        (cmax,nmax) = max_coords
-
-        # update the message with largest residue
-        @inbounds @fastmath Lr[cmax,nmax] += max_residue
-        # R[cmax,nmax] = 0.0
-        max_residue = 0.0
-        
-        _checks = nodes2checks[nmax]
-        for check in _checks
-            if check ≠ cmax
-                # vertical update of Lq[check,nmax], check ≠ cmax
-                @inbounds Lq[check,nmax] =  RBP_vertical_update(
-                                                _checks,
-                                                check,
-                                                ΔLf[nmax],
-                                                view(Lr,:,nmax)
-                                            )
-                # find max ΔLr[node,check], node ≠ nmax, check ≠ cmax
-                _nodes = checks2nodes[check]
-                # calc_residues!(
-                #     _nodes,
-                #     Lrn,
-                #     view(Lq,check,:),
-                #     view(Lr,check,:),
-                #     check,
-                #     nmax,
-                #     R
-                #     )
-                max_residue =   RBP_findmax_ΔLr!(
-                                    _nodes,
-                                    Lrn,
-                                    view(Lq,check,:),
-                                    view(Lr,check,:),
-                                    check,
-                                    nmax,
-                                    max_residue,
-                                    max_coords
-                                )
+            if maxresidue == 0.0 # if RBP has converged
+                break
             end
         end
-        # max_residue = find_max_residue(R,checks2nodes,max_coords)
 
-        if max_residue == 0.0
+        (cnmax,vnmax) = maxcoords
+        @fastmath @inbounds Factors[cnmax,vnmax] *= rbpfactor
+
+        ### update Lr[cnmax,vnmax]
+        pLr = 1.0
+        for n in cn2vn[cnmax]
+            if n != vnmax
+                @fastmath @inbounds pLr *= tanh(0.5*Lq[n,cnmax])
+            end
+        end    
+        if @fastmath abs(pLr) < 1 
+            @fastmath @inbounds Lr[cnmax,vnmax] = 2*atanh(pLr)
+        end
+
+        # we don't use the m-to-n message correspoding to (cnmax,vnmax) anymore.
+        # Thus we make the largest residue equal to zero:
+        if lrbp
+            maxresidue = 0.0
+        else
+            @inbounds Residues[cnmax,vnmax] = 0.0
+        end
+        
+        # update Ldn[vmax] and d[vnmax]
+        @inbounds Ldn[vnmax] = Lf[vnmax]
+        for m in vn2cn[vnmax]
+            @fastmath @inbounds Ldn[vnmax] += Lr[m,vnmax]
+            @fastmath @inbounds d[vnmax] = signbit(Ldn[vnmax])
+        end
+
+        for m in vn2cn[vnmax]
+            if m ≠ cnmax
+                # update vn2cn messages Lq[vnmax,m], ∀m ≠ cnmax
+                @fastmath @inbounds Lq[vnmax,m] = Ldn[vnmax] - Lr[m,vnmax]
+                # if any new residue estimate is larger than the previously estimated maximum 
+                # residue than update the value of maxresidue and maxcoords.
+                maxresidue = minsum_RBP!(
+                    Residues,
+                    maxcoords,
+                    maxresidue,
+                    Factors,
+                    Lr,
+                    Lq,
+                    signs,
+                    vnmax,
+                    m,
+                    cn2vn)
+            end
+        end
+
+        if maxresidue == 0.0 #breaks the loop in LRBP mode
             break
         end
+
+        e +=1
+
     end
 
-    MAP!(
-        d,
-        nodes2checks,
-        ΔLf,
-        Lr
-    )
-
-end
-
-function find_max_residue(R,checks2nodes,max_coords)
-
-    check = 0
-    max_residue = 0
-    for nodes in checks2nodes
-        check += 1
-        for node in nodes
-            if abs(R[check,node]) > abs(max_residue)
-                max_residue = R[check,node]
-                max_coords[1] = check
-                max_coords[2] = node
-            end
-        end
-    end
-
-    return max_residue
 end

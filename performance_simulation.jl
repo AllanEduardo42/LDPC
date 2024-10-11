@@ -14,8 +14,8 @@ function
         nreals::Integer,
         max::Integer,
         stop::Bool,
-        rgn_seed_noise::Integer;
-        rng_seed_sample=1234,
+        rgn_noise_seeds::Vector{<:Integer};
+        rgn_samples_seeds=ones(Int,NTHREADS),
         t_test=nothing,
         printing=false    
     )
@@ -107,27 +107,24 @@ function
     end
 
     if !test
-        NTH = 32
         K = length(SNR)
-        fer, ber = zeros(K,NTH), zeros(max,K,NTH)
+        fer, ber = zeros(K,NTHREADS), zeros(max,K,NTHREADS)
         # Threads.@threads 
         for k in 1:K
-            rng_noise = Xoshiro(rgn_seed_noise)
-            rng_sample = (mode == "RRBP") ? Xoshiro(rng_seed_sample) : nothing
-            Threads.@threads for nth in 1:NTH
-                fer[k,nth], ber[:,k,nth] = 
+            Threads.@threads for i in 1:NTHREADS
+                fer[k,i], ber[:,k,i] = 
                     performance_simulation_core(
                                         codeword,
                                         snr[k],
                                         H,
                                         mode,
                                         supermode,
-                                        nreals÷NTH,
+                                        nreals÷NTHREADS,
                                         max,
                                         stop,
                                         rbpfactor,
-                                        rng_noise,
-                                        rng_sample,
+                                        rgn_noise_seeds[i],
+                                        rgn_samples_seeds[i],
                                         test,
                                         t_test,
                                         printing)
@@ -143,9 +140,6 @@ function
     
     else
 
-        rng_noise = Xoshiro(rgn_seed_noise)
-        rng_sample = (mode == "RRBP") ? Xoshiro(rng_seed_sample) : nothing
-
         Lr, Lq = performance_simulation_core(
                                     codeword,
                                     snr[1],
@@ -156,8 +150,8 @@ function
                                     max,
                                     stop,
                                     rbpfactor,
-                                    rng_noise,
-                                    rng_sample,
+                                    rgn_noise_seeds[1],
+                                    rgn_samples_seeds[1],
                                     test,
                                     t_test,
                                     printing)
