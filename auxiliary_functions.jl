@@ -78,3 +78,16 @@ function
     @fastmath t .= u .+ noise
 
 end
+
+function
+    resetfactors!(
+        Factors::Matrix{<:AbstractFloat},
+        vn2cn::Vector{Vector{T}} where {T<:Integer}
+    )
+    
+    for n in eachindex(vn2cn)
+        for m in vn2cn[n]
+            Factors[m,n] = 1.0
+        end
+    end
+end

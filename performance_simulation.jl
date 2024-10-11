@@ -11,37 +11,40 @@ function
         snr::Vector{<:Real},
         H::BitMatrix,
         mode::String,
+        floomode::String,
         nreals::Integer,
         max::Integer,
         stop::Bool,
-        rgn_noise_seeds::Vector{<:Integer};
-        rgn_samples_seeds=ones(Int,NTHREADS),
+        rgn_noise_seeds::Vector{<:Integer},
+        rgn_samples_seeds::Vector{<:Integer};
         t_test=nothing,
         printing=false    
     )
 
 ############################### CHECK VALID MODE ###############################
-    if mode == "MKAY" || mode == "TANH" || mode == "ALTN" || mode == "TABL" ||
-        mode == "MSUM"
-        
-        supermode = "FLOO"
+    if mode == "Flooding"
+        if floomode == "MKAY" || floomode == "TANH" || floomode == "ALTN" || 
+           floomode == "TABL" || floomode == "MSUM"      
 
+            supermode, mode = mode, floomode
+        else
+            throw(
+                ArgumentError(
+                    "$floomode is not a valid flooding mode"
+                )
+            )
+        end
     elseif mode == "LBP" || mode == "iLBP"
-
-        supermode = "LBP"
-    
-    elseif mode == "RBP" || mode == "LRBP" || mode == "RRBP"
-        
+        supermode = "LBP"    
+    elseif mode == "RBP" || mode == "Local-RBP" || mode == "Random-RBP"||
+           mode == "List-RBP" 
         supermode = "RBP"
-
     else
-
         throw(
             ArgumentError(
                 "$mode is not a valid mode"
             )
         )
-
     end
 
 ########################## PRINT SIMULATION DETAILS ############################
@@ -51,9 +54,9 @@ function
     if supermode == "RBP"
         if mode == "RBP"
             rbpfactor = DECAYRBP
-        elseif mode == "LRBP"
+        elseif mode == "Local-RBP"
             rbpfactor = DECAYLRBP
-        elseif mode == "RRBP"
+        elseif mode == "Random-RBP"
             rbpfactor = DECAYRRBP
         end           
     else
@@ -73,17 +76,17 @@ function
         println("Number of trials: $nreals")
     end
     if !test || printing
-        if supermode == "FLOO"
+        if supermode == "Flooding"
             print("Message passing protocol: Flooding (using ")
-            if mode == "MKAY"
+            if floomode == "MKAY"
                 println("Mckay's SPA method)")
-            elseif mode == "TANH"
+            elseif floomode == "TANH"
                 println("LLR-SPA calculated by tanh)")
-            elseif mode == "ALTN"
+            elseif floomode == "ALTN"
                 println("LLR-SPA calculated by ϕ function)")
-            elseif mode == "TABL"
+            elseif floomode == "TABL"
                 println("LLR-SPA precalculated in look-up table)")
-            elseif mode == "MSUM"
+            elseif floomode == "MSUM"
                 println("LLRs calculated by min-sum algorithm)")
             end
         elseif mode == "LBP"
@@ -92,9 +95,9 @@ function
             println("Message passing protocol: iLBP")
         elseif mode == "RBP"
             println("Message passing protocol: RBP")
-        elseif mode == "LRBP"
+        elseif mode == "Local-RBP"
             println("Message passing protocol: Local RBP")
-        elseif mode == "RRBP"
+        elseif mode == "Random-RBP"
             println("Message passing protocol: Randomized RBP")
         end
 
@@ -102,7 +105,7 @@ function
         println("Simulated for SNR (dB): $snr")
         println("Stop at zero syndrome ? $stop")
         (supermode == "RBP") ? println("Decaying factor: $rbpfactor") : nothing
-        (mode == "RRBP") ? println("Sample size: $SAMPLESIZE") : nothing 
+        (mode == "Random-RBP") ? println("Sample size: $SAMPLESIZE") : nothing 
         println()
     end
 

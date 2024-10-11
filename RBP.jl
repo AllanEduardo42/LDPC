@@ -27,13 +27,8 @@ function
 
     for e in 1:num_edges
 
-        maxresidue = find_maxresidue_coords!(
-            maxcoords,
-            Residues,
-            cn2vn,
-            samples,
-            rng_sample)
-
+        maxresidue = find_maxresidue_coords!(maxcoords,Residues,cn2vn,samples,
+                                            rng_sample)
         if maxresidue == 0.0 # if RBP has converged
             break
         end
@@ -42,22 +37,12 @@ function
 
         @inbounds Residues[maxcoords...] = 0.0
 
-        _RBP_update_vn2cn!(Residues,
-                           maxcoords,
-                           maxresidue,
-                           Factors,
-                           Lf,
-                           Ldn,
-                           d,
-                           vn2cn,
-                           cn2vn,
-                           Ms,
-                           Lr,
-                           Lq,
-                           signs)
+        _RBP_update_vn2cn!(Residues,maxcoords,maxresidue,Factors,Lf,Ldn,d,vn2cn,
+                            cn2vn,Ms,Lr,Lq,signs)
     end
 end
 
+# LRBP
 function
     RBP!(
         Residues::Nothing,
@@ -82,19 +67,8 @@ function
 
         _RBP_update_Lr!(maxcoords,Factors,rbpfactor,cn2vn,Lq,Lr)
 
-        maxresidue = _RBP_update_vn2cn!(Residues,
-                                        maxcoords,
-                                        0.0,
-                                        Factors,
-                                        Lf,
-                                        Ldn,
-                                        d,
-                                        vn2cn,
-                                        cn2vn,
-                                        Ms,
-                                        Lr,
-                                        Lq,
-                                        signs)
+        maxresidue = _RBP_update_vn2cn!(Residues,maxcoords,0.0,Factors,Lf,Ldn,d,
+                                        vn2cn,cn2vn,Ms,Lr,Lq,signs)
 
         if maxresidue == 0.0 #breaks the loop in LRBP mode
             break
@@ -159,18 +133,8 @@ function
             @fastmath @inbounds Lq[vnmax,m] = Ldn[vnmax] - Lr[m,vnmax]
             # if any new residue estimate is larger than the previously estimated maximum 
             # residue than update the value of maxresidue and maxcoords.
-            maxresidue = calc_residues!(
-                Residues,
-                maxcoords,
-                maxresidue,
-                Factors,
-                Ms,
-                Lr,
-                Lq,
-                signs,
-                vnmax,
-                m,
-                cn2vn)
+            maxresidue = calc_residues!(Residues,maxcoords,maxresidue,Factors,
+                                        Ms,Lr,Lq,signs,vnmax,m,cn2vn)
         end
     end
 end

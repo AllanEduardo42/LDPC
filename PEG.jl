@@ -21,18 +21,8 @@ function
             else
                 L0_checks = findall(isone,H[:,n])
                 level = 
-                    subtree!(
-                        H,
-                        M,
-                        n,
-                        0,
-                        check_degrees,
-                        L0_checks,
-                        [n],
-                        copy(L0_checks),
-                        copy(L0_checks)
-                    )
-                ;
+                    subtree!(H,M,n,0,check_degrees,L0_checks,[n],copy(L0_checks),
+                            copy(L0_checks))
                 if level > 0
                     girth = min(girth, 2*(level+1))
                 end
@@ -93,18 +83,8 @@ function
     else
         append_sort_unique!(L0_check_set,L1_checks)
         level = 
-            subtree!(
-                H,
-                M,
-                root,
-                level,
-                check_degrees,
-                L1_checks,
-                L1_nodes,
-                L0_check_set,
-                L1_check_set
-            )
-        ;
+            subtree!(H,M,root,level,check_degrees,L1_checks,L1_nodes,L0_check_set,
+                L1_check_set)
     end
 
     return level

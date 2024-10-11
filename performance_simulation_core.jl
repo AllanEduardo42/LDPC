@@ -44,10 +44,7 @@ function
 
     # bit error rate
     BER = zeros(max)
-    ber = zeros(max)    
-
-    # iteration in which SPA stopped
-    # iters = Vector{Int}(undef, nreals)
+    ber = zeros(max)
 
     # estimate
     d = zeros(Bool,N)
@@ -101,9 +98,9 @@ function
 
     phi = (mode == "TABL") ? lookupTable() : nothing
 
-    Residues = (mode == "RBP" || mode == "RRBP") ? H*0.0 : nothing
+    Residues = (mode == "RBP" || mode == "Random-RBP") ? H*0.0 : nothing
 
-    samples = (mode == "RRBP" && SAMPLESIZE != 0) ?
+    samples = (mode == "Random-RBP" && SAMPLESIZE != 0) ?
                 Vector{Int}(undef,SAMPLESIZE) : nothing
 
     maxcoords, Factors, num_edges = (supermode == "RBP") ? 
@@ -114,7 +111,7 @@ function
     
     rng_noise = Xoshiro(rgn_seed_noise)
 
-    rng_sample = (mode == "RRBP") ? Xoshiro(rng_seed_sample) : nothing
+    rng_sample = (mode == "Random-RBP") ? Xoshiro(rng_seed_sample) : nothing
 
     ######################### FIRST RECEIVED SIGNAL ############################
     # In order to allow to test with a given received signal t_test, the first
@@ -158,43 +155,14 @@ function
         end      
         # SPA routine
         # DECODED, i = BP!(
-        DECODED = BP!(
-                    supermode,
-                    mode,
-                    stop,
-                    test,
-                    max,
-                    syndrome,
-                    d,
-                    c,
-                    bit_error,
-                    ber,
-                    Lf,
-                    Lq,
-                    Lr,
-                    Ms,
-                    cn2vn,
-                    vn2cn,
-                    Lrn,
-                    signs,
-                    phi,
-                    printing,
-                    Residues,
-                    maxcoords,
-                    Factors,
-                    H,
-                    rbpfactor,
-                    num_edges,
-                    Ldn,
-                    visited_vns,
-                    samples,
-                    rng_sample
-                )                
+        DECODED = BP!(supermode,mode,stop,test,max,syndrome,d,c,bit_error,ber,
+                        Lf,Lq,Lr,Ms,cn2vn,vn2cn,Lrn,signs,phi,printing,Residues,
+                        maxcoords,Factors,rbpfactor,num_edges,Ldn,visited_vns,
+                        samples,rng_sample)                
 
         # bit error rate
         @fastmath @. BER += ber
         # iteration in which SPA stopped (iszero(syndrome) = true)
-        # @inbounds iters[j] = i
         if !(DECODED)
             # frame error rate
             FER += 1
@@ -205,14 +173,11 @@ function
 
     end
 
-    # @inbounds @fastmath FER /= nreals
-
-
     if test
         return Lr, Lq
     else
-        # return log10.(FER), log10.(BER), iters
         return FER, BER
     end
 
 end
+

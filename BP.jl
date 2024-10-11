@@ -37,7 +37,6 @@ function
         Residues::Union{Matrix{<:AbstractFloat},Nothing},
         maxcoords::Union{Vector{<:Integer},Nothing},
         Factors::Union{Matrix{<:AbstractFloat},Nothing},
-        H::BitMatrix,
         rbpfactor::Union{AbstractFloat,Nothing},
         num_edges::Union{Integer,Nothing},
         Ldn::Union{Vector{<:AbstractFloat},Nothing},
@@ -49,58 +48,22 @@ function
     # index = max
     FIRST = true
     DECODED = false
-
+    ilbp = mode=="iLBP"
     for i in 1:max
 
         if test && printing  
             println("### Iteration #$i ###")
         end
 
-        if supermode == "FLOO"
-            flooding!(d,
-                      Lq,
-                      Lr,
-                      Lf,
-                      cn2vn,
-                      vn2cn,
-                      Lrn,
-                      signs,
-                      phi
-            )  
+        if supermode == "Flooding"
+            flooding!(d,Lq,Lr,Lf,cn2vn,vn2cn,Lrn,signs,phi)  
         elseif supermode == "LBP"
-            LBP!(d,
-                 Lr,
-                 Lq,
-                 Lf,
-                 cn2vn,
-                 vn2cn,
-                 Lrn,
-                 syndrome,
-                 Ldn,
-                 visited_vns,
-                 mode == "iLBP"
-            )   
+            LBP!(d,Lr,Lq,Lf,cn2vn,vn2cn,Lrn,syndrome,Ldn,visited_vns,ilbp)   
         elseif supermode == "RBP"
-            RBP!(
-                Residues,
-                d,
-                Lr,
-                Ms,
-                maxcoords,
-                Lq,
-                Lf,
-                cn2vn,
-                vn2cn,
-                signs,
-                Factors,
-                rbpfactor,
-                num_edges,
-                Ldn,
-                samples,
-                rgn_sample
-            )
+            RBP!(Residues,d,Lr,Ms,maxcoords,Lq,Lf,cn2vn,vn2cn,signs,Factors,
+                rbpfactor,num_edges,Ldn,samples,rgn_sample)
             # reset factors
-            Factors[H] .= 1.0
+            resetfactors!(Factors,vn2cn)
         end
 
         calc_syndrome!(syndrome,d,cn2vn)
