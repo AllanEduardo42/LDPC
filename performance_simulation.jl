@@ -18,7 +18,7 @@ function
         rgn_noise_seeds::Vector{<:Integer},
         rgn_samples_seeds::Vector{<:Integer};
         t_test=nothing,
-        printing=false    
+        printtest=false    
     )
 
 ############################### CHECK VALID MODE ###############################
@@ -47,10 +47,11 @@ function
         )
     end
 
-########################## PRINT SIMULATION DETAILS ############################
+########################### PRINT SIMULATION DETAILS ###########################
     
     # if nreals = 1, set test mode
     test = (nreals < 2) ? true : false
+
     if supermode == "RBP"
         if mode == "RBP"
             rbpfactor = DECAYRBP
@@ -58,12 +59,14 @@ function
             rbpfactor = DECAYLRBP
         elseif mode == "Random-RBP"
             rbpfactor = DECAYRRBP
+        elseif mode == "List-RBP"
+            rbpfactor = DECAYLIST
         end           
     else
         rbpfactor = nothing
     end    
     
-    if test && printing
+    if test && printtest
         println()
         print("###################### Starting simulation (Testing mode) #####")
         println("#################")
@@ -75,7 +78,7 @@ function
         println()
         println("Number of trials: $nreals")
     end
-    if !test || printing
+    if !test || printtest
         if supermode == "Flooding"
             print("Message passing protocol: Flooding (using ")
             if floomode == "MKAY"
@@ -109,6 +112,10 @@ function
         println()
     end
 
+################################ MULTITHREADING ################################
+
+    nreals_multh = nreals÷NTHREADS
+
     if !test
         K = length(SNR)
         fer, ber = zeros(K,NTHREADS), zeros(max,K,NTHREADS)
@@ -122,7 +129,7 @@ function
                                         H,
                                         mode,
                                         supermode,
-                                        nreals÷NTHREADS,
+                                        nreals_multh,
                                         max,
                                         stop,
                                         rbpfactor,
@@ -130,7 +137,7 @@ function
                                         rgn_samples_seeds[i],
                                         test,
                                         t_test,
-                                        printing)
+                                        printtest)
             end
         end
 
@@ -141,7 +148,7 @@ function
 
         return log10.(FER), log10.(BER)
     
-    else
+    else # IF TESTING
 
         Lr, Lq = performance_simulation_core(
                                     codeword,
@@ -157,10 +164,8 @@ function
                                     rgn_samples_seeds[1],
                                     test,
                                     t_test,
-                                    printing)
+                                    printtest)
         
-        return Lr, Lq
-        
+        return Lr, Lq        
     end
-
 end

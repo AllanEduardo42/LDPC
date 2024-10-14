@@ -23,7 +23,7 @@ function
         rng_seed_sample::Integer,
         test::Bool,
         t_test::Union{Vector{<:AbstractFloat},Nothing},
-        printing::Bool
+        printtest::Bool
     )
     
 ################################## CONSTANTS ###################################
@@ -98,7 +98,7 @@ function
 
     phi = (mode == "TABL") ? lookupTable() : nothing
 
-    Residues = (mode == "RBP" || mode == "Random-RBP") ? H*0.0 : nothing
+    Residues = (supermode == "RBP" && mode ≠ "Local-RBP") ? H*0.0 : nothing
 
     samples = (mode == "Random-RBP" && SAMPLESIZE != 0) ?
                 Vector{Int}(undef,SAMPLESIZE) : nothing
@@ -149,14 +149,14 @@ function
         # initialize matrix Lq
         init_Lq!(Lq,Lf,vn2cn)
 
-        if supermode == "RBP"
+        if supermode == "RBP" && mode != "List-RBP"
             # minsum_RBP_init!(Residues,maxcoords,Lq,signs,cn2vn)
             init_residues!(Residues,maxcoords,Lq,signs,cn2vn,Ms)
         end      
         # SPA routine
         # DECODED, i = BP!(
         DECODED = BP!(supermode,mode,stop,test,max,syndrome,d,c,bit_error,ber,
-                        Lf,Lq,Lr,Ms,cn2vn,vn2cn,Lrn,signs,phi,printing,Residues,
+                        Lf,Lq,Lr,Ms,cn2vn,vn2cn,Lrn,signs,phi,printtest,Residues,
                         maxcoords,Factors,rbpfactor,num_edges,Ldn,visited_vns,
                         samples,rng_sample)                
 

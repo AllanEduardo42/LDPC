@@ -1,7 +1,7 @@
 ################################################################################
 # Allan Eduardo Feitosa
 # 27 ago 2024
-# LDPC coding-decoding performance simulation
+# LDPC coding-decoding performance simulation using Believe Propagation (BP)
 
 ################################ JULIA PACKAGES ################################
 
@@ -18,30 +18,6 @@ include("performance_simulation.jl")
 include("PEG.jl")
 include("GF2_functions.jl")
 
-################################ BP MODE FLAGS ################################
-
-modes = [("Flooding",true),
-              ("LBP",true),
-             ("iLBP",true),
-              ("RBP",true),
-       ("Random-RBP",true),
-        ("Local-RBP",true),
-         ("List-RBP",false)]
-
-
-############################# FLOODING MODE FLAGS ##############################
-
-# floomodes = ["MKAY","TANH","ALTN","TABL","MSUM"]
-
-floomode = "TANH"
-
-FAST::Bool = true  # fast flooding update when using tanh mode (default:true)
-
-################################ CONTROL FLAGS #################################
-
-SAVE = true
-PRINTING::Bool = false
-
 ############################# SIMULATION CONSTANTS #############################
 
 const INF = typemax(Int64)
@@ -52,23 +28,57 @@ SEED_GRAPH::Int64 = 5714
 SEED_SAMPL::Int64 = 2857
 SEED_MESSA::Int64 = 9999
 
-# LookupTable
+###################### NUMBER OF TRIALS AND MULTITHREADING #####################
+
+TRIALS::Int = 96
+NTHREADS::Int = min(32,TRIALS)
+
+######################## MAXIMUM NUMBER OF BP ITERATIONS #######################
+
+MAX::Int = 30
+MAXRBP::Int = 6
+STOP::Bool = false # stop simulation at zero syndrome (if true, BER curves are 
+# not printed)
+
+################################ BP MODE FLAGS ################################
+
+modes = [("Flooding",true ,MAX),
+              ("LBP",true ,MAX),
+             ("iLBP",true ,MAX),
+              ("RBP",true ,MAXRBP),
+       ("Random-RBP",true ,MAXRBP),
+        ("Local-RBP",true ,MAXRBP),
+         ("List-RBP",true ,MAXRBP)]
+
+
+############################# FLOODING MODE FLAGS ##############################
+
+# FLOOMODE = "MKAY"
+FLOOMODE = "TANH"
+# FLOOMODE = "ALTN"
+# FLOOMODE = "TABL"
+# FLOOMODE = "MSUM"
+
+FAST::Bool = true  # fast flooding update when using tanh mode (default:true)
+
+################################ CONTROL FLAGS #################################
+
+SAVEDATA = false
+PRINTTEST::Bool = false
+
+################################# LOOKUP TABLE #################################
+
 SIZE::Int64 = 1024
 RANGE::Int64 = 20
 SIZE_per_RANGE::Float64 = SIZE/RANGE
 
-# Number of realizations and iterations
-NREALS::Int = 96
-NTHREADS::Int = min(32,NREALS)
-MAX::Int = 30
-MAXRBP::Int = 30
-STOP::Bool = false # stop simulation at zero syndrome (if true, BER curves are 
-# not printed)
+################################# RBP CONSTANTS ################################
 
-# decaying factor for RBP
 DECAYRBP::Float64 = 0.9
-DECAYLRBP::Float64 = 0.9
 DECAYRRBP::Float64 = 0.9
+DECAYLRBP::Float64 = 0.9
+DECAYLIST::Float64 = 0.9
+
 SAMPLESIZE::Int = 51
 
 ##################################### SNR ######################################
@@ -77,24 +87,22 @@ SNR = collect(1:1:4)
 
 ############################# PARITY-CHECK MATRIX #############################
 
-### PEG Algorithm
-
+# Matrix dimensions
 N::Int64 = 512
 M::Int64 = 256
 
-rng_graph = Xoshiro(SEED_GRAPH)
+# Vector of the variable node degrees
+D = rand(Xoshiro(SEED_GRAPH),[2,3,4],N)
 
-D = rand(rng_graph,[2,3,4],N)
-
+# Generate Parity-Check Matrix by the PEG algorithm
 H, girth = PEG(D,M)
 
+# Find the generator matrix
 G = gf2_nullspace(H)
 
 ############################# MESSAGE AND CODEWORD #############################
 
-rgn_message = Xoshiro(SEED_MESSA)
-
-Message::Vector{Bool} = rand(rgn_message,Bool,N-M)
+Message = rand(Xoshiro(SEED_MESSA),Bool,N-M)
 
 Codeword = gf2_mat_mult(Matrix(G), Message)
 
@@ -128,7 +136,7 @@ end
 println()
 println()
 
-#################################### SEEDS #####################################
+####################### GENERATE NOISE AND SAMPLE SEEDS ########################
 
 rgn_noise_seeds = zeros(Int,NTHREADS)
 rgn_samples_seeds = zeros(Int,NTHREADS)
@@ -137,39 +145,39 @@ for i in eachindex(rgn_noise_seeds)
     rgn_samples_seeds[i] = SEED_SAMPL + i - 1
 end
 
-############################## JULIA COMPILATION ###############################
+#################### JULIA COMPILATION (FOR SPEED) AND TEST ####################
 Lr = Dict()
 Lq = Dict()
 for mode in modes
     if mode[2]
         Lr[mode[1]] , Lq[mode[1]] = performance_simulation(Codeword,SNRTEST,H,
-                                        mode[1],floomode,1,MAX,STOP,
+                                        mode[1],FLOOMODE,1,mode[3],STOP,
                                         rgn_noise_seeds,
                                         rgn_samples_seeds;
-                                        printing=PRINTING)
+                                        printtest=PRINTTEST)
     end
-end
-                             
+end                             
 ############################ PERFORMANCE SIMULATION ############################
-if NREALS > 1
+if TRIALS > 1
     fer_labels = Vector{String}()
     FER = Vector{Vector{Float64}}()
     BER = Dict()
     for mode in modes
         if mode[2]
             @time fer, BER[mode[1]] = performance_simulation(Codeword,
-                                                    SNR,H,mode[1],floomode,
-                                                    NREALS,MAX,STOP,
+                                                    SNR,H,mode[1],FLOOMODE,
+                                                    TRIALS,mode[3],STOP,
                                                     rgn_noise_seeds,
                                                     rgn_samples_seeds)
             push!(FER,fer)
             push!(fer_labels,mode[1])
         end
     end
-
+end
 ################################### PLOTTING ###################################
+if TRIALS > 1    
     plotlyjs()
-    lim = log10(1/NREALS)
+    lim = log10(1/TRIALS)
     fer_labels = permutedims(fer_labels)
     p = plot(
             SNR,FER,
@@ -180,7 +188,7 @@ if NREALS > 1
             ylims=(lim,0)
         )
     display(p)
-    SAVE ? savefig(p, "FER.png") : nothing
+    SAVEDATA ? savefig(p, "FER.png") : nothing
     
     if !STOP
         ber_labels = Vector{String}()
@@ -197,7 +205,7 @@ if NREALS > 1
                     titleber = "BER $(mode[1])"
                 end
                 local p = plot(
-                    1:MAX,
+                    1:mode[3],
                     BER[mode[1]],                
                     xlabel="Iteration",
                     label=ber_labels,
@@ -206,32 +214,32 @@ if NREALS > 1
                     ylims=(lim-2,0)
                 )
                 display(p)
-                SAVE ? savefig(p,"BER_"*mode[1]*".png") : nothing
+                SAVEDATA ? savefig(p,"BER_"*mode[1]*".png") : nothing
             end
         end
     end
+end
+################################### SAVEDATA DATA ##################################
+if TRIALS > 1 && SAVEDATA
 
-    if SAVE
-    
-        aux = []
-        for i in eachindex(FER)
-            push!(aux,(fer_labels[i],FER[i]))
-        end
-        FERS = Dict(aux)
-        CSV.write("FERS.csv", DataFrame(FERS), header=true)
+    aux = []
+    for i in eachindex(FER)
+        push!(aux,(fer_labels[i],FER[i]))
+    end
+    FERS = Dict(aux)
+    CSV.write("FERS.csv", DataFrame(FERS), header=true)
 
-        aux = []
-        padding = zeros(MAX-MAXRBP)
-        for mode in modes
-            if mode[2]
-                for i in eachindex(SNR)
-                    title = mode[1] * " (SNR=$(SNR))"
-                    push!(aux,(title,BER[mode[1]][:,i]))
-                end
+    aux = []
+    padding = zeros(MAX-MAXRBP)
+    for mode in modes
+        if mode[2]
+            for i in eachindex(SNR)
+                title = mode[1] * " (SNR=$(SNR))"
+                push!(aux,(title,BER[mode[1]][:,i]))
             end
         end
-        BERS = Dict(aux)
-        CSV.write("BERS.csv", DataFrame(BERS), header=true)
-
     end
+    BERS = Dict(aux)
+    CSV.write("BERS.csv", DataFrame(BERS), header=true)
+
 end

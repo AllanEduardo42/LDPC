@@ -33,7 +33,7 @@ function
         Lrn::Union{Vector{<:AbstractFloat},Nothing},
         signs::Union{Vector{Bool},Nothing},        
         phi::Union{Vector{<:AbstractFloat},Nothing},
-        printing::Union{Bool,Nothing},        
+        printtest::Union{Bool,Nothing},        
         Residues::Union{Matrix{<:AbstractFloat},Nothing},
         maxcoords::Union{Vector{<:Integer},Nothing},
         Factors::Union{Matrix{<:AbstractFloat},Nothing},
@@ -51,7 +51,7 @@ function
     ilbp = mode=="iLBP"
     for i in 1:max
 
-        if test && printing  
+        if test && printtest  
             println("### Iteration #$i ###")
         end
 
@@ -68,7 +68,7 @@ function
 
         calc_syndrome!(syndrome,d,cn2vn)
 
-        if test && printing    
+        if test && printtest    
                 println("Max LLR estimate errors: ")
                 for j in eachindex(d)
                     print(Int(d[j] != c[j]))
