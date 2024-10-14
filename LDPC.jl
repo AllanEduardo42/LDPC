@@ -30,32 +30,32 @@ SEED_MESSA::Int64 = 9999
 
 ###################### NUMBER OF TRIALS AND MULTITHREADING #####################
 
-TRIALS::Int = 10240
+TRIALS::Int = 96
 NTHREADS::Int = min(32,TRIALS)
 
 ######################## MAXIMUM NUMBER OF BP ITERATIONS #######################
 
 MAX::Int = 20
-MAXRBP::Int = 20
+MAXRBP::Int = 5
 STOP::Bool = false # stop simulation at zero syndrome (if true, BER curves are 
 # not printed)
 
 ################################ BP MODE FLAGS ################################
 
 #Flooding
-FLOO::Bool = true      
+FLOO::Bool = false      
 #LBP
-_LBP::Bool = true      
+_LBP::Bool = false      
 #instantaneos-LBP
-iLBP::Bool = true      
+iLBP::Bool = false      
 #RBP
-_RBP::Bool = true      
+_RBP::Bool = false      
 #Random-RBP
-RRBP::Bool = true      
+RRBP::Bool = false      
 #Local-RBP
 LRBP::Bool = true      
 #List-RBP
-LIST::Bool = false      
+LIST::Bool = true      
 
 # Aggregate mode string name and number of iterations
 modes = [(FLOO,"Flooding",MAX),
@@ -90,12 +90,17 @@ SIZE_per_RANGE::Float64 = SIZE/RANGE
 
 ################################# RBP CONSTANTS ################################
 
-DECAYRBP::Float64 = 0.9
-DECAYRRBP::Float64 = 0.9
+DECAYRBP::Float64 = 0.4
+DECAYRRBP::Float64 = 0.7
 DECAYLRBP::Float64 = 0.9
-DECAYLIST::Float64 = 0.9
+DECAYLIST::Float64 = 0.4
+decay = Dict(modes[4][2] => DECAYRBP,
+             modes[5][2] => DECAYRRBP,
+             modes[6][2] => DECAYLRBP,
+             modes[7][2] => DECAYLIST)
 
 SAMPLESIZE::Int = 51
+LISTSIZE ::Int = 2
 
 ##################################### SNR ######################################
 SNRTEST = [3]
@@ -167,9 +172,8 @@ Lq = Dict()
 for mode in modes
     if mode[1]
         Lr[mode[2]] , Lq[mode[2]] = performance_simulation(Codeword,SNRTEST,H,
-                                        mode[2],FLOOMODE,1,mode[3],STOP,
+                                        mode[2],1,mode[3],STOP,
                                         rgn_noise_seeds,
-                                        rgn_samples_seeds;
                                         printtest=PRINTTEST)
     end
 end                             
@@ -182,10 +186,10 @@ if TRIALS > 1
     for mode in modes
         if mode[1]
             @time FER[mode[2]], BER[mode[2]] = performance_simulation(Codeword,
-                                                SNR,H,mode[2],FLOOMODE,
+                                                SNR,H,mode[2],
                                                 TRIALS,mode[3],STOP,
-                                                rgn_noise_seeds,
-                                                rgn_samples_seeds)
+                                                rgn_noise_seeds;
+                                                rgn_samples_seeds=rgn_samples_seeds)
             push!(fer_labels,mode[2])
             push!(fermax,FER[mode[2]][mode[3],:])
         end            
@@ -195,17 +199,23 @@ end
 if TRIALS > 1
     plotlyjs()
     lim = log10(1/TRIALS)
-    fer_labels = permutedims(fer_labels)    
-    p = plot(
-        SNR,fermax,
-        xlabel="SNR (dB)",
-        label=fer_labels,
-        lw=2,
-        title="FER (Graph girth = $girth)",
-        ylims=(lim,0)
-    )
-    display(p)
-    SAVEDATA ? savefig(p, "FER.png") : nothing
+
+    # FER x SNR
+    if length(SNR) > 1
+        fer_labels = permutedims(fer_labels)    
+        p = plot(
+            SNR,fermax,
+            xlabel="SNR (dB)",
+            label=fer_labels,
+            lw=2,
+            title="FER (Graph girth = $girth)",
+            ylims=(lim,0)
+        )
+        display(p)
+        SAVEDATA ? savefig(p, "FER.png") : nothing
+    end
+
+    # FER x Iterations
     labels = Vector{String}()
     for snr in SNR
         push!(labels,"SNR (dB) = $snr")
@@ -213,8 +223,8 @@ if TRIALS > 1
     labels = permutedims(labels)
     for mode in modes
         if mode[1]
-            if mode[1] == "RBP" || mode[2] == "Random-RBP" || mode[2] == "Local-RBP"
-                titlefer = "FER $(mode[2]) (decay factor = $DECAYRBP)"
+            if mode[2] == "RBP" || mode[2] == "Random-RBP" || mode[2] == "Local-RBP"
+                titlefer = "FER $(mode[2]) (decay factor = $(decay[mode[2]]))"
             else
                 titlefer = "FER $(mode[2])"
             end
@@ -232,6 +242,7 @@ if TRIALS > 1
         end
     end
     
+    # BER x Iterations
     if !STOP
 
         for mode in modes

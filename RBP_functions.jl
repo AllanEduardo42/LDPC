@@ -17,7 +17,8 @@ function
         signs::Vector{Bool},
         vnmax::Integer,
         m::Integer,
-        cn2vn::Vector{Vector{T}} where {T<:Integer}             
+        cn2vn::Vector{Vector{T}} where {T<:Integer},
+        list::Union{Vector{Tuple{Float64,Vector{Int}}},Nothing}             
     )
     
     minsum!(Lq,Ms,signs,m,cn2vn)
@@ -25,7 +26,7 @@ function
     for n in cn2vn[m]
         if n ≠ vnmax
             x = calc_residue(Ms,Factors,Lr,m,n)
-            maxresidue = findmaxresidue!(Residues,maxcoords,maxresidue,m,n,x)
+            maxresidue = findmaxresidue!(Residues,maxcoords,maxresidue,m,n,x,list)
         end
     end
 
@@ -66,15 +67,11 @@ function
         maxresidue::AbstractFloat,
         m::Integer,
         n::Integer,
-        x::AbstractFloat
+        x::AbstractFloat,
+        ::Nothing
     )
 
     @inbounds Residues[m,n] = x
-    # if @fastmath x > maxresidue
-    #     maxresidue = x
-    #     @inbounds maxcoords[1] = m
-    #     @inbounds maxcoords[2] = n
-    # end
 
     return maxresidue
 end
@@ -86,12 +83,34 @@ function
         maxresidue::AbstractFloat,
         m::Integer,
         n::Integer,
-        x::AbstractFloat
+        x::AbstractFloat,
+        ::Nothing
     )
     if @fastmath x > maxresidue
         maxresidue = x
         @inbounds maxcoords[1] = m
         @inbounds maxcoords[2] = n
+    end
+
+    return maxresidue
+end
+
+function 
+    findmaxresidue!(
+        ::Nothing,
+        maxcoords::Vector{Int},
+        maxresidue::AbstractFloat,
+        m::Integer,
+        n::Integer,
+        x::AbstractFloat,
+        list::Vector{Tuple{Float64,Vector{Int}}}
+    )
+    for i in eachindex(list)
+        if @fastmath x > list[i][1]
+            @inbounds list[i+1:end] = list[i:end-1]
+            @inbounds list[i] = (x,[m,n])
+            break
+        end
     end
 
     return maxresidue
@@ -104,7 +123,9 @@ function
         Lq::Matrix{<:AbstractFloat},
         signs::Vector{Bool},
         cn2vn::Vector{Vector{T}} where {T<:Integer},
-        Ms::Matrix{<:AbstractFloat}
+        Ms::Matrix{<:AbstractFloat},
+        list::Union{Vector{Tuple{Float64,Vector{Int}}},Nothing}   
+        
     )
     
     maxresidue = 0.0
@@ -120,7 +141,8 @@ function
             signs,
             0,
             m,
-            cn2vn
+            cn2vn,
+            list
         )
     end
 end

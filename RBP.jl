@@ -22,7 +22,8 @@ function
         num_edges::Integer,
         Ldn::Vector{<:AbstractFloat},
         samples::Union{Vector{<:Integer},Nothing},
-        rng_sample::Union{AbstractRNG,Nothing}
+        rng_sample::Union{AbstractRNG,Nothing},
+        ::Nothing
     )
 
     for e in 1:num_edges
@@ -38,14 +39,14 @@ function
         @inbounds Residues[maxcoords...] = 0.0
 
         _RBP_update_vn2cn!(Residues,maxcoords,maxresidue,Factors,Lf,Ldn,d,vn2cn,
-                            cn2vn,Ms,Lr,Lq,signs)
+                            cn2vn,Ms,Lr,Lq,signs,nothing)
     end
 end
 
 # LRBP
 function
     RBP!(
-        Residues::Nothing,
+        ::Nothing,
         d::Vector{Bool},
         Lr::Matrix{<:AbstractFloat},
         Ms::Matrix{<:AbstractFloat},
@@ -60,6 +61,7 @@ function
         num_edges::Integer,
         Ldn::Vector{<:AbstractFloat},        
         ::Nothing,
+        ::Nothing,
         ::Nothing
     )
 
@@ -67,12 +69,51 @@ function
 
         _RBP_update_Lr!(maxcoords,Factors,rbpfactor,cn2vn,Lq,Lr)
 
-        maxresidue = _RBP_update_vn2cn!(Residues,maxcoords,0.0,Factors,Lf,Ldn,d,
-                                        vn2cn,cn2vn,Ms,Lr,Lq,signs)
+        maxresidue = _RBP_update_vn2cn!(nothing,maxcoords,0.0,Factors,Lf,Ldn,d,
+                                        vn2cn,cn2vn,Ms,Lr,Lq,signs,nothing)
 
         if maxresidue == 0.0 #breaks the loop in LRBP mode
             break
         end
+    end
+end
+
+function
+    RBP!(
+        ::Nothing,
+        d::Vector{Bool},
+        Lr::Matrix{<:AbstractFloat},
+        Ms::Matrix{<:AbstractFloat},
+        maxcoords::Vector{<:Integer},
+        Lq::Matrix{<:AbstractFloat},
+        Lf::Vector{<:AbstractFloat},
+        cn2vn::Vector{Vector{T}} where {T<:Integer},
+        vn2cn::Vector{Vector{T}} where {T<:Integer},
+        signs::Vector{Bool},
+        Factors::Matrix{<:AbstractFloat},
+        rbpfactor::AbstractFloat,
+        num_edges::Integer,
+        Ldn::Vector{<:AbstractFloat},
+        samples::Union{Vector{<:Integer},Nothing},
+        rng_sample::Union{AbstractRNG,Nothing},
+        list::Vector{Tuple{Float64,Vector{Int}}}
+    )
+
+    for e in 1:num_edges
+        
+        maxcoords = list[1][2]        
+        list[1:end-1] = list[2:end]
+        list[end] = (0.0,[0,0])
+        
+        _RBP_update_Lr!(maxcoords,Factors,rbpfactor,cn2vn,Lq,Lr)
+
+        maxresidue = _RBP_update_vn2cn!(nothing,maxcoords,0.0,Factors,Lf,Ldn,d,
+                                        vn2cn,cn2vn,Ms,Lr,Lq,signs,list)
+
+        if @fastmath @inbounds list[1][1] == 0.0 #breaks the loop in LRBP mode
+            break
+        end
+        
     end
 end
 
@@ -116,7 +157,8 @@ function
         Ms::Matrix{<:AbstractFloat},
         Lr::Matrix{<:AbstractFloat},
         Lq::Matrix{<:AbstractFloat},
-        signs::Vector{Bool}        
+        signs::Vector{Bool},
+        list::Union{Vector{Tuple{Float64,Vector{Int}}},Nothing}       
     )
 
     # update Ldn[vmax] and d[vnmax]
@@ -134,7 +176,7 @@ function
             # if any new residue estimate is larger than the previously estimated maximum 
             # residue than update the value of maxresidue and maxcoords.
             maxresidue = calc_residues!(Residues,maxcoords,maxresidue,Factors,
-                                        Ms,Lr,Lq,signs,vnmax,m,cn2vn)
+                                        Ms,Lr,Lq,signs,vnmax,m,cn2vn,list)
         end
     end
 end

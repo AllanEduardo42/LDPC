@@ -99,7 +99,7 @@ function
 
     phi = (mode == "TABL") ? lookupTable() : nothing
 
-    Residues = (supermode == "RBP" && mode ≠ "Local-RBP") ? H*0.0 : nothing
+    Residues = (mode == "RBP" || mode == "Random-RBP") ? H*0.0 : nothing
 
     samples = (mode == "Random-RBP" && SAMPLESIZE != 0) ?
                 Vector{Int}(undef,SAMPLESIZE) : nothing
@@ -107,6 +107,15 @@ function
     maxcoords, Factors, num_edges = (supermode == "RBP") ? 
         ([0,0], 1.0*H, sum(H)) : 
         (nothing,nothing,nothing)
+
+    if mode == "List-RBP"
+        list = Vector{Tuple{Float64,Vector{Int}}}()
+        for m in 1:LISTSIZE
+            push!(list,(0.0,[0,0]))
+        end
+    else
+        list = nothing
+    end
 
 ################################## MAIN LOOP ###################################
     
@@ -150,15 +159,15 @@ function
         # initialize matrix Lq
         init_Lq!(Lq,Lf,vn2cn)
 
-        if supermode == "RBP" && mode != "List-RBP"
+        if supermode == "RBP"
             # minsum_RBP_init!(Residues,maxcoords,Lq,signs,cn2vn)
-            init_residues!(Residues,maxcoords,Lq,signs,cn2vn,Ms)
+            init_residues!(Residues,maxcoords,Lq,signs,cn2vn,Ms,list)
         end      
         # SPA routine
         decoded .= false
         BP!(supermode,mode,stop,test,max,syndrome,d,c,bit_error,ber,decoded,Lf,
             Lq,Lr,Ms,cn2vn,vn2cn,Lrn,signs,phi,printtest,Residues,maxcoords,
-            Factors,rbpfactor,num_edges,Ldn,visited_vns,samples,rng_sample)                
+            Factors,rbpfactor,num_edges,Ldn,visited_vns,samples,rng_sample,list)                
 
         # bit error rate
         @. BER += ber

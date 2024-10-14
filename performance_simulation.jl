@@ -11,12 +11,12 @@ function
         snr::Vector{<:Real},
         H::BitMatrix,
         mode::String,
-        floomode::String,
         trials::Integer,
         max::Integer,
         stop::Bool,
-        rgn_noise_seeds::Vector{<:Integer},
-        rgn_samples_seeds::Vector{<:Integer};
+        rgn_noise_seeds::Vector{<:Integer};
+        rgn_samples_seeds=ones(Int,NTHREADS),
+        floomode="TANH",
         t_test=nothing,
         printtest=false    
     )
