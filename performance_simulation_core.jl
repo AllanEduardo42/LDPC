@@ -15,7 +15,7 @@ function
         H::BitMatrix,
         mode::String,
         supermode::String,
-        nreals::Integer,
+        trials::Integer,
         max::Integer,
         stop::Bool,
         rbpfactor::Union{AbstractFloat,Nothing},
@@ -40,11 +40,12 @@ function
     ############################# PREALLOCATIONS ################################
 
     # frame error rate
-    FER = 0
+    DECODED = zeros(Int,max)
+    decoded = Vector{Bool}(undef,max)
 
     # bit error rate
-    BER = zeros(max)
-    ber = zeros(max)
+    BER = zeros(Int,max)
+    ber = zeros(Int,max)
 
     # estimate
     d = zeros(Bool,N)
@@ -136,7 +137,7 @@ function
         received_signal!(t,noise,stdev,u,rng_noise)
     end        
 
-    for j in 1:nreals
+    for j in 1:trials
 
         # init the llr priors
         calc_Lf!(Lf,t,variance)
@@ -154,19 +155,14 @@ function
             init_residues!(Residues,maxcoords,Lq,signs,cn2vn,Ms)
         end      
         # SPA routine
-        # DECODED, i = BP!(
-        DECODED = BP!(supermode,mode,stop,test,max,syndrome,d,c,bit_error,ber,
-                        Lf,Lq,Lr,Ms,cn2vn,vn2cn,Lrn,signs,phi,printtest,Residues,
-                        maxcoords,Factors,rbpfactor,num_edges,Ldn,visited_vns,
-                        samples,rng_sample)                
+        decoded .= false
+        BP!(supermode,mode,stop,test,max,syndrome,d,c,bit_error,ber,decoded,Lf,
+            Lq,Lr,Ms,cn2vn,vn2cn,Lrn,signs,phi,printtest,Residues,maxcoords,
+            Factors,rbpfactor,num_edges,Ldn,visited_vns,samples,rng_sample)                
 
         # bit error rate
-        @fastmath @. BER += ber
-        # iteration in which SPA stopped (iszero(syndrome) = true)
-        if !(DECODED)
-            # frame error rate
-            FER += 1
-        end
+        @. BER += ber
+        @. DECODED += decoded
 
         # received signal for the next realization (j+1)
         received_signal!(t,noise,stdev,u,rng_noise)
@@ -176,7 +172,7 @@ function
     if test
         return Lr, Lq
     else
-        return FER, BER
+        return DECODED, BER
     end
 
 end

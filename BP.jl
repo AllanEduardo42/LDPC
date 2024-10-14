@@ -23,7 +23,8 @@ function
         d::Vector{Bool},
         c::Vector{Bool},
         bit_error::Vector{Bool},
-        ber::Vector{<:AbstractFloat},
+        ber::Vector{<:Integer},
+        decoded::Vector{Bool},
         Lf::Array{<:AbstractFloat},
         Lq::Array{<:AbstractFloat},
         Lr::Array{<:AbstractFloat},
@@ -45,10 +46,8 @@ function
         rgn_sample::Union{AbstractRNG,Nothing}
     )
              
-    # index = max
-    FIRST = true
-    DECODED = false
-    ilbp = mode=="iLBP"
+    # FIRST = true
+    ilbp = (mode == "iLBP")
     for i in 1:max
 
         if test && printtest  
@@ -90,11 +89,11 @@ function
                 end
                 println()     
         else
-            if FIRST && iszero(syndrome)
-                FIRST = false
-                # index = i
+            # if FIRST && iszero(syndrome)
+            if iszero(syndrome)
+                # FIRST = false
                 if @fastmath d == c
-                    DECODED = true
+                    @inbounds decoded[i] = true
                 end
                 if stop
                     break
@@ -104,8 +103,5 @@ function
             @fastmath @inbounds ber[i] = sum(bit_error)
         end
     end
-
-    # return DECODED, index
-    return DECODED
 
 end

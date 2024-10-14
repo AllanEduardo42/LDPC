@@ -12,7 +12,7 @@ function
         H::BitMatrix,
         mode::String,
         floomode::String,
-        nreals::Integer,
+        trials::Integer,
         max::Integer,
         stop::Bool,
         rgn_noise_seeds::Vector{<:Integer},
@@ -49,8 +49,8 @@ function
 
 ########################### PRINT SIMULATION DETAILS ###########################
     
-    # if nreals = 1, set test mode
-    test = (nreals < 2) ? true : false
+    # if trials = 1, set test mode
+    test = (trials < 2) ? true : false
 
     if supermode == "RBP"
         if mode == "RBP"
@@ -76,7 +76,7 @@ function
         print("############################# Starting simulation #############")
         println("#################")
         println()
-        println("Number of trials: $nreals")
+        println("Number of trials: $trials")
     end
     if !test || printtest
         if supermode == "Flooding"
@@ -114,22 +114,22 @@ function
 
 ################################ MULTITHREADING ################################
 
-    nreals_multh = nreals÷NTHREADS
+    trials_multh = trials ÷ NTHREADS
 
     if !test
         K = length(SNR)
-        fer, ber = zeros(K,NTHREADS), zeros(max,K,NTHREADS)
+        decoded, ber = zeros(max,K,NTHREADS), zeros(max,K,NTHREADS)
         # Threads.@threads 
         for k in 1:K
             Threads.@threads for i in 1:NTHREADS
-                fer[k,i], ber[:,k,i] = 
+                decoded[:,k,i], ber[:,k,i] = 
                     performance_simulation_core(
                                         codeword,
                                         snr[k],
                                         H,
                                         mode,
                                         supermode,
-                                        nreals_multh,
+                                        trials_multh,
                                         max,
                                         stop,
                                         rbpfactor,
@@ -141,10 +141,10 @@ function
             end
         end
 
-        FER = zeros(K)
+        FER = zeros(max,K)
         BER = zeros(max,K)
-        FER .= sum(fer,dims=2)/(nreals)
-        BER .= sum(ber,dims=3)/(nreals*N)
+        FER .= 1 .- sum(decoded,dims=3)/trials
+        BER .= sum(ber,dims=3)/(trials*N)
 
         return log10.(FER), log10.(BER)
     
@@ -156,7 +156,7 @@ function
                                     H,
                                     mode,
                                     supermode,
-                                    nreals,
+                                    trials,
                                     max,
                                     stop,
                                     rbpfactor,

@@ -30,13 +30,13 @@ SEED_MESSA::Int64 = 9999
 
 ###################### NUMBER OF TRIALS AND MULTITHREADING #####################
 
-TRIALS::Int = 96
+TRIALS::Int = 10240
 NTHREADS::Int = min(32,TRIALS)
 
 ######################## MAXIMUM NUMBER OF BP ITERATIONS #######################
 
-MAX::Int = 30
-MAXRBP::Int = 5
+MAX::Int = 20
+MAXRBP::Int = 20
 STOP::Bool = false # stop simulation at zero syndrome (if true, BER curves are 
 # not printed)
 
@@ -45,15 +45,15 @@ STOP::Bool = false # stop simulation at zero syndrome (if true, BER curves are
 #Flooding
 FLOO::Bool = true      
 #LBP
-_LBP::Bool = false      
+_LBP::Bool = true      
 #instantaneos-LBP
-iLBP::Bool = false      
+iLBP::Bool = true      
 #RBP
-_RBP::Bool = false      
+_RBP::Bool = true      
 #Random-RBP
-RRBP::Bool = false      
+RRBP::Bool = true      
 #Local-RBP
-LRBP::Bool = false      
+LRBP::Bool = true      
 #List-RBP
 LIST::Bool = false      
 
@@ -81,8 +81,6 @@ FAST::Bool = true  # fast flooding update when using tanh mode (default:true)
 
 SAVEDATA::Bool = false
 PRINTTEST::Bool = false
-ITEREVOL::Bool = true
-MAX_ITEREVOL::Int = 30
 
 ################################# LOOKUP TABLE #################################
 
@@ -178,81 +176,60 @@ end
 ############################ PERFORMANCE SIMULATION ############################
 if TRIALS > 1
     fer_labels = Vector{String}()
-    if ITEREVOL
-        FER = Dict()
-        fer = zeros(length(SNR),MAX_ITEREVOL)
-        STOP = true
-        for mode in modes
-            if mode[1]
-                for iters = 1:MAX_ITEREVOL
-                    @time fer[:,iters], _ = performance_simulation(Codeword,
-                                                        SNR,H,mode[2],FLOOMODE,
-                                                        TRIALS,iters,STOP,
-                                                        rgn_noise_seeds,
-                                                        rgn_samples_seeds)
-                end
-            FER[mode[2]] = fer'
+    fermax = Vector{Vector{<:AbstractFloat}}()
+    FER = Dict()
+    BER = Dict()
+    for mode in modes
+        if mode[1]
+            @time FER[mode[2]], BER[mode[2]] = performance_simulation(Codeword,
+                                                SNR,H,mode[2],FLOOMODE,
+                                                TRIALS,mode[3],STOP,
+                                                rgn_noise_seeds,
+                                                rgn_samples_seeds)
             push!(fer_labels,mode[2])
-            end            
-        end
-    else        
-        FER = Vector{Vector{Float64}}()
-        BER = Dict()
-        for mode in modes
-            if mode[1]
-                @time fer, BER[mode[2]] = performance_simulation(Codeword,
-                                                        SNR,H,mode[2],FLOOMODE,
-                                                        TRIALS,mode[3],STOP,
-                                                        rgn_noise_seeds,
-                                                        rgn_samples_seeds)
-                push!(FER,fer)
-                push!(fer_labels,mode[2])
-            end
-        end
+            push!(fermax,FER[mode[2]][mode[3],:])
+        end            
     end
 end
 ################################### PLOTTING ###################################
 if TRIALS > 1
     plotlyjs()
     lim = log10(1/TRIALS)
-    fer_labels = permutedims(fer_labels)
+    fer_labels = permutedims(fer_labels)    
+    p = plot(
+        SNR,fermax,
+        xlabel="SNR (dB)",
+        label=fer_labels,
+        lw=2,
+        title="FER (Graph girth = $girth)",
+        ylims=(lim,0)
+    )
+    display(p)
+    SAVEDATA ? savefig(p, "FER.png") : nothing
     labels = Vector{String}()
     for snr in SNR
         push!(labels,"SNR (dB) = $snr")
     end
     labels = permutedims(labels)
-    if ITEREVOL
-        for mode in modes
-            if mode[1]
-                if mode[1] == "RBP" || mode[2] == "Random-RBP" || mode[2] == "Local-RBP"
-                    titlefer = "FER $(mode[2]) (decay factor = $DECAYRBP)"
-                else
-                    titlefer = "FER $(mode[2])"
-                end
-                local p = plot(
-                    1:MAX_ITEREVOL,
-                    FER[mode[2]],                
-                    xlabel="Iteration",
-                    label=labels,
-                    lw=2,
-                    title=titlefer,
-                    ylims=(lim,0)
-                )
-                display(p)
-                SAVEDATA ? savefig(p,"FER_EVOL_"*mode[2]*".png") : nothing
+    for mode in modes
+        if mode[1]
+            if mode[1] == "RBP" || mode[2] == "Random-RBP" || mode[2] == "Local-RBP"
+                titlefer = "FER $(mode[2]) (decay factor = $DECAYRBP)"
+            else
+                titlefer = "FER $(mode[2])"
             end
-        end        
-    else        
-        p = plot(
-                SNR,FER,
-                xlabel="SNR (dB)",
-                label=fer_labels,
+            local p = plot(
+                1:mode[3],
+                FER[mode[2]],                
+                xlabel="Iteration",
+                label=labels,
                 lw=2,
-                title="FER (Graph girth = $girth)",
+                title=titlefer,
                 ylims=(lim,0)
             )
-        display(p)
-        SAVEDATA ? savefig(p, "FER.png") : nothing
+            display(p)
+            SAVEDATA ? savefig(p,"FER_EVOL_"*mode[2]*".png") : nothing
+        end
     end
     
     if !STOP
