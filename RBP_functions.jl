@@ -137,7 +137,7 @@ function
         cn2vn::Vector{Vector{T}} where {T<:Integer},
         Ms::Matrix{<:AbstractFloat}        
     )
-    
+
     maxresidue = 0.0
     for m in eachindex(cn2vn)
         maxresidue = calc_residues!(
@@ -158,7 +158,7 @@ function
     end
 end
 
-
+# Random-RBP
 function
     find_maxresidue_coords!(
         maxresidue::AbstractFloat,

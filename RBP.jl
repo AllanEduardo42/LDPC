@@ -9,7 +9,7 @@ include("RBP_functions.jl")
 function
     RBP!(
         Residues::Matrix{<:AbstractFloat},
-        d::Vector{Bool},
+        bitvector::Vector{Bool},
         Lr::Matrix{<:AbstractFloat},
         Ms::Matrix{<:AbstractFloat},
         maxcoords::Vector{<:Integer},
@@ -40,7 +40,7 @@ function
 
         __RBP(Residues,maxcoords)
 
-        _RBP_update_vn2cn!(Residues,maxcoords,maxresidue,Factors,Lf,Ldn,d,vn2cn,
+        _RBP_update_vn2cn!(Residues,maxcoords,maxresidue,Factors,Lf,Ldn,bitvector,vn2cn,
                             cn2vn,Ms,Lr,Lq,signs,nothing,0)
     end
 end
@@ -153,7 +153,7 @@ function
         
         _RBP_update_Lr!(maxcoords,Factors,rbpfactor,cn2vn,Lq,Lr)
 
-        maxresidue = _RBP_update_vn2cn!(nothing,maxcoords,0.0,Factors,Lf,Ldn,d,
+        maxresidue = _RBP_update_vn2cn!(nothing,maxcoords,0.0,Factors,Lf,Ldn,bitvector,
                                         vn2cn,cn2vn,Ms,Lr,Lq,signs,list,
                                         listsize)
 
@@ -218,7 +218,7 @@ function
         Factors::Matrix{<:AbstractFloat},
         Lf::Vector{<:AbstractFloat},
         Ldn::Vector{<:AbstractFloat},
-        d::Vector{Bool},
+        bitvector::Vector{Bool},
         vn2cn::Vector{Vector{T}} where {T<:Integer},
         cn2vn::Vector{Vector{T}} where {T<:Integer},
         Ms::Matrix{<:AbstractFloat},
@@ -229,12 +229,12 @@ function
         listsize::Integer       
     )
 
-    # update Ldn[vmax] and d[vnmax]
+    # update Ldn[vmax] and bitvector[vnmax]
     (cnmax,vnmax) = maxcoords
     @inbounds Ldn[vnmax] = Lf[vnmax]
     for m in vn2cn[vnmax]
         @fastmath @inbounds Ldn[vnmax] += Lr[m,vnmax]
-        @fastmath @inbounds d[vnmax] = signbit(Ldn[vnmax])
+        @fastmath @inbounds bitvector[vnmax] = signbit(Ldn[vnmax])
     end
 
     for m in vn2cn[vnmax]
