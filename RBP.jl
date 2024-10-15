@@ -9,7 +9,7 @@ include("RBP_functions.jl")
 function
     RBP!(
         Residues::Matrix{<:AbstractFloat},
-        bitvector::Vector{Bool},
+        d::Vector{Bool},
         Lr::Matrix{<:AbstractFloat},
         Ms::Matrix{<:AbstractFloat},
         maxcoords::Vector{<:Integer},
@@ -24,46 +24,31 @@ function
         Ldn::Vector{<:AbstractFloat},
         samples::Union{Vector{<:Integer},Nothing},
         rng_sample::Union{AbstractRNG,Nothing},
-        list::Nothing,
-        listsize::Integer
+        ::Nothing,
+        ::Integer
     )
 
     for e in 1:num_edges
 
-        maxresidue = find_maxresidue_coords!(0.0,maxcoords,Residues,cn2vn,samples,
-                                            rng_sample,list,listsize)
+        maxresidue = find_maxresidue_coords!(maxcoords,Residues,cn2vn,samples,
+                                            rng_sample)
         if maxresidue == 0.0 # if RBP has converged
             break
         end
 
         _RBP_update_Lr!(maxcoords,Factors,rbpfactor,cn2vn,Lq,Lr)
 
-        __RBP(Residues,maxcoords)
+        @inbounds Residues[maxcoords...] = 0.0
 
-        _RBP_update_vn2cn!(Residues,maxcoords,maxresidue,Factors,Lf,Ldn,bitvector,vn2cn,
+        _RBP_update_vn2cn!(Residues,maxcoords,maxresidue,Factors,Lf,Ldn,d,vn2cn,
                             cn2vn,Ms,Lr,Lq,signs,nothing,0)
     end
-end
-
-function
-    __RBP(
-        Residues::Matrix{<:AbstractFloat},
-        maxcoords::Vector{<:Integer}
-    )
-    @inbounds Residues[maxcoords...] = 0.0
-end
-
-function
-    __RBP(
-        ::Nothing,
-        ::Vector{<:Integer}
-    )
 end
 
 # LRBP
 function
     RBP!(
-        Residues::Nothing,
+        ::Nothing,
         d::Vector{Bool},
         Lr::Matrix{<:AbstractFloat},
         Ms::Matrix{<:AbstractFloat},
@@ -77,50 +62,29 @@ function
         rbpfactor::AbstractFloat,
         num_edges::Integer,
         Ldn::Vector{<:AbstractFloat},        
-        samples::Nothing,
-        rng_sample::Nothing,
-        list::Nothing,
-        listsize::Integer
+        ::Nothing,
+        ::Nothing,
+        ::Nothing,
+        ::Integer
     )
 
-    maxresidue = -1.0
-
     for e = 1:num_edges
-
-        maxresidue = find_maxresidue_coords!(maxresidue,maxcoords,Residues,cn2vn,samples,
-                                            rng_sample,list,listsize)
-        if maxresidue == 0.0 #breaks the loop in LRBP mode
-            break
-        end
-
-        __RBP(Residues,maxcoords)
 
         _RBP_update_Lr!(maxcoords,Factors,rbpfactor,cn2vn,Lq,Lr)
 
         maxresidue = _RBP_update_vn2cn!(nothing,maxcoords,0.0,Factors,Lf,Ldn,d,
                                         vn2cn,cn2vn,Ms,Lr,Lq,signs,nothing,0)
+
+        if maxresidue == 0.0 #breaks the loop in LRBP mode
+            break
+        end
     end
-end
-
-function
-    find_maxresidue_coords!(
-        maxresidue::AbstractFloat,
-        maxcoords::Vector{<:Integer},
-        ::Nothing,
-        cn2vn::Vector{Vector{T}} where {T<:Integer},
-        ::Nothing,
-        ::Nothing,
-        list::Nothing,
-        listsize::Integer
-    )
-
-    return maxresidue
 end
 
 #List-RBP
 function
     RBP!(
-        Residues::Nothing,
+        ::Nothing,
         d::Vector{Bool},
         Lr::Matrix{<:AbstractFloat},
         Ms::Matrix{<:AbstractFloat},
@@ -142,46 +106,22 @@ function
 
     for e in 1:num_edges
 
-        maxresidue = find_maxresidue_coords!(0.0,maxcoords,Residues,cn2vn,samples,
-                                            rng_sample,list,listsize)
-
-        if @fastmath maxresidue == 0.0
+        if @fastmath @inbounds list[1][1] == 0.0
             break
         end
-        
-        __RBP(Residues,maxcoords)
+
+        @inbounds maxcoords .= list[1][2]
         
         _RBP_update_Lr!(maxcoords,Factors,rbpfactor,cn2vn,Lq,Lr)
 
-        maxresidue = _RBP_update_vn2cn!(nothing,maxcoords,0.0,Factors,Lf,Ldn,bitvector,
+        maxresidue = _RBP_update_vn2cn!(nothing,maxcoords,0.0,Factors,Lf,Ldn,d,
                                         vn2cn,cn2vn,Ms,Lr,Lq,signs,list,
                                         listsize)
 
-             
+        for i in 1:listsize   
+            @inbounds list[i] = list[i+1]
+        end       
     end
-end
-
-function
-    find_maxresidue_coords!(
-        maxresidue::AbstractFloat,
-        maxcoords::Vector{<:Integer},
-        ::Nothing,
-        cn2vn::Vector{Vector{T}} where {T<:Integer},
-        ::Nothing,
-        ::Nothing,
-        list::Vector{Tuple{Float64,Vector{Int}}},
-        listsize::Integer
-    )
-
-    maxresidue = list[1][1]
-
-    @inbounds maxcoords .= list[1][2]
-
-    for i in 1:listsize   
-        @inbounds list[i] = list[i+1]
-    end  
-
-    return maxresidue
 end
 
 function 
@@ -218,7 +158,7 @@ function
         Factors::Matrix{<:AbstractFloat},
         Lf::Vector{<:AbstractFloat},
         Ldn::Vector{<:AbstractFloat},
-        bitvector::Vector{Bool},
+        d::Vector{Bool},
         vn2cn::Vector{Vector{T}} where {T<:Integer},
         cn2vn::Vector{Vector{T}} where {T<:Integer},
         Ms::Matrix{<:AbstractFloat},
@@ -229,12 +169,12 @@ function
         listsize::Integer       
     )
 
-    # update Ldn[vmax] and bitvector[vnmax]
+    # update Ldn[vmax] and d[vnmax]
     (cnmax,vnmax) = maxcoords
     @inbounds Ldn[vnmax] = Lf[vnmax]
     for m in vn2cn[vnmax]
         @fastmath @inbounds Ldn[vnmax] += Lr[m,vnmax]
-        @fastmath @inbounds bitvector[vnmax] = signbit(Ldn[vnmax])
+        @fastmath @inbounds d[vnmax] = signbit(Ldn[vnmax])
     end
 
     for m in vn2cn[vnmax]

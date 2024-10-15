@@ -137,7 +137,7 @@ function
         cn2vn::Vector{Vector{T}} where {T<:Integer},
         Ms::Matrix{<:AbstractFloat}        
     )
-
+    
     maxresidue = 0.0
     for m in eachindex(cn2vn)
         maxresidue = calc_residues!(
@@ -158,19 +158,17 @@ function
     end
 end
 
-# Random-RBP
+
 function
     find_maxresidue_coords!(
-        maxresidue::AbstractFloat,
         maxcoords::Vector{<:Integer},
         Residues::Matrix{<:AbstractFloat},
         cn2vn::Vector{Vector{T}} where {T<:Integer},
         samples::Vector{<:Integer},
-        rng_sample::AbstractRNG,
-        list::Nothing,
-        listsize::Nothing
+        rng_sample::AbstractRNG
     )
 
+    maxresidue = 0.0
     M = length(cn2vn)
     rand!(rng_sample,samples,1:M)
     for m in samples
@@ -189,16 +187,14 @@ end
 
 function
     find_maxresidue_coords!(
-        maxresidue::AbstractFloat,
         maxcoords::Vector{<:Integer},
         Residues::Matrix{<:AbstractFloat},
         cn2vn::Vector{Vector{T}} where {T<:Integer},
         ::Nothing,
-        ::Nothing,
-        list::Nothing,
-        listsize::Nothing,
+        ::Nothing
     )
 
+    maxresidue = 0.0
     for m in eachindex(cn2vn)
         for n in cn2vn[m]
             @inbounds residue = Residues[m,n]
