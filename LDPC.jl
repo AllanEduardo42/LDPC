@@ -30,7 +30,7 @@ SEED_MESSA::Int64 = 9999
 
 ###################### NUMBER OF TRIALS AND MULTITHREADING #####################
 
-TRIALS::Int = 96
+TRIALS::Int = 1024
 NTHREADS::Int = min(32,TRIALS)
 
 ######################## MAXIMUM NUMBER OF BP ITERATIONS #######################
@@ -53,7 +53,7 @@ _RBP::Bool = false
 #Random-RBP
 RRBP::Bool = false      
 #Local-RBP
-LRBP::Bool = true      
+LRBP::Bool = false      
 #List-RBP
 LIST::Bool = true      
 
@@ -82,25 +82,19 @@ FAST::Bool = true  # fast flooding update when using tanh mode (default:true)
 SAVEDATA::Bool = false
 PRINTTEST::Bool = false
 
-################################# LOOKUP TABLE #################################
-
-SIZE::Int64 = 1024
-RANGE::Int64 = 20
-SIZE_per_RANGE::Float64 = SIZE/RANGE
-
 ################################# RBP CONSTANTS ################################
 
-DECAYRBP::Float64 = 0.4
+DECAYRBP::Float64 = 0.5
 DECAYRRBP::Float64 = 0.7
 DECAYLRBP::Float64 = 0.9
-DECAYLIST::Float64 = 0.4
+DECAYLIST::Float64 = 0.5
 decay = Dict(modes[4][2] => DECAYRBP,
              modes[5][2] => DECAYRRBP,
              modes[6][2] => DECAYLRBP,
              modes[7][2] => DECAYLIST)
 
 SAMPLESIZE::Int = 51
-LISTSIZE ::Int = 2
+LISTSIZE::Int = 200
 
 ##################################### SNR ######################################
 SNRTEST = [3]
@@ -267,7 +261,7 @@ if TRIALS > 1
         end
     end
 end
-################################### SAVEDATA DATA ##################################
+################################### SAVE DATA ##################################
 if TRIALS > 1 && SAVEDATA
 
     aux = []

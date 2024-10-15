@@ -44,7 +44,8 @@ function
         visited_vns::Union{Vector{Bool},Nothing},
         samples::Union{Vector{<:Integer},Nothing},
         rgn_sample::Union{AbstractRNG,Nothing},
-        list::Union{Vector{Tuple{Float64,Vector{Int}}},Nothing}
+        list::Union{Vector{Tuple{Float64,Vector{Int}}},Nothing},
+        listsize::Integer
     )
              
     # FIRST = true
@@ -61,7 +62,7 @@ function
             LBP!(d,Lr,Lq,Lf,cn2vn,vn2cn,Lrn,syndrome,Ldn,visited_vns,ilbp)   
         elseif supermode == "RBP"
             RBP!(Residues,d,Lr,Ms,maxcoords,Lq,Lf,cn2vn,vn2cn,signs,Factors,
-                rbpfactor,num_edges,Ldn,samples,rgn_sample,list)
+                rbpfactor,num_edges,Ldn,samples,rgn_sample,list,listsize)
             # reset factors
             resetfactors!(Factors,vn2cn)
         end

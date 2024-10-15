@@ -23,7 +23,8 @@ function
         Ldn::Vector{<:AbstractFloat},
         samples::Union{Vector{<:Integer},Nothing},
         rng_sample::Union{AbstractRNG,Nothing},
-        ::Nothing
+        ::Nothing,
+        ::Integer
     )
 
     for e in 1:num_edges
@@ -39,7 +40,7 @@ function
         @inbounds Residues[maxcoords...] = 0.0
 
         _RBP_update_vn2cn!(Residues,maxcoords,maxresidue,Factors,Lf,Ldn,d,vn2cn,
-                            cn2vn,Ms,Lr,Lq,signs,nothing)
+                            cn2vn,Ms,Lr,Lq,signs,nothing,0)
     end
 end
 
@@ -62,7 +63,8 @@ function
         Ldn::Vector{<:AbstractFloat},        
         ::Nothing,
         ::Nothing,
-        ::Nothing
+        ::Nothing,
+        ::Integer
     )
 
     for e = 1:num_edges
@@ -70,7 +72,7 @@ function
         _RBP_update_Lr!(maxcoords,Factors,rbpfactor,cn2vn,Lq,Lr)
 
         maxresidue = _RBP_update_vn2cn!(nothing,maxcoords,0.0,Factors,Lf,Ldn,d,
-                                        vn2cn,cn2vn,Ms,Lr,Lq,signs,nothing)
+                                        vn2cn,cn2vn,Ms,Lr,Lq,signs,nothing,0)
 
         if maxresidue == 0.0 #breaks the loop in LRBP mode
             break
@@ -96,24 +98,24 @@ function
         Ldn::Vector{<:AbstractFloat},
         samples::Union{Vector{<:Integer},Nothing},
         rng_sample::Union{AbstractRNG,Nothing},
-        list::Vector{Tuple{Float64,Vector{Int}}}
+        list::Vector{Tuple{Float64,Vector{Int}}},
+        listsize::Integer
     )
 
     for e in 1:num_edges
         
-        maxcoords = list[1][2]        
-        list[1:end-1] = list[2:end]
-        list[end] = (0.0,[0,0])
-        
         _RBP_update_Lr!(maxcoords,Factors,rbpfactor,cn2vn,Lq,Lr)
 
         maxresidue = _RBP_update_vn2cn!(nothing,maxcoords,0.0,Factors,Lf,Ldn,d,
-                                        vn2cn,cn2vn,Ms,Lr,Lq,signs,list)
+                                        vn2cn,cn2vn,Ms,Lr,Lq,signs,list,
+                                        listsize)
 
-        if @fastmath @inbounds list[1][1] == 0.0 #breaks the loop in LRBP mode
+        if @fastmath maxresidue == 0.0
             break
         end
-        
+        for i in 1:listsize   
+            @inbounds list[i] = list[i+1]
+        end       
     end
 end
 
@@ -158,7 +160,8 @@ function
         Lr::Matrix{<:AbstractFloat},
         Lq::Matrix{<:AbstractFloat},
         signs::Vector{Bool},
-        list::Union{Vector{Tuple{Float64,Vector{Int}}},Nothing}       
+        list::Union{Vector{Tuple{Float64,Vector{Int}}},Nothing},
+        listsize::Integer       
     )
 
     # update Ldn[vmax] and d[vnmax]
@@ -176,7 +179,10 @@ function
             # if any new residue estimate is larger than the previously estimated maximum 
             # residue than update the value of maxresidue and maxcoords.
             maxresidue = calc_residues!(Residues,maxcoords,maxresidue,Factors,
-                                        Ms,Lr,Lq,signs,vnmax,m,cn2vn,list)
+                                        Ms,Lr,Lq,signs,vnmax,m,cn2vn,list,
+                                        listsize)
         end
     end
+
+    return maxresidue
 end

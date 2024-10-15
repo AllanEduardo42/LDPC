@@ -92,16 +92,8 @@ function
             elseif floomode == "MSUM"
                 println("LLRs calculated by min-sum algorithm)")
             end
-        elseif mode == "LBP"
-            println("Message passing protocol: LBP")
-        elseif mode == "iLBP"
-            println("Message passing protocol: iLBP")
-        elseif mode == "RBP"
-            println("Message passing protocol: RBP")
-        elseif mode == "Local-RBP"
-            println("Message passing protocol: Local RBP")
-        elseif mode == "Random-RBP"
-            println("Message passing protocol: Randomized RBP")
+        else
+            println("Message passing protocol: $mode")
         end
 
         println("Maximum number of iterations: $max")

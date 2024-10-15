@@ -9,7 +9,7 @@ using Random
 using Statistics
 using Plots
 using SparseArrays
-using CSV, DataFrames
+using CSV
 
 ################################ INCLUDED FILES ################################
 
@@ -28,7 +28,7 @@ SEED_MESSA::Int64 = 9999
 
 ###################### NUMBER OF TRIALS AND MULTITHREADING #####################
 
-TRIALS::Int = 32768
+TRIALS::Int = 1024
 NTHREADS::Int = min(32,TRIALS)
 
 ######################## MAXIMUM NUMBER OF BP ITERATIONS #######################
@@ -39,7 +39,7 @@ STOP::Bool = false # stop simulation at zero syndrome (if true, BER curves are
 
 ################################ CONTROL FLAGS #################################
 
-SAVEDATA::Bool = false
+SAVEDATA::Bool = true
 PRINTTEST::Bool = false
 
 ################################# RBP CONSTANTS ################################
@@ -148,4 +148,16 @@ if TRIALS > 1
         display(p)
         SAVEDATA ? savefig(p, "FER.png") : nothing
     end
+end
+
+################################### SAVE DATA ##################################
+if TRIALS > 1 && SAVEDATA
+
+    aux = []
+    for i in 1:length(RD)
+        push!(aux,(fer_labels[i],fermax[i]))
+    end
+    FERS = Dict(aux)
+    CSV.write("FERS.csv", DataFrame(FERS), header=true)
+
 end

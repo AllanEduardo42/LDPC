@@ -18,7 +18,8 @@ function
         vnmax::Integer,
         m::Integer,
         cn2vn::Vector{Vector{T}} where {T<:Integer},
-        list::Union{Vector{Tuple{Float64,Vector{Int}}},Nothing}             
+        list::Union{Vector{Tuple{Float64,Vector{Int}}},Nothing},
+        listsize::Integer             
     )
     
     minsum!(Lq,Ms,signs,m,cn2vn)
@@ -26,10 +27,11 @@ function
     for n in cn2vn[m]
         if n ≠ vnmax
             x = calc_residue(Ms,Factors,Lr,m,n)
-            maxresidue = findmaxresidue!(Residues,maxcoords,maxresidue,m,n,x,list)
+            maxresidue = findmaxresidue!(Residues,maxcoords,maxresidue,m,n,x,
+                list,listsize)
+            
         end
     end
-
     return maxresidue
 end
 
@@ -60,6 +62,7 @@ function
 
 end
 
+# RBP and Random-RBP
 function 
     findmaxresidue!(
         Residues::Matrix{<:AbstractFloat},
@@ -68,14 +71,15 @@ function
         m::Integer,
         n::Integer,
         x::AbstractFloat,
-        ::Nothing
+        ::Nothing,
+        ::Integer
     )
 
     @inbounds Residues[m,n] = x
 
     return maxresidue
 end
-
+# LRBP
 function 
     findmaxresidue!(
         ::Nothing,
@@ -84,7 +88,8 @@ function
         m::Integer,
         n::Integer,
         x::AbstractFloat,
-        ::Nothing
+        ::Nothing,
+        ::Integer
     )
     if @fastmath x > maxresidue
         maxresidue = x
@@ -94,7 +99,7 @@ function
 
     return maxresidue
 end
-
+# List-RBP
 function 
     findmaxresidue!(
         ::Nothing,
@@ -103,17 +108,24 @@ function
         m::Integer,
         n::Integer,
         x::AbstractFloat,
-        list::Vector{Tuple{Float64,Vector{Int}}}
+        list::Vector{Tuple{Float64,Vector{Int}}},
+        listsize::Integer
     )
-    for i in eachindex(list)
-        if @fastmath x > list[i][1]
-            @inbounds list[i+1:end] = list[i:end-1]
-            @inbounds list[i] = (x,[m,n])
+
+    @inbounds maxcoords .= list[1][2]
+    for i in 1:listsize
+        y = @inbounds list[i][1]
+        if @fastmath x > y
+            for j=listsize:-1:i+1
+                @inbounds list[j] = list[j-1]
+            end
+            maxcoords[1] = m
+            maxcoords[2] = n
+            @inbounds list[i] = (x,maxcoords)
             break
         end
     end
-
-    return maxresidue
+    @inbounds return list[1][1]
 end
 
 function
@@ -123,9 +135,7 @@ function
         Lq::Matrix{<:AbstractFloat},
         signs::Vector{Bool},
         cn2vn::Vector{Vector{T}} where {T<:Integer},
-        Ms::Matrix{<:AbstractFloat},
-        list::Union{Vector{Tuple{Float64,Vector{Int}}},Nothing}   
-        
+        Ms::Matrix{<:AbstractFloat}        
     )
     
     maxresidue = 0.0
@@ -142,7 +152,8 @@ function
             0,
             m,
             cn2vn,
-            list
+            nothing,
+            0,
         )
     end
 end
