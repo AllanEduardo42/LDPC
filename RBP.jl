@@ -68,19 +68,20 @@ function
         listsize::Integer
     )
 
+    maxresidue = -1.0
+
     for e = 1:num_edges
 
-        maxresidue = find_maxresidue_coords!(0.0,maxcoords,Residues,cn2vn,samples,
+        maxresidue = find_maxresidue_coords!(maxresidue,maxcoords,Residues,cn2vn,samples,
                                             rng_sample,list,listsize)
+        if maxresidue == 0.0 #breaks the loop in LRBP mode
+            break
+        end
 
         _RBP_update_Lr!(maxcoords,Factors,rbpfactor,cn2vn,Lq,Lr)
 
         maxresidue = _RBP_update_vn2cn!(nothing,maxcoords,0.0,Factors,Lf,Ldn,d,
                                         vn2cn,cn2vn,Ms,Lr,Lq,signs,nothing,0)
-
-        if maxresidue == 0.0 #breaks the loop in LRBP mode
-            break
-        end
     end
 end
 
