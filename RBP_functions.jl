@@ -103,7 +103,7 @@ end
 function 
     findmaxresidue!(
         ::Nothing,
-        maxcoords::Vector{Int},
+        coords::Vector{Int},
         maxresidue::AbstractFloat,
         m::Integer,
         n::Integer,
@@ -112,20 +112,20 @@ function
         listsize::Integer
     )
 
-    @inbounds maxcoords .= list[1][2]
     for i in 1:listsize
         y = @inbounds list[i][1]
         if @fastmath x > y
             for j=listsize:-1:i+1
                 @inbounds list[j] = list[j-1]
             end
-            maxcoords[1] = m
-            maxcoords[2] = n
-            @inbounds list[i] = (x,maxcoords)
+            @inbounds coords[1] = m
+            @inbounds coords[2] = n
+            @inbounds list[i] = (x,coords)
             break
         end
     end
-    @inbounds return list[1][1]
+
+    return maxresidue
 end
 
 function

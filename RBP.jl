@@ -5,6 +5,7 @@
 
 include("RBP_functions.jl")
 
+#RBP
 function
     RBP!(
         Residues::Matrix{<:AbstractFloat},
@@ -80,6 +81,7 @@ function
     end
 end
 
+#List-RBP
 function
     RBP!(
         ::Nothing,
@@ -107,6 +109,8 @@ function
         if @fastmath @inbounds list[1][1] == 0.0
             break
         end
+
+        @inbounds maxcoords .= list[1][2]
         
         _RBP_update_Lr!(maxcoords,Factors,rbpfactor,cn2vn,Lq,Lr)
 

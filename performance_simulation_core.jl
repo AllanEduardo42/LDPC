@@ -105,12 +105,12 @@ function
                 Vector{Int}(undef,SAMPLESIZE) : nothing
 
     maxcoords, Factors, num_edges = (supermode == "RBP") ? 
-        ([1,cn2vn[1][1]], 1.0*H, sum(H)) : 
+        ([0,0], 1.0*H, sum(H)) : 
         (nothing,nothing,nothing)
 
     if mode == "List-RBP"
         list = Vector{Tuple{Float64,Vector{Int}}}()
-        push!(list,(-1.0,[0,0]))
+        push!(list,(-1.0,[1,cn2vn[1][1]]))
         for m in 1:LISTSIZE
             push!(list,(0.0,[0,0]))
         end
