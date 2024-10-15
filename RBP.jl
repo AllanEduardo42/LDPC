@@ -38,11 +38,26 @@ function
 
         _RBP_update_Lr!(maxcoords,Factors,rbpfactor,cn2vn,Lq,Lr)
 
-        @inbounds Residues[maxcoords...] = 0.0
+        __RBP(Residues,maxcoords)
 
         _RBP_update_vn2cn!(Residues,maxcoords,maxresidue,Factors,Lf,Ldn,d,vn2cn,
                             cn2vn,Ms,Lr,Lq,signs,nothing,0)
     end
+end
+
+function
+    __RBP(
+        Residues::Matrix{<:AbstractFloat},
+        maxcoords::Vector{<:Integer}
+    )
+    @inbounds Residues[maxcoords...] = 0.0
+end
+
+function
+    __RBP(
+        ::Nothing,
+        ::Vector{<:Integer}
+    )
 end
 
 # LRBP
@@ -77,6 +92,8 @@ function
         if maxresidue == 0.0 #breaks the loop in LRBP mode
             break
         end
+
+        __RBP(Residues,maxcoords)
 
         _RBP_update_Lr!(maxcoords,Factors,rbpfactor,cn2vn,Lq,Lr)
 
@@ -130,7 +147,9 @@ function
 
         if @fastmath maxresidue == 0.0
             break
-        end        
+        end
+        
+        __RBP(Residues,maxcoords)
         
         _RBP_update_Lr!(maxcoords,Factors,rbpfactor,cn2vn,Lq,Lr)
 
