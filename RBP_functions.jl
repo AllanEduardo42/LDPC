@@ -166,7 +166,9 @@ function
         Residues::Matrix{<:AbstractFloat},
         cn2vn::Vector{Vector{T}} where {T<:Integer},
         samples::Vector{<:Integer},
-        rng_sample::AbstractRNG
+        rng_sample::AbstractRNG,
+        list::Nothing,
+        listsize::Nothing
     )
 
     M = length(cn2vn)
@@ -192,7 +194,9 @@ function
         Residues::Matrix{<:AbstractFloat},
         cn2vn::Vector{Vector{T}} where {T<:Integer},
         ::Nothing,
-        ::Nothing
+        ::Nothing,
+        list::Nothing,
+        listsize::Nothing,
     )
 
     for m in eachindex(cn2vn)

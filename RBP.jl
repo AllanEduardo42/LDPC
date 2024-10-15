@@ -24,14 +24,14 @@ function
         Ldn::Vector{<:AbstractFloat},
         samples::Union{Vector{<:Integer},Nothing},
         rng_sample::Union{AbstractRNG,Nothing},
-        ::Nothing,
-        ::Integer
+        list::Nothing,
+        listsize::Integer
     )
 
     for e in 1:num_edges
 
         maxresidue = find_maxresidue_coords!(0.0,maxcoords,Residues,cn2vn,samples,
-                                            rng_sample)
+                                            rng_sample,list,listsize)
         if maxresidue == 0.0 # if RBP has converged
             break
         end
@@ -64,14 +64,14 @@ function
         Ldn::Vector{<:AbstractFloat},        
         samples::Nothing,
         rng_sample::Nothing,
-        ::Nothing,
-        ::Integer
+        list::Nothing,
+        listsize::Integer
     )
 
     for e = 1:num_edges
 
         maxresidue = find_maxresidue_coords!(0.0,maxcoords,Residues,cn2vn,samples,
-                                            rng_sample)
+                                            rng_sample,list,listsize)
 
         _RBP_update_Lr!(maxcoords,Factors,rbpfactor,cn2vn,Lq,Lr)
 
@@ -91,7 +91,9 @@ function
         ::Nothing,
         cn2vn::Vector{Vector{T}} where {T<:Integer},
         ::Nothing,
-        ::Nothing
+        ::Nothing,
+        list::Nothing,
+        listsize::Integer
     )
 
     return maxresidue
@@ -100,7 +102,7 @@ end
 #List-RBP
 function
     RBP!(
-        ::Nothing,
+        Residues::Nothing,
         d::Vector{Bool},
         Lr::Matrix{<:AbstractFloat},
         Ms::Matrix{<:AbstractFloat},
@@ -122,11 +124,12 @@ function
 
     for e in 1:num_edges
 
-        if @fastmath @inbounds list[1][1] == 0.0
-            break
-        end
+        maxresidue = find_maxresidue_coords!(0.0,maxcoords,Residues,cn2vn,samples,
+                                            rng_sample,list,listsize)
 
-        @inbounds maxcoords .= list[1][2]
+        if @fastmath maxresidue == 0.0
+            break
+        end        
         
         _RBP_update_Lr!(maxcoords,Factors,rbpfactor,cn2vn,Lq,Lr)
 
@@ -134,10 +137,31 @@ function
                                         vn2cn,cn2vn,Ms,Lr,Lq,signs,list,
                                         listsize)
 
-        for i in 1:listsize   
-            @inbounds list[i] = list[i+1]
-        end       
+             
     end
+end
+
+function
+    find_maxresidue_coords!(
+        maxresidue::AbstractFloat,
+        maxcoords::Vector{<:Integer},
+        ::Nothing,
+        cn2vn::Vector{Vector{T}} where {T<:Integer},
+        ::Nothing,
+        ::Nothing,
+        list::Vector{Tuple{Float64,Vector{Int}}},
+        listsize::Integer
+    )
+
+    maxresidue = list[1][1]
+
+    @inbounds maxcoords .= list[1][2]
+
+    for i in 1:listsize   
+        @inbounds list[i] = list[i+1]
+    end  
+
+    return maxresidue
 end
 
 function 
