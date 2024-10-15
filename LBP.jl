@@ -8,7 +8,7 @@ include("calc_syndrome.jl")
 
 function
     LBP!(
-        d::Vector{Bool},
+        bitvector::Vector{Bool},
         Lr::Matrix{<:AbstractFloat},
         Lq::Matrix{<:AbstractFloat},
         Lf::Vector{<:AbstractFloat},
@@ -28,7 +28,8 @@ function
             if @inbounds visited_vns[n]
                 @fastmath Lq[n,m] = Ldn[n] - Lr[m,n]
             else
-                @inbounds Ldn[n], d[n] = update_Lq!(Lq,Lr,Lf[n],n,vn2cn,Lrn)
+                @inbounds Ldn[n], bitvector[n] = update_Lq!(Lq,Lr,Lf[n],n,vn2cn,
+                                                            Lrn)
                 @inbounds visited_vns[n] = true
             end
         end
@@ -44,12 +45,12 @@ function
                 @fastmath @inbounds Ldn[n] -= Lr[m,n]
                 @fastmath @inbounds Lr[m,n] = 2*atanh(x)
                 @fastmath @inbounds Ldn[n] += Lr[m,n]
-                @inbounds d[n] = signbit(Ldn[n])
+                @inbounds bitvector[n] = signbit(Ldn[n])
             end
         end
         if ilbp
             # calc syndrome
-            @inbounds syndrome[m] = _calc_syndrome(d,cn2vn[m])
+            @inbounds syndrome[m] = _calc_syndrome(bitvector,cn2vn[m])
             if iszero(syndrome)
                 break
             end

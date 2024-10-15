@@ -12,12 +12,12 @@ function
         H::BitMatrix,
         mode::String,
         trials::Integer,
-        max::Integer,
+        maxiter::Integer,
         stop::Bool,
         rgn_noise_seeds::Vector{<:Integer};
         rgn_samples_seeds=ones(Int,NTHREADS),
         floomode="TANH",
-        t_test=nothing,
+        testsignal=nothing,
         printtest=false    
     )
 
@@ -96,7 +96,7 @@ function
             println("Message passing protocol: $mode")
         end
 
-        println("Maximum number of iterations: $max")
+        println("Maximum number of iterations: $maxiter")
         println("Simulated for SNR (dB): $snr")
         println("Stop at zero syndrome ? $stop")
         (supermode == "RBP") ? println("Decaying factor: $rbpfactor") : nothing
@@ -110,7 +110,7 @@ function
 
     if !test
         K = length(SNR)
-        decoded, ber = zeros(max,K,NTHREADS), zeros(max,K,NTHREADS)
+        decoded, ber = zeros(maxiter,K,NTHREADS), zeros(maxiter,K,NTHREADS)
         # Threads.@threads 
         for k in 1:K
             Threads.@threads for i in 1:NTHREADS
@@ -122,19 +122,19 @@ function
                                         mode,
                                         supermode,
                                         trials_multh,
-                                        max,
+                                        maxiter,
                                         stop,
                                         rbpfactor,
                                         rgn_noise_seeds[i],
                                         rgn_samples_seeds[i],
                                         test,
-                                        t_test,
+                                        testsignal,
                                         printtest)
             end
         end
 
-        FER = zeros(max,K)
-        BER = zeros(max,K)
+        FER = zeros(maxiter,K)
+        BER = zeros(maxiter,K)
         FER .= 1 .- sum(decoded,dims=3)/trials
         BER .= sum(ber,dims=3)/(trials*N)
 
@@ -149,13 +149,13 @@ function
                                     mode,
                                     supermode,
                                     trials,
-                                    max,
+                                    maxiter,
                                     stop,
                                     rbpfactor,
                                     rgn_noise_seeds[1],
                                     rgn_samples_seeds[1],
                                     test,
-                                    t_test,
+                                    testsignal,
                                     printtest)
         
         return Lr, Lq        

@@ -8,7 +8,7 @@ include("update_Lq.jl")
 
 function
     flooding!(
-        d::Vector{Bool},
+        bitvector::Vector{Bool},
         Lq::Matrix{<:AbstractFloat},
         Lr::Matrix{<:AbstractFloat},
         Lf::Vector{<:AbstractFloat},
@@ -29,7 +29,7 @@ function
     # Lq update
     for n in eachindex(vn2cn)
 
-        @inbounds _, d[n] = update_Lq!(Lq,Lr,Lf[n],n,vn2cn,Lrn)
+        @inbounds _, bitvector[n] = update_Lq!(Lq,Lr,Lf[n],n,vn2cn,Lrn)
         
     end
 end
@@ -38,7 +38,7 @@ end
 
 function
     flooding!(
-        d::Vector{Bool},
+        bitvector::Vector{Bool},
         q::Array{<:AbstractFloat,3},
         r::Array{<:AbstractFloat,3},
         f::Matrix{<:AbstractFloat},
@@ -65,7 +65,7 @@ function
     for n in eachindex(vn2cn)
         
         @inbounds Ld = f[n,:]
-        @inbounds d[n] = update_Lq!(q,r,Ld,n,vn2cn)
+        @inbounds bitvector[n] = update_Lq!(q,r,Ld,n,vn2cn)
 
     end
 end

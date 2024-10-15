@@ -10,19 +10,19 @@ include("calc_Lf.jl")
 
 function
     performance_simulation_core(
-        c::Vector{Bool},
+        codeword::Vector{Bool},
         snr::Real,
         H::BitMatrix,
         mode::String,
         supermode::String,
         trials::Integer,
-        max::Integer,
+        maxiter::Integer,
         stop::Bool,
         rbpfactor::Union{AbstractFloat,Nothing},
         rgn_seed_noise::Integer,
         rng_seed_sample::Integer,
         test::Bool,
-        t_test::Union{Vector{<:AbstractFloat},Nothing},
+        testsignal::Union{Vector{<:AbstractFloat},Nothing},
         printtest::Bool
     )
     
@@ -32,7 +32,7 @@ function
     variance = 1 ./ (exp10.(snr/10))
     stdev = sqrt.(variance)
     # BPKS
-    u = Float64.(2*c .- 1)
+    u = Float64.(2*codeword .- 1)
     # list of checks and variables nodes
     vn2cn  = make_vn2cn_list(H)
     cn2vn  = make_cn2vn_list(H)
@@ -40,15 +40,15 @@ function
     ############################# PREALLOCATIONS ################################
 
     # frame error rate
-    DECODED = zeros(Int,max)
-    decoded = Vector{Bool}(undef,max)
+    DECODED = zeros(Int,maxiter)
+    decoded = Vector{Bool}(undef,maxiter)
 
     # bit error rate
-    BER = zeros(Int,max)
-    ber = zeros(Int,max)
+    BER = zeros(Int,maxiter)
+    ber = zeros(Int,maxiter)
 
     # estimate
-    d = zeros(Bool,N)
+    bitvector = zeros(Bool,N)
 
     # syndrome
     syndrome = ones(Bool,M)
@@ -60,10 +60,10 @@ function
     noise = Vector{Float64}(undef,N)
 
     # received signal
-    t = Vector{Float64}(undef,N)
+    signal = Vector{Float64}(undef,N)
 
     # bit-error
-    bit_error = Vector{Bool}(undef,N) 
+    biterror = Vector{Bool}(undef,N) 
 
     # Lq -> matrix of vn2cn messages (N x M)
     # Lr -> matrix of cn2vn messages (M x N)
@@ -125,32 +125,32 @@ function
     rng_sample = (mode == "Random-RBP") ? Xoshiro(rng_seed_sample) : nothing
 
     ######################### FIRST RECEIVED SIGNAL ############################
-    # In order to allow to test with a given received signal t_test, the first
-    # received signal t must be set outside the main loop.
+    # In order to allow to test with a given received signal testsignal, the first
+    # received signal signal must be set outside the main loop.
     if test
-        if t_test === nothing # if no test signal was provided:
+        if testsignal === nothing # if no test signal was provided:
             # generate a new received signal
-            received_signal!(t,noise,stdev,u,rng_noise)
-        elseif length(t_test) != N
+            received_signal!(signal,noise,stdev,u,rng_noise)
+        elseif length(testsignal) != N
             # if a received test signal was given, but with wrong length
             throw(
                 DimensionMismatch(
-                    "length(t_test) should be $N, not $(length(t_test))"
+                    "length(testsignal) should be $N, not $(length(testsignal))"
                 )
             )
         else
             # the received signal is the given test signal
-            t = t_test
+            signal = testsignal
         end
     else
         # generate the first received signal outside the main loop
-        received_signal!(t,noise,stdev,u,rng_noise)
+        received_signal!(signal,noise,stdev,u,rng_noise)
     end        
 
     for j in 1:trials
 
         # init the llr priors
-        calc_Lf!(Lf,t,variance)
+        calc_Lf!(Lf,signal,variance)
         if mode == "TABL"
             # scale for table
             Lf .*= SIZE_per_RANGE
@@ -166,9 +166,37 @@ function
         end      
         # SPA routine
         decoded .= false
-        BP!(supermode,mode,stop,test,max,syndrome,d,c,bit_error,ber,decoded,Lf,
-            Lq,Lr,Ms,cn2vn,vn2cn,Lrn,signs,phi,printtest,Residues,maxcoords,
-            Factors,rbpfactor,num_edges,Ldn,visited_vns,samples,rng_sample,list,
+        BP!(supermode,
+            mode,
+            stop,
+            test,
+            maxiter,
+            syndrome,
+            bitvector,
+            codeword,
+            biterror,
+            ber,
+            decoded,
+            Lf,
+            Lq,
+            Lr,
+            Ms,
+            cn2vn,
+            vn2cn,
+            Lrn,
+            signs,
+            phi,
+            printtest,
+            Residues,
+            maxcoords,
+            Factors,
+            rbpfactor,
+            num_edges,
+            Ldn,
+            visited_vns,
+            samples,
+            rng_sample,
+            list,
             LISTSIZE)                
 
         # bit error rate
@@ -176,7 +204,7 @@ function
         @. DECODED += decoded
 
         # received signal for the next realization (j+1)
-        received_signal!(t,noise,stdev,u,rng_noise)
+        received_signal!(signal,noise,stdev,u,rng_noise)
 
     end
 

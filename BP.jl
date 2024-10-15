@@ -18,11 +18,11 @@ function
         mode::String,
         stop::Bool,
         test::Bool,
-        max::Integer,
+        maxiter::Integer,
         syndrome::Vector{Bool},
-        d::Vector{Bool},
-        c::Vector{Bool},
-        bit_error::Vector{Bool},
+        bitvector::Vector{Bool},
+        codeword::Vector{Bool},
+        biterror::Vector{Bool},
         ber::Vector{<:Integer},
         decoded::Vector{Bool},
         Lf::Array{<:AbstractFloat},
@@ -50,29 +50,63 @@ function
              
     # FIRST = true
     ilbp = (mode == "iLBP")
-    for i in 1:max
+    for i in 1:maxiter
 
         if test && printtest  
             println("### Iteration #$i ###")
         end
 
         if supermode == "Flooding"
-            flooding!(d,Lq,Lr,Lf,cn2vn,vn2cn,Lrn,signs,phi)  
+            flooding!(bitvector,
+                      Lq,
+                      Lr,
+                      Lf,
+                      cn2vn,
+                      vn2cn,
+                      Lrn,
+                      signs,
+                      phi)  
         elseif supermode == "LBP"
-            LBP!(d,Lr,Lq,Lf,cn2vn,vn2cn,Lrn,syndrome,Ldn,visited_vns,ilbp)   
+            LBP!(bitvector,
+                 Lr,
+                 Lq,
+                 Lf,
+                 cn2vn,
+                 vn2cn,
+                 Lrn,
+                 syndrome,
+                 Ldn,
+                 visited_vns,
+                 ilbp)   
         elseif supermode == "RBP"
-            RBP!(Residues,d,Lr,Ms,maxcoords,Lq,Lf,cn2vn,vn2cn,signs,Factors,
-                rbpfactor,num_edges,Ldn,samples,rgn_sample,list,listsize)
+            RBP!(Residues,
+                 bitvector,
+                 Lr,
+                 Ms,
+                 maxcoords,
+                 Lq,
+                 Lf,
+                 cn2vn,
+                 vn2cn,
+                 signs,
+                 Factors,
+                 rbpfactor,
+                 num_edges,
+                 Ldn,
+                 samples,
+                 rgn_sample,
+                 list,
+                 listsize)
             # reset factors
             resetfactors!(Factors,vn2cn)
         end
 
-        calc_syndrome!(syndrome,d,cn2vn)
+        calc_syndrome!(syndrome,bitvector,cn2vn)
 
         if test && printtest    
                 println("Max LLR estimate errors: ")
-                for j in eachindex(d)
-                    print(Int(d[j] != c[j]))
+                for j in eachindex(bitvector)
+                    print(Int(bitvector[j] != codeword[j]))
                     if j%80 == 0
                         println()
                     end
@@ -94,15 +128,15 @@ function
             # if FIRST && iszero(syndrome)
             if iszero(syndrome)
                 # FIRST = false
-                if @fastmath d == c
+                if @fastmath bitvector == codeword
                     @inbounds decoded[i] = true
                 end
                 if stop
                     break
                 end
             end
-            @fastmath bit_error .= (d .≠ c)
-            @fastmath @inbounds ber[i] = sum(bit_error)
+            @fastmath biterror .= (bitvector .≠ codeword)
+            @fastmath @inbounds ber[i] = sum(biterror)
         end
     end
 

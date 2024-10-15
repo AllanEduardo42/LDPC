@@ -49,11 +49,11 @@ _LBP::Bool = false
 #instantaneos-LBP
 iLBP::Bool = false      
 #RBP
-_RBP::Bool = true      
+_RBP::Bool = false      
 #Random-RBP
-RRBP::Bool = true      
+RRBP::Bool = false      
 #Local-RBP
-LRBP::Bool = true      
+LRBP::Bool = false      
 #List-RBP
 LIST::Bool = true      
 
