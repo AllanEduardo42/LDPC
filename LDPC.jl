@@ -165,8 +165,14 @@ Lr = Dict()
 Lq = Dict()
 for mode in modes
     if mode[1]
-        Lr[mode[2]] , Lq[mode[2]] = performance_simulation(Codeword,SNRTEST,H,
-                                        mode[2],1,mode[3],STOP,
+        Lr[mode[2]] , Lq[mode[2]] = performance_simulation(
+                                        Codeword,
+                                        SNRTEST,
+                                        H,
+                                        mode[2],
+                                        1,
+                                        mode[3],
+                                        STOP,
                                         rgn_noise_seeds,
                                         printtest=PRINTTEST)
     end
@@ -179,9 +185,14 @@ if TRIALS > 1
     BER = Dict()
     for mode in modes
         if mode[1]
-            @time FER[mode[2]], BER[mode[2]] = performance_simulation(Codeword,
-                                                SNR,H,mode[2],
-                                                TRIALS,mode[3],STOP,
+            @time FER[mode[2]], BER[mode[2]] = performance_simulation(
+                                                Codeword,
+                                                SNR,
+                                                H,
+                                                mode[2],
+                                                TRIALS,
+                                                mode[3],
+                                                STOP,
                                                 rgn_noise_seeds;
                                                 rgn_samples_seeds=rgn_samples_seeds)
             push!(fer_labels,mode[2])
