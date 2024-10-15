@@ -30,7 +30,7 @@ function
 
     for e in 1:num_edges
 
-        maxresidue = find_maxresidue_coords!(maxcoords,Residues,cn2vn,samples,
+        maxresidue = find_maxresidue_coords!(0.0,maxcoords,Residues,cn2vn,samples,
                                             rng_sample)
         if maxresidue == 0.0 # if RBP has converged
             break
@@ -48,7 +48,7 @@ end
 # LRBP
 function
     RBP!(
-        ::Nothing,
+        Residues::Nothing,
         d::Vector{Bool},
         Lr::Matrix{<:AbstractFloat},
         Ms::Matrix{<:AbstractFloat},
@@ -62,13 +62,16 @@ function
         rbpfactor::AbstractFloat,
         num_edges::Integer,
         Ldn::Vector{<:AbstractFloat},        
-        ::Nothing,
-        ::Nothing,
+        samples::Nothing,
+        rng_sample::Nothing,
         ::Nothing,
         ::Integer
     )
 
     for e = 1:num_edges
+
+        maxresidue = find_maxresidue_coords!(0.0,maxcoords,Residues,cn2vn,samples,
+                                            rng_sample)
 
         _RBP_update_Lr!(maxcoords,Factors,rbpfactor,cn2vn,Lq,Lr)
 
@@ -79,6 +82,19 @@ function
             break
         end
     end
+end
+
+function
+    find_maxresidue_coords!(
+        maxresidue::AbstractFloat,
+        maxcoords::Vector{<:Integer},
+        ::Nothing,
+        cn2vn::Vector{Vector{T}} where {T<:Integer},
+        ::Nothing,
+        ::Nothing
+    )
+
+    return maxresidue
 end
 
 #List-RBP
