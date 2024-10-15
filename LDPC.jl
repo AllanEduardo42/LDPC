@@ -49,7 +49,7 @@ _LBP::Bool = false
 #instantaneos-LBP
 iLBP::Bool = false      
 #RBP
-_RBP::Bool = false      
+_RBP::Bool = true      
 #Random-RBP
 RRBP::Bool = false      
 #Local-RBP

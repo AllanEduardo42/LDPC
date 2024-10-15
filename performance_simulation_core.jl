@@ -110,7 +110,8 @@ function
 
     if mode == "List-RBP"
         list = Vector{Tuple{Float64,Vector{Int}}}()
-        for m in 1:LISTSIZE+1
+        push!(list,(-1.0,[0,0]))
+        for m in 1:LISTSIZE
             push!(list,(0.0,[0,0]))
         end
     else

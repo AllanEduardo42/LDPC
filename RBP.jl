@@ -103,6 +103,10 @@ function
     )
 
     for e in 1:num_edges
+
+        if @fastmath @inbounds list[1][1] == 0.0
+            break
+        end
         
         _RBP_update_Lr!(maxcoords,Factors,rbpfactor,cn2vn,Lq,Lr)
 
@@ -110,9 +114,6 @@ function
                                         vn2cn,cn2vn,Ms,Lr,Lq,signs,list,
                                         listsize)
 
-        if @fastmath maxresidue == 0.0
-            break
-        end
         for i in 1:listsize   
             @inbounds list[i] = list[i+1]
         end       
