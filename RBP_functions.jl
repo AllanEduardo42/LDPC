@@ -133,14 +133,11 @@ function
             @inbounds mm = listadd[1,i]
             @inbounds nn = listadd[2,i]
             if mm == m && nn == n                
-                for j=i:listsize-1
+                for j=i:listsize
                     @inbounds listres[j] = listres[j+1]
                     @inbounds listadd[1,j] = listadd[1,j+1]
                     @inbounds listadd[2,j] = listadd[2,j+1]
                 end
-                @inbounds listres[end] = 0.0
-                @inbounds listadd[1,end] = 0
-                @inbounds listadd[2,end] = 0
                 break
             end
         end
@@ -214,6 +211,7 @@ end
 
 function
     find_maxresidue_coords!(
+        maxresidue::AbstractFloat,
         maxcoords::Vector{<:Integer},
         Residues::Matrix{<:AbstractFloat},
         cn2vn::Vector{Vector{T}} where {T<:Integer},
@@ -221,7 +219,6 @@ function
         rng_sample::AbstractRNG
     )
 
-    maxresidue = 0.0
     M = length(cn2vn)
     rand!(rng_sample,samples,1:M)
     for m in samples
@@ -240,6 +237,7 @@ end
 
 function
     find_maxresidue_coords!(
+        maxresidue::AbstractFloat,
         maxcoords::Vector{<:Integer},
         Residues::Matrix{<:AbstractFloat},
         cn2vn::Vector{Vector{T}} where {T<:Integer},
@@ -247,7 +245,6 @@ function
         ::Nothing
     )
 
-    maxresidue = 0.0
     for m in eachindex(cn2vn)
         for n in cn2vn[m]
             @inbounds residue = Residues[m,n]

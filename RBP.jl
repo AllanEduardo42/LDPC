@@ -41,11 +41,11 @@ function
 
         @inbounds Residues[maxcoords[1],maxcoords[2]] = 0.0
 
-        _RBP_update_vn2cn!(Residues,maxcoords,0.0,Factors,Lf,Ldn,bitvector,vn2cn,
+        maxresidue = _RBP_update_vn2cn!(Residues,maxcoords,0.0,Factors,Lf,Ldn,bitvector,vn2cn,
                             cn2vn,Ms,Lr,Lq,signs,nothing,nothing,0,nothing)
 
-        maxresidue = find_maxresidue_coords!(maxcoords,Residues,cn2vn,samples,
-                                            rng_sample)
+        maxresidue = find_maxresidue_coords!(maxresidue,maxcoords,Residues,cn2vn,
+            samples,rng_sample)
 
     end
 end
@@ -84,8 +84,8 @@ function
 
         _RBP_update_Lr!(maxcoords,Factors,rbpfactor,cn2vn,Lq,Lr)
 
-        maxresidue = _RBP_update_vn2cn!(nothing,maxcoords,0.0,Factors,Lf,Ldn,bitvector,
-                                        vn2cn,cn2vn,Ms,Lr,Lq,signs,nothing,nothing,0,nothing)
+        maxresidue = _RBP_update_vn2cn!(nothing,maxcoords,0.0,Factors,Lf,Ldn,
+            bitvector,vn2cn,cn2vn,Ms,Lr,Lq,signs,nothing,nothing,0,nothing)
 
     end
 end
@@ -123,15 +123,11 @@ function
         end
 
         @inbounds inlist[maxcoords[1],maxcoords[2]] = false
-        for i in 1:listsize-1   
+        for i in 1:listsize   
             @inbounds listres[i] = listres[i+1]
             @inbounds listadd[1,i] = listadd[1,i+1]
             @inbounds listadd[2,i] = listadd[2,i+1]
-        end 
-        @inbounds listres[end] = 0.0
-        @inbounds listadd[1,end] = 0
-        @inbounds listadd[2,end] = 0
-
+        end
         
         _RBP_update_Lr!(maxcoords,Factors,rbpfactor,cn2vn,Lq,Lr)
 

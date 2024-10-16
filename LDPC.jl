@@ -49,13 +49,13 @@ _LBP::Bool = false
 #instantaneos-LBP
 iLBP::Bool = false      
 #RBP
-_RBP::Bool = true      
+_RBP::Bool = false      
 #Random-RBP
 RRBP::Bool = true      
 #Local-RBP
-LRBP::Bool = true      
+LRBP::Bool = false      
 #List-RBP
-LIST::Bool = true      
+LIST::Bool = false      
 
 # Aggregate mode string name and number of iterations
 modes = [(FLOO,"Flooding",MAX),
@@ -94,7 +94,7 @@ decay = Dict(modes[4][2] => DECAYRBP,
              modes[7][2] => DECAYLIST)
 
 SAMPLESIZE::Int = 51
-LISTSIZE::Int = 100
+LISTSIZE::Int = 10
 
 ##################################### SNR ######################################
 SNRTEST = [3]

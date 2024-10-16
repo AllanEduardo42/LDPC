@@ -111,8 +111,8 @@ function
         (nothing,nothing,nothing)
     
     if mode == "List-RBP"
-        listres = zeros(LISTSIZE)
-        listadd = zeros(Int,2,LISTSIZE)
+        listres = zeros(LISTSIZE+1)
+        listadd = zeros(Int,2,LISTSIZE+1)
         inlist = Matrix(false*H)
     else
         listres = nothing
