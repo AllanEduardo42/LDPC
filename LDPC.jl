@@ -49,13 +49,13 @@ _LBP::Bool = false
 #instantaneos-LBP
 iLBP::Bool = false      
 #RBP
-_RBP::Bool = false      
+_RBP::Bool = true      
 #Random-RBP
 RRBP::Bool = true      
 #Local-RBP
-LRBP::Bool = false      
+LRBP::Bool = true      
 #List-RBP
-LIST::Bool = false      
+LIST::Bool = true      
 
 # Aggregate mode string name and number of iterations
 modes = [(FLOO,"Flooding",MAX),
