@@ -12,6 +12,7 @@ function
         bitvector::Vector{Bool},
         Lr::Matrix{<:AbstractFloat},
         Ms::Matrix{<:AbstractFloat},
+        maxresidue::AbstractFloat,
         maxcoords::Vector{<:Integer},
         Lq::Matrix{<:AbstractFloat},
         Lf::Vector{<:AbstractFloat},
@@ -32,12 +33,9 @@ function
 
     for e in 1:num_edges
 
-        maxresidue = find_maxresidue_coords!(maxcoords,Residues,cn2vn,samples,
-                                            rng_sample)
-
         if maxresidue == 0.0 # if RBP has converged
             break
-        end
+        end      
 
         _RBP_update_Lr!(maxcoords,Factors,rbpfactor,cn2vn,Lq,Lr)
 
@@ -46,7 +44,8 @@ function
         _RBP_update_vn2cn!(Residues,maxcoords,0.0,Factors,Lf,Ldn,bitvector,vn2cn,
                             cn2vn,Ms,Lr,Lq,signs,nothing,nothing,0,nothing)
 
-        
+        maxresidue = find_maxresidue_coords!(maxcoords,Residues,cn2vn,samples,
+                                            rng_sample)
 
     end
 end
@@ -58,6 +57,7 @@ function
         bitvector::Vector{Bool},
         Lr::Matrix{<:AbstractFloat},
         Ms::Matrix{<:AbstractFloat},
+        maxresidue::AbstractFloat,
         maxcoords::Vector{<:Integer},
         Lq::Matrix{<:AbstractFloat},
         Lf::Vector{<:AbstractFloat},
@@ -75,8 +75,6 @@ function
         ::Integer,
         ::Nothing
     )
-
-    maxresidue = -1.0
 
     for e = 1:num_edges
 
@@ -99,6 +97,7 @@ function
         bitvector::Vector{Bool},
         Lr::Matrix{<:AbstractFloat},
         Ms::Matrix{<:AbstractFloat},
+        maxresidue::AbstractFloat,
         maxcoords::Vector{<:Integer},
         Lq::Matrix{<:AbstractFloat},
         Lf::Vector{<:AbstractFloat},
@@ -119,12 +118,10 @@ function
 
     for e in 1:num_edges
 
-        if @fastmath @inbounds listres[1] == 0.0
+        if @fastmath maxresidue == 0.0
             break
         end
 
-        @inbounds maxcoords[1] = listadd[1,1]
-        @inbounds maxcoords[2] = listadd[2,1]
         @inbounds inlist[maxcoords[1],maxcoords[2]] = false
         for i in 1:listsize-1   
             @inbounds listres[i] = listres[i+1]
@@ -138,7 +135,7 @@ function
         
         _RBP_update_Lr!(maxcoords,Factors,rbpfactor,cn2vn,Lq,Lr)
 
-        _RBP_update_vn2cn!(nothing,maxcoords,0.0,Factors,Lf,Ldn,bitvector,
+        maxresidue = _RBP_update_vn2cn!(nothing,maxcoords,0.0,Factors,Lf,Ldn,bitvector,
                                         vn2cn,cn2vn,Ms,Lr,Lq,signs,listres,
                                         listadd,listsize,inlist)     
     end

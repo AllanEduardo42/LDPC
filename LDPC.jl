@@ -30,7 +30,7 @@ SEED_MESSA::Int64 = 9999
 
 ###################### NUMBER OF TRIALS AND MULTITHREADING #####################
 
-TRIALS::Int = 32
+TRIALS::Int = 960
 NTHREADS::Int = min(32,TRIALS)
 
 ######################## MAXIMUM NUMBER OF BP ITERATIONS #######################
@@ -51,9 +51,9 @@ iLBP::Bool = false
 #RBP
 _RBP::Bool = true      
 #Random-RBP
-RRBP::Bool = false      
+RRBP::Bool = true      
 #Local-RBP
-LRBP::Bool = false      
+LRBP::Bool = true      
 #List-RBP
 LIST::Bool = true      
 
@@ -94,7 +94,7 @@ decay = Dict(modes[4][2] => DECAYRBP,
              modes[7][2] => DECAYLIST)
 
 SAMPLESIZE::Int = 51
-LISTSIZE::Int = 1531
+LISTSIZE::Int = 100
 
 ##################################### SNR ######################################
 SNRTEST = [3]
@@ -105,6 +105,8 @@ SNR = collect(1:1:4)
 # Matrix dimensions
 N::Int64 = 512
 M::Int64 = 256
+
+Residues = zeros(M,N)
 
 # Vector of the variable node degrees
 D = rand(Xoshiro(SEED_GRAPH),[2,3,4],N)
@@ -165,7 +167,7 @@ Lr = Dict()
 Lq = Dict()
 for mode in modes
     if mode[1]
-        Lr[mode[2]] , Lq[mode[2]] = performance_simulation(
+        Lr[mode[2]] , Lq[mode[2]] = performance_sim(
                                         Codeword,
                                         SNRTEST,
                                         H,
@@ -185,7 +187,7 @@ if TRIALS > 2
     BER = Dict()
     for mode in modes
         if mode[1]
-            @time FER[mode[2]], BER[mode[2]] = performance_simulation(
+            @time FER[mode[2]], BER[mode[2]] = performance_sim(
                                                 Codeword,
                                                 SNR,
                                                 H,
@@ -228,7 +230,8 @@ if TRIALS > 2
     labels = permutedims(labels)
     for mode in modes
         if mode[1]
-            if mode[2] == "RBP" || mode[2] == "Random-RBP" || mode[2] == "Local-RBP"
+            if mode[2] == "RBP" || mode[2] == "Random-RBP" ||
+               mode[2] == "Local-RBP" || mode[2] == "List-RBP"
                 titlefer = "FER $(mode[2]) (decay factor = $(decay[mode[2]]))"
             else
                 titlefer = "FER $(mode[2])"
@@ -252,8 +255,9 @@ if TRIALS > 2
 
         for mode in modes
             if mode[1]
-                if mode[1] == "RBP" || mode[2] == "Random-RBP" || mode[2] == "Local-RBP"
-                    titleber = "BER $(mode[2]) (decay factor = $DECAYRBP)"
+                if mode[2] == "RBP" || mode[2] == "Random-RBP" || 
+                   mode[2] == "Local-RBP" || mode[2] == "List-RBP"
+                    titleber = "BER $(mode[2]) (decay factor = $(decay[mode[2]]))"
                 else
                     titleber = "BER $(mode[2])"
                 end

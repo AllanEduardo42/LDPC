@@ -9,7 +9,7 @@ include("BP.jl")
 include("calc_Lf.jl")
 
 function
-    performance_simulation_core(
+    performance_simcore(
         codeword::Vector{Bool},
         snr::Real,
         H::BitMatrix,
@@ -104,9 +104,21 @@ function
     samples = (mode == "Random-RBP" && SAMPLESIZE != 0) ?
                 Vector{Int}(undef,SAMPLESIZE) : nothing
 
+    maxresidue = 0.0
+
     maxcoords, Factors, num_edges = (supermode == "RBP") ? 
         ([0,0], 1.0*H, sum(H)) : 
         (nothing,nothing,nothing)
+    
+    if mode == "List-RBP"
+        listres = zeros(LISTSIZE)
+        listadd = zeros(Int,2,LISTSIZE)
+        inlist = Matrix(false*H)
+    else
+        listres = nothing
+        listadd = nothing
+        inlist = nothing
+    end 
 
 ################################## MAIN LOOP ###################################
     
@@ -150,24 +162,9 @@ function
         # initialize matrix Lq
         init_Lq!(Lq,Lf,vn2cn)
 
-        if mode == "RBP" || mode == "Random-RBP"
-            init_residues!(Residues,maxcoords,Lq,signs,cn2vn,Ms)
-            listres = nothing
-            listadd = nothing
-            inlist = nothing
-        elseif mode == "Local-RBP"
-            maxcoords = [1,cn2vn[1][1]]
-            listres = nothing
-            listadd = nothing
-            inlist = nothing
-        elseif mode == "List-RBP"
-            listres = zeros(LISTSIZE)
-            listres[1] = -1.0
-            listadd = zeros(Int,2,LISTSIZE)
-            listadd[1,1] = 1
-            listadd[2,1] = cn2vn[1][1]
-            inlist = Matrix(false*H)
-            inlist[1,cn2vn[1][1]] = true       
+        if supermode == "RBP"
+            maxresidue = init_residues!(Residues,maxcoords,Lq,signs,cn2vn,Ms,listres,listadd,
+                LISTSIZE,inlist)   
         end
             
         # SPA routine
@@ -194,6 +191,7 @@ function
             phi,
             printtest,
             Residues,
+            maxresidue,
             maxcoords,
             Factors,
             rbpfactor,

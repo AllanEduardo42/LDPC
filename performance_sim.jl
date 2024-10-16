@@ -6,7 +6,7 @@
 include("performance_simcore.jl")
 
 function 
-    performance_simulation(
+    performance_sim(
         codeword::Vector{Bool},
         snr::Vector{<:Real},
         H::BitMatrix,
@@ -115,7 +115,7 @@ function
         for k in 1:K
             Threads.@threads for i in 1:NTHREADS
                 decoded[:,k,i], ber[:,k,i] = 
-                    performance_simulation_core(
+                    performance_simcore(
                                         codeword,
                                         snr[k],
                                         H,
@@ -142,7 +142,7 @@ function
     
     else # IF TESTING
 
-        Lr, Lq = performance_simulation_core(
+        Lr, Lq = performance_simcore(
                                     codeword,
                                     snr[1],
                                     H,

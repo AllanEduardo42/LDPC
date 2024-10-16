@@ -68,7 +68,7 @@ end
 function 
     findmaxresidue!(
         Residues::Matrix{<:AbstractFloat},
-        ::Vector{Int},
+        maxcoords::Vector{<:Integer},
         maxresidue::AbstractFloat,
         m::Integer,
         n::Integer,
@@ -81,13 +81,20 @@ function
 
     @inbounds Residues[m,n] = x
 
+    if @fastmath x > maxresidue
+        maxresidue = x
+        @inbounds maxcoords[1] = m
+        @inbounds maxcoords[2] = n
+    end
+
     return maxresidue
 end
+
 # LRBP
 function 
     findmaxresidue!(
         ::Nothing,
-        maxcoords::Vector{Int},
+        maxcoords::Vector{<:Integer},
         maxresidue::AbstractFloat,
         m::Integer,
         n::Integer,
@@ -109,7 +116,7 @@ end
 function 
     findmaxresidue!(
         ::Nothing,
-        coords::Vector{Int},
+        maxcoords::Vector{<:Integer},
         maxresidue::AbstractFloat,
         m::Integer,
         n::Integer,
@@ -142,10 +149,10 @@ function
     for i in 1:listsize
         @inbounds y = listres[i]
         if @fastmath x > y
-            @inbounds coords[1] = listadd[1,end]
-            @inbounds coords[2] = listadd[2,end]
-            if @inbounds coords[1] ≠ 0
-                @inbounds inlist[coords[1],coords[2]] = false
+            @inbounds mm = listadd[1,end]
+            @inbounds nn = listadd[2,end]
+            if @inbounds mm ≠ 0
+                @inbounds inlist[nn,nn] = false
             end
             for j=listsize:-1:i+1
                 @inbounds listres[j] = listres[j-1]
@@ -160,7 +167,10 @@ function
         end
     end
 
-    return maxresidue
+    @inbounds maxcoords[1] = listadd[1,1]
+    @inbounds maxcoords[2] = listadd[2,1]
+
+    @inbounds return listres[1]
 end
 
 function
@@ -170,7 +180,11 @@ function
         Lq::Matrix{<:AbstractFloat},
         signs::Vector{Bool},
         cn2vn::Vector{Vector{T}} where {T<:Integer},
-        Ms::Matrix{<:AbstractFloat}        
+        Ms::Matrix{<:AbstractFloat},
+        listres::Union{Vector{<:AbstractFloat},Nothing},
+        listadd::Union{Matrix{<:Integer},Nothing},
+        listsize::Integer,
+        inlist::Union{Matrix{<:Integer},Nothing}         
     )
     
     maxresidue = 0.0
@@ -187,12 +201,14 @@ function
             0,
             m,
             cn2vn,
-            nothing,
-            nothing,
-            0,
-            nothing
+            listres,
+            listadd,
+            listsize,
+            inlist
         )
     end
+
+    return maxresidue
 end
 
 
