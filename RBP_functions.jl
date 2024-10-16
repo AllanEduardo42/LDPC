@@ -121,6 +121,7 @@ function
     )
 
     if @inbounds inlist[m,n]
+        @inbounds inlist[m,n] = false
         for i in 1:listsize
             @inbounds mm = listadd[1,i]
             @inbounds nn = listadd[2,i]

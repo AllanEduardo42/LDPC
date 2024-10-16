@@ -30,7 +30,7 @@ SEED_MESSA::Int64 = 9999
 
 ###################### NUMBER OF TRIALS AND MULTITHREADING #####################
 
-TRIALS::Int = 1
+TRIALS::Int = 32
 NTHREADS::Int = min(32,TRIALS)
 
 ######################## MAXIMUM NUMBER OF BP ITERATIONS #######################
@@ -95,6 +95,7 @@ decay = Dict(modes[4][2] => DECAYRBP,
 
 SAMPLESIZE::Int = 51
 LISTSIZE::Int = 1531
+
 ##################################### SNR ######################################
 SNRTEST = [3]
 SNR = collect(1:1:4)
@@ -169,7 +170,7 @@ for mode in modes
                                         SNRTEST,
                                         H,
                                         mode[2],
-                                        1,
+                                        min(TRIALS,2),
                                         mode[3],
                                         STOP,
                                         rgn_noise_seeds,
@@ -177,7 +178,7 @@ for mode in modes
     end
 end                             
 ############################ PERFORMANCE SIMULATION ############################
-if TRIALS > 1
+if TRIALS > 2
     fer_labels = Vector{String}()
     fermax = Vector{Vector{<:AbstractFloat}}()
     FER = Dict()
@@ -200,7 +201,7 @@ if TRIALS > 1
     end
 end
 ################################### PLOTTING ###################################
-if TRIALS > 1
+if TRIALS > 2
     plotlyjs()
     lim = log10(1/TRIALS)
 
@@ -272,7 +273,7 @@ if TRIALS > 1
     end
 end
 ################################### SAVE DATA ##################################
-if TRIALS > 1 && SAVEDATA
+if TRIALS > 2 && SAVEDATA
 
     aux = []
     for i in eachindex(FER)

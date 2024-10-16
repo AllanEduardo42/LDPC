@@ -119,8 +119,6 @@ function
 
     for e in 1:num_edges
 
-        # display(listadd)
-
         if @fastmath @inbounds listres[1] == 0.0
             break
         end

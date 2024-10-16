@@ -151,9 +151,7 @@ function
         init_Lq!(Lq,Lf,vn2cn)
 
         if mode == "RBP" || mode == "Random-RBP"
-            # Residues .= 0.0*H
             init_residues!(Residues,maxcoords,Lq,signs,cn2vn,Ms)
-            # maxcoords = [1,cn2vn[1][1]]
             listres = nothing
             listadd = nothing
             inlist = nothing

@@ -50,7 +50,7 @@ function
 ########################### PRINT SIMULATION DETAILS ###########################
     
     # if trials = 1, set test mode
-    test = (trials < 2) ? true : false
+    test = (trials < 3) ? true : false
 
     if supermode == "RBP"
         if mode == "RBP"
