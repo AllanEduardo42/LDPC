@@ -44,8 +44,10 @@ function
         visited_vns::Union{Vector{Bool},Nothing},
         samples::Union{Vector{<:Integer},Nothing},
         rgn_sample::Union{AbstractRNG,Nothing},
-        list::Union{Vector{Tuple{Float64,Vector{Int}}},Nothing},
-        listsize::Integer
+        listres::Union{Vector{<:AbstractFloat},Nothing},
+        listadd::Union{Matrix{<:Integer},Nothing},
+        listsize::Integer,
+        inlist::Union{Matrix{<:Integer},Nothing}
     )
              
     # FIRST = true
@@ -95,8 +97,10 @@ function
                  Ldn,
                  samples,
                  rgn_sample,
-                 list,
-                 listsize)
+                 listres,
+                 listadd,
+                 listsize,
+                 inlist)
             # reset factors
             resetfactors!(Factors,vn2cn)
         end

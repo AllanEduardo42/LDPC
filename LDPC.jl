@@ -14,7 +14,7 @@ using CSV, DataFrames
 
 ################################ INCLUDED FILES ################################
 
-include("performance_simulation.jl")
+include("performance_sim.jl")
 include("PEG.jl")
 include("GF2_functions.jl")
 
@@ -30,7 +30,7 @@ SEED_MESSA::Int64 = 9999
 
 ###################### NUMBER OF TRIALS AND MULTITHREADING #####################
 
-TRIALS::Int = 1024
+TRIALS::Int = 1
 NTHREADS::Int = min(32,TRIALS)
 
 ######################## MAXIMUM NUMBER OF BP ITERATIONS #######################
@@ -49,7 +49,7 @@ _LBP::Bool = false
 #instantaneos-LBP
 iLBP::Bool = false      
 #RBP
-_RBP::Bool = false      
+_RBP::Bool = true      
 #Random-RBP
 RRBP::Bool = false      
 #Local-RBP
@@ -85,8 +85,8 @@ PRINTTEST::Bool = false
 ################################# RBP CONSTANTS ################################
 
 DECAYRBP::Float64 = 0.5
-DECAYRRBP::Float64 = 0.7
-DECAYLRBP::Float64 = 0.9
+DECAYRRBP::Float64 = 0.5
+DECAYLRBP::Float64 = 0.5
 DECAYLIST::Float64 = 0.5
 decay = Dict(modes[4][2] => DECAYRBP,
              modes[5][2] => DECAYRRBP,
@@ -94,8 +94,7 @@ decay = Dict(modes[4][2] => DECAYRBP,
              modes[7][2] => DECAYLIST)
 
 SAMPLESIZE::Int = 51
-LISTSIZE::Int = 200
-
+LISTSIZE::Int = 1531
 ##################################### SNR ######################################
 SNRTEST = [3]
 SNR = collect(1:1:4)

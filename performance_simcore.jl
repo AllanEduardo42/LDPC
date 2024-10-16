@@ -108,16 +108,6 @@ function
         ([0,0], 1.0*H, sum(H)) : 
         (nothing,nothing,nothing)
 
-    if mode == "List-RBP"
-        list = Vector{Tuple{Float64,Vector{Int}}}()
-        push!(list,(-1.0,[1,cn2vn[1][1]]))
-        for m in 1:LISTSIZE
-            push!(list,(0.0,[0,0]))
-        end
-    else
-        list = nothing
-    end
-
 ################################## MAIN LOOP ###################################
     
     rng_noise = Xoshiro(rgn_seed_noise)
@@ -125,8 +115,8 @@ function
     rng_sample = (mode == "Random-RBP") ? Xoshiro(rng_seed_sample) : nothing
 
     ######################### FIRST RECEIVED SIGNAL ############################
-    # In order to allow to test with a given received signal testsignal, the first
-    # received signal signal must be set outside the main loop.
+    # In order to allow to test with a given received signal, its first 
+    # realization must be set outside the main loop.
     if test
         if testsignal === nothing # if no test signal was provided:
             # generate a new received signal
@@ -160,10 +150,29 @@ function
         # initialize matrix Lq
         init_Lq!(Lq,Lf,vn2cn)
 
-        if supermode == "RBP" && mode ≠ "List-RBP"
+        if mode == "RBP" || mode == "Random-RBP"
+            Residues .= 0.0*H
             # minsum_RBP_init!(Residues,maxcoords,Lq,signs,cn2vn)
-            init_residues!(Residues,maxcoords,Lq,signs,cn2vn,Ms)
-        end      
+            # init_residues!(Residues,maxcoords,Lq,signs,cn2vn,Ms)
+            maxcoords = [1,cn2vn[1][1]]
+            listres = nothing
+            listadd = nothing
+            inlist = nothing
+        elseif mode == "Local-RBP"
+            maxcoords = [1,cn2vn[1][1]]
+            listres = nothing
+            listadd = nothing
+            inlist = nothing
+        elseif mode == "List-RBP"
+            listres = zeros(LISTSIZE)
+            listres[1] = -1.0
+            listadd = zeros(Int,2,LISTSIZE)
+            listadd[1,1] = 1
+            listadd[2,1] = cn2vn[1][1]
+            inlist = Matrix(false*H)
+            inlist[1,cn2vn[1][1]] = true       
+        end
+            
         # SPA routine
         decoded .= false
         BP!(supermode,
@@ -196,8 +205,10 @@ function
             visited_vns,
             samples,
             rng_sample,
-            list,
-            LISTSIZE)                
+            listres,
+            listadd,
+            LISTSIZE,
+            inlist)                
 
         # bit error rate
         @. BER += ber

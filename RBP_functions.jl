@@ -18,8 +18,10 @@ function
         vnmax::Integer,
         m::Integer,
         cn2vn::Vector{Vector{T}} where {T<:Integer},
-        list::Union{Vector{Tuple{Float64,Vector{Int}}},Nothing},
-        listsize::Integer             
+        listres::Union{Vector{<:AbstractFloat},Nothing},
+        listadd::Union{Matrix{<:Integer},Nothing},
+        listsize::Integer,
+        inlist::Union{Matrix{<:Integer},Nothing}           
     )
     
     minsum!(Lq,Ms,signs,m,cn2vn)
@@ -28,7 +30,7 @@ function
         if n ≠ vnmax
             x = calc_residue(Ms,Factors,Lr,m,n)
             maxresidue = findmaxresidue!(Residues,maxcoords,maxresidue,m,n,x,
-                list,listsize)
+                listres,listadd,listsize,inlist)
             
         end
     end
@@ -72,7 +74,9 @@ function
         n::Integer,
         x::AbstractFloat,
         ::Nothing,
-        ::Integer
+        ::Nothing,
+        ::Integer,
+        ::Nothing
     )
 
     @inbounds Residues[m,n] = x
@@ -89,7 +93,9 @@ function
         n::Integer,
         x::AbstractFloat,
         ::Nothing,
-        ::Integer
+        ::Nothing,
+        ::Integer,
+        ::Nothing
     )
     if @fastmath x > maxresidue
         maxresidue = x
@@ -108,19 +114,47 @@ function
         m::Integer,
         n::Integer,
         x::AbstractFloat,
-        list::Vector{Tuple{Float64,Vector{Int}}},
-        listsize::Integer
+        listres::Vector{<:AbstractFloat},
+        listadd::Matrix{<:Integer},
+        listsize::Integer,
+        inlist::Matrix{<:Integer}
     )
 
-    for i in 1:listsize
-        y = @inbounds list[i][1]
-        if @fastmath x > y
-            for j=listsize:-1:i+1
-                @inbounds list[j] = list[j-1]
+    if @inbounds inlist[m,n]
+        for i in 1:listsize
+            @inbounds mm = listadd[1,i]
+            @inbounds nn = listadd[2,i]
+            if mm == m && nn == n                
+                for j=i:listsize-1
+                    @inbounds listres[j] = listres[j+1]
+                    @inbounds listadd[1,j] = listadd[1,j+1]
+                    @inbounds listadd[2,j] = listadd[2,j+1]
+                end
+                @inbounds listres[end] = 0.0
+                @inbounds listadd[1,end] = 0
+                @inbounds listadd[2,end] = 0
+                break
             end
-            @inbounds coords[1] = m
-            @inbounds coords[2] = n
-            @inbounds list[i] = (x,coords)
+        end
+    end
+
+    for i in 1:listsize
+        @inbounds y = listres[i]
+        if @fastmath x > y
+            @inbounds coords[1] = listadd[1,end]
+            @inbounds coords[2] = listadd[2,end]
+            if @inbounds coords[1] ≠ 0
+                @inbounds inlist[coords[1],coords[2]] = false
+            end
+            for j=listsize:-1:i+1
+                @inbounds listres[j] = listres[j-1]
+                @inbounds listadd[1,j] = listadd[1,j-1]
+                @inbounds listadd[2,j] = listadd[2,j-1]
+            end
+            @inbounds listadd[1,i] = m
+            @inbounds listadd[2,i] = n
+            @inbounds listres[i] = x
+            @inbounds inlist[m,n] = true
             break
         end
     end

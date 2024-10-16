@@ -25,23 +25,29 @@ function
         samples::Union{Vector{<:Integer},Nothing},
         rng_sample::Union{AbstractRNG,Nothing},
         ::Nothing,
-        ::Integer
+        ::Nothing,
+        ::Integer,
+        ::Nothing
     )
+
+    maxresidue=-1.0
 
     for e in 1:num_edges
 
-        maxresidue = find_maxresidue_coords!(maxcoords,Residues,cn2vn,samples,
-                                            rng_sample)
         if maxresidue == 0.0 # if RBP has converged
             break
         end
 
         _RBP_update_Lr!(maxcoords,Factors,rbpfactor,cn2vn,Lq,Lr)
 
-        @inbounds Residues[maxcoords...] = 0.0
+        @inbounds Residues[maxcoords[1],maxcoords[2]] = 0.0
 
-        _RBP_update_vn2cn!(Residues,maxcoords,maxresidue,Factors,Lf,Ldn,bitvector,vn2cn,
-                            cn2vn,Ms,Lr,Lq,signs,nothing,0)
+        _RBP_update_vn2cn!(Residues,maxcoords,0.0,Factors,Lf,Ldn,bitvector,vn2cn,
+                            cn2vn,Ms,Lr,Lq,signs,nothing,nothing,0,nothing)
+
+        maxresidue = find_maxresidue_coords!(maxcoords,Residues,cn2vn,samples,
+                                            rng_sample)
+
     end
 end
 
@@ -65,19 +71,24 @@ function
         ::Nothing,
         ::Nothing,
         ::Nothing,
-        ::Integer
+        ::Nothing,
+        ::Integer,
+        ::Nothing
     )
 
+    maxresidue = -1.0
+
     for e = 1:num_edges
-
-        _RBP_update_Lr!(maxcoords,Factors,rbpfactor,cn2vn,Lq,Lr)
-
-        maxresidue = _RBP_update_vn2cn!(nothing,maxcoords,0.0,Factors,Lf,Ldn,bitvector,
-                                        vn2cn,cn2vn,Ms,Lr,Lq,signs,nothing,0)
 
         if maxresidue == 0.0 #breaks the loop in LRBP mode
             break
         end
+
+        _RBP_update_Lr!(maxcoords,Factors,rbpfactor,cn2vn,Lq,Lr)
+
+        maxresidue = _RBP_update_vn2cn!(nothing,maxcoords,0.0,Factors,Lf,Ldn,bitvector,
+                                        vn2cn,cn2vn,Ms,Lr,Lq,signs,nothing,nothing,0,nothing)
+
     end
 end
 
@@ -100,28 +111,40 @@ function
         Ldn::Vector{<:AbstractFloat},
         samples::Union{Vector{<:Integer},Nothing},
         rng_sample::Union{AbstractRNG,Nothing},
-        list::Vector{Tuple{Float64,Vector{Int}}},
-        listsize::Integer
+        listres::Vector{<:AbstractFloat},
+        listadd::Matrix{<:Integer},
+        listsize::Integer,
+        inlist::Matrix{<:Integer} 
     )
 
     for e in 1:num_edges
 
-        if @fastmath @inbounds list[1][1] == 0.0
+        # display(listadd)
+
+        if @fastmath @inbounds listres[1] == 0.0
             break
         end
 
-        @inbounds maxcoords .= list[1][2]
+        @inbounds maxcoords[1] = listadd[1,1]
+        @inbounds maxcoords[2] = listadd[2,1]
+        @inbounds inlist[maxcoords[1],maxcoords[2]] = false
+        for i in 1:listsize-1   
+            @inbounds listres[i] = listres[i+1]
+            @inbounds listadd[1,i] = listadd[1,i+1]
+            @inbounds listadd[2,i] = listadd[2,i+1]
+        end 
+        @inbounds listres[end] = 0.0
+        @inbounds listadd[1,end] = 0
+        @inbounds listadd[2,end] = 0
+
         
         _RBP_update_Lr!(maxcoords,Factors,rbpfactor,cn2vn,Lq,Lr)
 
-        maxresidue = _RBP_update_vn2cn!(nothing,maxcoords,0.0,Factors,Lf,Ldn,bitvector,
-                                        vn2cn,cn2vn,Ms,Lr,Lq,signs,list,
-                                        listsize)
-
-        for i in 1:listsize   
-            @inbounds list[i] = list[i+1]
-        end       
+        _RBP_update_vn2cn!(nothing,maxcoords,0.0,Factors,Lf,Ldn,bitvector,
+                                        vn2cn,cn2vn,Ms,Lr,Lq,signs,listres,
+                                        listadd,listsize,inlist)     
     end
+
 end
 
 function 
@@ -165,8 +188,10 @@ function
         Lr::Matrix{<:AbstractFloat},
         Lq::Matrix{<:AbstractFloat},
         signs::Vector{Bool},
-        list::Union{Vector{Tuple{Float64,Vector{Int}}},Nothing},
-        listsize::Integer       
+        listres::Union{Vector{<:AbstractFloat},Nothing},
+        listadd::Union{Matrix{<:Integer},Nothing},
+        listsize::Integer,
+        inlist::Union{Matrix{<:Integer},Nothing}        
     )
 
     # update Ldn[vmax] and bitvector[vnmax]
@@ -184,8 +209,8 @@ function
             # if any new residue estimate is larger than the previously estimated maximum 
             # residue than update the value of maxresidue and maxcoords.
             maxresidue = calc_residues!(Residues,maxcoords,maxresidue,Factors,
-                                        Ms,Lr,Lq,signs,vnmax,m,cn2vn,list,
-                                        listsize)
+                                        Ms,Lr,Lq,signs,vnmax,m,cn2vn,listres,
+                                        listadd,listsize,inlist)
         end
     end
 
