@@ -41,7 +41,7 @@ STOP::Bool = false # stop simulation at zero syndrome (if true, BER curves are
 
 ################################ CONTROL FLAGS #################################
 
-SAVEDATA::Bool = true
+SAVEDATA::Bool = false
 PRINTTEST::Bool = false
 PLOT::Bool = false
 
