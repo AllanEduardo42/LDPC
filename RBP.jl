@@ -8,7 +8,7 @@ include("RBP_functions.jl")
 #RBP
 function
     RBP!(
-        Residues::Matrix{<:AbstractFloat},
+        Residues::Union{Matrix{<:AbstractFloat},Nothing},
         bitvector::Vector{Bool},
         Lr::Matrix{<:AbstractFloat},
         Ms::Matrix{<:AbstractFloat},
@@ -25,10 +25,10 @@ function
         Ldn::Vector{<:AbstractFloat},
         samples::Union{Vector{<:Integer},Nothing},
         rng_sample::Union{AbstractRNG,Nothing},
-        ::Nothing,
-        ::Nothing,
-        ::Integer,
-        ::Nothing
+        listsize::Integer,
+        listres::Union{Vector{<:AbstractFloat},Nothing},
+        listadd::Union{Matrix{<:Integer},Nothing},
+        inlist::Union{Matrix{<:Integer},Nothing}
     )
 
     for e in 1:num_edges
@@ -40,10 +40,10 @@ function
         _RBP_update_Lr!(maxcoords,Factors,rbpfactor,cn2vn,Lq,Lr)
 
         # @inbounds Residues[maxcoords[1],maxcoords[2]] = 0.0
-        __RBP(Residues,maxcoords,nothing,nothing,nothing,0)
+        __RBP(Residues,maxcoords,listsize,listres,listadd,inlist)
 
-        maxresidue = _RBP_update_vn2cn!(Residues,maxcoords,0.0,Factors,Lf,Ldn,bitvector,vn2cn,
-                            cn2vn,Ms,Lr,Lq,signs,nothing,nothing,0,nothing)
+        maxresidue = _RBP_update_vn2cn!(Residues,maxcoords,0.0,Factors,Lf,Ldn,
+            bitvector,vn2cn,cn2vn,Ms,Lr,Lq,signs,listsize,listres,listadd,inlist)
 
         maxresidue = find_maxresidue_coords!(maxresidue,maxcoords,Residues,cn2vn,
             samples,rng_sample)
@@ -51,39 +51,42 @@ function
     end
 end
 
+# RBP and Random-RBP
 function 
     __RBP(
         Residues::Matrix{<:AbstractFloat},
         maxcoords::Vector{<:Integer},
+        ::Integer,
         ::Nothing,
         ::Nothing,
-        ::Nothing,
-        ::Integer
+        ::Nothing
     )
 
     @inbounds Residues[maxcoords[1],maxcoords[2]] = 0.0
 end
 
+# Local-RBP
 function 
     __RBP(
         ::Nothing,
         ::Vector{<:Integer},
+        ::Integer,
         ::Nothing,
         ::Nothing,
-        ::Nothing,
-        ::Integer
+        ::Nothing
     )
     
 end
 
+# List-RBP
 function 
     __RBP(
         ::Nothing,
         maxcoords::Vector{<:Integer},
+        listsize::Integer,
         listres::Vector{<:AbstractFloat},
         listadd::Matrix{<:Integer},
-        inlist::Matrix{Bool},
-        listsize::Integer
+        inlist::Matrix{Bool}
     )
 
     @inbounds inlist[maxcoords[1],maxcoords[2]] = false
@@ -93,110 +96,6 @@ function
         @inbounds listadd[2,i] = listadd[2,i+1]
     end
     
-end
-
-function 
-    find_maxresidue_coords!(
-        maxresidue::AbstractFloat,
-        ::Vector{<:Integer},
-        ::Nothing,
-        ::Vector{Vector{T}} where {T<:Integer},
-        ::Nothing,
-        ::Nothing
-    )
-
-    return maxresidue
-end
-
-# LRBP
-function
-    RBP!(
-        ::Nothing,
-        bitvector::Vector{Bool},
-        Lr::Matrix{<:AbstractFloat},
-        Ms::Matrix{<:AbstractFloat},
-        maxresidue::AbstractFloat,
-        maxcoords::Vector{<:Integer},
-        Lq::Matrix{<:AbstractFloat},
-        Lf::Vector{<:AbstractFloat},
-        cn2vn::Vector{Vector{T}} where {T<:Integer},
-        vn2cn::Vector{Vector{T}} where {T<:Integer},
-        signs::Vector{Bool},
-        Factors::Matrix{<:AbstractFloat},
-        rbpfactor::AbstractFloat,
-        num_edges::Integer,
-        Ldn::Vector{<:AbstractFloat},        
-        ::Nothing,
-        ::Nothing,
-        ::Nothing,
-        ::Nothing,
-        ::Integer,
-        ::Nothing
-    )
-
-    for e = 1:num_edges
-
-        if maxresidue == 0.0 #breaks the loop in LRBP mode
-            break
-        end
-
-        _RBP_update_Lr!(maxcoords,Factors,rbpfactor,cn2vn,Lq,Lr)
-
-        __RBP(nothing,maxcoords,nothing,nothing,nothing,0)
-
-        maxresidue = _RBP_update_vn2cn!(nothing,maxcoords,0.0,Factors,Lf,Ldn,
-            bitvector,vn2cn,cn2vn,Ms,Lr,Lq,signs,nothing,nothing,0,nothing)
-
-        maxresidue = find_maxresidue_coords!(maxresidue,maxcoords,nothing,cn2vn,
-            nothing,nothing)
-
-    end
-end
-
-#List-RBP
-function
-    RBP!(
-        ::Nothing,
-        bitvector::Vector{Bool},
-        Lr::Matrix{<:AbstractFloat},
-        Ms::Matrix{<:AbstractFloat},
-        maxresidue::AbstractFloat,
-        maxcoords::Vector{<:Integer},
-        Lq::Matrix{<:AbstractFloat},
-        Lf::Vector{<:AbstractFloat},
-        cn2vn::Vector{Vector{T}} where {T<:Integer},
-        vn2cn::Vector{Vector{T}} where {T<:Integer},
-        signs::Vector{Bool},
-        Factors::Matrix{<:AbstractFloat},
-        rbpfactor::AbstractFloat,
-        num_edges::Integer,
-        Ldn::Vector{<:AbstractFloat},
-        samples::Union{Vector{<:Integer},Nothing},
-        rng_sample::Union{AbstractRNG,Nothing},
-        listres::Vector{<:AbstractFloat},
-        listadd::Matrix{<:Integer},
-        listsize::Integer,
-        inlist::Matrix{<:Integer} 
-    )
-
-    for e in 1:num_edges
-
-        if @fastmath maxresidue == 0.0
-            break
-        end
-        
-        _RBP_update_Lr!(maxcoords,Factors,rbpfactor,cn2vn,Lq,Lr)
-
-        __RBP(nothing,maxcoords,listres,listadd,inlist,listsize)
-
-        maxresidue = _RBP_update_vn2cn!(nothing,maxcoords,0.0,Factors,Lf,Ldn,bitvector,
-                                        vn2cn,cn2vn,Ms,Lr,Lq,signs,listres,
-                                        listadd,listsize,inlist)
-        
-        maxresidue = find_maxresidue_coords!(maxresidue,maxcoords,nothing,cn2vn,
-            nothing,nothing)
-    end
-
 end
 
 function 
@@ -240,9 +139,9 @@ function
         Lr::Matrix{<:AbstractFloat},
         Lq::Matrix{<:AbstractFloat},
         signs::Vector{Bool},
-        listres::Union{Vector{<:AbstractFloat},Nothing},
-        listadd::Union{Matrix{<:Integer},Nothing},
         listsize::Integer,
+        listres::Union{Vector{<:AbstractFloat},Nothing},
+        listadd::Union{Matrix{<:Integer},Nothing},        
         inlist::Union{Matrix{<:Integer},Nothing}        
     )
 
@@ -258,8 +157,6 @@ function
         if m ≠ cnmax
             # update vn2cn messages Lq[vnmax,m], ∀m ≠ cnmax
             @fastmath @inbounds Lq[vnmax,m] = Ldn[vnmax] - Lr[m,vnmax]
-            # if any new residue estimate is larger than the previously estimated maximum 
-            # residue than update the value of maxresidue and maxcoords.
             maxresidue = calc_residues!(Residues,maxcoords,maxresidue,Factors,
                                         Ms,Lr,Lq,signs,vnmax,m,cn2vn,listres,
                                         listadd,listsize,inlist)

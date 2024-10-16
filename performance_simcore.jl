@@ -200,9 +200,9 @@ function
             visited_vns,
             samples,
             rng_sample,
+            LISTSIZE,
             listres,
             listadd,
-            LISTSIZE,
             inlist)                
 
         # bit error rate
