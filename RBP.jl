@@ -30,9 +30,10 @@ function
         ::Nothing
     )
 
-    maxresidue=-1.0
-
     for e in 1:num_edges
+
+        maxresidue = find_maxresidue_coords!(maxcoords,Residues,cn2vn,samples,
+                                            rng_sample)
 
         if maxresidue == 0.0 # if RBP has converged
             break
@@ -45,8 +46,7 @@ function
         _RBP_update_vn2cn!(Residues,maxcoords,0.0,Factors,Lf,Ldn,bitvector,vn2cn,
                             cn2vn,Ms,Lr,Lq,signs,nothing,nothing,0,nothing)
 
-        maxresidue = find_maxresidue_coords!(maxcoords,Residues,cn2vn,samples,
-                                            rng_sample)
+        
 
     end
 end

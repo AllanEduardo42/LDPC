@@ -9,11 +9,13 @@ using Random
 using Statistics
 using Plots
 using SparseArrays
-using CSV
+using CSV, DataFrames
+
+LISTSIZE::Int = 0
 
 ################################ INCLUDED FILES ################################
 
-include("performance_simulation.jl")
+include("performance_sim.jl")
 include("PEG.jl")
 include("GF2_functions.jl")
 
@@ -28,7 +30,7 @@ SEED_MESSA::Int64 = 9999
 
 ###################### NUMBER OF TRIALS AND MULTITHREADING #####################
 
-TRIALS::Int = 1024
+TRIALS::Int = 640320
 NTHREADS::Int = min(32,TRIALS)
 
 ######################## MAXIMUM NUMBER OF BP ITERATIONS #######################
@@ -41,6 +43,7 @@ STOP::Bool = false # stop simulation at zero syndrome (if true, BER curves are
 
 SAVEDATA::Bool = true
 PRINTTEST::Bool = false
+PLOT::Bool = false
 
 ################################# RBP CONSTANTS ################################
 
@@ -145,7 +148,7 @@ if TRIALS > 1
             title="FER (Graph girth = $girth)",
             ylims=(lim,0)
         )
-        display(p)
+        PLOT ? display(p) : nothing
         SAVEDATA ? savefig(p, "FER.png") : nothing
     end
 end
