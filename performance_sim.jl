@@ -110,33 +110,58 @@ function
 
     if !test
         K = length(SNR)
-        decoded, ber = zeros(maxiter,K,NTHREADS), zeros(maxiter,K,NTHREADS)
-        # Threads.@threads 
+        if MULTI
+            decoded, ber = zeros(maxiter,K,NTHREADS), zeros(maxiter,K,NTHREADS)
+        else
+            decoded, ber = zeros(maxiter,K), zeros(maxiter,K)
+        end
         for k in 1:K
-            Threads.@threads for i in 1:NTHREADS
-                decoded[:,k,i], ber[:,k,i] = 
-                    performance_simcore(
-                                        codeword,
-                                        snr[k],
-                                        H,
-                                        mode,
-                                        supermode,
-                                        trials_multh,
-                                        maxiter,
-                                        stop,
-                                        rbpfactor,
-                                        rgn_noise_seeds[i],
-                                        rgn_samples_seeds[i],
-                                        test,
-                                        testsignal,
-                                        printtest)
+            if MULTI
+                Threads.@threads for i in 1:NTHREADS
+                    decoded[:,k,i], ber[:,k,i] = performance_simcore(
+                                            codeword,
+                                            snr[k],
+                                            H,
+                                            mode,
+                                            supermode,
+                                            trials_multh,
+                                            maxiter,
+                                            stop,
+                                            rbpfactor,
+                                            rgn_noise_seeds[i],
+                                            rgn_samples_seeds[i],
+                                            test,
+                                            testsignal,
+                                            printtest)
+                end
+            else
+                decoded[:,k], ber[:,k] = performance_simcore(
+                                            codeword,
+                                            snr[k],
+                                            H,
+                                            mode,
+                                            supermode,
+                                            trials_multh,
+                                            maxiter,
+                                            stop,
+                                            rbpfactor,
+                                            rgn_noise_seeds[1],
+                                            rgn_samples_seeds[1],
+                                            test,
+                                            testsignal,
+                                            printtest)
             end
         end
 
-        FER = zeros(maxiter,K)
-        BER = zeros(maxiter,K)
-        FER .= 1 .- sum(decoded,dims=3)/trials
-        BER .= sum(ber,dims=3)/(trials*N)
+        if MULTI
+            FER = zeros(maxiter,K)
+            BER = zeros(maxiter,K)
+            FER .= 1 .- sum(decoded,dims=3)/trials
+            BER .= sum(ber,dims=3)/(trials*N)
+        else
+            FER = 1 .- decoded/trials
+            BER = ber/(trials*N)
+        end
 
         return log10.(FER), log10.(BER)
     

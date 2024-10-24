@@ -17,6 +17,14 @@ using CSV, DataFrames
 include("performance_sim.jl")
 include("PEG.jl")
 include("GF2_functions.jl")
+include("IEEE80216e.jl")
+
+################################ CONTROL FLAGS #################################
+
+MULTI::Bool = true
+SAVEDATA::Bool = false
+PRINTTEST::Bool = false
+PLOT::Bool = true
 
 ############################# SIMULATION CONSTANTS #############################
 
@@ -30,7 +38,7 @@ SEED_MESSA::Int64 = 9999
 
 ###################### NUMBER OF TRIALS AND MULTITHREADING #####################
 
-TRIALS::Int = 960
+TRIALS::Int = 10240
 NTHREADS::Int = min(32,TRIALS)
 
 ######################## MAXIMUM NUMBER OF BP ITERATIONS #######################
@@ -43,19 +51,19 @@ STOP::Bool = false # stop simulation at zero syndrome (if true, BER curves are
 ################################ BP MODE FLAGS ################################
 
 #Flooding
-FLOO::Bool = false      
+FLOO::Bool = true      
 #LBP
 _LBP::Bool = false      
 #instantaneos-LBP
-iLBP::Bool = false      
+iLBP::Bool = true      
 #RBP
-_RBP::Bool = true      
+_RBP::Bool = false      
 #Random-RBP
-RRBP::Bool = true      
+RRBP::Bool = false      
 #Local-RBP
 LRBP::Bool = true      
 #List-RBP
-LIST::Bool = true      
+LIST::Bool = false      
 
 # Aggregate mode string name and number of iterations
 modes = [(FLOO,"Flooding",MAX),
@@ -77,11 +85,6 @@ FLOOMODE = "TANH"
 
 FAST::Bool = true  # fast flooding update when using tanh mode (default:true)
 
-################################ CONTROL FLAGS #################################
-
-SAVEDATA::Bool = false
-PRINTTEST::Bool = false
-
 ################################# RBP CONSTANTS ################################
 
 DECAYRBP::Float64 = 0.5
@@ -94,7 +97,7 @@ decay = Dict(modes[4][2] => DECAYRBP,
              modes[7][2] => DECAYLIST)
 
 SAMPLESIZE::Int = 51
-LISTSIZE::Int = 10
+LISTSIZE::Int = 1
 
 ##################################### SNR ######################################
 SNRTEST = [3]
@@ -106,13 +109,16 @@ SNR = collect(1:1:4)
 N::Int64 = 512
 M::Int64 = 256
 
-Residues = zeros(M,N)
+# N::Int = 576
 
 # Vector of the variable node degrees
 D = rand(Xoshiro(SEED_GRAPH),[2,3,4],N)
 
 # Generate Parity-Check Matrix by the PEG algorithm
 H, girth = PEG(D,M)
+# H = IEEE80216e(N,"1/2")
+# M = size(H,1)
+# girth = "?"
 
 # Find the generator matrix
 G = gf2_nullspace(H)
@@ -218,7 +224,7 @@ if TRIALS > 2
             title="FER (Graph girth = $girth)",
             ylims=(lim,0)
         )
-        display(p)
+        PLOT ? display(p) : nothing
         SAVEDATA ? savefig(p, "FER.png") : nothing
     end
 
@@ -245,8 +251,8 @@ if TRIALS > 2
                 title=titlefer,
                 ylims=(lim,0)
             )
-            display(p)
-            SAVEDATA ? savefig(p,"FER_EVOL_"*mode[2]*".png") : nothing
+            PLOT ? display(p) : nothing
+            SAVEDATA ? savefig(p,"FER_"*mode[2]*".png") : nothing
         end
     end
     
@@ -270,7 +276,7 @@ if TRIALS > 2
                     title=titleber,
                     ylims=(lim-2,0)
                 )
-                display(p)
+                PLOT ? display(p) : nothing
                 SAVEDATA ? savefig(p,"BER_"*mode[2]*".png") : nothing
             end
         end
@@ -280,23 +286,23 @@ end
 if TRIALS > 2 && SAVEDATA
 
     aux = []
-    for i in eachindex(FER)
-        push!(aux,(fer_labels[i],FER[i]))
+    for i in eachindex(fermax)
+        push!(aux,(fer_labels[i],fermax[i]))
     end
     FERS = Dict(aux)
-    CSV.write("FERS.csv", DataFrame(FERS), header=true)
+    CSV.write("FERMAX.csv", DataFrame(FERS), header=true)
 
-    aux = []
-    padding = zeros(MAX-MAXRBP)
-    for mode in modes
-        if mode[1]
-            for i in eachindex(SNR)
-                title = mode[2] * " (SNR=$(SNR))"
-                push!(aux,(title,BER[mode[2]][:,i]))
-            end
-        end
-    end
-    BERS = Dict(aux)
-    CSV.write("BERS.csv", DataFrame(BERS), header=true)
+    # aux = []
+    # padding = zeros(MAX-MAXRBP)
+    # for mode in modes
+    #     if mode[1]
+    #         for i in eachindex(SNR)
+    #             title = mode[2] * " (SNR=$(SNR))"
+    #             push!(aux,(title,BER[mode[2]][:,i]))
+    #         end
+    #     end
+    # end
+    # BERS = Dict(aux)
+    # CSV.write("BERS.csv", DataFrame(BERS), header=true)
 
 end
