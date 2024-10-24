@@ -1,13 +1,11 @@
 using LinearAlgebra
 
 function
-    IEEE80216e(N, R)
-    #N is an integer.
-    #N takes values in { 576   672   768   864   960  1056  1152  1248  1344 1440  1536  1632  1728  1824  1920  2016  2112  2208  2304}.
+    IEEE80216e(N::Integer, R::String)
+    # N takes values in {576,672,768,864,960,1056,1152,1248,1344,1440,1536,1632,
+    # 1728,1824,1920,2016,2112,2208,2304}.
     
-    #R is a string.
-    #R takes values in {'1/2', '2/3A', '2/3B', '3/4A', '3/4B',
-    #'5/6'}.
+    # R takes values in {"1/2","2/3A","2/3B","3/4A","3/4B","5/6"}.
     
     z0 = 96; #the largest sub-block-size.
     if R == "1/2"
