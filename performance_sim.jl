@@ -7,6 +7,7 @@ include("performance_simcore.jl")
 
 function 
     performance_sim(
+        message::Vector{Bool},
         codeword::Vector{Bool},
         snr::Vector{<:Real},
         H::BitMatrix,
@@ -119,6 +120,7 @@ function
             if MULTI
                 Threads.@threads for i in 1:NTHREADS
                     decoded[:,k,i], ber[:,k,i] = performance_simcore(
+                                            message,
                                             codeword,
                                             snr[k],
                                             H,
@@ -136,6 +138,7 @@ function
                 end
             else
                 decoded[:,k], ber[:,k] = performance_simcore(
+                                            message,
                                             codeword,
                                             snr[k],
                                             H,
@@ -168,6 +171,7 @@ function
     else # IF TESTING
 
         Lr, Lq = performance_simcore(
+                                    message,
                                     codeword,
                                     snr[1],
                                     H,

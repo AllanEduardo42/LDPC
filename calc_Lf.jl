@@ -6,12 +6,12 @@
 function
     calc_Lf!(
         Lf::Vector{<:AbstractFloat},
-        t::Vector{<:AbstractFloat},
+        signal::Vector{<:AbstractFloat},
         σ²::AbstractFloat
     )
 
-    for i in eachindex(t)
-        @inbounds @fastmath Lf[i] = -2*t[i]/σ²
+    for i in eachindex(signal)
+        @inbounds @fastmath Lf[i] = -2*signal[i]/σ²
     end
 
 end
@@ -19,15 +19,15 @@ end
 function
     calc_Lf!(
         f::Matrix{<:AbstractFloat},
-        t::Vector{<:AbstractFloat},
+        signal::Vector{<:AbstractFloat},
         σ²::AbstractFloat
     )
 
     k = 1/sqrt(2*π*σ²)
 
-    for i in eachindex(t)
-        @inbounds @fastmath f[i,1] = k*exp(-(t[i]+1)^2/(2*σ²))
-        @inbounds @fastmath f[i,2] = k*exp(-(t[i]-1)^2/(2*σ²))
+    for i in eachindex(signal)
+        @inbounds @fastmath f[i,1] = k*exp(-(signal[i]+1)^2/(2*σ²))
+        @inbounds @fastmath f[i,2] = k*exp(-(signal[i]-1)^2/(2*σ²))
     end
 
     normalize!(f)

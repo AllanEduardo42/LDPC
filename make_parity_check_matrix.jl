@@ -6,13 +6,21 @@ using LinearAlgebra
 function
     make_parity_check_matrix(n_BG,Zc)
 
+    set_Idx = find_set_index_lift_size(Zc)
+
+    return make_parity_check_matrix(n_BG,Zc,set_Idx)
+    
+end
+
+function
+    make_parity_check_matrix(n_BG,Zc,set_Idx)
+
     # [Ref] Nguyen, Tram Thi Bao, Tuy Nguyen Tan, and Hanho Lee. 
     #  "Efficient QC-LDPC encoder for 5G new radio." Electronics 8.6 (2019): 668.
-    
-    set_Idx = find_set_index_lift_size(Zc)    
+
     
     # 3GPP 38.212 Table 5.3.2.2(3)
-    if n_BG == 1
+    if n_BG == "1"
         n_rows_bg = 46; n_cols_bg = 68
         shift_coeffs_table = BG1()
     else

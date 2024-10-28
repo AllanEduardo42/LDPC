@@ -67,7 +67,7 @@ end
 
 function
     received_signal!(
-        t::Vector{<:AbstractFloat},
+        signal::AbstractArray{<:AbstractFloat},
         noise::Vector{<:AbstractFloat},
         σ::AbstractFloat,
         u::Vector{<:AbstractFloat},
@@ -75,7 +75,7 @@ function
 
     randn!(rng_noise,noise)
     @fastmath noise .*= σ
-    @fastmath t .= u .+ noise
+    @fastmath signal .= u .+ noise
 
 end
 

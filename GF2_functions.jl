@@ -185,6 +185,13 @@ function gf2_inverse(A::AbstractMatrix{Bool};ACCEF=false)
 
 end
 
+function gf2_column_echelon_form!(AA::AbstractMatrix{Bool})
+
+    _,N = size(AA)
+    return gf2_column_echelon_form!(AA,N)
+
+end
+
 function gf2_column_echelon_form!(AA::AbstractMatrix{Bool},N::Integer)
 
     full_rank_sub_matrix = true
@@ -216,8 +223,15 @@ function gf2_column_echelon_form!(AA::AbstractMatrix{Bool},N::Integer)
 
 end
 
-function gf2_reduce!(AA::AbstractMatrix{Bool},N::Integer)
+function gf2_reduce!(AA::AbstractMatrix{Bool})
 
+    _,N = size(AA)
+    gf2_reduce!(AA,N)
+
+end
+
+function gf2_reduce!(AA::AbstractMatrix{Bool},N::Integer)
+    
     for j in N:-1:2
         for k in j-1:-1:1
             if @inbounds AA[j,k]
@@ -225,7 +239,6 @@ function gf2_reduce!(AA::AbstractMatrix{Bool},N::Integer)
             end
         end
     end
-
 end
 
 function isgf2invertible(A::AbstractMatrix{Bool})

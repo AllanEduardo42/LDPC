@@ -18,6 +18,7 @@ include("performance_sim.jl")
 include("PEG.jl")
 include("GF2_functions.jl")
 include("IEEE80216e.jl")
+include("NR_LDPC_encode.jl")
 
 ################################ CONTROL FLAGS #################################
 
@@ -38,7 +39,7 @@ SEED_MESSA::Int64 = 9999
 
 ###################### NUMBER OF TRIALS AND MULTITHREADING #####################
 
-TRIALS::Int = 10240
+TRIALS::Int = 96
 NTHREADS::Int = min(32,TRIALS)
 
 ######################## MAXIMUM NUMBER OF BP ITERATIONS #######################
@@ -55,13 +56,13 @@ FLOO::Bool = true
 #LBP
 _LBP::Bool = false      
 #instantaneos-LBP
-iLBP::Bool = true      
+iLBP::Bool = false      
 #RBP
 _RBP::Bool = false      
 #Random-RBP
 RRBP::Bool = false      
 #Local-RBP
-LRBP::Bool = true      
+LRBP::Bool = false      
 #List-RBP
 LIST::Bool = false      
 
@@ -106,28 +107,35 @@ SNR = collect(1:1:4)
 ############################# PARITY-CHECK MATRIX #############################
 
 # Matrix dimensions
-N::Int64 = 512
-M::Int64 = 256
+# N::Int64 = 512
+# M::Int64 = 256
 
 # N::Int = 576
 
 # Vector of the variable node degrees
-D = rand(Xoshiro(SEED_GRAPH),[2,3,4],N)
+# D = rand(Xoshiro(SEED_GRAPH),[2,3,4],N)
 
 # Generate Parity-Check Matrix by the PEG algorithm
-H, girth = PEG(D,M)
+# H, girth = PEG(D,M)
 # H = IEEE80216e(N,"1/2")
 # M = size(H,1)
-# girth = "?"
+B::Int64 = 256
+Message, Codeword, H = NR_LDPC_encode(B,"2")
+Message = Message[:]
+Codeword = Codeword[:]
+H = BitMatrix(H)
+M,N = size(H)
+girth = "?"
 
 # Find the generator matrix
-G = gf2_nullspace(H)
+# G = gf2_nullspace(H)
+# gf2_reduce!(G,N)
 
 ############################# MESSAGE AND CODEWORD #############################
 
-Message = rand(Xoshiro(SEED_MESSA),Bool,N-M)
+# Message = rand(Xoshiro(SEED_MESSA),Bool,N-M)
 
-Codeword = gf2_mat_mult(Matrix(G), Message)
+# Codeword = gf2_mat_mult(Matrix(G), Message)
 
 ######################### PRINT INFORMATION ON SCREEN ##########################
 println()
@@ -174,6 +182,7 @@ Lq = Dict()
 for mode in modes
     if mode[1]
         Lr[mode[2]] , Lq[mode[2]] = performance_sim(
+                                        Message,
                                         Codeword,
                                         SNRTEST,
                                         H,
@@ -194,6 +203,7 @@ if TRIALS > 2
     for mode in modes
         if mode[1]
             @time FER[mode[2]], BER[mode[2]] = performance_sim(
+                                                Message,
                                                 Codeword,
                                                 SNR,
                                                 H,

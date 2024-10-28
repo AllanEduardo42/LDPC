@@ -10,6 +10,7 @@ include("calc_Lf.jl")
 
 function
     performance_simcore(
+        message::Vector{Bool},
         codeword::Vector{Bool},
         snr::Real,
         H::BitMatrix,
@@ -57,7 +58,8 @@ function
     Lf = (mode != "MKAY") ? Vector{Float64}(undef,N) : Matrix{Float64}(undef,N,2)
 
     # noise
-    noise = Vector{Float64}(undef,N)
+    NN = length(codeword)
+    noise = Vector{Float64}(undef,NN)
 
     # received signal
     signal = Vector{Float64}(undef,N)
@@ -118,7 +120,11 @@ function
         listres = nothing
         listadd = nothing
         inlist = nothing
-    end 
+    end
+    
+    if NN < N
+        codeword = [message[1:N-NN];codeword]
+    end
 
 ################################## MAIN LOOP ###################################
     
@@ -132,7 +138,7 @@ function
     if test
         if testsignal === nothing # if no test signal was provided:
             # generate a new received signal
-            received_signal!(signal,noise,stdev,u,rng_noise)
+            received_signal!(view(signal,N-NN+1:N),noise,stdev,u,rng_noise)
         elseif length(testsignal) != N
             # if a received test signal was given, but with wrong length
             throw(
@@ -146,7 +152,7 @@ function
         end
     else
         # generate the first received signal outside the main loop
-        received_signal!(signal,noise,stdev,u,rng_noise)
+        received_signal!(view(signal,N-NN+1:N),noise,stdev,u,rng_noise)
     end        
 
     for j in 1:trials
@@ -210,7 +216,7 @@ function
         @. DECODED += decoded
 
         # received signal for the next realization (j+1)
-        received_signal!(signal,noise,stdev,u,rng_noise)
+        received_signal!(view(signal,N-NN+1:N),noise,stdev,u,rng_noise)
 
     end
 
