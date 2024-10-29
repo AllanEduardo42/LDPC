@@ -74,7 +74,11 @@ function
                 @fastmath @inbounds Lr[m,n] *= tanh(0.5*Lq[n2,m])
             end
         end
-        @fastmath @inbounds Lr[m,n] = 2*atanh(Lr[m,n])
+        if @fastmath @inbounds abs(Lr[m,n]) < 1
+            @fastmath @inbounds Lr[m,n] = 2*atanh(Lr[m,n])
+        else
+            @fastmath @inbounds Lr[m,n] = Lr[m,n]*INF
+        end
     end
 end
 

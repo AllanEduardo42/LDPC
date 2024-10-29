@@ -113,9 +113,9 @@ function NR_LDPC_encode(B::Integer,bg::String)
 
     d = zeros(Bool,N,C)
 
-    for r = 1:C
-        d[1:K-2*Zc,r] = c[2*Zc+1:K,r]
-    end
+    # for r = 1:C
+    #     d[1:K-2*Zc,r] = c[2*Zc+1:K,r]
+    # end
 
     H,_ = make_parity_check_matrix(bg,Zc,iLS)
 
@@ -124,9 +124,12 @@ function NR_LDPC_encode(B::Integer,bg::String)
 
     for r=1:C
         x = gf2_mat_mult(G,c[:,r])
-        d[K-2*Zc+1:end,r] = x[K+1:end]
+        d[:,r] = x[2*Zc+1:end]
     end
 
-    return b,d,H
-
+    if C == 1
+        return b, d[:], H
+    else
+        return b,d,H
+    end
 end

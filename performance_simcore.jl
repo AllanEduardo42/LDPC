@@ -33,6 +33,7 @@ function
     variance = 1 ./ (exp10.(snr/10))
     stdev = sqrt.(variance)
     # BPKS
+    
     u = Float64.(2*codeword .- 1)
     # list of checks and variables nodes
     vn2cn  = make_vn2cn_list(H)
@@ -58,11 +59,12 @@ function
     Lf = (mode != "MKAY") ? Vector{Float64}(undef,N) : Matrix{Float64}(undef,N,2)
 
     # noise
-    NN = length(codeword)
+    NN = length(u)
     noise = Vector{Float64}(undef,NN)
 
     # received signal
-    signal = Vector{Float64}(undef,N)
+    signal = zeros(N)
+    # signal[1:N-NN] .+= eps()
 
     # bit-error
     biterror = Vector{Bool}(undef,N) 
@@ -120,11 +122,7 @@ function
         listres = nothing
         listadd = nothing
         inlist = nothing
-    end
-    
-    if NN < N
-        codeword = [message[1:N-NN];codeword]
-    end
+    end 
 
 ################################## MAIN LOOP ###################################
     
@@ -153,7 +151,9 @@ function
     else
         # generate the first received signal outside the main loop
         received_signal!(view(signal,N-NN+1:N),noise,stdev,u,rng_noise)
-    end        
+    end   
+    
+    codeword = [message[1:N-NN]; codeword]
 
     for j in 1:trials
 

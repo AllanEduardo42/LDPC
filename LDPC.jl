@@ -39,12 +39,12 @@ SEED_MESSA::Int64 = 9999
 
 ###################### NUMBER OF TRIALS AND MULTITHREADING #####################
 
-TRIALS::Int = 96
+TRIALS::Int = 10240
 NTHREADS::Int = min(32,TRIALS)
 
 ######################## MAXIMUM NUMBER OF BP ITERATIONS #######################
 
-MAX::Int = 20
+MAX::Int = 10
 MAXRBP::Int = 5
 STOP::Bool = false # stop simulation at zero syndrome (if true, BER curves are 
 # not printed)
@@ -84,7 +84,7 @@ FLOOMODE = "TANH"
 # FLOOMODE = "TABL"
 # FLOOMODE = "MSUM"
 
-FAST::Bool = true  # fast flooding update when using tanh mode (default:true)
+FAST::Bool = false  # fast flooding update when using tanh mode (default:true)
 
 ################################# RBP CONSTANTS ################################
 
@@ -101,41 +101,57 @@ SAMPLESIZE::Int = 51
 LISTSIZE::Int = 1
 
 ##################################### SNR ######################################
-SNRTEST = [3]
+SNRTEST = [5]
 SNR = collect(1:1:4)
 
 ############################# PARITY-CHECK MATRIX #############################
 
-# Matrix dimensions
-# N::Int64 = 512
-# M::Int64 = 256
+# CHECK = 1 : PEG ; = 2 : IEEE80216e ; 3 : NR-LDPC
+CHECK::Int = 3
 
-# N::Int = 576
-
-# Vector of the variable node degrees
-# D = rand(Xoshiro(SEED_GRAPH),[2,3,4],N)
-
-# Generate Parity-Check Matrix by the PEG algorithm
-# H, girth = PEG(D,M)
-# H = IEEE80216e(N,"1/2")
-# M = size(H,1)
-B::Int64 = 256
-Message, Codeword, H = NR_LDPC_encode(B,"2")
-Message = Message[:]
-Codeword = Codeword[:]
-H = BitMatrix(H)
-M,N = size(H)
-girth = "?"
-
-# Find the generator matrix
-# G = gf2_nullspace(H)
-# gf2_reduce!(G,N)
+if CHECK == 1
+    # PEG Matrix dimensions
+    N::Int64 = 512
+    M::Int64 = 256
+    # Vector of the variable node degrees
+    D = rand(Xoshiro(SEED_GRAPH),[2,3,4],N)
+    # Generate Parity-Check Matrix by the PEG algorithm
+    H, girth = PEG(D,M)
+elseif CHECK == 2
+    N::Int = 1632
+    H = IEEE80216e(N,"1/2")
+    M = size(H,1)
+    girth = "?"
+elseif CHECK == 3
+    # Message Length
+    B::Int64 = 256
+    # NR base matrix
+    bg = "1"
+    Message, Codeword, H = NR_LDPC_encode(B,bg)
+    M,N = size(H)
+    # Message = rand(Xoshiro(SEED_MESSA),Bool,N-M)
+    # G = gf2_nullspace(H)
+    # gf2_reduce!(G)
+    # Codeword = gf2_mat_mult(Matrix(G), Message)
+    girth = "?"
+else
+    throw(ArgumentError(
+                lazy"CHECK = $CHECK, but must be 1, 2 or 3"
+            ))
+end
 
 ############################# MESSAGE AND CODEWORD #############################
 
-# Message = rand(Xoshiro(SEED_MESSA),Bool,N-M)
+if CHECK ≠ 3
 
-# Codeword = gf2_mat_mult(Matrix(G), Message)
+    # Find the generator matrix
+    G = gf2_nullspace(H)
+    gf2_reduce!(G)
+
+    Message = rand(Xoshiro(SEED_MESSA),Bool,N-M)
+    Codeword = gf2_mat_mult(Matrix(G), Message)
+
+end
 
 ######################### PRINT INFORMATION ON SCREEN ##########################
 println()

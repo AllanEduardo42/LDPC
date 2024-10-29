@@ -35,7 +35,6 @@ function
         
     # Loop all records in 
     n_rows_exp_mtx,_ = size(shift_coeffs_table)
-    x = collect(1:Zc)
     I_matrix = Matrix(I(Zc))
     for i = 1:n_rows_exp_mtx 
         # row index and column index in exponent matrix
@@ -49,11 +48,13 @@ function
         E_H[row_idx,col_idx] = rem.(shift_coeff,Zc)
         
         # check matrix
-        H[Zc*(row_idx-1) .+ x, Zc*(col_idx-1) .+ x] = circshift(I_matrix,(0,-rem(shift_coeff,Zc)))
+        row_range = Zc*(row_idx-1)+1 : Zc*row_idx
+        col_range = Zc*(col_idx-1)+1 : Zc*col_idx
+        H[row_range,col_range] = circshift(I_matrix,-rem(shift_coeff,Zc))
         
     end
 
-    return H, E_H
+    return BitMatrix(H), E_H
 
 end
     
