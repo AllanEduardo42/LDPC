@@ -9,7 +9,9 @@ include("GF2_poly.jl")
 include("make_parity_check_matrix.jl")
 include("GF2_functions.jl")
 
-function NR_LDPC_encode(B::Integer,bg::String)
+function NR_LDPC_encode(msg::Vector{Bool},bg::String)
+
+    B = length(msg)
 
     if bg == "1"
         Kcb = 8448
@@ -30,8 +32,6 @@ function NR_LDPC_encode(B::Integer,bg::String)
                 lazy"""bg must be "1" or "2"."""
             ))
     end
-
-    b = rand(Bool,B)
 
     if B <= Kcb
         L = 0
@@ -105,7 +105,7 @@ function NR_LDPC_encode(B::Integer,bg::String)
 
     L2 = K0-L
     for r = 1:C
-        c[1:L2,r] = b[1 + (r-1)*L2:r*L2]
+        c[1:L2,r] = msg[1 + (r-1)*L2:r*L2]
         if C > 1
             _,c[L2+1:K0,r] = divide_poly([c[1:L2,r];zeros(Bool,L)],g)
         end
@@ -128,8 +128,8 @@ function NR_LDPC_encode(B::Integer,bg::String)
     end
 
     if C == 1
-        return b, d[:], H
+        return d[:], H
     else
-        return b,d,H
+        return d,H
     end
 end

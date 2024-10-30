@@ -16,9 +16,9 @@ function
     )
 
     Ld = zeros(2)
-    for m in vn2cn[n]
+    @inbounds for m in vn2cn[n]
         Ld .= f
-        for m2 in vn2cn[n]
+        @inbounds for m2 in vn2cn[n]
             if m2 ≠ m
                 @fastmath @inbounds Ld[1] *= r[m2,n,1]
                 @fastmath @inbounds Ld[2] *= r[m2,n,2]
@@ -48,8 +48,8 @@ function
     )
 
     Ld = calc_Ld(n,vn2cn,Lf,Lr)
-    for m in vn2cn[n]
-        @fastmath @inbounds Lq[n,m] = Ld - Lr[m,n]
+    @fastmath @inbounds for m in vn2cn[n]
+        Lq[n,m] = Ld - Lr[m,n]
     end
 
     return Ld, signbit(Ld)
@@ -63,8 +63,8 @@ function
         Lr::Matrix{<:AbstractFloat}
     )
     Ld = Lf
-    for m in vn2cn[n]
-        @fastmath @inbounds Ld += Lr[m,n]
+    @fastmath @inbounds for m in vn2cn[n]
+        Ld += Lr[m,n]
     end
     
     return Ld
@@ -82,19 +82,16 @@ function
         vn2cn::Vector{Vector{T}} where {T<:Integer},
         ::Nothing
     )
-
-    for m in vn2cn[n]
+    m = 0
+    @inbounds for outer m in vn2cn[n]
         @inbounds Lq[n,m] = Lf[n]
-        for m2 in vn2cn[n]
+        @inbounds for m2 in vn2cn[n]
             if m2 ≠ m
-                @fastmath @inbounds Lq[n,m] += Lr[m2,n]
+                @inbounds Lq[n,m] += Lr[m2,n]
             end
         end
     end
-    @inbounds Ld = Lf[n]
-    for m in vn2cn[n]
-        @fastmath @inbounds Ld += Lr[m,n]
-    end
 
+    @inbounds Ld =  Lq[n,m] + Lr[m,n]
     return Ld, signbit(Ld)
 end

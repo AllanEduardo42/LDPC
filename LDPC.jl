@@ -24,12 +24,13 @@ include("NR_LDPC_encode.jl")
 
 MULTI::Bool = true
 SAVEDATA::Bool = false
-PRINTTEST::Bool = false
+PRINTTEST::Bool = true
 PLOT::Bool = true
 
 ############################# SIMULATION CONSTANTS #############################
 
 const INF = typemax(Int64)
+const INFFLOAT = 1e2
 
 # Seeds
 SEED_NOISE::Int64 = 1428
@@ -39,12 +40,12 @@ SEED_MESSA::Int64 = 9999
 
 ###################### NUMBER OF TRIALS AND MULTITHREADING #####################
 
-TRIALS::Int = 10240
+TRIALS::Int = 1024
 NTHREADS::Int = min(32,TRIALS)
 
 ######################## MAXIMUM NUMBER OF BP ITERATIONS #######################
 
-MAX::Int = 10
+MAX::Int = 5
 MAXRBP::Int = 5
 STOP::Bool = false # stop simulation at zero syndrome (if true, BER curves are 
 # not printed)
@@ -52,11 +53,11 @@ STOP::Bool = false # stop simulation at zero syndrome (if true, BER curves are
 ################################ BP MODE FLAGS ################################
 
 #Flooding
-FLOO::Bool = true      
+FLOO::Bool = false      
 #LBP
-_LBP::Bool = false      
+_LBP::Bool = true      
 #instantaneos-LBP
-iLBP::Bool = false      
+iLBP::Bool = true      
 #RBP
 _RBP::Bool = false      
 #Random-RBP
@@ -84,7 +85,7 @@ FLOOMODE = "TANH"
 # FLOOMODE = "TABL"
 # FLOOMODE = "MSUM"
 
-FAST::Bool = false  # fast flooding update when using tanh mode (default:true)
+FAST::Bool = true  # fast flooding update when using tanh mode (default:true)
 
 ################################# RBP CONSTANTS ################################
 
@@ -118,16 +119,17 @@ if CHECK == 1
     # Generate Parity-Check Matrix by the PEG algorithm
     H, girth = PEG(D,M)
 elseif CHECK == 2
-    N::Int = 1632
+    N::Int64 = 1632
     H = IEEE80216e(N,"1/2")
     M = size(H,1)
     girth = "?"
 elseif CHECK == 3
     # Message Length
     B::Int64 = 256
+    Message = rand(Xoshiro(SEED_MESSA),Bool,B)
     # NR base matrix
-    bg = "1"
-    Message, Codeword, H = NR_LDPC_encode(B,bg)
+    bg = "2"
+    Codeword, H = NR_LDPC_encode(Message,bg)
     M,N = size(H)
     # Message = rand(Xoshiro(SEED_MESSA),Bool,N-M)
     # G = gf2_nullspace(H)
@@ -195,19 +197,20 @@ end
 #################### JULIA COMPILATION (FOR SPEED) AND TEST ####################
 Lr = Dict()
 Lq = Dict()
+p = (TRIALS ≤ 2) ? PRINTTEST : false
 for mode in modes
     if mode[1]
         Lr[mode[2]] , Lq[mode[2]] = performance_sim(
-                                        Message,
-                                        Codeword,
-                                        SNRTEST,
-                                        H,
-                                        mode[2],
-                                        min(TRIALS,2),
-                                        mode[3],
-                                        STOP,
-                                        rgn_noise_seeds,
-                                        printtest=PRINTTEST)
+            Message,
+            Codeword,
+            SNRTEST,
+            H,
+            mode[2],
+            min(TRIALS,2),
+            mode[3],
+            STOP,
+            rgn_noise_seeds;
+            printtest=p)
     end
 end                             
 ############################ PERFORMANCE SIMULATION ############################
@@ -219,16 +222,17 @@ if TRIALS > 2
     for mode in modes
         if mode[1]
             @time FER[mode[2]], BER[mode[2]] = performance_sim(
-                                                Message,
-                                                Codeword,
-                                                SNR,
-                                                H,
-                                                mode[2],
-                                                TRIALS,
-                                                mode[3],
-                                                STOP,
-                                                rgn_noise_seeds;
-                                                rgn_samples_seeds=rgn_samples_seeds)
+                Message,
+                Codeword,
+                SNR,
+                H,
+                mode[2],
+                TRIALS,
+                mode[3],
+                STOP,
+                rgn_noise_seeds;
+                rgn_samples_seeds=rgn_samples_seeds)
+
             push!(fer_labels,mode[2])
             push!(fermax,FER[mode[2]][mode[3],:])
         end            

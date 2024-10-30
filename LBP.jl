@@ -22,31 +22,33 @@ function
     )
 
     visited_vns .*= false
+    syndrome .== true
     for m in eachindex(cn2vn)
         # Lq updates       
-        for n in cn2vn[m] # every n in Neighborhood(m)
-            if @inbounds visited_vns[n]
-                @fastmath Lq[n,m] = Ldn[n] - Lr[m,n]
+        @fastmath @inbounds for n in cn2vn[m] # for every n in Neighborhood(m)
+            if visited_vns[n]
+                Lq[n,m] = Ldn[n] - Lr[m,n]
             else
-                @inbounds Ldn[n], bitvector[n] = update_Lq!(Lq,Lr,Lf[n],n,vn2cn,
-                                                            Lrn)
-                @inbounds visited_vns[n] = true
+            Ldn[n], bitvector[n] = update_Lq!(Lq,Lr,Lf[n],n,vn2cn,Lrn)
+                visited_vns[n] = true
             end
         end
         # Lr updates
         pLr = 1.0
-        for n in cn2vn[m]
-            @fastmath @inbounds Lrn[n] = tanh(0.5*Lq[n,m])
-            @fastmath @inbounds pLr *= Lrn[n]
+        @fastmath @inbounds for n in cn2vn[m]
+            Lrn[n] = tanh(0.5*Lq[n,m])
+            pLr *= Lrn[n]
         end
-        for n in cn2vn[m]
-            @fastmath @inbounds x = pLr/Lrn[n]
-            if @fastmath abs(x) < 1 # controls divergent values of Lr
-                @fastmath @inbounds Ldn[n] -= Lr[m,n]
-                @fastmath @inbounds Lr[m,n] = 2*atanh(x)
-                @fastmath @inbounds Ldn[n] += Lr[m,n]
-                @inbounds bitvector[n] = signbit(Ldn[n])
+        @fastmath @inbounds for n in cn2vn[m]
+            Ldn[n] -= Lr[m,n]
+            x = pLr/Lrn[n]
+            if abs(x) < 1 # controls divergent values of Lr                
+                Lr[m,n] = 2*atanh(x)                
+            else
+                Lr[m,n] = x*INFFLOAT
             end
+            Ldn[n] += Lr[m,n]
+            bitvector[n] = signbit(Ldn[n])
         end
         if ilbp
             # calc syndrome

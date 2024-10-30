@@ -64,7 +64,7 @@ function
 
     # received signal
     signal = zeros(N)
-    # signal[1:N-NN] .+= eps()
+    signal[1:N-NN] .+= eps()
 
     # bit-error
     biterror = Vector{Bool}(undef,N) 
@@ -162,7 +162,7 @@ function
         if mode == "TABL"
             # scale for table
             Lf .*= SIZE_per_RANGE
-        end            
+        end          
         # initialize matrix Lr
         Lr .*= 0
         # initialize matrix Lq

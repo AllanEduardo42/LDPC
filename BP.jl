@@ -134,15 +134,15 @@ function
             # if FIRST && iszero(syndrome)
             if iszero(syndrome)
                 # FIRST = false
-                if @fastmath bitvector == codeword
+                if bitvector == codeword
                     @inbounds decoded[i] = true
                 end
                 if stop
                     break
                 end
             end
-            @fastmath biterror .= (bitvector .≠ codeword)
-            @fastmath @inbounds ber[i] = sum(biterror)
+            biterror .= (bitvector .≠ codeword)
+            @inbounds ber[i] = sum(biterror)
         end
     end
 

@@ -10,8 +10,8 @@ function
         σ²::AbstractFloat
     )
 
-    for i in eachindex(signal)
-        @inbounds @fastmath Lf[i] = -2*signal[i]/σ²
+    @fastmath @inbounds for i in eachindex(signal)
+        Lf[i] = -2*signal[i]/σ²
     end
 
 end
@@ -23,11 +23,11 @@ function
         σ²::AbstractFloat
     )
 
-    k = 1/sqrt(2*π*σ²)
+    @fastmath k = 1/sqrt(2*π*σ²)
 
-    for i in eachindex(signal)
-        @inbounds @fastmath f[i,1] = k*exp(-(signal[i]+1)^2/(2*σ²))
-        @inbounds @fastmath f[i,2] = k*exp(-(signal[i]-1)^2/(2*σ²))
+    @inbounds @fastmath  for i in eachindex(signal)
+        f[i,1] = k*exp(-(signal[i]+1)^2/(2*σ²))
+        f[i,2] = k*exp(-(signal[i]-1)^2/(2*σ²))
     end
 
     normalize!(f)
@@ -38,10 +38,10 @@ function normalize!(f::Matrix{<:AbstractFloat})
 
     N = size(f,1)
     
-    for n in 1:N
-        @inbounds @fastmath α = f[n,1] + f[n,2]
-        @inbounds @fastmath f[n,1] = f[n,1]/α
-        @inbounds @fastmath f[n,2] = f[n,2]/α
+    @inbounds @fastmath for n in 1:N
+        α = f[n,1] + f[n,2]
+        f[n,1] = f[n,1]/α
+        f[n,2] = f[n,2]/α
     end
 
 end

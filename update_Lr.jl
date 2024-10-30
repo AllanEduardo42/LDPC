@@ -41,15 +41,18 @@ function
         ::Nothing,
         ::Nothing        
     )
+
     pLr = 1.0
-    for n in cn2vn[m]
-        @fastmath @inbounds Lrn[n] = tanh(0.5*Lq[n,m])
-        @fastmath @inbounds pLr *= Lrn[n]
+    @fastmath @inbounds for n in cn2vn[m]
+        Lrn[n] = tanh(0.5*Lq[n,m])
+        pLr *= Lrn[n]
     end
-    for n in cn2vn[m]
-        @fastmath @inbounds x = pLr/Lrn[n]
-        if @fastmath abs(x) < 1 # controls divergent values of Lr
-            @fastmath @inbounds Lr[m,n] = 2*atanh(x)
+    @fastmath @inbounds for n in cn2vn[m]
+        x = pLr/Lrn[n]
+        if abs(x) < 1 # controls divergent values of Lr
+            Lr[m,n] = 2*atanh(x)
+        else
+            Lr[m,n] = x*INFFLOAT
         end
     end
 end
@@ -67,18 +70,14 @@ function
         ::Nothing   
     )
 
-    for n in cn2vn[m]
-        @inbounds Lr[m,n] = 1.0
-        for n2 in cn2vn[m]
+    @inbounds for n in cn2vn[m]
+        pLr = 1.0
+        @inbounds for n2 in cn2vn[m]
             if n2 ≠ n
-                @fastmath @inbounds Lr[m,n] *= tanh(0.5*Lq[n2,m])
+                @inbounds pLr *= tanh(0.5*Lq[n2,m])
             end
         end
-        if @fastmath @inbounds abs(Lr[m,n]) < 1
-            @fastmath @inbounds Lr[m,n] = 2*atanh(Lr[m,n])
-        else
-            @fastmath @inbounds Lr[m,n] = Lr[m,n]*INF
-        end
+        @inbounds Lr[m,n] = 2*atanh(pLr)
     end
 end
 
