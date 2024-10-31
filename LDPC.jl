@@ -33,19 +33,19 @@ const INF = typemax(Int64)
 const INFFLOAT = 1e2
 
 # Seeds
-SEED_NOISE::Int64 = 1428
-SEED_GRAPH::Int64 = 5714
-SEED_SAMPL::Int64 = 2857
-SEED_MESSA::Int64 = 9999
+SEED_NOISE::Int = 1428
+SEED_GRAPH::Int = 5714
+SEED_SAMPL::Int = 2857
+SEED_MESSA::Int = 9999
 
 ###################### NUMBER OF TRIALS AND MULTITHREADING #####################
 
-TRIALS::Int = 1024
-NTHREADS::Int = min(32,TRIALS)
+TRIALS::Int = 10240
+NTHREADS::Int = min(Threads.nthreads(),TRIALS)
 
 ######################## MAXIMUM NUMBER OF BP ITERATIONS #######################
 
-MAX::Int = 5
+MAX::Int = 30
 MAXRBP::Int = 5
 STOP::Bool = false # stop simulation at zero syndrome (if true, BER curves are 
 # not printed)
@@ -108,29 +108,29 @@ SNR = collect(1:1:4)
 ############################# PARITY-CHECK MATRIX #############################
 
 # CHECK = 1 : PEG ; = 2 : IEEE80216e ; 3 : NR-LDPC
-CHECK::Int = 3
+CHECK::Int = 1
 
 if CHECK == 1
     # PEG Matrix dimensions
-    N::Int64 = 512
-    M::Int64 = 256
+    N::Int = 512
+    M::Int = 256
     # Vector of the variable node degrees
     D = rand(Xoshiro(SEED_GRAPH),[2,3,4],N)
     # Generate Parity-Check Matrix by the PEG algorithm
     H, girth = PEG(D,M)
 elseif CHECK == 2
-    N::Int64 = 1632
+    N::Int = 1632
     H = IEEE80216e(N,"1/2")
-    M = size(H,1)
+    M::Int = size(H,1)
     girth = "?"
 elseif CHECK == 3
     # Message Length
-    B::Int64 = 256
+    B::Int = 256
     Message = rand(Xoshiro(SEED_MESSA),Bool,B)
     # NR base matrix
     bg = "2"
     Codeword, H = NR_LDPC_encode(Message,bg)
-    M,N = size(H)
+    M::Int, N::Int = size(H)
     # Message = rand(Xoshiro(SEED_MESSA),Bool,N-M)
     # G = gf2_nullspace(H)
     # gf2_reduce!(G)

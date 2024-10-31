@@ -50,10 +50,10 @@ function
     ber = zeros(Int,maxiter)
 
     # estimate
-    bitvector = zeros(Bool,N)
+    bitvector = Vector{Bool}(undef,N)
 
     # syndrome
-    syndrome = ones(Bool,M)
+    syndrome = Vector{Bool}(undef,N)
 
     # prior llr (if mode == "MKAY" just the prior probabilities)
     Lf = (mode != "MKAY") ? Vector{Float64}(undef,N) : Matrix{Float64}(undef,N,2)
@@ -72,7 +72,9 @@ function
     # Lq -> matrix of vn2cn messages (N x M)
     # Lr -> matrix of cn2vn messages (M x N)
     # if mode == "MKAY" the are matrices for bit = 0 and bit = 1
-    Lq, Lr = (mode != "MKAY") ? (H'*0.0,H*0.0) : (zeros(N,M,2),zeros(M,N,2))
+    Lq = (mode != "MKAY") ? Matrix{Float64}(undef,N,M) : Array{Float64,3}(undef,N,M,2)
+
+    Lr = (mode != "MKAY") ? Matrix{Float64}(undef,M,N) : Array{Float64,3}(undef,M,N,2)
 
     Ms = (supermode == "RBP") ? H*0.0 : nothing
 
@@ -157,14 +159,20 @@ function
 
     for j in 1:trials
 
+        bitvector .= true
+
+        biterror .= true
+
+        syndrome .= true
+        # initialize matrix Lr
+        Lr = Lr*0.0
+
         # init the llr priors
         calc_Lf!(Lf,signal,variance)
         if mode == "TABL"
             # scale for table
             Lf .*= SIZE_per_RANGE
-        end          
-        # initialize matrix Lr
-        Lr .*= 0
+        end
         # initialize matrix Lq
         init_Lq!(Lq,Lf,vn2cn)
 

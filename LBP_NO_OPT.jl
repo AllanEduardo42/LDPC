@@ -1,14 +1,15 @@
 ################################################################################
 # Allan Eduardo Feitosa
 # 17 set 2024
-# LBP Sum-Product Algorithm (no optimization)
+# LBP Sum-Product Algorithm
 
 include("update_Lq.jl")
+include("update_Lr.jl")
 include("calc_syndrome.jl")
 
 function
     LBP!(
-        d::Vector{Bool},
+        bitvector::Vector{Bool},
         Lr::Matrix{<:AbstractFloat},
         Lq::Matrix{<:AbstractFloat},
         Lf::Vector{<:AbstractFloat},
@@ -21,30 +22,17 @@ function
         ilbp::Bool
     )
 
-    visited_vns .*= false
     for m in eachindex(cn2vn)
         # Lq updates       
-        for n in cn2vn[m] # every n in Neighborhood(m)
-            @inbounds Ldn[n], d[n] = update_Lq!(Lq,Lr,Lf[n],n,vn2cn,Lrn)
-        end
-        if ilbp
-            # calc syndrome
-            @inbounds syndrome[m] = _calc_syndrome(d,cn2vn[m])
-            if iszero(syndrome)
-                break
-            end
+        @fastmath @inbounds for n in cn2vn[m] # for every n in Neighborhood(m)
+            _,_ = update_Lq!(Lq,Lr,Lf[n],n,vn2cn,Lrn)
         end
         # Lr updates
-        pLr = 1.0
-        for n in cn2vn[m]
-            @fastmath @inbounds Lrn[n] = tanh(0.5*Lq[n,m])
-            @fastmath @inbounds pLr *= Lrn[n]
-        end
-        for n in cn2vn[m]
-            @fastmath @inbounds x = pLr/Lrn[n]
-            if @fastmath abs(x) < 1 # controls divergent values of Lr
-                @fastmath @inbounds Lr[m,n] = 2*atanh(x)
-            end
-        end
+        update_Lr!(Lr,Lq,m,cn2vn,Lrn,nothing,nothing)
+    end
+
+    @fastmath @inbounds for n in eachindex(vn2cn)
+        m = vn2cn[n][1]
+        bitvector[n] = signbit(Lq[n,m] + Lr[m,n])
     end
 end

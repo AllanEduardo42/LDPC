@@ -22,7 +22,6 @@ function
     )
 
     visited_vns .*= false
-    syndrome .== true
     for m in eachindex(cn2vn)
         # Lq updates       
         @fastmath @inbounds for n in cn2vn[m] # for every n in Neighborhood(m)
