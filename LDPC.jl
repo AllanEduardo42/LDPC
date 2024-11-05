@@ -40,14 +40,14 @@ SEED_MESSA::Int = 9999
 
 ###################### NUMBER OF TRIALS AND MULTITHREADING #####################
 
-TRIALS::Int = 96
+TRIALS::Int = 9600
 NTHREADS::Int = min(Threads.nthreads(),TRIALS)
 
 ######################## MAXIMUM NUMBER OF BP ITERATIONS #######################
 
-MAX::Int = 5
+MAX::Int = 30
 MAXRBP::Int = 5
-STOP::Bool = false # stop simulation at zero syndrome (if true, BER curves are 
+STOP::Bool = true # stop simulation at zero syndrome (if true, BER curves are 
 # not printed)
 
 ################################ BP MODE FLAGS ################################
@@ -108,7 +108,7 @@ SNR = collect(1:1:4)
 ############################# PARITY-CHECK MATRIX #############################
 
 # CHECK = 1 : PEG ; = 2 : IEEE80216e ; 3 : NR-LDPC
-CHECK::Int = 3
+CHECK::Int = 1
 
 if CHECK == 1
     # PEG Matrix dimensions

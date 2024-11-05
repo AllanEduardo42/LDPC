@@ -5,7 +5,6 @@
 
 include("update_Lq.jl")
 include("update_Lr.jl")
-include("calc_syndrome.jl")
 
 function
     LBP!(

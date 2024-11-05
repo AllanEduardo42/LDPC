@@ -3,7 +3,7 @@
 # 3 out 2024
 # First layer of the routine to estimate the LPDC performance (FER BER x SNR)
 
-include("performance_simcore.jl")
+include("simcore.jl")
 
 function 
     performance_sim(

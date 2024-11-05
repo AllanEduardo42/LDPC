@@ -50,10 +50,10 @@ function
         listadd::Union{Matrix{<:Integer},Nothing},
         inlist::Union{Matrix{<:Integer},Nothing}
     )
-             
-    # FIRST = true
-    ilbp = (mode == "iLBP")
+    
     for i in 1:maxiter
+
+        ilbp = (mode == "iLBP" && i > 1)
 
         if test && printtest  
             println("### Iteration #$i ###")
@@ -107,7 +107,7 @@ function
             resetfactors!(Factors,vn2cn)
         end
 
-        calc_syndrome!(syndrome,bitvector,cn2vn)
+        ilbp ? nothing : calc_syndrome!(syndrome,bitvector,cn2vn)
 
         if test && printtest    
                 println("Max LLR estimate errors: ")
@@ -131,13 +131,14 @@ function
                 end
                 println()     
         else
-            # if FIRST && iszero(syndrome)
             if iszero(syndrome)
-                # FIRST = false
                 if bitvector == codeword
                     @inbounds decoded[i] = true
                 end
                 if stop
+                    if i < maxiter
+                        @inbounds decoded[i+1:end] .= true
+                    end
                     break
                 end
             end
