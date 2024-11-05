@@ -9,8 +9,8 @@ include("calc_syndrome.jl")
 function
     LBP!(
         bitvector::Vector{Bool},
-        Lr::Matrix{<:AbstractFloat},
         Lq::Matrix{<:AbstractFloat},
+        Lr::Matrix{<:AbstractFloat},
         Lf::Vector{<:AbstractFloat},
         cn2vn::Vector{Vector{T}} where {T<:Integer},
         vn2cn::Vector{Vector{T}} where {T<:Integer},
@@ -21,7 +21,8 @@ function
         ilbp::Bool
     )
 
-    visited_vns .*= false
+    visited_vns .= false
+    # syndrome .= true
     for m in eachindex(cn2vn)
         # Lq updates       
         @fastmath @inbounds for n in cn2vn[m] # for every n in Neighborhood(m)

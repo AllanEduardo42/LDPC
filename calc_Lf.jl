@@ -5,7 +5,7 @@
 
 function
     calc_Lf!(
-        Lf::Vector{<:AbstractFloat},
+        Lf::AbstractVector{<:AbstractFloat},
         signal::Vector{<:AbstractFloat},
         σ²::AbstractFloat
     )

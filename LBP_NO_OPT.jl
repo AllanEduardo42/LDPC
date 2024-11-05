@@ -10,8 +10,8 @@ include("calc_syndrome.jl")
 function
     LBP!(
         bitvector::Vector{Bool},
-        Lr::Matrix{<:AbstractFloat},
         Lq::Matrix{<:AbstractFloat},
+        Lr::Matrix{<:AbstractFloat},        
         Lf::Vector{<:AbstractFloat},
         cn2vn::Vector{Vector{T}} where {T<:Integer},
         vn2cn::Vector{Vector{T}} where {T<:Integer},

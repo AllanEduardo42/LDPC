@@ -23,7 +23,6 @@ function
         rgn_seed_noise::Integer,
         rng_seed_sample::Integer,
         test::Bool,
-        testsignal::Union{Vector{<:AbstractFloat},Nothing},
         printtest::Bool
     )
     
@@ -39,7 +38,7 @@ function
     vn2cn  = make_vn2cn_list(H)
     cn2vn  = make_cn2vn_list(H)
 
-    ############################# PREALLOCATIONS ################################
+    ############################# PREALLOCATIONS ###############################
 
     # frame error rate
     DECODED = zeros(Int,maxiter)
@@ -56,15 +55,18 @@ function
     syndrome = Vector{Bool}(undef,N)
 
     # prior llr (if mode == "MKAY" just the prior probabilities)
-    Lf = (mode != "MKAY") ? Vector{Float64}(undef,N) : Matrix{Float64}(undef,N,2)
+    Lf = (mode != "MKAY") ? zeros(N) : zeros(N,2)
 
     # noise
-    NN = length(u)
-    noise = Vector{Float64}(undef,NN)
+    L = length(codeword)
+    noise = Vector{Float64}(undef,L)
 
     # received signal
-    signal = zeros(N)
-    signal[1:N-NN] .+= eps()
+    signal = zeros(L)
+    NmL = N - L
+    if NmL > 0
+        Lf[1:NmL] .= -2*eps()/variance
+    end
 
     # bit-error
     biterror = Vector{Bool}(undef,N) 
@@ -72,15 +74,15 @@ function
     # Lq -> matrix of vn2cn messages (N x M)
     # Lr -> matrix of cn2vn messages (M x N)
     # if mode == "MKAY" the are matrices for bit = 0 and bit = 1
-    Lq = (mode != "MKAY") ? Matrix{Float64}(undef,N,M) : Array{Float64,3}(undef,N,M,2)
+    Lq = (mode != "MKAY") ? zeros(N,M) : zeros(N,M,2)
 
-    Lr = (mode != "MKAY") ? Matrix{Float64}(undef,M,N) : Array{Float64,3}(undef,M,N,2)
+    Lr = (mode != "MKAY") ? zeros(M,N) : zeros(M,N,2)
 
     Ms = (supermode == "RBP") ? H*0.0 : nothing
 
     # Set variables Lrn and signs depending on the mode (also used for dispatch)
     if (mode == "TANH" && FAST) || mode == "LBP" || mode == "iLBP"
-        Lrn = zeros(N) 
+        Lrn = zeros(N)
         signs = nothing
     elseif mode == "ALTN" || mode == "TABL"
         Lrn = zeros(N)
@@ -130,59 +132,42 @@ function
     
     rng_noise = Xoshiro(rgn_seed_noise)
 
-    rng_sample = (mode == "Random-RBP") ? Xoshiro(rng_seed_sample) : nothing
-
-    ######################### FIRST RECEIVED SIGNAL ############################
-    # In order to allow to test with a given received signal, its first 
-    # realization must be set outside the main loop.
-    if test
-        if testsignal === nothing # if no test signal was provided:
-            # generate a new received signal
-            received_signal!(view(signal,N-NN+1:N),noise,stdev,u,rng_noise)
-        elseif length(testsignal) != N
-            # if a received test signal was given, but with wrong length
-            throw(
-                DimensionMismatch(
-                    "length(testsignal) should be $N, not $(length(testsignal))"
-                )
-            )
-        else
-            # the received signal is the given test signal
-            signal = testsignal
-        end
-    else
-        # generate the first received signal outside the main loop
-        received_signal!(view(signal,N-NN+1:N),noise,stdev,u,rng_noise)
-    end   
+    rng_sample = (mode == "Random-RBP") ? Xoshiro(rng_seed_sample) : nothing  
     
-    codeword = [message[1:N-NN]; codeword]
+    if NmL > 0
+        codeword = [message[1:N-L]; codeword]
+    end
 
     for j in 1:trials
 
+        # received signal for the next realization (j+1)
+        received_signal!(signal,noise,stdev,u,rng_noise)
+
         bitvector .= true
 
-        biterror .= true
-
         syndrome .= true
-        # initialize matrix Lr
-        Lr = Lr*0.0
+
+        decoded .= false
+        
+        # reinitialize matrix Lr
+        Lr *= 0.0
 
         # init the llr priors
-        calc_Lf!(Lf,signal,variance)
+        calc_Lf!(view(Lf,NmL+1:N),signal,variance)
         if mode == "TABL"
             # scale for table
             Lf .*= SIZE_per_RANGE
         end
-        # initialize matrix Lq
+        # reinitialize matrix Lq
+        Lq *= 0.0
         init_Lq!(Lq,Lf,vn2cn)
 
         if supermode == "RBP"
-            maxresidue = init_residues!(Residues,maxcoords,Lq,signs,cn2vn,Ms,listres,listadd,
-                LISTSIZE,inlist)   
+            maxresidue = init_residues!(Residues,maxcoords,Lq,signs,cn2vn,Ms,
+                listres,listadd,LISTSIZE,inlist)   
         end
             
         # SPA routine
-        decoded .= false
         BP!(supermode,
             mode,
             stop,
@@ -222,9 +207,6 @@ function
         # bit error rate
         @. BER += ber
         @. DECODED += decoded
-
-        # received signal for the next realization (j+1)
-        received_signal!(view(signal,N-NN+1:N),noise,stdev,u,rng_noise)
 
     end
 

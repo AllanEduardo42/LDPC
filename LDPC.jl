@@ -40,12 +40,12 @@ SEED_MESSA::Int = 9999
 
 ###################### NUMBER OF TRIALS AND MULTITHREADING #####################
 
-TRIALS::Int = 10240
+TRIALS::Int = 96
 NTHREADS::Int = min(Threads.nthreads(),TRIALS)
 
 ######################## MAXIMUM NUMBER OF BP ITERATIONS #######################
 
-MAX::Int = 30
+MAX::Int = 5
 MAXRBP::Int = 5
 STOP::Bool = false # stop simulation at zero syndrome (if true, BER curves are 
 # not printed)
@@ -53,7 +53,7 @@ STOP::Bool = false # stop simulation at zero syndrome (if true, BER curves are
 ################################ BP MODE FLAGS ################################
 
 #Flooding
-FLOO::Bool = false      
+FLOO::Bool = false     
 #LBP
 _LBP::Bool = true      
 #instantaneos-LBP
@@ -108,7 +108,7 @@ SNR = collect(1:1:4)
 ############################# PARITY-CHECK MATRIX #############################
 
 # CHECK = 1 : PEG ; = 2 : IEEE80216e ; 3 : NR-LDPC
-CHECK::Int = 1
+CHECK::Int = 3
 
 if CHECK == 1
     # PEG Matrix dimensions
@@ -166,7 +166,7 @@ display(sparse(H))
 println()
 println("Graph girth = ", girth)
 println()
-println("Message:")
+println("Message (M = $M):")
 for i in eachindex(Message)
     print(Int(Message[i]))
     if i%80 == 0
@@ -175,7 +175,7 @@ for i in eachindex(Message)
 end
 println()
 println()
-println("Codeword:")
+println("Codeword (N = $N):")
 for i in eachindex(Codeword)
     print(Int(Codeword[i]))
     if i%80 == 0
@@ -195,12 +195,12 @@ for i in eachindex(rgn_noise_seeds)
 end
 
 #################### JULIA COMPILATION (FOR SPEED) AND TEST ####################
-Lr = Dict()
-Lq = Dict()
+LR = Dict()
+LQ = Dict()
 p = (TRIALS ≤ 2) ? PRINTTEST : false
 for mode in modes
     if mode[1]
-        Lr[mode[2]] , Lq[mode[2]] = performance_sim(
+        LR[mode[2]] , LQ[mode[2]] = performance_sim(
             Message,
             Codeword,
             SNRTEST,
@@ -258,36 +258,36 @@ if TRIALS > 2
         SAVEDATA ? savefig(p, "FER.png") : nothing
     end
 
-    # FER x Iterations
-    labels = Vector{String}()
-    for snr in SNR
-        push!(labels,"SNR (dB) = $snr")
-    end
-    labels = permutedims(labels)
-    for mode in modes
-        if mode[1]
-            if mode[2] == "RBP" || mode[2] == "Random-RBP" ||
-               mode[2] == "Local-RBP" || mode[2] == "List-RBP"
-                titlefer = "FER $(mode[2]) (decay factor = $(decay[mode[2]]))"
-            else
-                titlefer = "FER $(mode[2])"
-            end
-            local p = plot(
-                1:mode[3],
-                FER[mode[2]],                
-                xlabel="Iteration",
-                label=labels,
-                lw=2,
-                title=titlefer,
-                ylims=(lim,0)
-            )
-            PLOT ? display(p) : nothing
-            SAVEDATA ? savefig(p,"FER_"*mode[2]*".png") : nothing
-        end
-    end
-    
     # BER x Iterations
     if !STOP
+
+        # FER x Iterations
+        labels = Vector{String}()
+        for snr in SNR
+            push!(labels,"SNR (dB) = $snr")
+        end
+        labels = permutedims(labels)
+        for mode in modes
+            if mode[1]
+                if mode[2] == "RBP" || mode[2] == "Random-RBP" ||
+                mode[2] == "Local-RBP" || mode[2] == "List-RBP"
+                    titlefer = "FER $(mode[2]) (decay factor = $(decay[mode[2]]))"
+                else
+                    titlefer = "FER $(mode[2])"
+                end
+                local p = plot(
+                    1:mode[3],
+                    FER[mode[2]],                
+                    xlabel="Iteration",
+                    label=labels,
+                    lw=2,
+                    title=titlefer,
+                    ylims=(lim,0)
+                )
+                PLOT ? display(p) : nothing
+                SAVEDATA ? savefig(p,"FER_"*mode[2]*".png") : nothing
+            end
+        end
 
         for mode in modes
             if mode[1]

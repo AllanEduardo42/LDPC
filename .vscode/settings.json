@@ -9,5 +9,5 @@
           "color": "#00000085"
         },
     ],
-    "julia.NumThreads":32,
+    "julia.NumThreads":1,
 }

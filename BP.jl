@@ -71,8 +71,8 @@ function
                       phi)  
         elseif supermode == "LBP"
             LBP!(bitvector,
-                 Lr,
                  Lq,
+                 Lr,
                  Lf,
                  cn2vn,
                  vn2cn,

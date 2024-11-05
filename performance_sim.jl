@@ -18,7 +18,6 @@ function
         rgn_noise_seeds::Vector{<:Integer};
         rgn_samples_seeds=ones(Int,NTHREADS),
         floomode="TANH",
-        testsignal=nothing,
         printtest=false    
     )
 
@@ -133,7 +132,6 @@ function
                                             rgn_noise_seeds[i],
                                             rgn_samples_seeds[i],
                                             test,
-                                            testsignal,
                                             printtest)
                 end
             else
@@ -151,7 +149,6 @@ function
                                             rgn_noise_seeds[1],
                                             rgn_samples_seeds[1],
                                             test,
-                                            testsignal,
                                             printtest)
             end
         end
@@ -184,7 +181,7 @@ function
                                     rgn_noise_seeds[1],
                                     rgn_samples_seeds[1],
                                     test,
-                                    testsignal,
+                                    # testsignal,
                                     printtest)
         
         return Lr, Lq        
