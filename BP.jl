@@ -134,6 +134,8 @@ function
             if iszero(syndrome)
                 if bitvector == codeword
                     @inbounds decoded[i] = true
+                elseif ilbp
+                    syndrome .= true
                 end
                 if stop
                     if i < maxiter
