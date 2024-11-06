@@ -97,9 +97,9 @@ function
 
    # Set other variables that depend on the mode
 
-    visited_vns = (supermode == "LBP") ? zeros(Bool,N) : nothing
+    visited_vns = (mode == "iLBP") ? zeros(Bool,N) : nothing
 
-    if supermode == "LBP" || supermode == "RBP"       
+    if mode == "iLBP" || supermode == "RBP"       
         Ldn = zeros(N)
     else
         Ldn = nothing

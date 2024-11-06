@@ -53,8 +53,6 @@ function
     
     for i in 1:maxiter
 
-        ilbp = (mode == "iLBP" && i > 1)
-
         if test && printtest  
             println("### Iteration #$i ###")
         end
@@ -80,7 +78,7 @@ function
                  syndrome,
                  Ldn,
                  visited_vns,
-                 ilbp)   
+                 i)   
         elseif supermode == "RBP"
             RBP!(Residues,
                  bitvector,
@@ -107,7 +105,7 @@ function
             resetfactors!(Factors,vn2cn)
         end
 
-        ilbp ? nothing : calc_syndrome!(syndrome,bitvector,cn2vn)
+        calc_syndrome!(syndrome,bitvector,cn2vn)
 
         if test && printtest    
                 println("Max LLR estimate errors: ")
@@ -134,12 +132,10 @@ function
             if iszero(syndrome)
                 if bitvector == codeword
                     @inbounds decoded[i] = true
-                elseif ilbp
-                    syndrome .= true
                 end
                 if stop
                     if i < maxiter
-                        @inbounds decoded[i+1:end] .= true
+                        @inbounds decoded[i+1:end] .= decoded[i]
                     end
                     break
                 end
