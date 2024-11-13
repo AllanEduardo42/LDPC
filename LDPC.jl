@@ -24,7 +24,7 @@ include("NR_LDPC_encode.jl")
 
 MULTI::Bool = true
 SAVEDATA::Bool = false
-PRINTTEST::Bool = true
+PRINTTEST::Bool = false
 PLOT::Bool = true
 
 ############################# SIMULATION CONSTANTS #############################
@@ -40,12 +40,12 @@ SEED_MESSA::Int = 9999
 
 ###################### NUMBER OF TRIALS AND MULTITHREADING #####################
 
-TRIALS::Int = 9600
+TRIALS::Int = 1
 NTHREADS::Int = min(Threads.nthreads(),TRIALS)
 
 ######################## MAXIMUM NUMBER OF BP ITERATIONS #######################
 
-MAX::Int = 30
+MAX::Int = 2
 MAXRBP::Int = 5
 STOP::Bool = true # stop simulation at zero syndrome (if true, BER curves are 
 # not printed)
@@ -108,7 +108,7 @@ SNR = collect(1:1:4)
 ############################# PARITY-CHECK MATRIX #############################
 
 # CHECK = 1 : PEG ; = 2 : IEEE80216e ; 3 : NR-LDPC
-CHECK::Int = 1
+CHECK::Int = 3
 
 if CHECK == 1
     # PEG Matrix dimensions
@@ -129,7 +129,7 @@ elseif CHECK == 3
     Message = rand(Xoshiro(SEED_MESSA),Bool,B)
     # NR base matrix
     bg = "2"
-    Codeword, H = NR_LDPC_encode(Message,bg)
+    Codeword, H = NR_LDPC_encode(Message,bg,1//2)
     M::Int, N::Int = size(H)
     # Message = rand(Xoshiro(SEED_MESSA),Bool,N-M)
     # G = gf2_nullspace(H)
@@ -166,7 +166,7 @@ display(sparse(H))
 println()
 println("Graph girth = ", girth)
 println()
-println("Message (M = $M):")
+println("Message (L = $(length(Message))):")
 for i in eachindex(Message)
     print(Int(Message[i]))
     if i%80 == 0
@@ -175,7 +175,7 @@ for i in eachindex(Message)
 end
 println()
 println()
-println("Codeword (N = $N):")
+println("Codeword (L = $(length(Codeword))):")
 for i in eachindex(Codeword)
     print(Int(Codeword[i]))
     if i%80 == 0

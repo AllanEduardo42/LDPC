@@ -3,7 +3,59 @@
 # 28 Out 2024
 # GF(2) polynomial functions
 
-function divide_poly(p::Vector{Bool},d::Vector{Bool})
+function
+    gf2_poly(p::String)
+
+    L = length(p)
+    if L == 1
+        if p[1] == '1'
+            return [true]
+        elseif p[1] == 'x'
+            return [true, false]
+        else
+            return nothing
+        end
+    end
+    first = true
+    coeffs = Vector{Bool}()
+    N = 0
+    l = 1
+    while l ≤ L
+        if p[l] == 'x'
+            if l < L
+                l += 1
+                if p[l] == '^'
+                    l += 1
+                    str = ""
+                    while l ≤ L && p[l] ≠ ' ' && p[l] ≠ '+'
+                        str *= p[l]
+                        l += 1
+                    end
+                    c = parse(Int,str)
+                else
+                    c = 1
+                end                
+                if first
+                    first = false
+                    N = c + 1
+                    coeffs = zeros(Bool,c+1)
+                end
+                coeffs[N - c] = true
+            else
+                coeffs[N-1] = true
+            end
+        elseif p[l] == '1'
+            coeffs[N] = true
+        end
+        l += 1
+    end
+    return coeffs
+end
+
+function divide_poly(
+    p::Union{Vector{Bool},Vector{Union{Bool,Nothing}}},
+    d::Vector{Bool}
+    )
 
     if d[1] != 1
         throw(ArgumentError(

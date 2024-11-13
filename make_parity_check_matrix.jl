@@ -30,7 +30,7 @@ function
     
     
     #exponent matrix
-    E_H  = -1 * ones(n_rows_bg,n_cols_bg)
+    E_H  = -1 * ones(Int,n_rows_bg,n_cols_bg)
     H = zeros(Bool,n_rows_bg*Zc, n_cols_bg*Zc)
         
     # Loop all records in 
@@ -45,7 +45,7 @@ function
         shift_coeff = shift_coeffs_table[i,set_Idx + 3]
         
         # Exponet matrix
-        E_H[row_idx,col_idx] = rem.(shift_coeff,Zc)
+        E_H[row_idx,col_idx] = rem(shift_coeff,Zc)
         
         # check matrix
         row_range = Zc*(row_idx-1)+1 : Zc*row_idx
