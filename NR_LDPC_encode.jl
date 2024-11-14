@@ -1,6 +1,6 @@
 ################################################################################
 # Allan Eduardo Feitosa
-# 28 Out 2024
+# 13 NOV 2024
 # Function to encode a message using the NR-LDPC
 
 using SparseArrays
@@ -13,26 +13,28 @@ include("encode.jl")
 
 const R_LBRM = 2//3
 
+mutable struct NR_LDPC
+    E_r::Vector{Int}
+    C::Int
+    N_cb::Int
+    N::Int
+    k0::Int
+    K::Int
+    K_prime::Int
+    Zc::Int
+end
+
 function
     NR_LDPC_encode(
         a::Vector{Bool},
-        R::Rational;
+        R::Rational,
+        rv::Integer;
         I_LBRM = 0,
         TBS_LBRM = Inf,
-        rv = 0,
         CBGTI = [],
         N_L = 1,
         Q_m = 1
-    )   
-
-    # a = rand(Bool,2000)
-    # R = Float64(1//2)
-    # I_LBRM = 0
-    # TBS_LBRM = Inf
-    # rv = 0
-    # CBGTI = []
-    # N_L = 1
-    # Q_m = 1
+    )
 
     A = length(a)
 
@@ -56,12 +58,6 @@ function
 
     b[1:A] = a
     _,b[A+1:end] = divide_poly(b,g_CRC)
-
-    if b[1:A] ≠ a
-        throw(error(
-                lazy"""Encode error at 1."""
-            ))
-    end
 
     ### 1.5) LDPC base graph selection (TS38212 Clause 7.2.2 and 6.2.2)
 
@@ -124,7 +120,6 @@ function
     display("iLS = $iLS")    
     display("K = $K")
 
-    # c = Matrix{Union{Bool,Nothing}}(undef,K,C)
     c = zeros(Bool,K,C)
 
     if C > 1
@@ -153,17 +148,6 @@ function
         # end        
     end
 
-    b_prime = c[1:K_prime - L_2,1]
-
-    for r = 2:C
-        b_prime = [b_prime;c[1:K_prime-L_2,r]]
-    end
-    if b_prime ≠ b
-        throw(error(
-                lazy"""Encode error at 2 (b)."""
-            ))
-    end
-
     ### 3) Channel coding (TS38212 Clauses 7.2.4, 6.2.4 and 5.3.2)
 
     if bg == "1"
@@ -190,32 +174,15 @@ function
     H,E_H = make_parity_check_matrix(bg,Zc,iLS)
 
     for r = 1:C
-        global w = parity_bits(E_H,c[:,r],Zc,bg)
+        w = parity_bits(E_H,c[:,r],Zc,bg)
         for k = (K + 1) : N + 2*Zc
             d[k - 2*Zc,r] = w[k - K]
         end
-        if !iszero(gf2_mat_mult(H,[c[:,r];w]))
+        if !iszero(gf2_mat_mult(H,[c[1:K,r]; w]))
             throw(error(
                     lazy"""Wrong encoding"."""
                 ))
         end
-    end
-
-    c_prime = zeros(Bool,K,C)
-    for r = 1:C
-        c_prime[1:(2*Zc),r] = c[1:(2*Zc),r]
-        for k=(2*Zc+1):K
-            if d[k - 2*Zc,r] === nothing
-                c_prime[k,r] = false
-            else
-                c_prime[k,r] = d[k - 2*Zc,r]
-            end
-        end
-    end
-    if c_prime ≠ c
-        throw(error(
-                lazy"""Encode error at 3."""
-            ))
     end
 
     ### 4) Rate Matching (TS38212 Clauses 7.2.5, 6.2.5 and 5.4.2)
@@ -260,7 +227,27 @@ function
     # Hx = [Hx H[1:Mx,K+1:length(g)+(2*Zc+(K-K_prime))]]
     # iszero(gf2_mat_mult(Hx,x))
 
-    return H, E_r, C, g, N_cb, N, k0, K, K_prime, Zc, d
+    nr_ldpc = NR_LDPC(E_r,C,N_cb,N,k0,K,K_prime,Zc)
+
+    # test inv functions
+
+    f_prime = inv_code_concatenation(C,E_r,g)
+
+    display("f: $(f_prime == f)")
+
+    e_prime = inv_bit_interleaving(C,E_r,Q_m,f_prime)
+
+    display("e: $(e_prime == e)")
+
+    range = (K_prime-2*Zc+1):(K-2*Zc)
+
+    d_prime = inv_rate_matching(E_r,N,C,e_prime,N_cb,k0,range)
+
+    r = E_r[1] + K - K_prime
+
+    display("d: $(d_prime[1:r,1] == d[1:r,1])")
+
+    return H, g, nr_ldpc
 
 end
 

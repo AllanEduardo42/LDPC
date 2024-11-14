@@ -33,16 +33,14 @@ function
         e,
         N_cb::Integer,
         k0,
-        K,
-        K_prime,
-        Zc
+        range
         # I_HARQ,
         # d_buffer
     )
 
     d = Matrix{Union{Bool,Nothing}}(undef,N,C)
     d .= false
-    d[(K_prime-2*Zc+1):(K-2*Zc),:] .= nothing
+    d[range,:] .= nothing
 
     for r = 1:C        
         j = 1

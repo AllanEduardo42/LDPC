@@ -24,7 +24,7 @@ include("NR_LDPC_encode.jl")
 
 MULTI::Bool = true
 SAVEDATA::Bool = false
-PRINTTEST::Bool = false
+PRINTTEST::Bool = true
 PLOT::Bool = true
 
 ############################# SIMULATION CONSTANTS #############################
@@ -40,24 +40,24 @@ SEED_MESSA::Int = 9999
 
 ###################### NUMBER OF TRIALS AND MULTITHREADING #####################
 
-TRIALS::Int = 1
+TRIALS::Int = 10240
 NTHREADS::Int = min(Threads.nthreads(),TRIALS)
 
 ######################## MAXIMUM NUMBER OF BP ITERATIONS #######################
 
-MAX::Int = 2
+MAX::Int = 30
 MAXRBP::Int = 5
-STOP::Bool = true # stop simulation at zero syndrome (if true, BER curves are 
+STOP::Bool = false # stop simulation at zero syndrome (if true, BER curves are 
 # not printed)
 
 ################################ BP MODE FLAGS ################################
 
 #Flooding
-FLOO::Bool = false     
+FLOO::Bool = true     
 #LBP
-_LBP::Bool = true      
+_LBP::Bool = false      
 #instantaneos-LBP
-iLBP::Bool = true      
+iLBP::Bool = false      
 #RBP
 _RBP::Bool = false      
 #Random-RBP
@@ -128,8 +128,9 @@ elseif CHECK == 3
     B::Int = 256
     Message = rand(Xoshiro(SEED_MESSA),Bool,B)
     # NR base matrix
-    bg = "2"
-    Codeword, H = NR_LDPC_encode(Message,bg,1//2)
+    rv = 0
+    R = 1//2
+    H, Codeword, nr_ldpc = NR_LDPC_encode(Message,R,rv)
     M::Int, N::Int = size(H)
     # Message = rand(Xoshiro(SEED_MESSA),Bool,N-M)
     # G = gf2_nullspace(H)
@@ -205,6 +206,8 @@ for mode in modes
             Codeword,
             SNRTEST,
             H,
+            nr_ldpc.Zc,
+            nr_ldpc.K_prime,
             mode[2],
             min(TRIALS,2),
             mode[3],
@@ -226,6 +229,8 @@ if TRIALS > 2
                 Codeword,
                 SNR,
                 H,
+                nr_ldpc.Zc,
+                nr_ldpc.K_prime,
                 mode[2],
                 TRIALS,
                 mode[3],

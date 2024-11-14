@@ -6,13 +6,18 @@
 using Random
 using LinearAlgebra
 
+import Base.*
+
 ########################### GF2 matrix multiplication ##########################
+*(A::AbstractMatrix{Bool},B::AbstractMatrix{Bool}) = gf2_mat_mult(A,B)
+*(A::AbstractMatrix{Bool},B::AbstractVector{Bool}) = gf2_mat_mult(A,B)
 
 function
     gf2_mat_mult(
-        A::AbstractArray{Bool},
-        B::AbstractArray{Bool},
+        A::AbstractMatrix{Bool},
+        B::AbstractArray{Bool}
     )
+
     (mA, nA) =  (ndims(A) == 2) ? size(A) : (length(A),1)
     (mB, nB) =  (ndims(B) == 2) ? size(B) : (length(B),1)
 
@@ -32,8 +37,8 @@ end
 
 function 
     _gf2_mat_mult(
-        A::AbstractArray{Bool},
-        B::AbstractArray{Bool},
+        A::AbstractMatrix{Bool},
+        B::AbstractMatrix{Bool},
         mA::Integer,
         nA::Integer,
         nB::Integer
@@ -55,7 +60,7 @@ end
 
 function 
     _gf2_mat_mult(
-        A::AbstractArray{Bool},
+        A::AbstractMatrix{Bool},
         B::AbstractVector{Bool},
         mA::Integer,
         nA::Integer,
