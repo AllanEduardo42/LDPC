@@ -129,7 +129,7 @@ function
     display("iLS = $iLS")    
     display("K = $K")    
 
-    c = code_block_segmentation(K,C,K_prime,L_2,b)    
+    c = code_block_segmentation(b,C,K_prime,K,L_2)
 
     ### 3) Channel coding (TS38212 Clauses 7.2.4, 6.2.4 and 5.3.2)
 
@@ -140,7 +140,7 @@ function
     end
     display("N = $N")
 
-    d, H = channel_coding(N,C,Zc,K_prime,K,bg,iLS,c)
+    d, H = channel_coding(c,C,K_prime,K,Zc,iLS,N,bg)
 
     # d[1:(K_prime-2*Zc),:] == c[(2*Zc+1):K_prime,:] #(payload + CRC)
     # d[(K_prime-2*Zc+1):(K-2*Zc),:] == c[(K_prime+1):K,:] #(filler bits)
@@ -157,33 +157,33 @@ function
 
     G = round(Int,(A/R)/Q_m)*Q_m
 
-    E_r = get_Er(C,CBGTI,G,N_L,Q_m)
+    E_r = get_Er(C,G,CBGTI,N_L,Q_m)
 
-    k0 = get_k0(rv,bg,N_cb,Zc)
+    k0 = get_k0(rv,Zc,N_cb,bg)
 
-    e =  rate_matching(E_r,d,N_cb,k0,C)
+    e =  rate_matching(d,C,N_cb,E_r,k0)
 
-    f =  bit_interleaving(E_r,Q_m,e,C)
+    f =  bit_interleaving(e,C,E_r,Q_m)
 
     ### 5) Code block concatenation (TS38212 Clauses 7.2.6, 6.2.6 and 5.5)
 
-    g = code_concatenation(G,E_r,f,C)
+    g = code_concatenation(f,C,G,E_r)
 
     # nr_ldpc = NR_LDPC(E_r,C,N_cb,N,k0,K,K_prime,Zc)
 
     # test inv functions
 
-    f_prime = inv_code_concatenation(C,E_r,g)
+    f_prime = inv_code_concatenation(g,C,E_r)
 
     display("f: $(f_prime == f)")
 
-    e_prime = inv_bit_interleaving(C,E_r,Q_m,f_prime)
+    e_prime = inv_bit_interleaving(f_prime,C,E_r,Q_m)
 
     display("e: $(e_prime == e)")
 
     range = (K_prime-2*Zc+1):(K-2*Zc)
 
-    d_prime = inv_rate_matching(E_r,N,C,e_prime,N_cb,k0,range)
+    d_prime = inv_rate_matching(e_prime,C,N,N_cb,E_r,k0,range)
 
     r = E_r[1] + K - K_prime
 
