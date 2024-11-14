@@ -53,7 +53,7 @@ function
 end
 
 function divide_poly(
-    p::Union{Vector{Bool},Vector{Union{Bool,Nothing}}},
+    p::Union{Vector{Bool},Vector{Union{Bool,Missing}}},
     d::Vector{Bool}
     )
 

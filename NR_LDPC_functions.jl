@@ -132,10 +132,10 @@ function
     e = zeros(Bool,maximum(E_r),C)
     
     for r = 1:C
-        j = 1
+        j = 0
         k = 1
         while k ≤ E_r[r]
-            x = rem(k0+j,N_cb)
+            x = rem(k0+j,N_cb)+1
             if d[x,r] !== missing
                 e[k,r] = d[x,r]
                 k += 1
@@ -164,12 +164,12 @@ function
     d[range,:] .= missing
 
     for r = 1:C        
-        j = 1
+        j = 0
         k = 1
         while k ≤ E_r[r]
-            x = rem(k0+j,N_cb)
+            x = rem(k0+j,N_cb)+1
             if d[x,r] !== missing
-                d[x,r] ⊻= e[k,r]
+                d[x,r] = e[k,r]
                 k += 1
             end
             j += 1

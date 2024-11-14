@@ -35,9 +35,9 @@ function
     )
 
     ### for testing
-    # a = rand(Bool,1000)
+    # a = rand(Bool,4000)
     # a[1] = true
-    # R = 1//2
+    # R = 1//5
     # rv = 0
     # I_LBRM = 0
     # TBS_LBRM = Inf
@@ -157,6 +157,8 @@ function
 
     G = round(Int,(A/R)/Q_m)*Q_m
 
+    display("G = $G")
+
     E_r = get_Er(C,G,CBGTI,N_L,Q_m)
 
     k0 = get_k0(rv,Zc,N_cb,bg)
@@ -185,13 +187,12 @@ function
 
     d_prime = inv_rate_matching(e_prime,C,N,N_cb,E_r,k0,range)
 
-    r = E_r[1] + K - K_prime
+    display("d: $(sum(d_prime[1:E_r[1],1] .=== d[1:E_r[1],1]) === E_r[1])")
 
-    display("d: $(sum(d_prime[1:r,1] .=== d[1:r,1]) == r)")
 
-    # P = N - (L + K - K_prime)- 2*Zc
-    # H = H[1:M-P,1:N-P]
-    # H = [H[:,1:K_prime] H[:,K+1:end]]
+    P = N - G - K + K_prime
+    H = H[1:end-P,1:end-P]
+    H = [H[:,1:K_prime] H[:,K+1:end]]
 
     return H, g, Zc, K_prime
 

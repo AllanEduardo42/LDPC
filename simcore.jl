@@ -33,16 +33,12 @@ function
     # transform snr in standard deviations
     variance = 1 ./ (exp10.(snr/10))
     stdev = sqrt.(variance)
-    L = length(codeword)
-    M,N = size(H)
-    K = N - M
-    P = N - (L + K - K_prime)- 2*Zc
-    H = H[1:M-P,1:N-P]
+
     # BPKS
     if Zc > 0
         codeword = [message[1:2*Zc]; codeword]
         N = length(codeword)
-        H = [H[:,1:K_prime] H[:,K+1:end]]
+
     end
     
     u = Float64.(2*codeword .- 1)
