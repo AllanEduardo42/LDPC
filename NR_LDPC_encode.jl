@@ -6,23 +6,21 @@
 using SparseArrays
 
 include("GF2_poly.jl")
-include("make_parity_check_matrix.jl")
 include("GF2_functions.jl")
-include("rate_matching.jl")
-include("encode.jl")
+include("NR_LDPC_functions.jl")
 
 const R_LBRM = 2//3
 
-mutable struct NR_LDPC
-    E_r::Vector{Int}
-    C::Int
-    N_cb::Int
-    N::Int
-    k0::Int
-    K::Int
-    K_prime::Int
-    Zc::Int
-end
+# mutable struct NR_LDPC
+#     E_r::Vector{Int}
+#     C::Int
+#     N_cb::Int
+#     N::Int
+#     k0::Int
+#     K::Int
+#     K_prime::Int
+#     Zc::Int
+# end
 
 function
     NR_LDPC_encode(
@@ -35,6 +33,17 @@ function
         N_L = 1,
         Q_m = 1
     )
+
+    ### for testing
+    # a = rand(Bool,1000)
+    # a[1] = true
+    # R = 1//2
+    # rv = 0
+    # I_LBRM = 0
+    # TBS_LBRM = Inf
+    # CBGTI = []
+    # N_L = 1
+    # Q_m = 1
 
     A = length(a)
 
@@ -118,35 +127,9 @@ function
     display("Kb = $Kb")
     display("Zc = $Zc")
     display("iLS = $iLS")    
-    display("K = $K")
+    display("K = $K")    
 
-    c = zeros(Bool,K,C)
-
-    if C > 1
-
-        # CRC24B:
-        p_CRC =  "x^24 + x^23 + x^6 + x^5 + x + 1"
-
-        g_CRC = gf2_poly(p_CRC)
-
-    end
-
-    s = 1
-    for r = 1:C
-        for k = 1 : (K_prime - L_2)
-            c[k,r] = b[s]
-            s += 1
-        end
-        if C > 1
-            _, p = divide_poly(c[1:K_prime,r],g_CRC)
-            for k = (K_prime - L_2 + 1) : K_prime
-                c[k,r] = p[k + L_2 - K_prime]
-            end
-        end
-        # for k = (K_prime + 1) : K #(filler bits)
-        #     c[k,r] = nothing
-        # end        
-    end
+    c = code_block_segmentation(K,C,K_prime,L_2,b)    
 
     ### 3) Channel coding (TS38212 Clauses 7.2.4, 6.2.4 and 5.3.2)
 
@@ -157,33 +140,10 @@ function
     end
     display("N = $N")
 
-    d = Matrix{Union{Bool,Nothing}}(undef,N,C)
-
-    for r = 1:C
-        for k = 2*Zc +1 : K_prime
-            d[k-2*Zc,r] = c[k,r]
-        end
-        for k = K_prime + 1 : K #(filler bits)
-            d[k-2*Zc,r] = nothing
-        end
-    end
+    d, H = channel_coding(N,C,Zc,K_prime,K,bg,iLS,c)
 
     # d[1:(K_prime-2*Zc),:] == c[(2*Zc+1):K_prime,:] #(payload + CRC)
     # d[(K_prime-2*Zc+1):(K-2*Zc),:] == c[(K_prime+1):K,:] #(filler bits)
-
-    H,E_H = make_parity_check_matrix(bg,Zc,iLS)
-
-    for r = 1:C
-        w = parity_bits(E_H,c[:,r],Zc,bg)
-        for k = (K + 1) : N + 2*Zc
-            d[k - 2*Zc,r] = w[k - K]
-        end
-        if !iszero(gf2_mat_mult(H,[c[1:K,r]; w]))
-            throw(error(
-                    lazy"""Wrong encoding"."""
-                ))
-        end
-    end
 
     ### 4) Rate Matching (TS38212 Clauses 7.2.5, 6.2.5 and 5.4.2)
 
@@ -209,25 +169,7 @@ function
 
     g = code_concatenation(G,E_r,f,C)
 
-    # x = c[1:2*Zc,1]
-    # x = [x;g[1:K_prime-2*Zc]]
-    # x = [x; zeros(Bool,K-K_prime)]
-    # x = [x;g[K_prime-2*Zc+1:end]]
-
-    # Nx = length(x)
-    # # Mx = Int(Nx - length(g)*R)
-    # Mx = Nx - K
-    # iszero(gf2_mat_mult(H[1:Mx,1:Nx],x))
-
-    # x = c[1:2*Zc,1]
-    # x = [x;g]
-    # Nx = length(x)
-    # Mx = Nx - K
-    # Hx = H[1:Mx,1:K_prime]
-    # Hx = [Hx H[1:Mx,K+1:length(g)+(2*Zc+(K-K_prime))]]
-    # iszero(gf2_mat_mult(Hx,x))
-
-    nr_ldpc = NR_LDPC(E_r,C,N_cb,N,k0,K,K_prime,Zc)
+    # nr_ldpc = NR_LDPC(E_r,C,N_cb,N,k0,K,K_prime,Zc)
 
     # test inv functions
 
@@ -245,9 +187,13 @@ function
 
     r = E_r[1] + K - K_prime
 
-    display("d: $(d_prime[1:r,1] == d[1:r,1])")
+    display("d: $(sum(d_prime[1:r,1] .=== d[1:r,1]) == r)")
 
-    return H, g, nr_ldpc
+    # P = N - (L + K - K_prime)- 2*Zc
+    # H = H[1:M-P,1:N-P]
+    # H = [H[:,1:K_prime] H[:,K+1:end]]
+
+    return H, g, Zc, K_prime
 
 end
 
