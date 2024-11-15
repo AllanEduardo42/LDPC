@@ -15,7 +15,6 @@ include("RBP.jl")
 function 
     BP!(
         supermode::String,
-        mode::String,
         stop::Bool,
         test::Bool,
         maxiter::Integer,

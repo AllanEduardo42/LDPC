@@ -79,7 +79,7 @@ function divide_poly(
     q = zeros(Bool,L)
     # q(x) = q[1]*x^(L-1) + q[2]*x^(L-2) + ... + q[L-2]*x^2 + q[L-1]*x + q[L]
     a = copy(p)
-    for i = 1:L
+    @inbounds for i = 1:L
         if a[i]
             q[i] = true
             for j = 1:M

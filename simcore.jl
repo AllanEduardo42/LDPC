@@ -15,7 +15,6 @@ function
         snr::Real,
         H::BitMatrix,
         Zc::Integer,
-        K_prime::Integer,
         mode::String,
         supermode::String,
         trials::Integer,
@@ -33,13 +32,6 @@ function
     # transform snr in standard deviations
     variance = 1 ./ (exp10.(snr/10))
     stdev = sqrt.(variance)
-
-    # BPKS
-    if Zc > 0
-        codeword = [message[1:2*Zc]; codeword]
-        N = length(codeword)
-
-    end
     
     u = Float64.(2*codeword .- 1)
     # list of checks and variables nodes
@@ -60,22 +52,21 @@ function
     bitvector = Vector{Bool}(undef,N)
 
     # syndrome
-    syndrome = Vector{Bool}(undef,N)
+    syndrome = Vector{Bool}(undef,M)
 
     # prior llr (if mode == "MKAY" just the prior probabilities)
     Lf = (mode != "MKAY") ? zeros(N) : zeros(N,2)
 
     # noise
-    noise = Vector{Float64}(undef,N)
+    L = length(codeword)
+    noise = Vector{Float64}(undef,L)
 
     # received signal
-    signal = zeros(N)
+    signal = zeros(L)
     # NmL = N - L
-    # if NmL > 0
-    #     Lf[1:2*Zc] .= -2*eps()/variance
-    #     Lf[K_prime+1:K] -2*eps()/variance
-    #     Lf[(L+2*Zc+1):N] .= -2*eps()/variance
-    # end
+    if Zc > 0
+        Lf[1:2*Zc] .= -2*eps()/variance
+    end
 
     # bit-error
     biterror = Vector{Bool}(undef,N) 
@@ -143,20 +134,14 @@ function
 
     rng_sample = (mode == "Random-RBP") ? Xoshiro(rng_seed_sample) : nothing  
     
-    # if NmL > 0
-    #     codeword = [message[1:N-L]; codeword]
-    # end
+    if Zc > 0
+        codeword = [message[1:N-L]; codeword]
+    end
 
     for j in 1:trials
 
         # received signal for the next realization (j+1)
         received_signal!(signal,noise,stdev,u,rng_noise)
-
-        if Zc > 0
-            signal[1:2*Zc] .= eps()
-            # signal[(K_prime+1):K] .= eps()
-            # signal[(L+2*Zc+1):N] .= eps()
-        end
 
         bitvector .= true
 
@@ -168,7 +153,7 @@ function
         Lr *= 0.0
 
         # init the llr priors
-        calc_Lf!(Lf,signal,variance)
+        calc_Lf!(view(Lf,2*Zc+1:N),signal,variance)
         if mode == "TABL"
             # scale for table
             Lf .*= SIZE_per_RANGE
@@ -184,7 +169,6 @@ function
             
         # SPA routine
         BP!(supermode,
-            mode,
             stop,
             test,
             maxiter,

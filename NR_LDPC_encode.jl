@@ -35,7 +35,7 @@ function
     )
 
     ### for testing
-    # a = rand(Bool,4000)
+    # a = rand(Bool,1000)
     # a[1] = true
     # R = 1//5
     # rv = 0
@@ -190,11 +190,11 @@ function
     display("d: $(sum(d_prime[1:E_r[1],1] .=== d[1:E_r[1],1]) === E_r[1])")
 
 
-    P = N - G - K + K_prime
+    P = N - G÷C - K + K_prime
     H = H[1:end-P,1:end-P]
     H = [H[:,1:K_prime] H[:,K+1:end]]
 
-    return H, g, Zc, K_prime
+    return H, g, Zc
 
 end
 

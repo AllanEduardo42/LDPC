@@ -40,14 +40,14 @@ SEED_MESSA::Int = 9999
 
 ###################### NUMBER OF TRIALS AND MULTITHREADING #####################
 
-TRIALS::Int = 10240
+TRIALS::Int = 1024
 NTHREADS::Int = min(Threads.nthreads(),TRIALS)
 
 ######################## MAXIMUM NUMBER OF BP ITERATIONS #######################
 
-MAX::Int = 30
+MAX::Int = 4
 MAXRBP::Int = 5
-STOP::Bool = false # stop simulation at zero syndrome (if true, BER curves are 
+STOP::Bool = true # stop simulation at zero syndrome (if true, BER curves are 
 # not printed)
 
 ################################ BP MODE FLAGS ################################
@@ -124,18 +124,18 @@ elseif CHECK == 2
     M::Int = size(H,1)
     girth = "?"
 elseif CHECK == 3
-    # Message Length
+    # Msg Length
     B::Int = 256
-    Message = rand(Xoshiro(SEED_MESSA),Bool,B)
+    Msg = rand(Xoshiro(SEED_MESSA),Bool,B)
     # NR base matrix
     rv = 0
-    R = 1//2
-    H, Codeword, Zc, K_prime = NR_LDPC_encode(Message,R,rv)
+    R = 1//5
+    H, Cword, Zc = NR_LDPC_encode(Msg,R,rv)
     M::Int, N::Int = size(H)
-    # Message = rand(Xoshiro(SEED_MESSA),Bool,N-M)
+    # Msg = rand(Xoshiro(SEED_MESSA),Bool,N-M)
     # G = gf2_nullspace(H)
     # gf2_reduce!(G)
-    # Codeword = gf2_mat_mult(Matrix(G), Message)
+    # Cword = gf2_mat_mult(Matrix(G), Msg)
     girth = "?"
 else
     throw(ArgumentError(
@@ -151,8 +151,8 @@ if CHECK ≠ 3
     G = gf2_nullspace(H)
     gf2_reduce!(G)
 
-    Message = rand(Xoshiro(SEED_MESSA),Bool,N-M)
-    Codeword = gf2_mat_mult(Matrix(G), Message)
+    Msg = rand(Xoshiro(SEED_MESSA),Bool,N-M)
+    Cword = gf2_mat_mult(Matrix(G), Msg)
 
 end
 
@@ -167,18 +167,18 @@ display(sparse(H))
 println()
 println("Graph girth = ", girth)
 println()
-println("Message (L = $(length(Message))):")
-for i in eachindex(Message)
-    print(Int(Message[i]))
+println("Msg (L = $(length(Msg))):")
+for i in eachindex(Msg)
+    print(Int(Msg[i]))
     if i%80 == 0
         println()
     end
 end
 println()
 println()
-println("Codeword (L = $(length(Codeword))):")
-for i in eachindex(Codeword)
-    print(Int(Codeword[i]))
+println("Cword (L = $(length(Cword))):")
+for i in eachindex(Cword)
+    print(Int(Cword[i]))
     if i%80 == 0
         println()
     end
@@ -202,12 +202,11 @@ p = (TRIALS ≤ 2) ? PRINTTEST : false
 for mode in modes
     if mode[1]
         LR[mode[2]] , LQ[mode[2]] = performance_sim(
-            Message,
-            Codeword,
+            Msg,
+            Cword,
             SNRTEST,
             H,
             Zc,
-            K_prime,
             mode[2],
             min(TRIALS,2),
             mode[3],
@@ -225,12 +224,11 @@ if TRIALS > 2
     for mode in modes
         if mode[1]
             @time FER[mode[2]], BER[mode[2]] = performance_sim(
-                Message,
-                Codeword,
+                Msg,
+                Cword,
                 SNR,
                 H,
                 Zc,
-                K_prime,
                 mode[2],
                 TRIALS,
                 mode[3],
