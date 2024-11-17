@@ -40,14 +40,14 @@ SEED_MESSA::Int = 9999
 
 ###################### NUMBER OF TRIALS AND MULTITHREADING #####################
 
-TRIALS::Int = 1024
+TRIALS::Int = 32
 NTHREADS::Int = min(Threads.nthreads(),TRIALS)
 
 ######################## MAXIMUM NUMBER OF BP ITERATIONS #######################
 
-MAX::Int = 4
+MAX::Int = 30
 MAXRBP::Int = 5
-STOP::Bool = true # stop simulation at zero syndrome (if true, BER curves are 
+STOP::Bool = false # stop simulation at zero syndrome (if true, BER curves are 
 # not printed)
 
 ################################ BP MODE FLAGS ################################
@@ -102,8 +102,8 @@ SAMPLESIZE::Int = 51
 LISTSIZE::Int = 1
 
 ##################################### SNR ######################################
-SNRTEST = [5]
-SNR = collect(1:1:4)
+SNRTEST = [4]
+SNR = collect(1:8)
 
 ############################# PARITY-CHECK MATRIX #############################
 
@@ -125,17 +125,13 @@ elseif CHECK == 2
     girth = "?"
 elseif CHECK == 3
     # Msg Length
-    B::Int = 256
+    B::Int = 4000
     Msg = rand(Xoshiro(SEED_MESSA),Bool,B)
     # NR base matrix
     rv = 0
-    R = 1//5
+    R = 1//2
     H, Cword, Zc = NR_LDPC_encode(Msg,R,rv)
     M::Int, N::Int = size(H)
-    # Msg = rand(Xoshiro(SEED_MESSA),Bool,N-M)
-    # G = gf2_nullspace(H)
-    # gf2_reduce!(G)
-    # Cword = gf2_mat_mult(Matrix(G), Msg)
     girth = "?"
 else
     throw(ArgumentError(

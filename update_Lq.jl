@@ -48,6 +48,7 @@ function
     )
 
     Ld = calc_Ld(n,vn2cn,Lf,Lr)
+    # for m in vn2cn[n]
     @fastmath @inbounds for m in vn2cn[n]
         Lq[n,m] = Ld - Lr[m,n]
     end
@@ -63,6 +64,7 @@ function
         Lr::Matrix{<:AbstractFloat}
     )
     Ld = Lf
+    # for m in vn2cn[n]
     @fastmath @inbounds for m in vn2cn[n]
         Ld += Lr[m,n]
     end

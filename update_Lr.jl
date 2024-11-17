@@ -44,10 +44,17 @@ function
 
     pLr = 1.0
     @fastmath @inbounds for n in cn2vn[m]
-        Lrn[n] = tanh(0.5*Lq[n,m])
+    # for n in cn2vn[m]
+        x = tanh(0.5*Lq[n,m])
+        if x == 0.0
+            Lrn[n] = 1.0
+        else
+            Lrn[n] = x
+        end
         pLr *= Lrn[n]
     end
     @fastmath @inbounds for n in cn2vn[m]
+    # for n in cn2vn[m]
         x = pLr/Lrn[n]
         if abs(x) < 1 # controls divergent values of Lr
             Lr[m,n] = 2*atanh(x)

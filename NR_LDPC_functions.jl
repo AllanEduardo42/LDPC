@@ -91,13 +91,14 @@ function
     )
 
     d = zeros(Union{Bool,Missing},N,C)
+    cw = zeros(Bool,N+2*Zc,C)
+    cw[1:K_prime,:] = c[1:K_prime,:]
 
     for r = 1:C
         for k = 2*Zc +1 : K_prime
             d[k-2*Zc,r] = c[k,r]
         end
         for k = K_prime + 1 : K #(filler bits)
-            c[k,r] = false
             d[k-2*Zc,r] = missing
         end
     end
@@ -105,18 +106,19 @@ function
     H, E_H = make_parity_check_matrix(Zc,iLS,bg)
 
     for r = 1:C
-        w = parity_bits(c[:,r],Zc,E_H,bg)
-        for k = (K + 1) : N + 2*Zc
-            d[k - 2*Zc,r] = w[k - K]
-        end
-        if !iszero(gf2_mat_mult(H,[Bool.(c[1:K,r]); w]))
+        w = parity_bits(cw[1:K,r],bg,Zc,K,E_H)
+        cw[K+1:end,r] = w
+        if !iszero(H*cw)
             throw(error(
                     lazy"""Wrong encoding"."""
                 ))
         end
+        for k = (K + 1) : N + 2*Zc
+            d[k - 2*Zc,r] = w[k - K]
+        end
     end
 
-    return d, H
+    return d, H, cw
 
 end
 
@@ -363,74 +365,103 @@ function
 end
 
 function 
-    parity_bits(
-        c::Vector{Union{Bool,Missing}},
+    parity_bits_G(
+        c::Vector{Bool},
         Zc::Integer,
-        E_H::Matrix{<:Integer},
-        bg::String
+        K::Integer,
+        H::BitMatrix,
     )
 
-    if bg == "1"
-        I = 22
-        J = 68
-        M = 46
-    else
-        I = 10
-        J = 52
-        M = 42
-    end
+    G = gf2_nullspace(H[1:(4*Zc),1:(K+4*Zc)])
+    gf2_reduce!(G)
 
-    E_A = E_H[1:4,1:I]
-    E_C = E_H[5:end,1:I+4]
+    p = G[K+1:end,:]*c
 
-    a1 = circ_mult(E_A[1,:],I,Zc,c)
-    a2 = circ_mult(E_A[2,:],I,Zc,c)
-    a3 = circ_mult(E_A[3,:],I,Zc,c)
-    a4 = circ_mult(E_A[4,:],I,Zc,c)
-
-    p1 = a1 .⊻ a2 .⊻ a3 .⊻ a4
-
-    if bg == "1"
-        zp1 = circshift(p1,-1)
-        p2 = circ_mult(E_H[1,:],I,Zc,c) .⊻ zp1
-        p4 = circ_mult(E_H[4,:],I,Zc,c) .⊻ zp1
-        p3 = circ_mult(E_H[3,:],I,Zc,c) .⊻ p4
-        
-    else
-        p1 = circshift(p1,1)
-        p2 = circ_mult(E_H[1,:],I,Zc,c) .⊻ p1
-        p3 = circ_mult(E_H[2,:],I,Zc,c) .⊻ p2
-        p4 = circ_mult(E_H[4,:],I,Zc,c) .⊻ p1
-    end
-
-    p = [p1;p2;p3;p4]
-
-    c = [c;p] # K + 4*Zc
-
-    q = zeros(Bool,(J-I-4)*Zc) # N - K - 4*Zc
-
-    for m = 1:M-4
-
-        q[1+Zc*(m-1):Zc*m] .= circ_mult(E_C[m,:],I+4,Zc,c)
-
-    end
+    q = H[4*Zc+1:end,1:K+4*Zc]*[c;p]
 
     return [p;q]
 
 end
 
+function 
+    parity_bits(
+        c::Vector{Bool},
+        bg::String,
+        Zc::Integer,
+        K::Integer,
+        E_H::Matrix{<:Integer}
+    )
+
+    if bg == "1"
+        J = 22
+        N = 68
+        M = 46
+    else
+        J = 10
+        N = 52
+        M = 42
+    end
+
+    cw = zeros(Bool,Zc,N)
+    cw[1:K] = c
+
+    a = zeros(Bool,Zc,4)
+    Sc = zeros(Bool,Zc)
+
+    for i = 1:4
+        for j = 1:J            
+            if E_H[i,j] ≠ -1
+                a[:,i] .⊻= circshift(cw[:,j],-E_H[i,j])
+            end
+        end
+        Sc .⊻= a[:,i]
+    end
+
+    for i = 1:4
+        if E_H[i,J+1] ≠ -1
+            cw[:,J+1] .⊻= circshift(Sc,E_H[i,J+1])
+        end
+    end
+    
+    z = zeros(Bool,Zc,4)
+    for i=1:4
+        if E_H[i,J+1] ≠ -1
+            z[:,i] = circshift(cw[:,J+1],-E_H[i,J+1])
+        end
+    end
+
+    for i = 4:-1:2
+        cw[:,J+i] = a[:,i] .⊻ z[:,i] .⊻ cw[:,J+i+1]
+    end
+
+    for i=5:M
+        for j=1:J+4
+            if E_H[i,j] ≠ -1
+                cw[:,J+i] .⊻= circshift(cw[:,j],-E_H[i,j])
+            end
+        end
+    end    
+
+    return cw[K+1:end]
+
+end
+
 function circ_mult(
-    e_A::AbstractArray{<:Integer},
-    I::Integer,
-    Zc::Integer,
-    c::Vector{Union{Bool,Missing}})
+        e_H::AbstractArray{<:Integer},
+        Zc::Integer,
+        u::Vector{Bool}
+    )
 
-    q = zeros(Bool,Zc)
+    L = size(e_H,1)
 
-    for i = 1:I
-        if e_A[i] != -1
-            range = (1 + (i-1)*Zc) : (i*Zc)
-            q .⊻= circshift(c[range],-e_A[i])
+    q = zeros(Bool,Zc,L)
+
+    for i in axes(e_H,1)
+        for j in axes(e_H,2)
+            if e_H[i,j] != -1
+                range = (1 + (j-1)*Zc) : (j*Zc)
+                q[:,i] .⊻= circshift(u[range],-e_H[i,j])
+            end
         end
     end
 

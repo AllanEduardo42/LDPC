@@ -11,17 +11,6 @@ include("NR_LDPC_functions.jl")
 
 const R_LBRM = 2//3
 
-# mutable struct NR_LDPC
-#     E_r::Vector{Int}
-#     C::Int
-#     N_cb::Int
-#     N::Int
-#     k0::Int
-#     K::Int
-#     K_prime::Int
-#     Zc::Int
-# end
-
 function
     NR_LDPC_encode(
         a::Vector{Bool},
@@ -35,9 +24,8 @@ function
     )
 
     ### for testing
-    # a = rand(Bool,1000)
-    # a[1] = true
-    # R = 1//5
+    # a = rand(Bool,4000)
+    # R = 10//11
     # rv = 0
     # I_LBRM = 0
     # TBS_LBRM = Inf
@@ -62,6 +50,8 @@ function
     g_CRC = gf2_poly(p_CRC)
 
     B = A + L_1
+
+    display("B = $B")
 
     b = zeros(Bool,B)
 
@@ -124,10 +114,9 @@ function
     display("L_2 = $L_2")
     display("C = $C")
     display("K_prime = $K_prime")
-    display("Kb = $Kb")
+    display("K = $K")
     display("Zc = $Zc")
-    display("iLS = $iLS")    
-    display("K = $K")    
+    display("iLS = $iLS")
 
     c = code_block_segmentation(b,C,K_prime,K,L_2)
 
@@ -140,7 +129,7 @@ function
     end
     display("N = $N")
 
-    d, H = channel_coding(c,C,K_prime,K,Zc,iLS,N,bg)
+    d, H, cw = channel_coding(c,C,K_prime,K,Zc,iLS,N,bg)
 
     # d[1:(K_prime-2*Zc),:] == c[(2*Zc+1):K_prime,:] #(payload + CRC)
     # d[(K_prime-2*Zc+1):(K-2*Zc),:] == c[(K_prime+1):K,:] #(filler bits)
@@ -159,6 +148,35 @@ function
 
     display("G = $G")
 
+    P = N - G÷C - K + K_prime
+
+    display("P = $P")
+
+    if P > 42*Zc && bg == "1"
+        G = C*(N - 42*Zc - K + K_prime)
+        display("new G = $G")
+        P = N - G÷C - K + K_prime
+        display("new P = $P")
+        R = A//G
+        display("new R = $R")
+    elseif P > 38*Zc && bg == "2"
+        G = C*(N - 38*Zc - K + K_prime)
+        display("new G = $G")
+        P = N - G÷C - K + K_prime
+        display("new P = $P")
+        R = A//G
+        display("new R = $R")
+    end
+
+    if P < 0
+        G = C*(N -  K + K_prime)
+        display("new G = $G")
+        P = N - G÷C - K + K_prime
+        display("new P = $P")
+        R = A//G
+        display("new R = $R")
+    end
+
     E_r = get_Er(C,G,CBGTI,N_L,Q_m)
 
     k0 = get_k0(rv,Zc,N_cb,bg)
@@ -171,32 +189,28 @@ function
 
     g = code_concatenation(f,C,G,E_r)
 
-    # nr_ldpc = NR_LDPC(E_r,C,N_cb,N,k0,K,K_prime,Zc)
-
     # test inv functions
 
-    f_prime = inv_code_concatenation(g,C,E_r)
+    # f_prime = inv_code_concatenation(g,C,E_r)
 
-    display("f: $(f_prime == f)")
+    # display("f: $(f_prime == f)")
 
-    e_prime = inv_bit_interleaving(f_prime,C,E_r,Q_m)
+    # e_prime = inv_bit_interleaving(f_prime,C,E_r,Q_m)
 
-    display("e: $(e_prime == e)")
+    # display("e: $(e_prime == e)")
 
-    range = (K_prime-2*Zc+1):(K-2*Zc)
+    # range = (K_prime-2*Zc+1):(K-2*Zc)
 
-    d_prime = inv_rate_matching(e_prime,C,N,N_cb,E_r,k0,range)
+    # d_prime = inv_rate_matching(e_prime,C,N,N_cb,E_r,k0,range)
 
-    display("d: $(sum(d_prime[1:E_r[1],1] .=== d[1:E_r[1],1]) === E_r[1])")
+    # display("d: $(sum(d_prime[1:E_r[1],1] .=== d[1:E_r[1],1]) === E_r[1])")
 
-
-    P = N - G÷C - K + K_prime
     H = H[1:end-P,1:end-P]
     H = [H[:,1:K_prime] H[:,K+1:end]]
+
+    display(iszero(H*[b[1:2*Zc];g]))
 
     return H, g, Zc
 
 end
-
-
 

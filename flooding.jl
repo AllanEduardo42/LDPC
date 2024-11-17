@@ -20,16 +20,16 @@ function
     )
 
     # Lr update
-    for m in eachindex(cn2vn)
+    @inbounds for m in eachindex(cn2vn)
 
         update_Lr!(Lr,Lq,m,cn2vn,Lrn,signs,phi)
 
     end
 
     # Lq update
-    for n in eachindex(vn2cn)
+    @inbounds for n in eachindex(vn2cn)
 
-        @inbounds _, bitvector[n] = update_Lq!(Lq,Lr,Lf[n],n,vn2cn,Lrn)
+        _, bitvector[n] = update_Lq!(Lq,Lr,Lf[n],n,vn2cn,Lrn)
         
     end
 end
