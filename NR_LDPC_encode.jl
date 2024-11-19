@@ -14,7 +14,7 @@ const R_LBRM = 2//3
 function
     NR_LDPC_encode(
         a::Vector{Bool},
-        R::Rational,
+        R::Float64,
         rv::Integer;
         I_LBRM = 0,
         TBS_LBRM = Inf,
@@ -24,8 +24,8 @@ function
     )
 
     ### for testing
-    # a = rand(Bool,4000)
-    # R = 10//11
+    # a = rand(Bool,2064)
+    # R = 1/2
     # rv = 0
     # I_LBRM = 0
     # TBS_LBRM = Inf
@@ -129,6 +129,42 @@ function
     end
     display("N = $N")
 
+    if R == 0
+        P = -1
+    elseif R == 1
+        P = 100*Zc
+    else
+        G = round(Int,(A/R)/Q_m)*Q_m
+        display("G = $G")
+        P = N - G÷C - K + K_prime
+        display("P = $P")
+    end
+
+    if P > 42*Zc && bg == "1"
+        G = C*(N - 42*Zc - K + K_prime)
+        display("new G = $G")
+        P = N - G÷C - K + K_prime
+        display("new P = $P")
+        R = A/G
+        display("new R = $(round(R*1000)/1000)")
+    elseif P > 38*Zc && bg == "2"
+        G = C*(N - 38*Zc - K + K_prime)
+        display("new G = $G")
+        P = N - G÷C - K + K_prime
+        display("new P = $P")
+        R = A/G
+        display("new R = $(round(R*1000)/1000)")
+    end
+
+    if P < 0
+        G = C*(N -  K + K_prime)
+        display("new G = $G")
+        P = N - G÷C - K + K_prime
+        display("new P = $P")
+        R = A/G
+        display("new R = $(round(R*1000)/1000)")
+    end
+
     d, H, cw = channel_coding(c,C,K_prime,K,Zc,iLS,N,bg)
 
     # d[1:(K_prime-2*Zc),:] == c[(2*Zc+1):K_prime,:] #(payload + CRC)
@@ -142,39 +178,6 @@ function
         N_cb = N
     else
         N_cb = min(N, N_ref)
-    end
-
-    G = round(Int,(A/R)/Q_m)*Q_m
-
-    display("G = $G")
-
-    P = N - G÷C - K + K_prime
-
-    display("P = $P")
-
-    if P > 42*Zc && bg == "1"
-        G = C*(N - 42*Zc - K + K_prime)
-        display("new G = $G")
-        P = N - G÷C - K + K_prime
-        display("new P = $P")
-        R = A//G
-        display("new R = $R")
-    elseif P > 38*Zc && bg == "2"
-        G = C*(N - 38*Zc - K + K_prime)
-        display("new G = $G")
-        P = N - G÷C - K + K_prime
-        display("new P = $P")
-        R = A//G
-        display("new R = $R")
-    end
-
-    if P < 0
-        G = C*(N -  K + K_prime)
-        display("new G = $G")
-        P = N - G÷C - K + K_prime
-        display("new P = $P")
-        R = A//G
-        display("new R = $R")
     end
 
     E_r = get_Er(C,G,CBGTI,N_L,Q_m)
@@ -201,14 +204,19 @@ function
 
     # range = (K_prime-2*Zc+1):(K-2*Zc)
 
-    # d_prime = inv_rate_matching(e_prime,C,N,N_cb,E_r,k0,range)
+    # d_prime, cw_prime = inv_rate_matching(e_prime,C,Zc,N,N_cb,E_r,k0,range)
 
-    # display("d: $(sum(d_prime[1:E_r[1],1] .=== d[1:E_r[1],1]) === E_r[1])")
+    # display("d: $(sum(d_prime[k0+1:k0+E_r[1],1] .=== d[k0+1:k0+E_r[1],1]) === E_r[1])")
+    # display("d: $(d_prime[k0+1:k0+E_r[1],1] == d[k0+1:k0+E_r[1],1])")
 
     H = H[1:end-P,1:end-P]
     H = [H[:,1:K_prime] H[:,K+1:end]]
 
-    display(iszero(H*[b[1:2*Zc];g]))
+    if !iszero(H*[b[1:2*Zc];g])
+        throw(error(
+                    lazy"""Wrong encoding"."""
+                ))
+    end
 
     return H, g, Zc
 

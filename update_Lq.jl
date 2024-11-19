@@ -86,10 +86,10 @@ function
     )
     m = 0
     @inbounds for outer m in vn2cn[n]
-        @inbounds Lq[n,m] = Lf[n]
-        @inbounds for m2 in vn2cn[n]
+        Lq[n,m] = Lf[n]
+        for m2 in vn2cn[n]
             if m2 ≠ m
-                @inbounds Lq[n,m] += Lr[m2,n]
+                Lq[n,m] += Lr[m2,n]
             end
         end
     end

@@ -7,16 +7,10 @@ include("simcore.jl")
 
 function 
     performance_sim(
-        message::Vector{Bool},
-        codeword::Vector{Bool},
         snr::Vector{<:Real},
-        H::BitMatrix,
-        Zc::Integer,
         mode::String,
         trials::Integer,
-        maxiter::Integer,
-        stop::Bool,
-        rgn_noise_seeds::Vector{<:Integer};
+        maxiter::Integer;
         rgn_samples_seeds=ones(Int,NTHREADS),
         floomode="TANH",
         printtest=false    
@@ -99,7 +93,7 @@ function
 
         println("Maximum number of iterations: $maxiter")
         println("Simulated for SNR (dB): $snr")
-        println("Stop at zero syndrome ? $stop")
+        println("Stop at zero syndrome ? $STOP")
         (supermode == "RBP") ? println("Decaying factor: $rbpfactor") : nothing
         (mode == "Random-RBP") ? println("Sample size: $SAMPLESIZE") : nothing 
         println()
@@ -111,17 +105,17 @@ function
 
     if !test
         K = length(SNR)
-        if MULTI
+        if MTHR
             decoded, ber = zeros(maxiter,K,NTHREADS), zeros(maxiter,K,NTHREADS)
         else
             decoded, ber = zeros(maxiter,K), zeros(maxiter,K)
         end
         for k in 1:K
-            if MULTI
+            if MTHR
                 Threads.@threads for i in 1:NTHREADS
                     decoded[:,k,i], ber[:,k,i] = performance_simcore(
-                                            message,
-                                            codeword,
+                                            Msg,
+                                            Cword,
                                             snr[k],
                                             H,
                                             Zc,
@@ -129,17 +123,18 @@ function
                                             supermode,
                                             trials_multh,
                                             maxiter,
-                                            stop,
+                                            STOP,
+                                            FAST,
                                             rbpfactor,
-                                            rgn_noise_seeds[i],
+                                            Rgn_noise_seeds[i],
                                             rgn_samples_seeds[i],
                                             test,
                                             printtest)
                 end
             else
                 decoded[:,k], ber[:,k] = performance_simcore(
-                                            message,
-                                            codeword,
+                                            Msg,
+                                            Cword,
                                             snr[k],
                                             H,
                                             Zc,
@@ -147,16 +142,17 @@ function
                                             supermode,
                                             trials_multh,
                                             maxiter,
-                                            stop,
+                                            STOP,
+                                            FAST,
                                             rbpfactor,
-                                            rgn_noise_seeds[1],
+                                            Rgn_noise_seeds[1],
                                             rgn_samples_seeds[1],
                                             test,
                                             printtest)
             end
         end
 
-        if MULTI
+        if MTHR
             FER = zeros(maxiter,K)
             BER = zeros(maxiter,K)
             FER .= 1 .- sum(decoded,dims=3)/trials
@@ -171,8 +167,8 @@ function
     else # IF TESTING
 
         Lr, Lq = performance_simcore(
-                                    message,
-                                    codeword,
+                                    Msg,
+                                    Cword,
                                     snr[1],
                                     H,
                                     Zc,
@@ -180,9 +176,10 @@ function
                                     supermode,
                                     trials,
                                     maxiter,
-                                    stop,
+                                    STOP,
+                                    FAST,
                                     rbpfactor,
-                                    rgn_noise_seeds[1],
+                                    Rgn_noise_seeds[1],
                                     rgn_samples_seeds[1],
                                     test,
                                     # testsignal,

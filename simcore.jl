@@ -10,8 +10,8 @@ include("calc_Lf.jl")
 
 function
     performance_simcore(
-        message::Vector{Bool},
-        codeword::Vector{Bool},
+        msg::Vector{Bool},
+        cword::Vector{Bool},
         snr::Real,
         H::BitMatrix,
         Zc::Integer,
@@ -20,6 +20,7 @@ function
         trials::Integer,
         maxiter::Integer,
         stop::Bool,
+        fast::Bool,
         rbpfactor::Union{AbstractFloat,Nothing},
         rgn_seed_noise::Integer,
         rng_seed_sample::Integer,
@@ -33,7 +34,7 @@ function
     variance = 1 ./ (exp10.(snr/10))
     stdev = sqrt.(variance)
     
-    u = Float64.(2*codeword .- 1)
+    u = Float64.(2*cword .- 1)
     # list of checks and variables nodes
     vn2cn  = make_vn2cn_list(H)
     cn2vn  = make_cn2vn_list(H)
@@ -58,15 +59,15 @@ function
     Lf = (mode != "MKAY") ? zeros(N) : zeros(N,2)
 
     # noise
-    L = length(codeword)
+    L = length(cword)
     noise = Vector{Float64}(undef,L)
 
     # received signal
     signal = zeros(L)
     # NmL = N - L
-    if Zc > 0
-        Lf[1:2*Zc] .= -2*eps()/variance
-    end
+    # if Zc > 0 && fast
+    #     Lf[1:2*Zc] .= -2*eps()/variance
+    # end
 
     # bit-error
     biterror = Vector{Bool}(undef,N) 
@@ -81,7 +82,7 @@ function
     Ms = (supermode == "RBP") ? H*0.0 : nothing
 
     # Set variables Lrn and signs depending on the mode (also used for dispatch)
-    if (mode == "TANH" && FAST) || mode == "LBP" || mode == "iLBP"
+    if (mode == "TANH" && fast) || mode == "LBP" || mode == "iLBP"
         Lrn = zeros(N)
         signs = nothing
     elseif mode == "ALTN" || mode == "TABL"
@@ -135,7 +136,7 @@ function
     rng_sample = (mode == "Random-RBP") ? Xoshiro(rng_seed_sample) : nothing  
     
     if Zc > 0
-        codeword = [message[1:N-L]; codeword]
+        cword = [msg[1:N-L]; cword]
     end
 
     for j in 1:trials
@@ -149,8 +150,13 @@ function
 
         decoded .= false
         
-        # reinitialize matrix Lr
-        Lr *= 0.0
+        # reinitialize matrices Lr and Lq
+        for m in 1:M
+            for n in cn2vn[m]
+                Lr[m,n] *= 0.0
+                Lq[n,m] *= 0.0
+            end
+        end
 
         # init the llr priors
         calc_Lf!(view(Lf,2*Zc+1:N),signal,variance)
@@ -158,8 +164,6 @@ function
             # scale for table
             Lf .*= SIZE_per_RANGE
         end
-        # reinitialize matrix Lq
-        Lq *= 0.0
         init_Lq!(Lq,Lf,vn2cn)
 
         if supermode == "RBP"
@@ -174,7 +178,7 @@ function
             maxiter,
             syndrome,
             bitvector,
-            codeword,
+            cword,
             biterror,
             ber,
             decoded,

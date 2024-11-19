@@ -108,7 +108,7 @@ function
     for r = 1:C
         w = parity_bits(cw[1:K,r],bg,Zc,K,E_H)
         cw[K+1:end,r] = w
-        if !iszero(H*cw)
+        if !iszero(H*cw[:,r])
             throw(error(
                     lazy"""Wrong encoding"."""
                 ))
@@ -117,7 +117,6 @@ function
             d[k - 2*Zc,r] = w[k - K]
         end
     end
-
     return d, H, cw
 
 end
@@ -131,6 +130,7 @@ function
         E_r::Vector{<:Integer},
         k0::Integer
     )
+
     e = zeros(Bool,maximum(E_r),C)
     
     for r = 1:C
@@ -144,7 +144,7 @@ function
             end
             j += 1
         end
-    end    
+    end
 
     return e
 end
@@ -153,6 +153,7 @@ function
     inv_rate_matching(
         e::Matrix{Bool},
         C::Integer,
+        Zc::Integer,
         N::Integer,
         N_cb::Integer,
         E_r::Vector{<:Integer},        
@@ -165,6 +166,8 @@ function
     d = zeros(Union{Bool,Missing},N,C)
     d[range,:] .= missing
 
+    cw = zeros(Bool,N+2*Zc,C)
+
     for r = 1:C        
         j = 0
         k = 1
@@ -172,6 +175,7 @@ function
             x = rem(k0+j,N_cb)+1
             if d[x,r] !== missing
                 d[x,r] = e[k,r]
+                cw[2*Zc + x,r] = e[k,r]
                 k += 1
             end
             j += 1
@@ -183,7 +187,7 @@ function
         # end
     end
 
-    return d
+    return d,cw
 end
 
 function 

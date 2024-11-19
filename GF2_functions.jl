@@ -190,6 +190,16 @@ function gf2_inverse(A::AbstractMatrix{Bool};ACCEF=false)
 
 end
 
+function gf2_row_echelon_form!(AA::AbstractMatrix{Bool})
+
+    M,N = size(AA)
+    AAt = zeros(Bool,N,M)
+    AAt .= AA'
+    gf2_column_echelon_form!(AAt,M)
+    AA .= AAt'
+
+end
+
 function gf2_column_echelon_form!(AA::AbstractMatrix{Bool})
 
     _,N = size(AA)
@@ -227,6 +237,8 @@ function gf2_column_echelon_form!(AA::AbstractMatrix{Bool},N::Integer)
     return full_rank_sub_matrix
 
 end
+
+
 
 function gf2_reduce!(AA::AbstractMatrix{Bool})
 
