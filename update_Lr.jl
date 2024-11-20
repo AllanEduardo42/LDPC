@@ -44,19 +44,19 @@ function
 
     pLr = 1.0
     countzeros = 0
-    nzero = 0
+    n0 = 0
     @fastmath @inbounds for n in cn2vn[m]
     # for n in cn2vn[m]
         x = tanh(0.5*Lq[n,m])
-        if x == 0.0 # all Lr[m,n] = 0 other than Lr[m,nzero]
+        if x == 0.0 # Lr[m,n] = 0 for n ≠ n0
             countzeros += 1
-            nzero = n
-            Lrn[n] = 1.0
-            if countzeros > 1 # absolutely all Lr[m,n] = 0
+            n0 = n
+            Lrn[n] = 1.0 # s.t. Lr[m,n0] = 2*atanh(pLr)
+            if countzeros > 1 # Lr[m,n] = 0 ∀n
                 break
             end
         else
-            Lrn[n] = x
+            Lrn[n] = x 
         end
         pLr *= Lrn[n]
     end
@@ -66,16 +66,18 @@ function
             x = pLr/Lrn[n]
             if abs(x) < 1 # controls divergent values of Lr
                 Lr[m,n] = 2*atanh(x)
+            elseif x > 0
+                Lr[m,n] = INFFLOAT
             else
-                Lr[m,n] = x*INFFLOAT
+                Lr[m,n] = NINFFLOAT
             end
         end
     else
         @fastmath @inbounds for n in cn2vn[m]
             Lr[m,n] = 0.0
         end
-        if countzeros == 1
-            Lr[m,nzero] = 2*atanh(pLr)
+        if countzeros == 1 # Lr[m,n] = 0 for n ≠ n0
+            @fastmath @inbounds Lr[m,n0] = 2*atanh(pLr)
         end
     end
 end

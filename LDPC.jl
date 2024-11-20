@@ -24,6 +24,7 @@ include("performance_sim.jl")
 
 const INF = typemax(Int64)
 const INFFLOAT = 1e2
+const NINFFLOAT = -INFFLOAT
 
 # Seeds
 SEED_NOISE::Int = 1428
@@ -37,28 +38,28 @@ MTHR::Bool = true
 SAVE::Bool = false
 PRIN::Bool = true
 PLOT::Bool = true
-STOP::Bool = false # stop simulation at zero syndrome (if true, BER curves are 
+STOP::Bool = true # stop simulation at zero syndrome (if true, BER curves are 
 # not printed)
 
 ################################## 5) NUMBERS ##################################
 
-TRIALS::Int = 1024
+TRIALS::Int = 10240
 MAX::Int = 10
 MAXRBP::Int = 10
 SNRTEST = [4]
-SNR = collect(1:4)
+SNR = collect(1:3)
 
 ################################## 6) BP MODE ##################################
 
 #Flooding
-FLOO::Bool = true
+FLOO::Bool = false
     # Flooding type: "MKAY", "TANH", "ALTN", "TABL", "MSUM"
     FLOOTYPE = "TANH"
     # fast flooding update when using tanh mode (default:true)    
     FAST::Bool = true 
 
 #LBP
-_LBP::Bool = true 
+_LBP::Bool = false 
 
 #instantaneos-LBP
 iLBP::Bool = false    
@@ -81,7 +82,7 @@ LRBP::Bool = true
     DECAYLRBP::Float64 = 0.5  
 
 #List-RBP
-LIST::Bool = false
+LIST::Bool = true
     # List-RBP decay constant
     DECAYLIST::Float64 = 0.5
     # List-RBP size

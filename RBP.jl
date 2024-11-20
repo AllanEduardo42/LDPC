@@ -33,9 +33,13 @@ function
 
     for e in 1:num_edges
 
-        if maxresidue == 0.0 # if RBP has converged
-            break
-        end      
+        # display("e = $e")
+        # display("maxresidue = $maxresidue")
+        # display("maxcoords = $maxcoords")
+
+        # if @fastmath maxresidue == 0.0 # if RBP has converged
+        #     break
+        # end
 
         _RBP_update_Lr!(maxcoords,Factors,rbpfactor,cn2vn,Lq,Lr)
 
@@ -90,10 +94,10 @@ function
     )
 
     @inbounds inlist[maxcoords[1],maxcoords[2]] = false
-    for i in 1:listsize   
-        @inbounds listres[i] = listres[i+1]
-        @inbounds listadd[1,i] = listadd[1,i+1]
-        @inbounds listadd[2,i] = listadd[2,i+1]
+    @inbounds for i in 1:listsize   
+        listres[i] = listres[i+1]
+        listadd[1,i] = listadd[1,i+1]
+        listadd[2,i] = listadd[2,i+1]
     end
     
 end
@@ -113,13 +117,17 @@ function
 
     ### update Lr[cnmax,vnmax]
     pLr = 1.0
-    for n in cn2vn[cnmax]
+    @fastmath @inbounds for n in cn2vn[cnmax]
         if n != vnmax
-            @fastmath @inbounds pLr *= tanh(0.5*Lq[n,cnmax])
+            pLr *= tanh(0.5*Lq[n,cnmax])
         end
     end    
     if @fastmath abs(pLr) < 1 
         @fastmath @inbounds Lr[cnmax,vnmax] = 2*atanh(pLr)
+    elseif pLr > 0
+        @fastmath @inbounds Lr[cnmax,vnmax] = INFFLOAT
+    else
+        @fastmath @inbounds Lr[cnmax,vnmax] = NINFFLOAT
     end
 
 end
@@ -148,15 +156,15 @@ function
     # update Ldn[vmax] and bitvector[vnmax]
     (cnmax,vnmax) = maxcoords
     @inbounds Ldn[vnmax] = Lf[vnmax]
-    for m in vn2cn[vnmax]
-        @fastmath @inbounds Ldn[vnmax] += Lr[m,vnmax]
-        @fastmath @inbounds bitvector[vnmax] = signbit(Ldn[vnmax])
+    @fastmath @inbounds for m in vn2cn[vnmax]
+        Ldn[vnmax] += Lr[m,vnmax]
+        bitvector[vnmax] = signbit(Ldn[vnmax])
     end
 
-    for m in vn2cn[vnmax]
-        if m ≠ cnmax
+    @fastmath @inbounds for m in vn2cn[vnmax]
+        if m ≠ cnmax || length(vn2cn[vnmax]) == 1
             # update vn2cn messages Lq[vnmax,m], ∀m ≠ cnmax
-            @fastmath @inbounds Lq[vnmax,m] = Ldn[vnmax] - Lr[m,vnmax]
+            Lq[vnmax,m] = Ldn[vnmax] - Lr[m,vnmax]
             maxresidue = calc_residues!(Residues,maxcoords,maxresidue,Factors,
                                         Ms,Lr,Lq,signs,vnmax,m,cn2vn,listres,
                                         listadd,listsize,inlist)

@@ -26,7 +26,7 @@ function
     
     minsum!(Lq,Ms,signs,m,cn2vn)
     x = 0.0    
-    for n in cn2vn[m]
+    @inbounds for n in cn2vn[m]
         if n ≠ vnmax
             x = calc_residue(Ms,Factors,Lr,m,n)
             maxresidue = findmaxresidue!(Residues,maxcoords,maxresidue,m,n,x,
@@ -34,6 +34,11 @@ function
             
         end
     end
+    if iszero(maxcoords) || maxresidue == 0.0
+        maxcoords[1] = rand(1:length(cn2vn))
+        maxcoords[2] = rand(cn2vn[maxcoords[1]])
+    end
+
     return maxresidue
 end
 
@@ -90,7 +95,7 @@ function
     return maxresidue
 end
 
-# LRBP
+# Local-RBP
 function 
     findmaxresidue!(
         ::Nothing,
@@ -129,37 +134,37 @@ function
 
     if @inbounds inlist[m,n]
         @inbounds inlist[m,n] = false
-        for i in 1:listsize
-            @inbounds mm = listadd[1,i]
-            @inbounds nn = listadd[2,i]
+        @inbounds for i in 1:listsize
+            mm = listadd[1,i]
+            nn = listadd[2,i]
             if mm == m && nn == n                
                 for j=i:listsize
-                    @inbounds listres[j] = listres[j+1]
-                    @inbounds listadd[1,j] = listadd[1,j+1]
-                    @inbounds listadd[2,j] = listadd[2,j+1]
+                    listres[j] = listres[j+1]
+                    listadd[1,j] = listadd[1,j+1]
+                    listadd[2,j] = listadd[2,j+1]
                 end
                 break
             end
         end
     end
 
-    for i in 1:listsize
-        @inbounds y = listres[i]
-        if @fastmath x > y
-            @inbounds mm = listadd[1,end]
-            @inbounds nn = listadd[2,end]
-            if @inbounds mm ≠ 0
-                @inbounds inlist[nn,nn] = false
+    @fastmath @inbounds for i in 1:listsize
+        y = listres[i]
+        if x > y
+            mm = listadd[1,end]
+            nn = listadd[2,end]
+            if mm ≠ 0
+                inlist[nn,nn] = false
             end
             for j=listsize:-1:i+1
-                @inbounds listres[j] = listres[j-1]
-                @inbounds listadd[1,j] = listadd[1,j-1]
-                @inbounds listadd[2,j] = listadd[2,j-1]
+                listres[j] = listres[j-1]
+                listadd[1,j] = listadd[1,j-1]
+                listadd[2,j] = listadd[2,j-1]
             end
-            @inbounds listadd[1,i] = m
-            @inbounds listadd[2,i] = n
-            @inbounds listres[i] = x
-            @inbounds inlist[m,n] = true
+            listadd[1,i] = m
+            listadd[2,i] = n
+            listres[i] = x
+            inlist[m,n] = true
             break
         end
     end
@@ -219,13 +224,13 @@ function
         ::Nothing
     )
 
-    for m in eachindex(cn2vn)
+    @fastmath @inbounds for m in eachindex(cn2vn)
         for n in cn2vn[m]
-            @inbounds residue = Residues[m,n]
-            if @fastmath residue > maxresidue
+            residue = Residues[m,n]
+            if residue > maxresidue
                 maxresidue = residue
-                @inbounds maxcoords[1] = m
-                @inbounds maxcoords[2] = n
+                maxcoords[1] = m
+                maxcoords[2] = n
             end
         end
     end
@@ -246,13 +251,13 @@ function
 
     M = length(cn2vn)
     rand!(rng_sample,samples,1:M)
-    for m in samples
+    @fastmath @inbounds for m in samples
         for n in cn2vn[m]
-            @inbounds residue = Residues[m,n]
-            if @fastmath residue > maxresidue
+            residue = Residues[m,n]
+            if residue > maxresidue
                 maxresidue = residue
-                @inbounds maxcoords[1] = m
-                @inbounds maxcoords[2] = n
+                maxcoords[1] = m
+                maxcoords[2] = n
             end
         end
     end

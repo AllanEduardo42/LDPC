@@ -58,7 +58,7 @@ function
 
     c = zeros(Union{Bool,Missing},K,C)
     s = 1
-    for r = 1:C
+    @inbounds for r = 1:C
         for k = 1 : (K_prime - L)
             c[k,r] = b[s]
             s += 1
@@ -94,7 +94,7 @@ function
     cw = zeros(Bool,N+2*Zc,C)
     cw[1:K_prime,:] = c[1:K_prime,:]
 
-    for r = 1:C
+    @inbounds for r = 1:C
         for k = 2*Zc +1 : K_prime
             d[k-2*Zc,r] = c[k,r]
         end
@@ -105,7 +105,7 @@ function
     
     H, E_H = make_parity_check_matrix(Zc,iLS,bg)
 
-    for r = 1:C
+    @inbounds for r = 1:C
         w = parity_bits(cw[1:K,r],bg,Zc,K,E_H)
         cw[K+1:end,r] = w
         if !iszero(H*cw[:,r])
@@ -133,7 +133,7 @@ function
 
     e = zeros(Bool,maximum(E_r),C)
     
-    for r = 1:C
+    @inbounds for r = 1:C
         j = 0
         k = 1
         while k ≤ E_r[r]
@@ -168,7 +168,7 @@ function
 
     cw = zeros(Bool,N+2*Zc,C)
 
-    for r = 1:C        
+    @inbounds for r = 1:C        
         j = 0
         k = 1
         while k ≤ E_r[r]
@@ -199,7 +199,7 @@ function
     )
 
     f = zeros(Bool,maximum(E_r),C)
-    for r = 1:C
+    @inbounds for r = 1:C
         for j = 0:(E_r[r]÷Q_m - 1)
             for i = 0:(Q_m - 1)
                 f[i + j*Q_m + 1,r] = e[i*E_r[r]÷Q_m + j + 1,r]
@@ -220,7 +220,7 @@ function
 
     e = zeros(Bool,maximum(E_r),C)
 
-    for r = 1:C        
+    @inbounds for r = 1:C        
         for j = 0:(E_r[r]÷Q_m - 1)
             for i = 0:(Q_m - 1)
                 e[i*E_r[r]÷Q_m + j + 1,r] = f[i + j*Q_m + 1,r]
@@ -242,7 +242,7 @@ function
     g = zeros(Bool,Int(G))
     k = 1
     r = 1
-    while r ≤ C
+    @inbounds while r ≤ C
         j = 1
         while j ≤ E_r[r]
             g[k] = f[j,r]
@@ -268,7 +268,7 @@ function
     C_prime = sum(CBGTI_flags)
     j=0
     E_r = zeros(Int,C)
-    for r = 1:C
+    @inbounds for r = 1:C
         if CBGTI_flags[r] == 0
             E_r[r] = 0
         else
@@ -306,7 +306,7 @@ function
 
     k = 1
     r = 1    
-    while r ≤ C
+    @inbounds while r ≤ C
         j = 1
         while j ≤ E_r[r]
             f[j,r] = g[k]
@@ -412,7 +412,7 @@ function
     a = zeros(Bool,Zc,4)
     Sc = zeros(Bool,Zc)
 
-    for i = 1:4
+    @inbounds for i = 1:4
         for j = 1:J            
             if E_H[i,j] ≠ -1
                 a[:,i] .⊻= circshift(cw[:,j],-E_H[i,j])
@@ -421,24 +421,24 @@ function
         Sc .⊻= a[:,i]
     end
 
-    for i = 1:4
+    @inbounds for i = 1:4
         if E_H[i,J+1] ≠ -1
             cw[:,J+1] .⊻= circshift(Sc,E_H[i,J+1])
         end
     end
     
     z = zeros(Bool,Zc,4)
-    for i=1:4
+    @inbounds for i=1:4
         if E_H[i,J+1] ≠ -1
             z[:,i] = circshift(cw[:,J+1],-E_H[i,J+1])
         end
     end
 
-    for i = 4:-1:2
+    @inbounds for i = 4:-1:2
         cw[:,J+i] = a[:,i] .⊻ z[:,i] .⊻ cw[:,J+i+1]
     end
 
-    for i=5:M
+    @inbounds for i=5:M
         for j=1:J+4
             if E_H[i,j] ≠ -1
                 cw[:,J+i] .⊻= circshift(cw[:,j],-E_H[i,j])
@@ -460,7 +460,7 @@ function circ_mult(
 
     q = zeros(Bool,Zc,L)
 
-    for i in axes(e_H,1)
+    @inbounds for i in axes(e_H,1)
         for j in axes(e_H,2)
             if e_H[i,j] != -1
                 range = (1 + (j-1)*Zc) : (j*Zc)
@@ -487,7 +487,7 @@ function
 
     I_matrix = Matrix(I(Zc))
 
-    for i = 1:m
+    @inbounds for i = 1:m
         for j = 1:n 
             row_range = Zc*(i-1)+1 : Zc*i
             col_range = Zc*(j-1)+1 : Zc*j

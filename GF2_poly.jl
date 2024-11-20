@@ -97,7 +97,7 @@ function divide_poly(
     # Length{r(x)} ≤ M - 1 ==>
     # r(x) = a[N-(M-1)+1:end]
 
-    return q, a[N-M+2:end]
+    @inbounds return q, a[N-M+2:end]
 
 end
 

@@ -55,8 +55,8 @@ function
 
     b = zeros(Bool,B)
 
-    b[1:A] = a
-    _,b[A+1:end] = divide_poly(b,g_CRC)
+    @inbounds b[1:A] = a
+    @inbounds _,b[A+1:end] = divide_poly(b,g_CRC)
 
     ### 1.5) LDPC base graph selection (TS38212 Clause 7.2.2 and 6.2.2)
 

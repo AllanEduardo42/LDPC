@@ -151,7 +151,7 @@ function
         decoded .= false
         
         # reinitialize matrices Lr and Lq
-        for m in 1:M
+        @inbounds for m in 1:M
             for n in cn2vn[m]
                 Lr[m,n] *= 0.0
                 Lq[n,m] *= 0.0
@@ -168,7 +168,7 @@ function
 
         if supermode == "RBP"
             maxresidue = init_residues!(Residues,maxcoords,Lq,signs,cn2vn,Ms,
-                listres,listadd,LISTSIZE,inlist)   
+                listres,listadd,LISTSIZE,inlist)  
         end
             
         # SPA routine
