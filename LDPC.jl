@@ -43,8 +43,8 @@ STOP::Bool = true # stop simulation at zero syndrome (if true, BER curves are
 
 ################################## 5) NUMBERS ##################################
 
-TRIALS::Int = 10240
-MAX::Int = 10
+TRIALS::Int = 1
+MAX::Int = 20
 MAXRBP::Int = 10
 SNRTEST = [4]
 SNR = collect(1:3)
@@ -52,7 +52,7 @@ SNR = collect(1:3)
 ################################## 6) BP MODE ##################################
 
 #Flooding
-FLOO::Bool = false
+FLOO::Bool = true
     # Flooding type: "MKAY", "TANH", "ALTN", "TABL", "MSUM"
     FLOOTYPE = "TANH"
     # fast flooding update when using tanh mode (default:true)    
@@ -77,7 +77,7 @@ RRBP::Bool = false
     SAMPLESIZE::Int = 51
      
 #Local-RBP
-LRBP::Bool = true
+LRBP::Bool = false
     # Local-RBP decay constant    
     DECAYLRBP::Float64 = 0.5  
 
@@ -86,7 +86,8 @@ LIST::Bool = true
     # List-RBP decay constant
     DECAYLIST::Float64 = 0.5
     # List-RBP size
-    LISTSIZE::Int = 1
+    LISTSIZE::Int = 10
+    LISTSIZE2::Int = 10
 
 ########################### 7) MESSAGE AND CODEWORD ############################
 

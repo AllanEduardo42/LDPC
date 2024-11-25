@@ -22,6 +22,9 @@ function
         stop::Bool,
         fast::Bool,
         rbpfactor::Union{AbstractFloat,Nothing},
+        listsize1::Integer,
+        listsize2::Integer,
+        samplesize::Integer,
         rgn_seed_noise::Integer,
         rng_seed_sample::Integer,
         test::Bool,
@@ -64,10 +67,6 @@ function
 
     # received signal
     signal = zeros(L)
-    # NmL = N - L
-    # if Zc > 0 && fast
-    #     Lf[1:2*Zc] .= -2*eps()/variance
-    # end
 
     # bit-error
     biterror = Vector{Bool}(undef,N) 
@@ -110,8 +109,8 @@ function
 
     Residues = (mode == "RBP" || mode == "Random-RBP") ? H*0.0 : nothing
 
-    samples = (mode == "Random-RBP" && SAMPLESIZE != 0) ?
-                Vector{Int}(undef,SAMPLESIZE) : nothing
+    samples = (mode == "Random-RBP" && samplesize != 0) ?
+                Vector{Int}(undef,samplesize) : nothing
 
     maxresidue = 0.0
 
@@ -120,26 +119,47 @@ function
         (nothing,nothing,nothing)
     
     if mode == "List-RBP"
-        listres = zeros(LISTSIZE+1)
-        listadd = zeros(Int,2,LISTSIZE+1)
-        inlist = Matrix(false*H)
+        listres1 = zeros(listsize1+1)
+        listadd1 = zeros(Int,2,listsize1+1)
+        listaddinv1 = zeros(Int,M,N)
+        inlist1 = Matrix(false*H)
+        if listsize2 != 0
+            listres2 = zeros(listsize1+1)
+            listadd2 = zeros(Int,2,listsize1+1)
+        else
+            listres2 = nothing
+            listadd2 = nothing
+        end
     else
-        listres = nothing
-        listadd = nothing
-        inlist = nothing
+        listres1 = nothing
+        listadd1 = nothing
+        listres2 = nothing
+        listadd2 = nothing
+        listaddinv1 = nothing
+        inlist1 = nothing
     end 
 
 ################################## MAIN LOOP ###################################
     
     rng_noise = Xoshiro(rgn_seed_noise)
 
-    rng_sample = (mode == "Random-RBP") ? Xoshiro(rng_seed_sample) : nothing  
+    rng_sample = (supermode == "RBP" && mode != "RBP") ? Xoshiro(rng_seed_sample) : nothing  
     
     if Zc > 0
         cword = [msg[1:N-L]; cword]
     end
 
     for j in 1:trials
+
+        if mode == "List-RBP"
+            listres1 .*= 0.0
+            listadd1 .*= 0
+            @inbounds for m in 1:M
+                for n in cn2vn[m]
+                    inlist1[m,n] = false
+                end
+            end
+        end
 
         # received signal for the next realization (j+1)
         received_signal!(signal,noise,stdev,u,rng_noise)
@@ -168,7 +188,7 @@ function
 
         if supermode == "RBP"
             maxresidue = init_residues!(Residues,maxcoords,Lq,signs,cn2vn,Ms,
-                listres,listadd,LISTSIZE,inlist)  
+                listres1,listadd1,listaddinv1,listsize1,inlist1)
         end
             
         # SPA routine
@@ -202,10 +222,14 @@ function
             visited_vns,
             samples,
             rng_sample,
-            LISTSIZE,
-            listres,
-            listadd,
-            inlist)                
+            listsize1,
+            listsize2,
+            listres1,
+            listadd1,
+            listres2,
+            listadd2,
+            listaddinv1,
+            inlist1)                
 
         # bit error rate
         @. BER += ber

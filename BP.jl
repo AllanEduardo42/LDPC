@@ -45,9 +45,13 @@ function
         samples::Union{Vector{<:Integer},Nothing},
         rgn_sample::Union{AbstractRNG,Nothing},
         listsize::Integer,
-        listres::Union{Vector{<:AbstractFloat},Nothing},
-        listadd::Union{Matrix{<:Integer},Nothing},
-        inlist::Union{Matrix{<:Integer},Nothing}
+        listsize2::Integer,
+        listres1::Union{Vector{<:AbstractFloat},Nothing},
+        listadd1::Union{Matrix{<:Integer},Nothing},
+        listres2::Union{Vector{<:AbstractFloat},Nothing},
+        listadd2::Union{Matrix{<:Integer},Nothing},
+        listaddinv1::Union{Matrix{<:Integer},Nothing},
+        inlist1::Union{Matrix{<:Integer},Nothing}
     )
     
     for i in 1:maxiter
@@ -97,9 +101,13 @@ function
                  samples,
                  rgn_sample,
                  listsize,
-                 listres,
-                 listadd,
-                 inlist)
+                 listsize2,
+                 listres1,
+                 listadd1,
+                 listres2,
+                 listadd2,
+                 listaddinv1,
+                 inlist1)
             # reset factors
             resetfactors!(Factors,vn2cn)
         end

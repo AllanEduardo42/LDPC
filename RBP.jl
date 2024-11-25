@@ -25,29 +25,33 @@ function
         Ldn::Vector{<:AbstractFloat},
         samples::Union{Vector{<:Integer},Nothing},
         rng_sample::Union{AbstractRNG,Nothing},
-        listsize::Integer,
-        listres::Union{Vector{<:AbstractFloat},Nothing},
-        listadd::Union{Matrix{<:Integer},Nothing},
-        inlist::Union{Matrix{<:Integer},Nothing}
+        listsize1::Integer,
+        listsize2::Integer,
+        listres1::Union{Vector{<:AbstractFloat},Nothing},
+        listadd1::Union{Matrix{<:Integer},Nothing},
+        listres2::Union{Vector{<:AbstractFloat},Nothing},
+        listadd2::Union{Matrix{<:Integer},Nothing},
+        listaddinv1::Union{Matrix{<:Integer},Nothing},
+        inlist1::Union{Matrix{<:Integer},Nothing}
     )
 
     for e in 1:num_edges
 
-        # display("e = $e")
-        # display("maxresidue = $maxresidue")
-        # display("maxcoords = $maxcoords")
+        # display(listadd1)
+        # display(listadd2)
 
-        # if @fastmath maxresidue == 0.0 # if RBP has converged
-        #     break
-        # end
+        if iszero(maxcoords) || maxresidue == 0.0
+            maxcoords[1] = rand(rng_sample,1:length(cn2vn))
+            maxcoords[2] = rand(rng_sample,cn2vn[maxcoords[1]])
+        end
 
         _RBP_update_Lr!(maxcoords,Factors,rbpfactor,cn2vn,Lq,Lr)
 
-        # @inbounds Residues[maxcoords[1],maxcoords[2]] = 0.0
-        __RBP(Residues,maxcoords,listsize,listres,listadd,inlist)
+        __RBP(Residues,maxcoords,listsize1,listres1,listadd1,listaddinv1,inlist1)
 
         maxresidue = _RBP_update_vn2cn!(Residues,maxcoords,0.0,Factors,Lf,Ldn,
-            bitvector,vn2cn,cn2vn,Ms,Lr,Lq,signs,listsize,listres,listadd,inlist)
+            bitvector,vn2cn,cn2vn,Ms,Lr,Lq,signs,listsize1,listsize2,listres1,
+            listadd1,listres2,listadd2,listaddinv1,inlist1)
 
         maxresidue = find_maxresidue_coords!(maxresidue,maxcoords,Residues,cn2vn,
             samples,rng_sample)
@@ -61,6 +65,7 @@ function
         Residues::Matrix{<:AbstractFloat},
         maxcoords::Vector{<:Integer},
         ::Integer,
+        ::Nothing,
         ::Nothing,
         ::Nothing,
         ::Nothing
@@ -77,6 +82,7 @@ function
         ::Integer,
         ::Nothing,
         ::Nothing,
+        ::Nothing,
         ::Nothing
     )
     
@@ -88,18 +94,27 @@ function
         ::Nothing,
         maxcoords::Vector{<:Integer},
         listsize::Integer,
-        listres::Vector{<:AbstractFloat},
-        listadd::Matrix{<:Integer},
-        inlist::Matrix{Bool}
+        listres1::Vector{<:AbstractFloat},
+        listadd1::Matrix{<:Integer},
+        listaddinv::Matrix{<:Integer},
+        inlist1::Matrix{Bool}
     )
 
-    @inbounds inlist[maxcoords[1],maxcoords[2]] = false
-    @inbounds for i in 1:listsize   
-        listres[i] = listres[i+1]
-        listadd[1,i] = listadd[1,i+1]
-        listadd[2,i] = listadd[2,i+1]
-    end
-    
+    # println()
+    # println("maxcoords:")
+    # display(maxcoords)
+    # println()
+
+    @inbounds inlist1[maxcoords[1],maxcoords[2]] = false
+    @inbounds listaddinv[maxcoords[1],maxcoords[2]] = 0
+    @inbounds for i in 1:listsize
+        listres1[i] = listres1[i+1]
+        listadd1[1,i] = listadd1[1,i+1]
+        listadd1[2,i] = listadd1[2,i+1]
+        if listadd1[1,i] != 0
+            listaddinv[listadd1[1,i],listadd1[2,i]] = i
+        end
+    end    
 end
 
 function 
@@ -147,10 +162,14 @@ function
         Lr::Matrix{<:AbstractFloat},
         Lq::Matrix{<:AbstractFloat},
         signs::Vector{Bool},
-        listsize::Integer,
-        listres::Union{Vector{<:AbstractFloat},Nothing},
-        listadd::Union{Matrix{<:Integer},Nothing},        
-        inlist::Union{Matrix{<:Integer},Nothing}        
+        listsize1::Integer,
+        listsize2::Integer,
+        listres1::Union{Vector{<:AbstractFloat},Nothing},
+        listadd1::Union{Matrix{<:Integer},Nothing},
+        listres2::Union{Vector{<:AbstractFloat},Nothing},
+        listadd2::Union{Matrix{<:Integer},Nothing},
+        listaddinv1::Union{Matrix{<:Integer},Nothing},
+        inlist1::Union{Matrix{<:Integer},Nothing}       
     )
 
     # update Ldn[vmax] and bitvector[vnmax]
@@ -162,14 +181,69 @@ function
     end
 
     @fastmath @inbounds for m in vn2cn[vnmax]
-        if m ≠ cnmax || length(vn2cn[vnmax]) == 1
+        # if m ≠ cnmax || length(vn2cn[vnmax]) == 1
+        if m ≠ cnmax
             # update vn2cn messages Lq[vnmax,m], ∀m ≠ cnmax
             Lq[vnmax,m] = Ldn[vnmax] - Lr[m,vnmax]
             maxresidue = calc_residues!(Residues,maxcoords,maxresidue,Factors,
-                                        Ms,Lr,Lq,signs,vnmax,m,cn2vn,listres,
-                                        listadd,listsize,inlist)
+                                        Ms,Lr,Lq,signs,vnmax,m,cn2vn,listres1,
+                                        listadd1,listres2,listadd2,listaddinv1,
+                                        listsize1,listsize2,inlist1)
+        elseif listres1 !== nothing
+            maxresidue = listres1[1]
+            maxcoords[1] = listadd1[1,1]
+            maxcoords[2] = listadd1[2,1]
         end
     end
+
+    # println()
+    # println("### lists ###")
+    # println()
+    # println("list 1")
+    # display(listres1)
+    # display(listadd1)
+    # println()
+    # println("list 2")
+    # display(listres2)
+    # display(listadd2)
+
+    if listsize2 != 0
+        @inbounds for k=1:listsize2
+            for i=1:listsize1
+                if listres2[k] > listres1[i]
+                    mm = listadd1[1,end-1]
+                    nn = listadd1[2,end-1]
+                    if mm ≠ 0
+                        inlist1[mm,nn] = false
+                        listaddinv1[mm,nn] = 0
+                    end
+                    for j=listsize1:-1:i+1
+                        listres1[j] = listres1[j-1]
+                        listadd1[1,j] = listadd1[1,j-1]
+                        listadd1[2,j] = listadd1[2,j-1]
+                        if listadd1[1,j] != 0
+                            listaddinv1[listadd1[1,j],listadd1[2,j]] = j
+                        end
+                    end
+                    listadd1[1,i] = listadd2[1,k]
+                    listadd1[2,i] = listadd2[2,k]
+                    listaddinv1[listadd2[1,k],listadd2[2,k]] = i
+                    listres1[i] = listres2[k] 
+                    inlist1[listadd2[1,k],listadd2[2,k]] = true
+                    break
+                end
+            end
+        end
+        @inbounds maxcoords[1] = listadd1[1,1]
+        @inbounds maxcoords[2] = listadd1[2,1]
+        listres2 .*= 0.0
+        listadd2 .*= 0
+    end
+
+    println()
+    println("list 1 updated")
+    display(listres1)
+    display(listadd1)
 
     return maxresidue
 end
