@@ -450,27 +450,27 @@ function
 
 end
 
-function circ_mult(
-        e_H::AbstractArray{<:Integer},
-        Zc::Integer,
-        u::Vector{Bool}
-    )
+# function circ_mult(
+#         e_H::AbstractArray{<:Integer},
+#         Zc::Integer,
+#         u::Vector{Bool}
+#     )
 
-    L = size(e_H,1)
+#     L = size(e_H,1)
 
-    q = zeros(Bool,Zc,L)
+#     q = zeros(Bool,Zc,L)
 
-    @inbounds for i in axes(e_H,1)
-        for j in axes(e_H,2)
-            if e_H[i,j] != -1
-                range = (1 + (j-1)*Zc) : (j*Zc)
-                q[:,i] .⊻= circshift(u[range],-e_H[i,j])
-            end
-        end
-    end
+#     @inbounds for i in axes(e_H,1)
+#         for j in axes(e_H,2)
+#             if e_H[i,j] != -1
+#                 range = (1 + (j-1)*Zc) : (j*Zc)
+#                 q[:,i] .⊻= circshift(u[range],-e_H[i,j])
+#             end
+#         end
+#     end
 
-    return q
-end
+#     return q
+# end
 
 function
     make_parity_check_matrix(

@@ -137,6 +137,7 @@ function
         listadd2 = nothing
         listaddinv1 = nothing
         inlist1 = nothing
+        listsize2 = 0
     end 
 
 ################################## MAIN LOOP ###################################

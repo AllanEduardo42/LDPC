@@ -4,6 +4,7 @@
 # RBP Sum-Product Algorithm using min-sum to calculate the residues
 
 include("RBP_functions.jl")
+include("findmaxcoords.jl")
 
 #RBP
 function
@@ -53,7 +54,7 @@ function
             bitvector,vn2cn,cn2vn,Ms,Lr,Lq,signs,listsize1,listsize2,listres1,
             listadd1,listres2,listadd2,listaddinv1,inlist1)
 
-        maxresidue = find_maxresidue_coords!(maxresidue,maxcoords,Residues,cn2vn,
+        maxresidue = findmaxcoords!(maxresidue,maxcoords,Residues,cn2vn,
             samples,rng_sample)
 
     end
@@ -240,10 +241,10 @@ function
         listadd2 .*= 0
     end
 
-    println()
-    println("list 1 updated")
-    display(listres1)
-    display(listadd1)
+    # println()
+    # println("list 1 updated")
+    # display(listres1)
+    # display(listadd1)
 
     return maxresidue
 end

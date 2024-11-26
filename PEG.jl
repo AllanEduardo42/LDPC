@@ -11,12 +11,13 @@ function
     check_degrees = zeros(Int,M)
     girth = Inf
 
-    for m=1:M
-        H[m,N-M+m] = 1
-        check_degrees[m] += 1
-    end
+    # for m=1:M
+    #     H[m,N-M+m] = 1
+    #     check_degrees[m] += 1
+    # end
 
-    for n in 1:N-M
+    # for n in 1:N-M
+    for n in 1:N
         for k in 1:d[n]
             if k == 1
                 _,m = findmin(check_degrees)

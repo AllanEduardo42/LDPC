@@ -19,6 +19,7 @@ include("GF2_functions.jl")
 include("IEEE80216e.jl")
 include("NR_LDPC_encode.jl")
 include("performance_sim.jl")
+include("find_girth.jl")
 
 ################################# 3) CONSTANTS #################################
 
@@ -43,11 +44,11 @@ STOP::Bool = true # stop simulation at zero syndrome (if true, BER curves are
 
 ################################## 5) NUMBERS ##################################
 
-TRIALS::Int = 1
+TRIALS::Int = 10240*2
 MAX::Int = 20
 MAXRBP::Int = 10
 SNRTEST = [4]
-SNR = collect(1:3)
+SNR = collect(1.0:0.4:2.2)
 
 ################################## 6) BP MODE ##################################
 
@@ -67,7 +68,7 @@ iLBP::Bool = false
 #RBP
 _RBP::Bool = false 
     # RBP decay constant
-    DECAYRBP::Float64 = 0.5  
+    DECAYRBP::Float64 = 0.9  
 
 #Random-RBP
 RRBP::Bool = false  
@@ -84,19 +85,19 @@ LRBP::Bool = false
 #List-RBP
 LIST::Bool = true
     # List-RBP decay constant
-    DECAYLIST::Float64 = 0.5
+    DECAYLIST::Float64 = 0.9
     # List-RBP size
-    LISTSIZE::Int = 10
-    LISTSIZE2::Int = 10
+    LISTSIZE::Int = fld(6384,128)
+    LISTSIZE2::Int = 5
 
 ########################### 7) MESSAGE AND CODEWORD ############################
 
 # Message (Payload) size
-A::Int = 512
+A::Int = 1008
 # Rate
 R::Float64 = 1/2
 # LDPC protocol: 1 = NR-LDPC; 2 = PEG; 3 = IEEE80216e;
-LDPC::Int = 1
+LDPC::Int = 3
     densities = 2:11
 
 include("main.jl")

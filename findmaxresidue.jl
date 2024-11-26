@@ -1,3 +1,60 @@
+# RBP and Random-RBP
+function 
+    findmaxresidue!(
+        Residues::Matrix{<:AbstractFloat},
+        maxcoords::Vector{<:Integer},
+        maxresidue::AbstractFloat,
+        m::Integer,
+        n::Integer,
+        x::AbstractFloat,
+        ::Nothing,
+        ::Nothing,
+        ::Nothing,
+        ::Nothing,
+        ::Nothing,
+        ::Integer,
+        ::Integer,
+        ::Nothing
+    )
+
+    @inbounds Residues[m,n] = x
+
+    if @fastmath x > maxresidue
+        maxresidue = x
+        @inbounds maxcoords[1] = m
+        @inbounds maxcoords[2] = n
+    end
+
+    return maxresidue
+end
+
+# Local-RBP
+function 
+    findmaxresidue!(
+        ::Nothing,
+        maxcoords::Vector{<:Integer},
+        maxresidue::AbstractFloat,
+        m::Integer,
+        n::Integer,
+        x::AbstractFloat,
+        ::Nothing,
+        ::Nothing,
+        ::Nothing,
+        ::Nothing,
+        ::Nothing,
+        ::Integer,
+        ::Integer,
+        ::Nothing
+    )
+    if @fastmath x > maxresidue
+        maxresidue = x
+        @inbounds maxcoords[1] = m
+        @inbounds maxcoords[2] = n
+    end
+
+    return maxresidue
+end
+
 # List-RBP
 function 
     findmaxresidue!(

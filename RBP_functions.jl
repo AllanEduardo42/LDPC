@@ -72,57 +72,6 @@ function
 
 end
 
-# RBP and Random-RBP
-function 
-    findmaxresidue!(
-        Residues::Matrix{<:AbstractFloat},
-        maxcoords::Vector{<:Integer},
-        maxresidue::AbstractFloat,
-        m::Integer,
-        n::Integer,
-        x::AbstractFloat,
-        ::Nothing,
-        ::Nothing,
-        ::Nothing,
-        ::Integer,
-        ::Nothing
-    )
-
-    @inbounds Residues[m,n] = x
-
-    if @fastmath x > maxresidue
-        maxresidue = x
-        @inbounds maxcoords[1] = m
-        @inbounds maxcoords[2] = n
-    end
-
-    return maxresidue
-end
-
-# Local-RBP
-function 
-    findmaxresidue!(
-        ::Nothing,
-        maxcoords::Vector{<:Integer},
-        maxresidue::AbstractFloat,
-        m::Integer,
-        n::Integer,
-        x::AbstractFloat,
-        ::Nothing,
-        ::Nothing,
-        ::Nothing,
-        ::Integer,
-        ::Nothing
-    )
-    if @fastmath x > maxresidue
-        maxresidue = x
-        @inbounds maxcoords[1] = m
-        @inbounds maxcoords[2] = n
-    end
-
-    return maxresidue
-end
-
 function
     init_residues!(    
         Residues::Union{Matrix{<:AbstractFloat},Nothing},      
@@ -162,72 +111,6 @@ function
             inlist1
         )
     end
-
-    return maxresidue
-end
-
-# RBP
-function
-    find_maxresidue_coords!(
-        maxresidue::AbstractFloat,
-        maxcoords::Vector{<:Integer},
-        Residues::Matrix{<:AbstractFloat},
-        cn2vn::Vector{Vector{T}} where {T<:Integer},
-        ::Nothing,
-        ::Nothing
-    )
-
-    @fastmath @inbounds for m in eachindex(cn2vn)
-        for n in cn2vn[m]
-            residue = Residues[m,n]
-            if residue > maxresidue
-                maxresidue = residue
-                maxcoords[1] = m
-                maxcoords[2] = n
-            end
-        end
-    end
-
-    return maxresidue
-end
-
-# Random-RBP
-function
-    find_maxresidue_coords!(
-        maxresidue::AbstractFloat,
-        maxcoords::Vector{<:Integer},
-        Residues::Matrix{<:AbstractFloat},
-        cn2vn::Vector{Vector{T}} where {T<:Integer},
-        samples::Vector{<:Integer},
-        rng_sample::AbstractRNG
-    )
-
-    M = length(cn2vn)
-    rand!(rng_sample,samples,1:M)
-    @fastmath @inbounds for m in samples
-        for n in cn2vn[m]
-            residue = Residues[m,n]
-            if residue > maxresidue
-                maxresidue = residue
-                maxcoords[1] = m
-                maxcoords[2] = n
-            end
-        end
-    end
-
-    return maxresidue
-end
-
-# Local-RBP and List-RBP
-function 
-    find_maxresidue_coords!(
-        maxresidue::AbstractFloat,
-        ::Vector{<:Integer},
-        ::Nothing,
-        ::Vector{Vector{T}} where {T<:Integer},
-        ::Nothing,
-        ::AbstractRNG
-    )
 
     return maxresidue
 end

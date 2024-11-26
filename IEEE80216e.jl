@@ -100,7 +100,11 @@ function
     for i in axes(P,1)
         for j in axes(P,2)
             if P[i,j] > 0
-                P[i,j] = fld(P[i,j]*zf,z0)
+                if rate == "2/3A"
+                    P[i,j] = rem(P[i,j],zf)
+                else
+                    P[i,j] = fld(P[i,j]*zf,z0)
+                end
             end
         end
     end
@@ -117,5 +121,51 @@ function
         end
     end
 
-    return BitMatrix(H_sparse)
+    return BitMatrix(H_sparse), P, zf
+end
+
+function 
+    IEEE80216e_parity_bits(
+        c::Vector{Bool},
+        Zc::Integer,
+        E_H::Matrix{<:Integer}
+    )
+
+    M,N = size(E_H)
+    K = N - M
+
+    cw = zeros(Bool,Zc,N+1)
+    cw[1:Zc*K] = c
+
+    a = zeros(Bool,Zc,M)
+    Sc = zeros(Bool,Zc)
+
+    @inbounds for i = 1:M
+        for j = 1:K            
+            if E_H[i,j] ≠ -1
+                a[:,i] .⊻= circshift(cw[:,j],-E_H[i,j])
+            end
+        end
+        Sc .⊻= a[:,i]
+    end
+
+    @inbounds for i = 1:M
+        if E_H[i,K+1] ≠ -1
+            cw[:,K+1] .⊻= circshift(Sc,E_H[i,K+1])
+        end
+    end
+    
+    z = zeros(Bool,Zc,M)
+    @inbounds for i=1:M
+        if E_H[i,K+1] ≠ -1
+            z[:,i] = circshift(cw[:,K+1],-E_H[i,K+1])
+        end
+    end
+
+    @inbounds for i = M:-1:2
+        cw[:,K+i] = a[:,i] .⊻ z[:,i] .⊻ cw[:,K+i+1]
+    end   
+
+    return cw[Zc*K+1:end-Zc]
+
 end

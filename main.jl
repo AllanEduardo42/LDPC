@@ -6,7 +6,7 @@ if LDPC == 1
     rv = 0
     H, Cword, Zc = NR_LDPC_encode(Msg,R,rv)
     M::Int, N::Int = size(H)
-    girth = "?"
+    girth = find_girth(H,100000)
 else
     Zc = 0
     L = round(Int,A/R)
@@ -18,20 +18,23 @@ else
         # Generate Parity-Check Matrix by the PEG algorithm
         H, girth = PEG(D,M,N)
     elseif LDPC == 3
-        H = IEEE80216e(L,R)
+        H, E_H, zf = IEEE80216e(L,R)
         M::Int,N::Int = size(H)
-        Msg = Msg[1:M]
+        Cword = zeros(Bool,N)
+        Cword[1:A] = Msg
+        Cword[A+1:N] = IEEE80216e_parity_bits(Msg,zf,E_H)
         L = N
-        girth = "?"
+        girth = find_girth(H,100000)
+        println("H*Cword = $(iszero(H*Cword))")
     else
         throw(ArgumentError(
                     lazy"CHECK = $CHECK, but must be 1, 2 or 3"
                 ))
     end
-    H1 = H[:,1:N-M]
-    w = H1*Msg
-    Cword = [Msg;w]
-    display(iszero(H*Cword))
+    # H1 = H[:,1:N-M]
+    # w = H1*Msg
+    # Cword = [Msg;w]
+    # display(iszero(H*Cword))
 end
 
 # Number of Threads
