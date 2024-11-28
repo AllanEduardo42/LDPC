@@ -43,8 +43,7 @@ function
         Lr::Matrix{<:AbstractFloat},
         Lf::AbstractFloat,
         n::Integer,
-        vn2cn::Vector{Vector{T}} where {T<:Integer},
-        ::Vector{<:AbstractFloat}
+        vn2cn::Vector{Vector{T}} where {T<:Integer}
     )
 
     Ld = calc_Ld(n,vn2cn,Lf,Lr)
@@ -75,25 +74,24 @@ end
 
 ######################### SPA USING LLRs METHOD VER 2 ##########################
 
-function
-    update_Lq!(
-        Lq::Matrix{<:AbstractFloat},
-        Lr::Matrix{<:AbstractFloat},
-        Lf::AbstractFloat,
-        n::Integer,
-        vn2cn::Vector{Vector{T}} where {T<:Integer},
-        ::Nothing
-    )
-    m = 0
-    @inbounds for outer m in vn2cn[n]
-        Lq[n,m] = Lf[n]
-        for m2 in vn2cn[n]
-            if m2 ≠ m
-                Lq[n,m] += Lr[m2,n]
-            end
-        end
-    end
+# function
+#     update_Lq!(
+#         Lq::Matrix{<:AbstractFloat},
+#         Lr::Matrix{<:AbstractFloat},
+#         Lf::AbstractFloat,
+#         n::Integer,
+#         vn2cn::Vector{Vector{T}} where {T<:Integer}
+#     )
+#     m = 0
+#     @inbounds for outer m in vn2cn[n]
+#         Lq[n,m] = Lf[n]
+#         for m2 in vn2cn[n]
+#             if m2 ≠ m
+#                 Lq[n,m] += Lr[m2,n]
+#             end
+#         end
+#     end
 
-    @inbounds Ld =  Lq[n,m] + Lr[m,n]
-    return Ld, signbit(Ld)
-end
+#     @inbounds Ld = Lq[n,m] + Lr[m,n]
+#     return Ld, signbit(Ld)
+# end

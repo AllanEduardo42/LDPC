@@ -39,7 +39,8 @@ function
         cn2vn::Vector{Vector{T}} where {T<:Integer},
         Lrn::Vector{<:AbstractFloat},
         ::Nothing,
-        ::Nothing        
+        ::Nothing,
+        ::AbstractFloat        
     )
 
     pLr = 1.0
@@ -92,7 +93,8 @@ function
         cn2vn::Vector{Vector{T}} where {T<:Integer},
         ::Nothing,
         ::Nothing,
-        ::Nothing   
+        ::Nothing,
+        ::AbstractFloat   
     )
 
     @inbounds for n in cn2vn[m]
@@ -137,7 +139,8 @@ function
         cn2vn::Vector{Vector{T}} where {T<:Integer},
         Lrn::Vector{<:AbstractFloat},
         signs::Vector{Bool},
-        phi::Union{Vector{<:AbstractFloat},Nothing}
+        phi::Union{Vector{<:AbstractFloat},Nothing},
+        ::AbstractFloat
     )
 
     sLr = 0.0
@@ -165,9 +168,10 @@ function
         cn2vn::Vector{Vector{T}} where {T<:Integer},
         ::Nothing,
         signs::Vector{Bool},
-        ::Nothing        
+        ::Nothing,
+        alpha::AbstractFloat        
     )
 
-    minsum!(Lq,Lr,signs,m,cn2vn)
+    minsum!(Lq,Lr,signs,m,cn2vn,alpha,2*alpha)
 
 end

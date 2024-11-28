@@ -14,28 +14,30 @@ function minsum!(
     Ms::Matrix{<:AbstractFloat},
     signs::Vector{Bool},
     m::Integer,
-    cn2vn::Vector{Vector{T}} where {T<:Integer}   
+    cn2vn::Vector{Vector{T}} where {T<:Integer},
+    alpha::AbstractFloat,
+    alpha2::AbstractFloat
     )
 
     s = false
-    minL = INF
-    minL2 = INF
+    minL = INFFLOAT
+    minL2 = INFFLOAT
     max_idx = 0
-    for n in cn2vn[m]
-        @inbounds β, signs[n], s = abs_sign!(Lq[n,m],s)
-        if @fastmath β < minL
+    @fastmath @inbounds for n in cn2vn[m]
+        β, signs[n], s = abs_sign!(Lq[n,m],s)
+        if β < minL
             max_idx = n
             minL, minL2 = β, minL
-        elseif @fastmath β < minL2
+        elseif β < minL2
             minL2 = β
         end
     end
 
-    for n in cn2vn[m]
+    @fastmath @inbounds for n in cn2vn[m]
         if n == max_idx #(pick the second least Lq)
-            @fastmath @inbounds Ms[m,n] = (1 - 2*(signs[n] ⊻ s))*minL2
+            Ms[m,n] = (alpha - alpha2*(signs[n] ⊻ s))*minL2
         else
-            @fastmath @inbounds Ms[m,n] = (1 - 2*(signs[n] ⊻ s))*minL
+            Ms[m,n] = (alpha - alpha2*(signs[n] ⊻ s))*minL
         end
     end
 

@@ -12,20 +12,20 @@ function
         trials::Integer,
         maxiter::Integer;
         rgn_samples_seeds=ones(Int,NTHREADS),
-        floomode="TANH",
+        flootype="TANH",
         printtest=false    
     )
 
 ############################### CHECK VALID MODE ###############################
     if mode == "Flooding"
-        if floomode == "MKAY" || floomode == "TANH" || floomode == "ALTN" || 
-           floomode == "TABL" || floomode == "MSUM"      
+        if flootype == "MKAY" || flootype == "TANH" || flootype == "ALTN" || 
+           flootype == "TABL" || flootype == "MSUM"      
 
-            supermode, mode = mode, floomode
+            supermode, mode = mode, flootype
         else
             throw(
                 ArgumentError(
-                    "$floomode is not a valid flooding mode"
+                    "$flootype is not a valid flooding mode"
                 )
             )
         end
@@ -76,15 +76,15 @@ function
     if !test || printtest
         if supermode == "Flooding"
             print("Message passing protocol: Flooding (using ")
-            if floomode == "MKAY"
+            if flootype == "MKAY"
                 println("Mckay's SPA method)")
-            elseif floomode == "TANH"
+            elseif flootype == "TANH"
                 println("LLR-SPA calculated by tanh)")
-            elseif floomode == "ALTN"
+            elseif flootype == "ALTN"
                 println("LLR-SPA calculated by ϕ function)")
-            elseif floomode == "TABL"
+            elseif flootype == "TABL"
                 println("LLR-SPA precalculated in look-up table)")
-            elseif floomode == "MSUM"
+            elseif flootype == "MSUM"
                 println("LLRs calculated by min-sum algorithm)")
             end
         else
@@ -121,6 +121,7 @@ function
                                             Zc,
                                             mode,
                                             supermode,
+                                            ALPHA,
                                             trials_multh,
                                             maxiter,
                                             STOP,
@@ -143,6 +144,7 @@ function
                                             Zc,
                                             mode,
                                             supermode,
+                                            ALPHA,
                                             trials,
                                             maxiter,
                                             STOP,
@@ -180,6 +182,7 @@ function
                                     Zc,
                                     mode,
                                     supermode,
+                                    ALPHA,
                                     trials,
                                     maxiter,
                                     STOP,

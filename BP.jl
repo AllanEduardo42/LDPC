@@ -15,6 +15,7 @@ include("RBP.jl")
 function 
     BP!(
         supermode::String,
+        alpha::AbstractFloat,
         stop::Bool,
         test::Bool,
         maxiter::Integer,
@@ -61,7 +62,8 @@ function
         end
 
         if supermode == "Flooding"
-            flooding!(bitvector,
+            flooding!(alpha,
+                      bitvector,
                       Lq,
                       Lr,
                       Lf,
@@ -83,7 +85,8 @@ function
                  visited_vns,
                  i)   
         elseif supermode == "RBP"
-            RBP!(Residues,
+            RBP!(alpha,
+                 Residues,
                  bitvector,
                  Lr,
                  Ms,

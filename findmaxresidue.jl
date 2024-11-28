@@ -85,38 +85,57 @@ function
         @inbounds listaddinv1[m,n] = 0
         @inbounds for j in pos:listsize1
             listres1[j] = listres1[j+1]
-            listadd1[1,j] = listadd1[1,j+1]
-            listadd1[2,j] = listadd1[2,j+1]
+            mm = listadd1[1,j+1]
+            nn = listadd1[2,j+1]
+            listadd1[1,j] = mm
+            listadd1[2,j] = nn
             if listadd1[1,j] != 0
-                listaddinv1[listadd1[1,j],listadd1[2,j]] = j
+                listaddinv1[mm,nn] = j
             end
         end
     end
 
-    @fastmath @inbounds for i in 1:listsize1
-        y = listres1[i]
-        if x > y
-            mm = listadd1[1,end-1]
-            nn = listadd1[2,end-1]
-            if mm ≠ 0
-                inlist1[mm,nn] = false
-                listaddinv1[mm,nn] = 0
-            end
-            for j=listsize1:-1:i+1
-                listres1[j] = listres1[j-1]
-                listadd1[1,j] = listadd1[1,j-1]
-                listadd1[2,j] = listadd1[2,j-1]
-                if listadd1[1,j] != 0
-                    listaddinv1[listadd1[1,j],listadd1[2,j]] = j
+    # @fastmath @inbounds for i in 1:listsize1
+    #     y = listres1[i]
+    @fastmath @inbounds if x > listres1[listsize1]
+        if x > listres1[1]
+            i = 1
+        else
+            d = listsize1 >> 1
+            i = d
+            while d > 1
+                d >>= 1
+                if x ≥ listres1[i]
+                    i -= d
+                else
+                    i += d
                 end
             end
-            listadd1[1,i] = m
-            listadd1[2,i] = n
-            listaddinv1[m,n] = i
-            listres1[i] = x
-            inlist1[m,n] = true
-            break
+            if x < listres1[i]
+                i += 1
+            end
         end
+        mm = listadd1[1,end-1]
+        nn = listadd1[2,end-1]
+        if mm ≠ 0
+            inlist1[mm,nn] = false
+            listaddinv1[mm,nn] = 0
+        end
+        for j=listsize1:-1:i+1
+            listres1[j] = listres1[j-1]
+            mm = listadd1[1,j-1]
+            nn = listadd1[2,j-1]
+            listadd1[1,j] = mm
+            listadd1[2,j] = nn
+            if listadd1[1,j] != 0
+                listaddinv1[mm,nn] = j
+            end
+        end
+        listadd1[1,i] = m
+        listadd1[2,i] = n
+        listaddinv1[m,n] = i
+        listres1[i] = x
+        inlist1[m,n] = true
     end
 
     @inbounds maxcoords[1] = listadd1[1,1]
@@ -183,34 +202,48 @@ function
     #     end
     # end
 
-    @fastmath @inbounds for i in 1:listsize1
-        y = listres2[i]
-        if x > y
-            # mm = listadd2[1,end-1]
-            # nn = listadd2[2,end-1]
-            # if mm ≠ 0
-            #     inlist2[mm,nn] = false
-            #     listaddinv2[mm,nn] = 0
-            # end
-            for j=listsize1:-1:i+1
-                listres2[j] = listres2[j-1]
-                listadd2[1,j] = listadd2[1,j-1]
-                listadd2[2,j] = listadd2[2,j-1]
-                # if listadd2[1,j] != 0
-                #     listaddinv2[listadd2[1,j],listadd2[2,j]] = j
-                # end
+    # @fastmath @inbounds for i in 1:listsize2
+    @fastmath @inbounds if x > listres2[listsize2]
+        if x > listres2[1]
+            i = 1
+        else
+            d = listsize2÷2
+            i = d
+            while d > 1
+                d ÷= 2
+                if x ≥ listres2[i]
+                    i -= d
+                else
+                    i += d
+                end
             end
-            listadd2[1,i] = m
-            listadd2[2,i] = n
-            # listaddinv2[m,n] = i
-            listres2[i] = x
-            # inlist2[m,n] = true
-            break
+            if x < listres2[i]
+                i += 1
+            end
         end
+        # mm = listadd2[1,end-1]
+        # nn = listadd2[2,end-1]
+        # if mm ≠ 0
+        #     inlist2[mm,nn] = false
+        #     listaddinv2[mm,nn] = 0
+        # end
+        for j=listsize2:-1:i+1
+            listres2[j] = listres2[j-1]
+            listadd2[1,j] = listadd2[1,j-1]
+            listadd2[2,j] = listadd2[2,j-1]
+            # if listadd2[1,j] != 0
+            #     listaddinv2[listadd2[1,j],listadd2[2,j]] = j
+            # end
+        end
+        listadd2[1,i] = m
+        listadd2[2,i] = n
+        # listaddinv2[m,n] = i
+        listres2[i] = x
+        # inlist2[m,n] = true
     end
 
     # display(listres2)
     # display(listadd2)
 
-    @inbounds return listres1[1]
+    @inbounds return listres2[1]
 end

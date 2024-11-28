@@ -8,6 +8,7 @@ include("findmaxresidue.jl")
 
 function
     calc_residues!(
+        alpha::AbstractFloat,
         Residues::Union{Matrix{<:AbstractFloat},Nothing},
         maxcoords::Vector{<:Integer},
         maxresidue::AbstractFloat,
@@ -29,7 +30,7 @@ function
         inlist1::Union{Matrix{<:Integer},Nothing}   
     )
     
-    minsum!(Lq,Ms,signs,m,cn2vn)
+    minsum!(Lq,Ms,signs,m,cn2vn,alpha,2*alpha)
     x = 0.0    
     @fastmath @inbounds for n in cn2vn[m]
         if n ≠ vnmax
@@ -73,7 +74,8 @@ function
 end
 
 function
-    init_residues!(    
+    init_residues!(
+        alpha::AbstractFloat,  
         Residues::Union{Matrix{<:AbstractFloat},Nothing},      
         maxcoords::Vector{<:Integer},              
         Lq::Matrix{<:AbstractFloat},
@@ -90,6 +92,7 @@ function
     maxresidue = 0.0
     for m in eachindex(cn2vn)
         maxresidue = calc_residues!(
+            alpha,
             Residues,
             maxcoords,
             maxresidue,

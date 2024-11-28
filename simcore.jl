@@ -17,6 +17,7 @@ function
         Zc::Integer,
         mode::String,
         supermode::String,
+        alpha::AbstractFloat,
         trials::Integer,
         maxiter::Integer,
         stop::Bool,
@@ -124,8 +125,8 @@ function
         listaddinv1 = zeros(Int,M,N)
         inlist1 = Matrix(false*H)
         if listsize2 != 0
-            listres2 = zeros(listsize1+1)
-            listadd2 = zeros(Int,2,listsize1+1)
+            listres2 = zeros(listsize2+1)
+            listadd2 = zeros(Int,2,listsize2+1)
         else
             listres2 = nothing
             listadd2 = nothing
@@ -188,12 +189,13 @@ function
         init_Lq!(Lq,Lf,vn2cn)
 
         if supermode == "RBP"
-            maxresidue = init_residues!(Residues,maxcoords,Lq,signs,cn2vn,Ms,
+            maxresidue = init_residues!(alpha,Residues,maxcoords,Lq,signs,cn2vn,Ms,
                 listres1,listadd1,listaddinv1,listsize1,inlist1)
         end
             
         # SPA routine
         BP!(supermode,
+            alpha,
             stop,
             test,
             maxiter,
