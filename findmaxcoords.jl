@@ -6,7 +6,7 @@ function
         Residues::Matrix{<:AbstractFloat},
         cn2vn::Vector{Vector{T}} where {T<:Integer},
         ::Nothing,
-        ::Nothing
+        ::AbstractRNG
     )
 
     @fastmath @inbounds for m in eachindex(cn2vn)

@@ -16,7 +16,9 @@ function
         Ms::Matrix{<:AbstractFloat},
         Lr::Union{Matrix{<:AbstractFloat},Nothing},                      
         Lq::Matrix{<:AbstractFloat},
-        signs::Vector{Bool},
+        Lrn::Union{Vector{<:AbstractFloat},Nothing},
+        signs::Union{Vector{Bool},Nothing},        
+        phi::Union{Vector{<:AbstractFloat},Nothing},
         vnmax::Integer,
         m::Integer,
         cn2vn::Vector{Vector{T}} where {T<:Integer},
@@ -30,7 +32,8 @@ function
         inlist1::Union{Matrix{<:Integer},Nothing}   
     )
     
-    minsum!(Lq,Ms,signs,m,cn2vn,alpha,2*alpha)
+    # minsum!(Lq,Ms,signs,m,cn2vn,alpha,2*alpha)
+    update_Lr!(Ms,Lq,m,cn2vn,Lrn,signs,phi,alpha)
     x = 0.0    
     @fastmath @inbounds for n in cn2vn[m]
         if n ≠ vnmax
@@ -79,7 +82,9 @@ function
         Residues::Union{Matrix{<:AbstractFloat},Nothing},      
         maxcoords::Vector{<:Integer},              
         Lq::Matrix{<:AbstractFloat},
-        signs::Vector{Bool},
+        Lrn::Union{Vector{<:AbstractFloat},Nothing},
+        signs::Union{Vector{Bool},Nothing},        
+        phi::Union{Vector{<:AbstractFloat},Nothing},
         cn2vn::Vector{Vector{T}} where {T<:Integer},
         Ms::Matrix{<:AbstractFloat},
         listres1::Union{Vector{<:AbstractFloat},Nothing},
@@ -100,7 +105,9 @@ function
             Ms,
             nothing,
             Lq,
+            Lrn,
             signs,
+            phi,
             0,
             m,
             cn2vn,

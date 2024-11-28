@@ -44,7 +44,7 @@ STOP::Bool = true # stop simulation at zero syndrome (if true, BER curves are
 
 ################################## 5) NUMBERS ##################################
 
-TRIALS::Int = 1024
+TRIALS::Int = 96
 MAX::Int = 20
 MAXRBP::Int = 10
 SNRTEST = [4]
@@ -55,11 +55,11 @@ SNR = collect(1.0:0.4:2.2)
 #Flooding
 FLOO::Bool = false
     # Flooding type: "MKAY", "TANH", "ALTN", "TABL", "MSUM"
-    FLOOTYPE = "TANH"
+    FLOOTYPE = "MSUM"
     # fast flooding update when using tanh mode (default:true)    
     FAST::Bool = true 
     # Min-Sum attenuation factor
-    ALPHA = 1.0
+    ALPHA = 0.8
 
 #LBP
 _LBP::Bool = false 
@@ -68,7 +68,7 @@ _LBP::Bool = false
 iLBP::Bool = false    
 
 #RBP
-_RBP::Bool = true 
+_RBP::Bool = false 
     # RBP decay constant
     DECAYRBP::Float64 = 1.0
 
@@ -212,7 +212,6 @@ for mode in modes
             mode[2],
             min(TRIALS,2),
             mode[3];
-            flootype=FLOOTYPE,
             printtest=p)
     end
 end                             
@@ -229,7 +228,6 @@ if TRIALS > 2
                 mode[2],
                 TRIALS,
                 mode[3];
-                flootype=FLOOTYPE,
                 rgn_samples_seeds=rgn_samples_seeds)
 
             push!(fer_labels,mode[2])

@@ -12,23 +12,21 @@ function
         trials::Integer,
         maxiter::Integer;
         rgn_samples_seeds=ones(Int,NTHREADS),
-        flootype="TANH",
         printtest=false    
     )
 
 ############################### CHECK VALID MODE ###############################
-    if mode == "Flooding"
-        if flootype == "MKAY" || flootype == "TANH" || flootype == "ALTN" || 
-           flootype == "TABL" || flootype == "MSUM"      
-
-            supermode, mode = mode, flootype
-        else
-            throw(
-                ArgumentError(
-                    "$flootype is not a valid flooding mode"
-                )
+    if !(FLOOTYPE == "MKAY" || FLOOTYPE == "TANH" || FLOOTYPE == "ALTN" || 
+        FLOOTYPE == "TABL" || FLOOTYPE == "MSUM")      
+        throw(
+            ArgumentError(
+                "$FLOOTYPE is not a valid flooding mode"
             )
-        end
+        )
+    end    
+
+    if mode == "Flooding"
+        supermode, mode = mode, FLOOTYPE        
     elseif mode == "LBP" || mode == "iLBP"
         supermode = "LBP"    
     elseif mode == "RBP" || mode == "Local-RBP" || mode == "Random-RBP"||
@@ -76,16 +74,29 @@ function
     if !test || printtest
         if supermode == "Flooding"
             print("Message passing protocol: Flooding (using ")
-            if flootype == "MKAY"
+            if FLOOTYPE == "MKAY"
                 println("Mckay's SPA method)")
-            elseif flootype == "TANH"
+            elseif FLOOTYPE == "TANH"
                 println("LLR-SPA calculated by tanh)")
-            elseif flootype == "ALTN"
+            elseif FLOOTYPE == "ALTN"
                 println("LLR-SPA calculated by ϕ function)")
-            elseif flootype == "TABL"
+            elseif FLOOTYPE == "TABL"
                 println("LLR-SPA precalculated in look-up table)")
-            elseif flootype == "MSUM"
+            elseif FLOOTYPE == "MSUM"
                 println("LLRs calculated by min-sum algorithm)")
+            end
+        elseif supermode == "RBP"
+            print("Message passing protocol: RBP (residuals calculated by ")
+            if FLOOTYPE == "MKAY"
+                println("Mckay's SPA method)")
+            elseif FLOOTYPE == "TANH"
+                println("tanh)")
+            elseif FLOOTYPE == "ALTN"
+                println("ϕ function)")
+            elseif FLOOTYPE == "TABL"
+                println("look-up table)")
+            elseif FLOOTYPE == "MSUM"
+                println("min-sum algorithm)")
             end
         else
             println("Message passing protocol: $mode")
@@ -121,6 +132,7 @@ function
                                             Zc,
                                             mode,
                                             supermode,
+                                            FLOOTYPE,
                                             ALPHA,
                                             trials_multh,
                                             maxiter,
@@ -144,6 +156,7 @@ function
                                             Zc,
                                             mode,
                                             supermode,
+                                            FLOOTYPE,
                                             ALPHA,
                                             trials,
                                             maxiter,
@@ -182,6 +195,7 @@ function
                                     Zc,
                                     mode,
                                     supermode,
+                                    FLOOTYPE,
                                     ALPHA,
                                     trials,
                                     maxiter,

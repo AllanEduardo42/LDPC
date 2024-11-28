@@ -3,8 +3,8 @@
 # 27 ago 2024
 # Lookup table functions
 
-SIZE::Int64 = 1024
-RANGE::Int64 = 20
+SIZE::Int64 = 8192
+RANGE::Int64 = 10
 SIZE_per_RANGE::Float64 = SIZE/RANGE
 
 function lookupTable()

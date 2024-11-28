@@ -17,6 +17,7 @@ function
         Zc::Integer,
         mode::String,
         supermode::String,
+        flootype::String,
         alpha::AbstractFloat,
         trials::Integer,
         maxiter::Integer,
@@ -33,7 +34,7 @@ function
     )
     
 ################################## CONSTANTS ###################################
-
+    
     # transform snr in standard deviations
     variance = 1 ./ (exp10.(snr/10))
     stdev = sqrt.(variance)
@@ -80,15 +81,15 @@ function
     Lr = (mode != "MKAY") ? zeros(M,N) : zeros(M,N,2)
 
     Ms = (supermode == "RBP") ? H*0.0 : nothing
-
-    # Set variables Lrn and signs depending on the mode (also used for dispatch)
-    if (mode == "TANH" && fast) || mode == "LBP" || mode == "iLBP"
+    
+    # Set variables Lrn and signs depending on the floooding type (also used for dispatch)
+    if (flootype == "TANH" && fast) || supermode == "LBP"
         Lrn = zeros(N)
         signs = nothing
-    elseif mode == "ALTN" || mode == "TABL"
+    elseif flootype == "ALTN" || flootype == "TABL" 
         Lrn = zeros(N)
         signs = zeros(Bool,N)
-    elseif mode == "MSUM" || supermode == "RBP"
+    elseif flootype == "MSUM"
         Lrn = nothing
         signs = zeros(Bool,N)
     else
@@ -145,7 +146,7 @@ function
     
     rng_noise = Xoshiro(rgn_seed_noise)
 
-    rng_sample = (supermode == "RBP" && mode != "RBP") ? Xoshiro(rng_seed_sample) : nothing  
+    rng_sample = (supermode == "RBP") ? Xoshiro(rng_seed_sample) : nothing  
     
     if Zc > 0
         cword = [msg[1:N-L]; cword]
@@ -189,7 +190,7 @@ function
         init_Lq!(Lq,Lf,vn2cn)
 
         if supermode == "RBP"
-            maxresidue = init_residues!(alpha,Residues,maxcoords,Lq,signs,cn2vn,Ms,
+            maxresidue = init_residues!(alpha,Residues,maxcoords,Lq,Lrn,signs,phi,cn2vn,Ms,
                 listres1,listadd1,listaddinv1,listsize1,inlist1)
         end
             
