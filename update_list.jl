@@ -2,7 +2,6 @@ function update_list!(
         inlist::Union{Matrix{Bool},Nothing},
         listres::Vector{<:AbstractFloat},
         listadd::Matrix{<:Integer},
-        listaddinv::Matrix{<:Integer},
         x::AbstractFloat,
         m::Integer,
         n::Integer,
@@ -31,7 +30,7 @@ function update_list!(
             if mm ≠ 0
                 nn = listadd[2,end-1]
                 inlist[mm,nn] = false
-                listaddinv[mm,nn] = 0
+                # listaddinv[mm,nn] = 0
             end
         end
         for j=listsize:-1:i+1
@@ -40,15 +39,11 @@ function update_list!(
             nn = listadd[2,j-1]
             listadd[1,j] = mm
             listadd[2,j] = nn
-            if inlist !== nothing && mm != 0
-                listaddinv[mm,nn] = j
-            end
         end
         listadd[1,i] = m
         listadd[2,i] = n
         listres[i] = x
         if inlist !== nothing
-            listaddinv[m,n] = i
             inlist[m,n] = true
         end
     end

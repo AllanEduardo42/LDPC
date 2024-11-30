@@ -26,10 +26,9 @@ function
         listadd1::Union{Matrix{<:Integer},Nothing},
         listres2::Union{Vector{<:AbstractFloat},Nothing},
         listadd2::Union{Matrix{<:Integer},Nothing},
-        listaddinv1::Union{Matrix{<:Integer},Nothing},
         listsize1::Integer,
         listsize2::Integer,
-        inlist1::Union{Matrix{<:Integer},Nothing}   
+        inlist::Union{Matrix{<:Integer},Nothing}   
     )
     
     update_Lr!(Ms,Lq,m,cn2vn,Lrn,signs,phi,alpha)
@@ -38,8 +37,8 @@ function
             x = calc_residue(Ms,Factors,Lr,m,n)
             if x ≠ 0.0
                 maxresidue = findmaxresidue!(Residues,maxcoords,maxresidue,m,n,x,
-                    listres1,listadd1,listres2,listadd2,listaddinv1,listsize1,
-                    listsize2,inlist1)
+                    listres1,listadd1,listres2,listadd2,listsize1,listsize2,
+                    inlist)
             end            
         end
     end
@@ -89,9 +88,8 @@ function
         Ms::Matrix{<:AbstractFloat},
         listres1::Union{Vector{<:AbstractFloat},Nothing},
         listadd1::Union{Matrix{<:Integer},Nothing},
-        listaddinv1::Union{Matrix{<:Integer},Nothing},
         listsize1::Integer,
-        inlist1::Union{Matrix{<:Integer},Nothing}
+        inlist::Union{Matrix{<:Integer},Nothing}
     )
     
     maxresidue = 0.0
@@ -115,10 +113,9 @@ function
             listadd1,
             nothing,
             nothing,
-            listaddinv1,
             listsize1,
             0,
-            inlist1
+            inlist
         )
     end
 

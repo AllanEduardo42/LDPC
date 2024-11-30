@@ -11,7 +11,6 @@ function
         ::Nothing,
         ::Nothing,
         ::Nothing,
-        ::Nothing,
         ::Integer,
         ::Integer,
         ::Nothing
@@ -37,7 +36,6 @@ function
         m::Integer,
         n::Integer,
         x::AbstractFloat,
-        ::Nothing,
         ::Nothing,
         ::Nothing,
         ::Nothing,
@@ -68,36 +66,39 @@ function
         listadd1::Matrix{<:Integer},
         listres2::Union{Vector{<:AbstractFloat},Nothing},
         listadd2::Union{Matrix{<:Integer},Nothing},
-        listaddinv1::Union{Matrix{<:Integer},Nothing},
         listsize1::Integer,
         listsize2::Integer,
         inlist::Matrix{<:Integer}
     )
 
-    if @inbounds inlist[m,n] # if residue(m,n) is in the list
-        @inbounds inlist[m,n] = false   # remove from the list
-        @inbounds pos = listaddinv1[m,n]
+    @inbounds if inlist[m,n] # if residue(m,n) is in the list
+        inlist[m,n] = false   # remove from the list
+        pos = 0
+        for i = 1:listsize1
+            if listadd1[1,i] == m
+                if listadd1[2,i] == n
+                    pos = i
+                    break
+                end
+            end
+        end
         if pos == 0
             throw(error("($m,$n) is on the list, but it's not registered."))
         end
-        @inbounds listaddinv1[m,n] = 0
-        @inbounds for j in pos:listsize1
+        for j in pos:listsize1
             listres1[j] = listres1[j+1]
             mm = listadd1[1,j+1]
             nn = listadd1[2,j+1]
             listadd1[1,j] = mm
             listadd1[2,j] = nn
-            if mm != 0
-                listaddinv1[mm,nn] = j
-            end
         end
     end
 
     if listsize2 == 0
-        update_list!(inlist,listres1,listadd1,listaddinv1,x,m,n,listsize1)
+        update_list!(inlist,listres1,listadd1,x,m,n,listsize1)
         @inbounds maxcoords[1], maxcoords[2] = listadd1[1], listadd1[2]
     else
-        update_list!(nothing,listres2,listadd2,listaddinv1,x,m,n,listsize2)
+        update_list!(nothing,listres2,listadd2,x,m,n,listsize2)
     end
 
     @inbounds return listres1[1]

@@ -51,8 +51,7 @@ function
         listadd1::Union{Matrix{<:Integer},Nothing},
         listres2::Union{Vector{<:AbstractFloat},Nothing},
         listadd2::Union{Matrix{<:Integer},Nothing},
-        listaddinv1::Union{Matrix{<:Integer},Nothing},
-        inlist1::Union{Matrix{<:Integer},Nothing}
+        inlist::Union{Matrix{<:Integer},Nothing}
     )
     
     for i in 1:maxiter
@@ -111,8 +110,7 @@ function
                  listadd1,
                  listres2,
                  listadd2,
-                 listaddinv1,
-                 inlist1)
+                 inlist)
             # reset factors
             resetfactors!(Factors,vn2cn)
         end

@@ -89,7 +89,7 @@ LIST::Bool = true
     # List-RBP decay constant
     DECAYLIST::Float64 = 1.0
     # List-RBP size
-    LISTSIZE::UInt = 512
+    LISTSIZE::UInt = 2048
     LISTSIZE2::UInt = 0
 
 ########################### 7) MESSAGE AND CODEWORD ############################

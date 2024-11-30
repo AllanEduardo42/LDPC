@@ -36,22 +36,21 @@ function
         listadd1::Union{Matrix{<:Integer},Nothing},
         listres2::Union{Vector{<:AbstractFloat},Nothing},
         listadd2::Union{Matrix{<:Integer},Nothing},
-        listaddinv1::Union{Matrix{<:Integer},Nothing},
-        inlist1::Union{Matrix{<:Integer},Nothing}
+        inlist::Union{Matrix{<:Integer},Nothing}
     )
 
     for e in 1:num_edges
 
         (cnmax,vnmax) = maxcoords
 
-        if cnmax == 0 || maxresidue == 0.0
+        if cnmax == 0
             cnmax = rand(rng_sample,1:length(cn2vn))
             vnmax = rand(rng_sample,cn2vn[cnmax])
         end
 
         _RBP_update_Lr!(cnmax,vnmax,Factors,rbpfactor,cn2vn,Lq,Lr,Ms,Lrn,signs)
 
-        __RBP(Residues,cnmax,vnmax,listsize1,listres1,listadd1,listaddinv1,inlist1)
+        __RBP(Residues,cnmax,vnmax,listsize1,listres1,listadd1,inlist)
 
         # update Ldn[vmax] and bitvector[vnmax]
         @inbounds Ldn[vnmax] = Lf[vnmax]
@@ -67,8 +66,8 @@ function
                 Lq[vnmax,m] = Ldn[vnmax] - Lr[m,vnmax]
                 maxresidue = calc_residues!(alpha,Residues,maxcoords,0.0,
                                 Factors,Ms,Lr,Lq,Lrn,signs,phi,vnmax,m,cn2vn,
-                                listres1,listadd1,listres2,listadd2,listaddinv1,
-                                listsize1,listsize2,inlist1)
+                                listres1,listadd1,listres2,listadd2,listsize1,
+                                listsize2,inlist)
 
             elseif listres1 !== nothing
                 maxresidue = listres1[1]
@@ -78,7 +77,7 @@ function
 
         @inbounds if listsize2 ≠ 0
             for k in 1:listsize2
-                update_list!(inlist1,listres1,listadd1,listaddinv1,listres2[k],
+                update_list!(inlist,listres1,listadd1,listaddinv1,listres2[k],
                     listadd2[1,k],listadd2[2,k],listsize1)
             end
             maxcoords[1],maxcoords[2] = listadd1[1], listadd1[2]
@@ -132,21 +131,16 @@ function
         listsize::Integer,
         listres1::Vector{<:AbstractFloat},
         listadd1::Matrix{<:Integer},
-        listaddinv::Matrix{<:Integer},
-        inlist1::Matrix{Bool}
+        inlist::Matrix{Bool}
     )
 
-    @inbounds inlist1[cnmax,vnmax] = false
-    @inbounds listaddinv[cnmax,vnmax] = 0
+    @inbounds inlist[cnmax,vnmax] = false
     @inbounds for i in 1:listsize
         listres1[i] = listres1[i+1]
         m = listadd1[1,i+1]
         n = listadd1[2,i+1]
         listadd1[1,i] = m
         listadd1[2,i] = n
-        if listadd1[1,i] != 0
-            listaddinv[m,n] = i
-        end
     end    
 end
 
