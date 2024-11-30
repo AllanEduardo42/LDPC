@@ -66,16 +66,16 @@ function
         x::AbstractFloat,
         listres1::Vector{<:AbstractFloat},
         listadd1::Matrix{<:Integer},
-        ::Nothing,
-        ::Nothing,
+        listres2::Union{Vector{<:AbstractFloat},Nothing},
+        listadd2::Union{Matrix{<:Integer},Nothing},
         listaddinv1::Union{Matrix{<:Integer},Nothing},
         listsize1::Integer,
         listsize2::Integer,
-        inlist1::Matrix{<:Integer}
+        inlist::Matrix{<:Integer}
     )
 
-    if @inbounds inlist1[m,n] # if residue(m,n) is in the list
-        @inbounds inlist1[m,n] = false   # remove from the list
+    if @inbounds inlist[m,n] # if residue(m,n) is in the list
+        @inbounds inlist[m,n] = false   # remove from the list
         @inbounds pos = listaddinv1[m,n]
         if pos == 0
             throw(error("($m,$n) is on the list, but it's not registered."))
@@ -87,153 +87,19 @@ function
             nn = listadd1[2,j+1]
             listadd1[1,j] = mm
             listadd1[2,j] = nn
-            if listadd1[1,j] != 0
+            if mm != 0
                 listaddinv1[mm,nn] = j
             end
         end
     end
 
-    update_list!(inlist1,listres1,listadd1,listaddinv1,x,m,n,listsize1)
-
-    # @fastmath @inbounds if x > listres1[listsize1]
-    #     if x > listres1[1]
-    #         i = 1
-    #     else
-    #         d = listsize1 >> 1
-    #         i = d
-    #         while d > 1
-    #             d >>= 1
-    #             if x ≥ listres1[i]
-    #                 i -= d
-    #             else
-    #                 i += d
-    #             end
-    #         end
-    #         if x < listres1[i]
-    #             i += 1
-    #         end
-    #     end
-    #     mm = listadd1[1,end-1]
-    #     nn = listadd1[2,end-1]
-    #     if mm ≠ 0
-    #         inlist1[mm,nn] = false
-    #         listaddinv1[mm,nn] = 0
-    #     end
-    #     for j=listsize1:-1:i+1
-    #         listres1[j] = listres1[j-1]
-    #         mm = listadd1[1,j-1]
-    #         nn = listadd1[2,j-1]
-    #         listadd1[1,j] = mm
-    #         listadd1[2,j] = nn
-    #         if listadd1[1,j] != 0
-    #             listaddinv1[mm,nn] = j
-    #         end
-    #     end
-    #     listadd1[1,i] = m
-    #     listadd1[2,i] = n
-    #     listaddinv1[m,n] = i
-    #     listres1[i] = x
-    #     inlist1[m,n] = true
-    # end
-
-    @inbounds maxcoords[1] = listadd1[1,1]
-    @inbounds maxcoords[2] = listadd1[2,1]
+    if listsize2 == 0
+        update_list!(inlist,listres1,listadd1,listaddinv1,x,m,n,listsize1)
+        @inbounds maxcoords[1], maxcoords[2] = listadd1[1], listadd1[2]
+    else
+        update_list!(nothing,listres2,listadd2,listaddinv1,x,m,n,listsize2)
+    end
 
     @inbounds return listres1[1]
-end
-
-# 2-List-RBP
-function 
-    findmaxresidue!(
-        ::Nothing,
-        maxcoords::Vector{<:Integer},
-        maxresidue::AbstractFloat,
-        m::Integer,
-        n::Integer,
-        x::AbstractFloat,
-        listres1::Vector{<:AbstractFloat},
-        listadd1::Matrix{<:Integer},
-        listres2::Vector{<:AbstractFloat},
-        listadd2::Matrix{<:Integer},
-        listaddinv1::Union{Matrix{<:Integer},Nothing},
-        listsize1::Integer,
-        listsize2::Integer,
-        inlist1::Matrix{<:Integer}
-    )
-
-
-    if @inbounds inlist1[m,n] # if residue(m,n) is in the list
-        @inbounds inlist1[m,n] = false   # remove from the list
-        @inbounds pos = listaddinv1[m,n]
-        if pos == 0
-            throw(error("($m,$n) is on the list, but it's not registered."))
-        end
-        @inbounds listaddinv1[m,n] = 0
-        @inbounds for j in pos:listsize1
-            listres1[j] = listres1[j+1]
-            listadd1[1,j] = listadd1[1,j+1]
-            listadd1[2,j] = listadd1[2,j+1]
-            if listadd1[1,j] != 0
-                listaddinv1[listadd1[1,j],listadd1[2,j]] = j
-            end
-        end
-    end
-
-    # if @inbounds inlist2[m,n] # if residue(m,n) is in the list
-    #     @inbounds inlist2[m,n] = false   # remove from the list
-    #     @inbounds pos = listaddinv2[m,n]
-    #     if pos == 0
-    #         throw(error("($m,$n) is on the list, but it's not registered."))
-    #     end
-    #     @inbounds listaddinv2[m,n] = 0
-    #     @inbounds for j in pos:listsize1
-    #         listres2[j] = listres2[j+1]
-    #         listadd2[1,j] = listadd2[1,j+1]
-    #         listadd2[2,j] = listadd2[2,j+1]
-    #         if listadd2[1,j] != 0
-    #             listaddinv2[listadd2[1,j],listadd2[2,j]] = j
-    #         end
-    #     end
-    # end
-
-    @fastmath @inbounds if x > listres2[listsize2]
-        if x > listres2[1]
-            i = 1
-        else
-            d = listsize2÷2
-            i = d
-            while d > 1
-                d ÷= 2
-                if x ≥ listres2[i]
-                    i -= d
-                else
-                    i += d
-                end
-            end
-            if x < listres2[i]
-                i += 1
-            end
-        end
-        # mm = listadd2[1,end-1]
-        # nn = listadd2[2,end-1]
-        # if mm ≠ 0
-        #     inlist2[mm,nn] = false
-        #     listaddinv2[mm,nn] = 0
-        # end
-        for j=listsize2:-1:i+1
-            listres2[j] = listres2[j-1]
-            listadd2[1,j] = listadd2[1,j-1]
-            listadd2[2,j] = listadd2[2,j-1]
-            # if listadd2[1,j] != 0
-            #     listaddinv2[listadd2[1,j],listadd2[2,j]] = j
-            # end
-        end
-        listadd2[1,i] = m
-        listadd2[2,i] = n
-        # listaddinv2[m,n] = i
-        listres2[i] = x
-        # inlist2[m,n] = true
-    end
-
-    @inbounds return listres2[1]
+    
 end

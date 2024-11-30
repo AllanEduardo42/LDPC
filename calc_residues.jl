@@ -32,13 +32,11 @@ function
         inlist1::Union{Matrix{<:Integer},Nothing}   
     )
     
-    # minsum!(Lq,Ms,signs,m,cn2vn,alpha,2*alpha)
     update_Lr!(Ms,Lq,m,cn2vn,Lrn,signs,phi,alpha)
-    x = 0.0    
     @fastmath @inbounds for n in cn2vn[m]
         if n ≠ vnmax
             x = calc_residue(Ms,Factors,Lr,m,n)
-            if x != 0.0
+            if x ≠ 0.0
                 maxresidue = findmaxresidue!(Residues,maxcoords,maxresidue,m,n,x,
                     listres1,listadd1,listres2,listadd2,listaddinv1,listsize1,
                     listsize2,inlist1)
@@ -58,7 +56,9 @@ function
         n::Integer
     )
 
-    @fastmath @inbounds return abs(Ms[m,n] - Lr[m,n])*Factors[m,n]
+    @inbounds i = LinearIndices(Ms)[m,n]
+
+    @fastmath @inbounds return abs(Ms[i] - Lr[i])*Factors[i]
 
 end
 

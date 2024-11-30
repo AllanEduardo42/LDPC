@@ -55,7 +55,7 @@ SNR = collect(1.0:0.4:2.2)
 #Flooding
 FLOO::Bool = false
     # Flooding type: "MKAY", "TANH", "ALTN", "TABL", "MSUM"
-    FLOOTYPE = "MSUM"
+    FLOOTYPE = "TANH"
     # fast flooding update when using tanh mode (default:true)    
     FAST::Bool = true 
     # Min-Sum attenuation factor
@@ -87,10 +87,10 @@ LRBP::Bool = false
 #List-RBP
 LIST::Bool = true
     # List-RBP decay constant
-    DECAYLIST::Float64 = 0.9
+    DECAYLIST::Float64 = 1.0
     # List-RBP size
-    LISTSIZE::UInt = 64
-    LISTSIZE2::UInt = 4
+    LISTSIZE::UInt = 512
+    LISTSIZE2::UInt = 0
 
 ########################### 7) MESSAGE AND CODEWORD ############################
 
@@ -318,18 +318,5 @@ if TRIALS > 2 && SAVE
     end
     FERS = Dict(aux)
     CSV.write("FERMAX.csv", DataFrame(FERS), header=true)
-
-    # aux = []
-    # padding = zeros(MAX-MAXRBP)
-    # for mode in modes
-    #     if mode[1]
-    #         for i in eachindex(SNR)
-    #             title = mode[2] * " (SNR=$(SNR))"
-    #             push!(aux,(title,BER[mode[2]][:,i]))
-    #         end
-    #     end
-    # end
-    # BERS = Dict(aux)
-    # CSV.write("BERS.csv", DataFrame(BERS), header=true)
 
 end

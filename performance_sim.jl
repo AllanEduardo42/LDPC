@@ -86,7 +86,7 @@ function
                 println("LLRs calculated by min-sum algorithm)")
             end
         elseif supermode == "RBP"
-            print("Message passing protocol: RBP (residuals calculated by ")
+            print("Message passing protocol: $mode (residuals calculated by ")
             if FLOOTYPE == "MKAY"
                 println("Mckay's SPA method)")
             elseif FLOOTYPE == "TANH"
