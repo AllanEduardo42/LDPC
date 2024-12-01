@@ -68,7 +68,7 @@ _LBP::Bool = false
 iLBP::Bool = false    
 
 #RBP
-_RBP::Bool = false 
+_RBP::Bool = true 
     # RBP decay constant
     DECAYRBP::Float64 = 1.0
 
@@ -89,8 +89,8 @@ LIST::Bool = true
     # List-RBP decay constant
     DECAYLIST::Float64 = 1.0
     # List-RBP size
-    LISTSIZE::UInt = 2048
-    LISTSIZE2::UInt = 0
+    LISTSIZE::UInt = 64
+    LISTSIZE2::UInt = 4
 
 ########################### 7) MESSAGE AND CODEWORD ############################
 

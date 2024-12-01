@@ -122,20 +122,25 @@ function
     
     if mode == "List-RBP"
         listres1 = zeros(listsize1+1)
-        listadd1 = zeros(Int,2,listsize1+1)
+        listm1 = zeros(Int,listsize1+1)
+        listn1 = zeros(Int,listsize1+1)
         inlist = Matrix(false*H)
         if listsize2 != 0
             listres2 = zeros(listsize2+1)
-            listadd2 = zeros(Int,2,listsize2+1)
+            listm2 = zeros(Int,listsize2+1)
+            listn2 = zeros(Int,listsize2+1)
         else
             listres2 = nothing
-            listadd2 = nothing
+            listm2 = nothing
+            listn2 = nothing
         end
     else
         listres1 = nothing
-        listadd1 = nothing
+        listm1 = nothing
+        listn1 = nothing
         listres2 = nothing
-        listadd2 = nothing
+        listm2 = nothing
+        listn2 = nothing
         inlist = nothing
         listsize2 = 0
     end 
@@ -154,7 +159,13 @@ function
 
         if mode == "List-RBP"
             listres1 .*= 0.0
-            listadd1 .*= 0
+            listm1 .*= 0
+            listn1 .*= 0
+            if listsize2 != 0
+                listres2 .*= 0.0
+                listm2 .*= 0
+                listn2 .*= 0
+            end
             @inbounds for m in 1:M
                 for n in cn2vn[m]
                     inlist[m,n] = false
@@ -189,7 +200,7 @@ function
 
         if supermode == "RBP"
             maxresidue = init_residues!(alpha,Residues,maxcoords,Lq,Lrn,signs,phi,cn2vn,Ms,
-                listres1,listadd1,listsize1,inlist)
+                listres1,listm1,listn1,listsize1,inlist)
         end
             
         # SPA routine
@@ -227,9 +238,11 @@ function
             listsize1,
             listsize2,
             listres1,
-            listadd1,
+            listm1,
+            listn1,
             listres2,
-            listadd2,
+            listm2,
+            listn2,
             inlist)                
 
         # bit error rate

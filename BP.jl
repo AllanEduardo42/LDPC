@@ -48,9 +48,11 @@ function
         listsize::Integer,
         listsize2::Integer,
         listres1::Union{Vector{<:AbstractFloat},Nothing},
-        listadd1::Union{Matrix{<:Integer},Nothing},
+        listm1::Union{Vector{<:Integer},Nothing},
+        listn1::Union{Vector{<:Integer},Nothing},
         listres2::Union{Vector{<:AbstractFloat},Nothing},
-        listadd2::Union{Matrix{<:Integer},Nothing},
+        listm2::Union{Vector{<:Integer},Nothing},
+        listn2::Union{Vector{<:Integer},Nothing},
         inlist::Union{Matrix{<:Integer},Nothing}
     )
     
@@ -107,9 +109,11 @@ function
                  listsize,
                  listsize2,
                  listres1,
-                 listadd1,
+                 listm1,
+                 listn1,
                  listres2,
-                 listadd2,
+                 listm2,
+                 listn2,
                  inlist)
             # reset factors
             resetfactors!(Factors,vn2cn)

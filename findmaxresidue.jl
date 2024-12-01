@@ -11,6 +11,8 @@ function
         ::Nothing,
         ::Nothing,
         ::Nothing,
+        ::Nothing,
+        ::Nothing,
         ::Integer,
         ::Integer,
         ::Nothing
@@ -40,6 +42,8 @@ function
         ::Nothing,
         ::Nothing,
         ::Nothing,
+        ::Nothing,
+        ::Nothing,
         ::Integer,
         ::Integer,
         ::Nothing
@@ -63,9 +67,11 @@ function
         n::Integer,
         x::AbstractFloat,
         listres1::Vector{<:AbstractFloat},
-        listadd1::Matrix{<:Integer},
+        listm1::Vector{<:Integer},
+        listn1::Vector{<:Integer},
         listres2::Union{Vector{<:AbstractFloat},Nothing},
-        listadd2::Union{Matrix{<:Integer},Nothing},
+        listm2::Union{Vector{<:Integer},Nothing},
+        listn2::Union{Vector{<:Integer},Nothing},
         listsize1::Integer,
         listsize2::Integer,
         inlist::Matrix{<:Integer}
@@ -75,8 +81,8 @@ function
         inlist[m,n] = false   # remove from the list
         pos = 0
         for i = 1:listsize1
-            if listadd1[1,i] == m
-                if listadd1[2,i] == n
+            if listm1[i] == m
+                if listn1[i] == n
                     pos = i
                     break
                 end
@@ -87,18 +93,16 @@ function
         end
         for j in pos:listsize1
             listres1[j] = listres1[j+1]
-            mm = listadd1[1,j+1]
-            nn = listadd1[2,j+1]
-            listadd1[1,j] = mm
-            listadd1[2,j] = nn
+            listm1[j] = listm1[j+1]
+            listn1[j] = listn1[j+1]
         end
     end
 
     if listsize2 == 0
-        update_list!(inlist,listres1,listadd1,x,m,n,listsize1)
-        @inbounds maxcoords[1], maxcoords[2] = listadd1[1], listadd1[2]
+        update_list!(inlist,listres1,listm1,listn1,x,m,n,listsize1)
+        @inbounds maxcoords[1], maxcoords[2] = listm1[1], listn1[1]
     else
-        update_list!(nothing,listres2,listadd2,x,m,n,listsize2)
+        update_list!(nothing,listres2,listm2,listn2,x,m,n,listsize2)
     end
 
     @inbounds return listres1[1]

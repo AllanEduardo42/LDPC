@@ -23,9 +23,11 @@ function
         m::Integer,
         cn2vn::Vector{Vector{T}} where {T<:Integer},
         listres1::Union{Vector{<:AbstractFloat},Nothing},
-        listadd1::Union{Matrix{<:Integer},Nothing},
+        listm1::Union{Vector{<:Integer},Nothing},
+        listn1::Union{Vector{<:Integer},Nothing},
         listres2::Union{Vector{<:AbstractFloat},Nothing},
-        listadd2::Union{Matrix{<:Integer},Nothing},
+        listm2::Union{Vector{<:Integer},Nothing},
+        listn2::Union{Vector{<:Integer},Nothing},
         listsize1::Integer,
         listsize2::Integer,
         inlist::Union{Matrix{<:Integer},Nothing}   
@@ -37,7 +39,7 @@ function
             x = calc_residue(Ms,Factors,Lr,m,n)
             if x ≠ 0.0
                 maxresidue = findmaxresidue!(Residues,maxcoords,maxresidue,m,n,x,
-                    listres1,listadd1,listres2,listadd2,listsize1,listsize2,
+                    listres1,listm1,listn1,listres2,listm2,listn2,listsize1,listsize2,
                     inlist)
             end            
         end
@@ -87,7 +89,8 @@ function
         cn2vn::Vector{Vector{T}} where {T<:Integer},
         Ms::Matrix{<:AbstractFloat},
         listres1::Union{Vector{<:AbstractFloat},Nothing},
-        listadd1::Union{Matrix{<:Integer},Nothing},
+        listm1::Union{Vector{<:Integer},Nothing},
+        listn1::Union{Vector{<:Integer},Nothing},
         listsize1::Integer,
         inlist::Union{Matrix{<:Integer},Nothing}
     )
@@ -110,7 +113,9 @@ function
             m,
             cn2vn,
             listres1,
-            listadd1,
+            listm1,
+            listn1,
+            nothing,
             nothing,
             nothing,
             listsize1,
