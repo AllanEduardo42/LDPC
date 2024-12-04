@@ -10,7 +10,7 @@ function
     calc_residues!(
         alpha::AbstractFloat,
         Residues::Union{Matrix{<:AbstractFloat},Nothing},
-        maxcoords::Vector{<:Integer},
+        # maxcoords::Vector{<:Integer},
         maxresidue::AbstractFloat,
         Factors::Union{Matrix{<:AbstractFloat},Nothing},
         Ms::Matrix{<:AbstractFloat},
@@ -34,15 +34,21 @@ function
     )
     
     update_Lr!(Ms,Lq,m,cn2vn,Lrn,signs,phi,alpha)
-    @fastmath @inbounds for n in cn2vn[m]
+    @inbounds for n in cn2vn[m]
         if n ≠ vnmax
             x = calc_residue(Ms,Factors,Lr,m,n)
-            if x ≠ 0.0
-                maxresidue = findmaxresidue!(Residues,maxcoords,maxresidue,m,n,x,
+            @fastmath if x != 0.0
+                maxresidue = findmaxresidue!(Residues,
+                    # maxcoords,
+                maxresidue,m,n,x,
                     listres1,listm1,listn1,listres2,listm2,listn2,listsize1,listsize2,
                     inlist)
             end            
         end
+    end
+
+    if maxresidue == 0 # no update
+        maxresidue = -1
     end
 
     return maxresidue
@@ -59,7 +65,13 @@ function
 
     @inbounds i = LinearIndices(Ms)[m,n]
 
-    @fastmath @inbounds return abs(Ms[i] - Lr[i])*Factors[i]
+    @fastmath @inbounds x = Ms[i] - Lr[i]
+    @fastmath if signbit(x)
+        x = -x
+    end
+    @fastmath @inbounds x *= Factors[i]
+
+    return x
 
 end
 
@@ -81,7 +93,7 @@ function
     init_residues!(
         alpha::AbstractFloat,  
         Residues::Union{Matrix{<:AbstractFloat},Nothing},      
-        maxcoords::Vector{<:Integer},              
+        # maxcoords::Vector{<:Integer},              
         Lq::Matrix{<:AbstractFloat},
         Lrn::Union{Vector{<:AbstractFloat},Nothing},
         signs::Union{Vector{Bool},Nothing},        
@@ -100,7 +112,7 @@ function
         maxresidue = calc_residues!(
             alpha,
             Residues,
-            maxcoords,
+            # maxcoords,
             maxresidue,
             nothing,
             Ms,

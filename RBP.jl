@@ -16,7 +16,6 @@ function
         Lr::Matrix{<:AbstractFloat},
         Ms::Matrix{<:AbstractFloat},
         maxresidue::AbstractFloat,
-        maxcoords::Vector{<:Integer},
         Lq::Matrix{<:AbstractFloat},
         Lf::Vector{<:AbstractFloat},
         cn2vn::Vector{Vector{T}} where {T<:Integer},
@@ -41,54 +40,68 @@ function
         inlist::Union{Matrix{<:Integer},Nothing}
     )
 
-    for e in 1:num_edges
+    @fastmath @inbounds for e in 1:num_edges
 
-        (cnmax,vnmax) = maxcoords
+        if maxresidue == 0
+            break
+        end
+        
+        cnmax = listm1[1]
+        vnmax = listn1[1]
 
-        if cnmax == 0
+        if cnmax == 0 || maxresidue == -1
             cnmax = rand(rng_sample,1:length(cn2vn))
             vnmax = rand(rng_sample,cn2vn[cnmax])
         end
+
+        maxresidue = 0.0
 
         _RBP_update_Lr!(cnmax,vnmax,Factors,rbpfactor,cn2vn,Lq,Lr,Ms,Lrn,signs)
 
         __RBP(Residues,cnmax,vnmax,listsize1,listres1,listm1,listn1,inlist)
 
         # update Ldn[vmax] and bitvector[vnmax]
-        @inbounds Ldn[vnmax] = Lf[vnmax]
-        @fastmath @inbounds for m in vn2cn[vnmax]
+        Ldn[vnmax] = Lf[vnmax]
+         @inbounds for m in vn2cn[vnmax]
             Ldn[vnmax] += Lr[m,vnmax]
             bitvector[vnmax] = signbit(Ldn[vnmax])
         end
 
-        @fastmath @inbounds for m in vn2cn[vnmax]
-            # if m ≠ cnmax || length(vn2cn[vnmax]) == 1
+        leaf = true
+        for m in vn2cn[vnmax]
             if m ≠ cnmax
+                leaf = false
                 # update vn2cn messages Lq[vnmax,m], ∀m ≠ cnmax
                 Lq[vnmax,m] = Ldn[vnmax] - Lr[m,vnmax]
-                maxresidue = calc_residues!(alpha,Residues,maxcoords,0.0,
-                                Factors,Ms,Lr,Lq,Lrn,signs,phi,vnmax,m,cn2vn,
-                                listres1,listm1,listn1,listres2,listm2,listn2,
-                                listsize1,listsize2,inlist)
-
-            elseif listres1 !== nothing
-                maxresidue = listres1[1]
-                maxcoords[1], maxcoords[2] = listm1[1], listn1[1]
+                maxresidue = calc_residues!(alpha,Residues,
+                maxresidue,
+                Factors,Ms,Lr,Lq,Lrn,signs,phi,vnmax,m,cn2vn,
+                listres1,listm1,listn1,listres2,listm2,listn2,
+                listsize1,listsize2,inlist)
             end
         end
 
-        @inbounds if listsize2 ≠ 0
-            for k in 1:listsize2
+        if leaf
+            if listres1 !== nothing
+                maxresidue = listres1[1]
+            else
+                listm1[1] = 0
+            end
+        end
+
+        if listsize2 ≠ 0
+            for k in listsize2:-1:1
+            # for k in 1:listsize2
                 update_list!(inlist,listres1,listm1,listn1,listres2[k],
                     listm2[k],listn2[k],listsize1)
             end
-            maxcoords[1], maxcoords[2] = listm1[1], listn1[1]
+            maxresidue = listres1[1]
             listres2 .*= 0.0
-            listm1 .*= 0
-            listn1 .*= 0
+            listm2 .*= 0
+            listn2 .*= 0
         end
 
-        maxresidue = findmaxcoords!(maxresidue,maxcoords,Residues,cn2vn,
+        maxresidue = findmaxcoords!(maxresidue,listm1,listn1,Residues,cn2vn,
             samples,rng_sample)
 
     end
@@ -102,8 +115,8 @@ function
         vnmax::Integer,
         ::Integer,
         ::Nothing,
-        ::Nothing,
-        ::Nothing,
+        ::Vector{<:Integer},
+        ::Vector{<:Integer},
         ::Nothing
     )
 
@@ -118,8 +131,8 @@ function
         ::Integer,
         ::Integer,
         ::Nothing,
-        ::Nothing,
-        ::Nothing,
+        ::Vector{<:Integer},
+        ::Vector{<:Integer},
         ::Nothing
     )
     

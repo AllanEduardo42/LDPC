@@ -10,7 +10,7 @@ function update_list!(
     )
 
     @fastmath @inbounds if x > listres[listsize]
-        if x > listres[1]
+        if x ≥ listres[1]
             i = 1
         else
             d = listsize >> 1

@@ -2,7 +2,8 @@
 function
     findmaxcoords!(
         maxresidue::AbstractFloat,
-        maxcoords::Vector{<:Integer},
+        listm1::Vector{<:Integer},
+        listn1::Vector{<:Integer},
         Residues::Matrix{<:AbstractFloat},
         cn2vn::Vector{Vector{T}} where {T<:Integer},
         ::Nothing,
@@ -14,8 +15,8 @@ function
             residue = Residues[m,n]
             if residue > maxresidue
                 maxresidue = residue
-                maxcoords[1] = m
-                maxcoords[2] = n
+                listm1[1] = m
+                listn1[1] = n
             end
         end
     end
@@ -54,6 +55,7 @@ end
 function 
     findmaxcoords!(
         maxresidue::AbstractFloat,
+        ::Vector{<:Integer},
         ::Vector{<:Integer},
         ::Nothing,
         ::Vector{Vector{T}} where {T<:Integer},

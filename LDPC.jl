@@ -44,7 +44,7 @@ STOP::Bool = true # stop simulation at zero syndrome (if true, BER curves are
 
 ################################## 5) NUMBERS ##################################
 
-TRIALS::Int = 96
+TRIALS::Int = 10
 MAX::Int = 20
 MAXRBP::Int = 10
 SNRTEST = [4]
@@ -55,7 +55,7 @@ SNR = collect(1.0:0.4:2.2)
 #Flooding
 FLOO::Bool = false
     # Flooding type: "MKAY", "TANH", "ALTN", "TABL", "MSUM"
-    FLOOTYPE = "TANH"
+    FLOOTYPE = "MSUM"
     # fast flooding update when using tanh mode (default:true)    
     FAST::Bool = true 
     # Min-Sum attenuation factor
@@ -70,7 +70,7 @@ iLBP::Bool = false
 #RBP
 _RBP::Bool = true 
     # RBP decay constant
-    DECAYRBP::Float64 = 1.0
+    DECAYRBP::Float64 = 0.9
 
 #Random-RBP
 RRBP::Bool = false  
@@ -80,17 +80,17 @@ RRBP::Bool = false
     SAMPLESIZE::Int = 51
      
 #Local-RBP
-LRBP::Bool = false
+LRBP::Bool = true
     # Local-RBP decay constant    
-    DECAYLRBP::Float64 = 0.5  
+    DECAYLRBP::Float64 = 0.9
 
 #List-RBP
 LIST::Bool = true
     # List-RBP decay constant
-    DECAYLIST::Float64 = 1.0
+    DECAYLIST::Float64 = 0.9
     # List-RBP size
     LISTSIZE::UInt = 64
-    LISTSIZE2::UInt = 4
+    LISTSIZE2::UInt = 0
 
 ########################### 7) MESSAGE AND CODEWORD ############################
 
@@ -212,6 +212,7 @@ for mode in modes
             mode[2],
             min(TRIALS,2),
             mode[3];
+            rgn_samples_seeds=rgn_samples_seeds,
             printtest=p)
     end
 end                             

@@ -116,10 +116,8 @@ function
 
     maxresidue = 0.0
 
-    maxcoords, Factors, num_edges = (supermode == "RBP") ? 
-        ([0,0], 1.0*H, sum(H)) : 
-        (nothing,nothing,nothing)
-    
+    Factors, num_edges = (supermode == "RBP") ? (1.0*H, sum(H)) : (nothing,nothing)
+
     if mode == "List-RBP"
         listres1 = zeros(listsize1+1)
         listm1 = zeros(Int,listsize1+1)
@@ -136,8 +134,13 @@ function
         end
     else
         listres1 = nothing
-        listm1 = nothing
-        listn1 = nothing
+        if mode == "RBP" || mode == "Local-RBP"
+            listm1 = zeros(Int,1)
+            listn1 = zeros(Int,1)
+        else
+            listm1 = nothing
+            listn1 = nothing
+        end
         listres2 = nothing
         listm2 = nothing
         listn2 = nothing
@@ -199,8 +202,8 @@ function
         init_Lq!(Lq,Lf,vn2cn)
 
         if supermode == "RBP"
-            maxresidue = init_residues!(alpha,Residues,maxcoords,Lq,Lrn,signs,phi,cn2vn,Ms,
-                listres1,listm1,listn1,listsize1,inlist)
+            maxresidue = init_residues!(alpha,Residues,Lq,Lrn,signs,phi,cn2vn,
+                Ms,listres1,listm1,listn1,listsize1,inlist)
         end
             
         # SPA routine
@@ -227,7 +230,6 @@ function
             printtest,
             Residues,
             maxresidue,
-            maxcoords,
             Factors,
             rbpfactor,
             num_edges,

@@ -2,14 +2,13 @@
 function 
     findmaxresidue!(
         Residues::Matrix{<:AbstractFloat},
-        maxcoords::Vector{<:Integer},
         maxresidue::AbstractFloat,
         m::Integer,
         n::Integer,
         x::AbstractFloat,
         ::Nothing,
-        ::Nothing,
-        ::Nothing,
+        listm1::Vector{<:Integer},
+        listn1::Vector{<:Integer},
         ::Nothing,
         ::Nothing,
         ::Nothing,
@@ -20,10 +19,10 @@ function
 
     @inbounds Residues[m,n] = x
 
-    if @fastmath x > maxresidue
+    if @fastmath x ≥ maxresidue
         maxresidue = x
-        @inbounds maxcoords[1] = m
-        @inbounds maxcoords[2] = n
+        @inbounds listm1[1] = m
+        @inbounds listn1[1] = n
     end
 
     return maxresidue
@@ -33,14 +32,13 @@ end
 function 
     findmaxresidue!(
         ::Nothing,
-        maxcoords::Vector{<:Integer},
         maxresidue::AbstractFloat,
         m::Integer,
         n::Integer,
         x::AbstractFloat,
         ::Nothing,
-        ::Nothing,
-        ::Nothing,
+        listm1::Vector{<:Integer},
+        listn1::Vector{<:Integer},
         ::Nothing,
         ::Nothing,
         ::Nothing,
@@ -50,8 +48,8 @@ function
     )
     if @fastmath x > maxresidue
         maxresidue = x
-        @inbounds maxcoords[1] = m
-        @inbounds maxcoords[2] = n
+        @inbounds listm1[1] = m
+        @inbounds listn1[1] = n
     end
 
     return maxresidue
@@ -61,7 +59,6 @@ end
 function 
     findmaxresidue!(
         ::Nothing,
-        maxcoords::Vector{<:Integer},
         maxresidue::AbstractFloat,
         m::Integer,
         n::Integer,
@@ -77,7 +74,7 @@ function
         inlist::Matrix{<:Integer}
     )
 
-    @inbounds if inlist[m,n] # if residue(m,n) is in the list
+    @inbounds if inlist[m,n]  # if residue(m,n) is in the list
         inlist[m,n] = false   # remove from the list
         pos = 0
         for i = 1:listsize1
@@ -100,7 +97,6 @@ function
 
     if listsize2 == 0
         update_list!(inlist,listres1,listm1,listn1,x,m,n,listsize1)
-        @inbounds maxcoords[1], maxcoords[2] = listm1[1], listn1[1]
     else
         update_list!(nothing,listres2,listm2,listn2,x,m,n,listsize2)
     end
