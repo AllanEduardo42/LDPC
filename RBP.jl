@@ -15,7 +15,6 @@ function
         bitvector::Vector{Bool},
         Lr::Matrix{<:AbstractFloat},
         Ms::Matrix{<:AbstractFloat},
-        maxresidue::AbstractFloat,
         Lq::Matrix{<:AbstractFloat},
         Lf::Vector{<:AbstractFloat},
         cn2vn::Vector{Vector{T}} where {T<:Integer},
@@ -31,9 +30,9 @@ function
         rng_sample::Union{AbstractRNG,Nothing},
         listsize1::Integer,
         listsize2::Integer,
-        listres1::Union{Vector{<:AbstractFloat},Nothing},
-        listm1::Union{Vector{<:Integer},Nothing},
-        listn1::Union{Vector{<:Integer},Nothing},
+        listres1::Vector{<:AbstractFloat},
+        listm1::Vector{<:Integer},
+        listn1::Vector{<:Integer},
         listres2::Union{Vector{<:AbstractFloat},Nothing},
         listm2::Union{Vector{<:Integer},Nothing},
         listn2::Union{Vector{<:Integer},Nothing},
@@ -42,19 +41,17 @@ function
 
     @fastmath @inbounds for e in 1:num_edges
 
-        if maxresidue == 0
+        if listres1[1] == 0
             break
         end
         
         cnmax = listm1[1]
         vnmax = listn1[1]
 
-        if cnmax == 0 || maxresidue == -1
+        if cnmax == 0 || listm1[1]== -1
             cnmax = rand(rng_sample,1:length(cn2vn))
             vnmax = rand(rng_sample,cn2vn[cnmax])
         end
-
-        maxresidue = 0.0
 
         _RBP_update_Lr!(cnmax,vnmax,Factors,rbpfactor,cn2vn,Lq,Lr,Ms,Lrn,signs)
 
@@ -73,18 +70,14 @@ function
                 leaf = false
                 # update vn2cn messages Lq[vnmax,m], ∀m ≠ cnmax
                 Lq[vnmax,m] = Ldn[vnmax] - Lr[m,vnmax]
-                maxresidue = calc_residues!(alpha,Residues,
-                maxresidue,
-                Factors,Ms,Lr,Lq,Lrn,signs,phi,vnmax,m,cn2vn,
-                listres1,listm1,listn1,listres2,listm2,listn2,
-                listsize1,listsize2,inlist)
+                calc_residues!(alpha,Residues,Factors,Ms,Lr,Lq,Lrn,signs,phi,
+                    vnmax,m,cn2vn,listres1,listm1,listn1,listres2,listm2,listn2,
+                    listsize1,listsize2,inlist)
             end
         end
 
         if leaf
-            if listres1 !== nothing
-                maxresidue = listres1[1]
-            else
+            if listsize1 == 1
                 listm1[1] = 0
             end
         end
@@ -95,14 +88,12 @@ function
                 update_list!(inlist,listres1,listm1,listn1,listres2[k],
                     listm2[k],listn2[k],listsize1)
             end
-            maxresidue = listres1[1]
             listres2 .*= 0.0
             listm2 .*= 0
             listn2 .*= 0
         end
 
-        maxresidue = findmaxcoords!(maxresidue,listm1,listn1,Residues,cn2vn,
-            samples,rng_sample)
+        findmaxcoords!(listres1,listm1,listn1,Residues,cn2vn,samples,rng_sample)
 
     end
 end
@@ -114,12 +105,13 @@ function
         cnmax::Integer,
         vnmax::Integer,
         ::Integer,
-        ::Nothing,
+        listres1::Vector{<:AbstractFloat},
         ::Vector{<:Integer},
         ::Vector{<:Integer},
         ::Nothing
     )
 
+    @inbounds listres1[1] = 0
     @inbounds Residues[cnmax,vnmax] = 0.0
 end
 
@@ -130,12 +122,14 @@ function
         ::Integer,
         ::Integer,
         ::Integer,
-        ::Nothing,
+        listres1::Vector{<:AbstractFloat},
         ::Vector{<:Integer},
         ::Vector{<:Integer},
         ::Nothing
     )
     
+    @inbounds listres1[1] = 0
+
 end
 
 # List-RBP

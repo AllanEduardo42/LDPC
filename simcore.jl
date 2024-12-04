@@ -132,12 +132,14 @@ function
             listm2 = nothing
             listn2 = nothing
         end
-    else
-        listres1 = nothing
+    else        
         if mode == "RBP" || mode == "Local-RBP"
+            listsize1 = 1
+            listres1 = zeros(1)
             listm1 = zeros(Int,1)
             listn1 = zeros(Int,1)
         else
+            listres1 = nothing
             listm1 = nothing
             listn1 = nothing
         end
@@ -202,8 +204,8 @@ function
         init_Lq!(Lq,Lf,vn2cn)
 
         if supermode == "RBP"
-            maxresidue = init_residues!(alpha,Residues,Lq,Lrn,signs,phi,cn2vn,
-                Ms,listres1,listm1,listn1,listsize1,inlist)
+            init_residues!(alpha,Residues,Lq,Lrn,signs,phi,cn2vn,Ms,listres1,
+                listm1,listn1,listsize1,inlist)
         end
             
         # SPA routine
@@ -229,7 +231,6 @@ function
             phi,
             printtest,
             Residues,
-            maxresidue,
             Factors,
             rbpfactor,
             num_edges,

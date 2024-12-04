@@ -10,8 +10,6 @@ function
     calc_residues!(
         alpha::AbstractFloat,
         Residues::Union{Matrix{<:AbstractFloat},Nothing},
-        # maxcoords::Vector{<:Integer},
-        maxresidue::AbstractFloat,
         Factors::Union{Matrix{<:AbstractFloat},Nothing},
         Ms::Matrix{<:AbstractFloat},
         Lr::Union{Matrix{<:AbstractFloat},Nothing},                      
@@ -22,9 +20,9 @@ function
         vnmax::Integer,
         m::Integer,
         cn2vn::Vector{Vector{T}} where {T<:Integer},
-        listres1::Union{Vector{<:AbstractFloat},Nothing},
-        listm1::Union{Vector{<:Integer},Nothing},
-        listn1::Union{Vector{<:Integer},Nothing},
+        listres1::Vector{<:AbstractFloat},
+        listm1::Vector{<:Integer},
+        listn1::Vector{<:Integer},
         listres2::Union{Vector{<:AbstractFloat},Nothing},
         listm2::Union{Vector{<:Integer},Nothing},
         listn2::Union{Vector{<:Integer},Nothing},
@@ -38,20 +36,16 @@ function
         if n ≠ vnmax
             x = calc_residue(Ms,Factors,Lr,m,n)
             @fastmath if x != 0.0
-                maxresidue = findmaxresidue!(Residues,
-                    # maxcoords,
-                maxresidue,m,n,x,
-                    listres1,listm1,listn1,listres2,listm2,listn2,listsize1,listsize2,
-                    inlist)
+                findmaxresidue!(Residues,m,n,x,listres1,listm1,listn1,listres2,
+                listm2,listn2,listsize1,listsize2,inlist)
             end            
         end
     end
 
-    if maxresidue == 0 # no update
-        maxresidue = -1
+    if listres1[1] == 0 # no update
+        listres1[1] = -1
     end
 
-    return maxresidue
 end
 
 function 
@@ -92,8 +86,7 @@ end
 function
     init_residues!(
         alpha::AbstractFloat,  
-        Residues::Union{Matrix{<:AbstractFloat},Nothing},      
-        # maxcoords::Vector{<:Integer},              
+        Residues::Union{Matrix{<:AbstractFloat},Nothing},              
         Lq::Matrix{<:AbstractFloat},
         Lrn::Union{Vector{<:AbstractFloat},Nothing},
         signs::Union{Vector{Bool},Nothing},        
@@ -107,35 +100,11 @@ function
         inlist::Union{Matrix{<:Integer},Nothing}
     )
     
-    maxresidue = 0.0
     for m in eachindex(cn2vn)
-        maxresidue = calc_residues!(
-            alpha,
-            Residues,
-            # maxcoords,
-            maxresidue,
-            nothing,
-            Ms,
-            nothing,
-            Lq,
-            Lrn,
-            signs,
-            phi,
-            0,
-            m,
-            cn2vn,
-            listres1,
-            listm1,
-            listn1,
-            nothing,
-            nothing,
-            nothing,
-            listsize1,
-            0,
-            inlist
-        )
+        calc_residues!(alpha,Residues,nothing,Ms,nothing,Lq,Lrn,signs,phi,0,m,
+            cn2vn,listres1,listm1,listn1,nothing,nothing,nothing,listsize1,0,
+            inlist)
     end
 
-    return maxresidue
 end
 

@@ -2,11 +2,10 @@
 function 
     findmaxresidue!(
         Residues::Matrix{<:AbstractFloat},
-        maxresidue::AbstractFloat,
         m::Integer,
         n::Integer,
         x::AbstractFloat,
-        ::Nothing,
+        listres1::Vector{<:AbstractFloat},
         listm1::Vector{<:Integer},
         listn1::Vector{<:Integer},
         ::Nothing,
@@ -19,24 +18,22 @@ function
 
     @inbounds Residues[m,n] = x
 
-    if @fastmath x ≥ maxresidue
-        maxresidue = x
-        @inbounds listm1[1] = m
-        @inbounds listn1[1] = n
+    @fastmath @inbounds if x > listres1[1]
+        listres1[1] = x
+        listm1[1] = m
+        listn1[1] = n
     end
 
-    return maxresidue
 end
 
 # Local-RBP
 function 
     findmaxresidue!(
         ::Nothing,
-        maxresidue::AbstractFloat,
         m::Integer,
         n::Integer,
         x::AbstractFloat,
-        ::Nothing,
+        listres1::Vector{<:AbstractFloat},
         listm1::Vector{<:Integer},
         listn1::Vector{<:Integer},
         ::Nothing,
@@ -46,20 +43,19 @@ function
         ::Integer,
         ::Nothing
     )
-    if @fastmath x > maxresidue
-        maxresidue = x
-        @inbounds listm1[1] = m
-        @inbounds listn1[1] = n
+
+    @fastmath @inbounds if x > listres1[1]
+        listres1[1] = x
+        listm1[1] = m
+        listn1[1] = n
     end
 
-    return maxresidue
 end
 
 # List-RBP
 function 
     findmaxresidue!(
         ::Nothing,
-        maxresidue::AbstractFloat,
         m::Integer,
         n::Integer,
         x::AbstractFloat,
@@ -100,7 +96,5 @@ function
     else
         update_list!(nothing,listres2,listm2,listn2,x,m,n,listsize2)
     end
-
-    @inbounds return listres1[1]
     
 end
