@@ -10,7 +10,9 @@ include("update_list.jl")
 #RBP
 function
     RBP!(
-        Residues::Union{Matrix{<:AbstractFloat},Nothing},
+        address::Union{Matrix{<:Integer},Nothing},
+        addressinv::Union{Matrix{<:Integer},Nothing},
+        residues::Union{Vector{<:AbstractFloat},Nothing},
         bitvector::Vector{Bool},
         Lr::Matrix{<:AbstractFloat},
         Ms::Matrix{<:AbstractFloat},
@@ -22,11 +24,10 @@ function
         signs::Union{Vector{Bool},Nothing},        
         phi::Union{Vector{<:AbstractFloat},Nothing},
         Factors::Matrix{<:AbstractFloat},
-        rbpfactor::AbstractFloat,
+        decayfactor::AbstractFloat,
         num_edges::Integer,
         Ldn::Vector{<:AbstractFloat},
-        samples::Union{Vector{<:Integer},Nothing},
-        rng_sample::Union{AbstractRNG,Nothing},
+        rng_sample::AbstractRNG,
         listsize1::Integer,
         listsize2::Integer,
         listres1::Vector{<:AbstractFloat},
@@ -52,14 +53,14 @@ function
             vnmax = rand(rng_sample,cn2vn[cnmax])
         end
 
-        imax = LinearIndices(Factors)[cnmax,vnmax]
+        lmax = LinearIndices(Factors)[cnmax,vnmax]
 
-        Factors[imax] *= rbpfactor
+        Factors[lmax] *= decayfactor
 
         ### update Lr[cnmax,vnmax]
-        _RBP_update_Lr!(imax,cnmax,vnmax,cn2vn,Lq,Lr,Ms,Lrn,signs)
+        _RBP_update_Lr!(lmax,cnmax,vnmax,cn2vn,Lq,Lr,Ms,Lrn,signs)
 
-        __RBP(Residues,imax,listsize1,listres1,listm1,listn1,inlist)
+        __RBP(addressinv,residues,lmax,listsize1,listres1,listm1,listn1,inlist)
 
         # update Ldn[vmax] and bitvector[vnmax]
         Ldn[vnmax] = Lf[vnmax]
@@ -74,7 +75,7 @@ function
                 leaf = false
                 # update vn2cn messages Lq[vnmax,m], ∀m ≠ cnmax
                 Lq[vnmax,m] = Ldn[vnmax] - Lr[m,vnmax]
-                calc_residues!(Residues,Factors,Ms,Lr,Lq,Lrn,signs,phi,vnmax,m,
+                calc_residues!(addressinv,residues,Factors,Ms,Lr,Lq,Lrn,signs,phi,vnmax,m,
                     cn2vn,listres1,listm1,listn1,listres2,listm2,listn2,
                     listsize1,listsize2,inlist)
             end
@@ -97,16 +98,17 @@ function
             listn2 .*= 0
         end
 
-        findmaxcoords!(listres1,listm1,listn1,Residues,cn2vn,samples,rng_sample)
+        findmaxcoords!(address,residues,listres1,listm1,listn1)
 
     end
 end
 
-# RBP and Random-RBP
+# RBP
 function 
     __RBP(
-        Residues::Matrix{<:AbstractFloat},
-        imax::Integer,
+        addressinv::Matrix{<:Integer},
+        residues::Vector{<:AbstractFloat},
+        lmax::Integer,
         ::Integer,
         listres1::Vector{<:AbstractFloat},
         ::Vector{<:Integer},
@@ -115,13 +117,14 @@ function
     )
 
     @inbounds listres1[1] = 0
-    @inbounds Residues[imax] = 0.0
+    @inbounds residues[addressinv[lmax]] = 0.0
 
 end
 
 # Local-RBP
 function 
     __RBP(
+        ::Nothing,
         ::Nothing,
         ::Integer,
         ::Integer,
@@ -139,7 +142,8 @@ end
 function 
     __RBP(
         ::Nothing,
-        imax::Integer,
+        ::Nothing,
+        lmax::Integer,
         listsize::Integer,
         listres1::Vector{<:AbstractFloat},
         listm1::Vector{<:Integer},
@@ -147,7 +151,7 @@ function
         inlist::Matrix{Bool}
     )
 
-    @inbounds inlist[imax] = false
+    @inbounds inlist[lmax] = false
     @inbounds for i in 1:listsize
         listres1[i] = listres1[i+1]
         listm1[i] = listm1[i+1]
@@ -157,7 +161,7 @@ end
 
 function 
     _RBP_update_Lr!(
-        imax::Integer,
+        lmax::Integer,
         ::Integer,
         ::Integer,
         ::Vector{Vector{T}} where {T<:Integer},
@@ -168,13 +172,13 @@ function
         ::Nothing
     )
 
-    @inbounds Lr[imax] = Ms[imax]
+    @inbounds Lr[lmax] = Ms[lmax]
 
 end
 
 function 
     _RBP_update_Lr!(
-        imax::Integer,
+        lmax::Integer,
         cnmax::Integer,
         vnmax::Integer,
         cn2vn::Vector{Vector{T}} where {T<:Integer},
@@ -192,11 +196,11 @@ function
         end
     end    
     if @fastmath abs(pLr) < 1 
-        @fastmath @inbounds Lr[imax] = 2*atanh(pLr)
+        @fastmath @inbounds Lr[lmax] = 2*atanh(pLr)
     elseif pLr > 0
-        @fastmath @inbounds Lr[imax] = INFFLOAT
+        @fastmath @inbounds Lr[lmax] = INFFLOAT
     else
-        @fastmath @inbounds Lr[imax] = NINFFLOAT
+        @fastmath @inbounds Lr[lmax] = NINFFLOAT
     end
 
 end

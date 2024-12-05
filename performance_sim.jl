@@ -16,49 +16,10 @@ function
         printtest=false    
     )
 
-############################### CHECK VALID MODE ###############################
-    # if !(bptype == "MKAY" || bptype == "TANH" || bptype == "ALTN" || 
-    #     bptype == "TABL" || bptype == "MSUM")      
-    #     throw(
-    #         ArgumentError(
-    #             "$bptype is not a valid flooding mode"
-    #         )
-    #     )
-    # end    
-
-    # if mode == "Flooding"
-    #     supermode, mode = mode, bptype        
-    # elseif mode == "LBP" || mode == "iLBP"
-    #     supermode = "LBP"    
-    # elseif mode == "RBP" || mode == "Local-RBP" || mode == "Random-RBP"||
-    #        mode == "List-RBP" 
-    #     supermode = "RBP"
-    # else
-    #     throw(
-    #         ArgumentError(
-    #             "$mode is not a valid mode"
-    #         )
-    #     )
-    # end
-
 ########################### PRINT SIMULATION DETAILS ###########################
     
     # if trials = 1, set test mode
-    test = (trials < 3) ? true : false
-
-    # if supermode == "RBP"
-    #     if mode == "RBP"
-    #         decayfactor = DECAYRBP
-    #     elseif mode == "Local-RBP"
-    #         decayfactor = DECAYLRBP
-    #     elseif mode == "Random-RBP"
-    #         decayfactor = DECAYRRBP
-    #     elseif mode == "List-RBP"
-    #         decayfactor = DECAYLIST
-    #     end           
-    # else
-    #     decayfactor = nothing
-    # end    
+    test = (trials < 3) ? true : false  
     
     if test && printtest
         println()
@@ -126,7 +87,6 @@ function
                                             decayfactor,
                                             LISTSIZE,
                                             LISTSIZE2,
-                                            SAMPLESIZE,
                                             Rgn_noise_seeds[i],
                                             Rgn_samples_seeds[i],
                                             Rgn_message_seeds[i],
@@ -149,7 +109,6 @@ function
                                             decayfactor,
                                             LISTSIZE,
                                             LISTSIZE2,
-                                            SAMPLESIZE,
                                             Rgn_noise_seeds[1],
                                             Rgn_samples_seeds[1],
                                             Rgn_message_seeds[1],
@@ -187,7 +146,6 @@ function
                                     decayfactor,
                                     LISTSIZE,
                                     LISTSIZE2,
-                                    SAMPLESIZE,
                                     Rgn_noise_seeds[1],
                                     Rgn_samples_seeds[1],
                                     Rgn_message_seeds[1],

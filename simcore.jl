@@ -24,7 +24,6 @@ function
         decayfactor::AbstractFloat,
         listsize1::Integer,
         listsize2::Integer,
-        samplesize::Integer,
         rgn_seed_noise::Integer,
         rng_seed_sample::Integer,
         rgn_seed_msg::Integer,
@@ -32,8 +31,7 @@ function
         printtest::Bool
     )
 
-    if mode == "RBP" || mode == "Local-RBP" || mode == "Random-RBP" ||
-    mode == "List-RBP" 
+    if mode == "RBP" || mode == "Local-RBP" || mode == "List-RBP" 
         supermode = "RBP"
     elseif mode == "LBP" || mode == "iLBP"
         supermode = "LBP"  
@@ -43,6 +41,38 @@ function
 
     msg = rand(Xoshiro(rgn_seed_msg),Bool,a)
     cword = IEEE80216e_parity_bits(msg,zf,E_H)
+
+######################### PRINT INFORMATION ON SCREEN ##########################
+    if test && printtest   
+        println()
+        print("############################### LDPC parameters #######################")
+        println("#########")
+        println()
+        println("Parity Check Matrix: $M x $N")
+        println()
+        display(sparse(H))
+        println()
+        println("Graph girth = ", girth)
+        println()
+        println("msg (L = $(length(msg))):")
+        for i in eachindex(msg)
+            print(Int(msg[i]))
+            if i%80 == 0
+                println()
+            end
+        end
+        println()
+        println()
+        println("cword (L = $(length(cword))):")
+        for i in eachindex(cword)
+            print(Int(cword[i]))
+            if i%80 == 0
+                println()
+            end
+        end
+        println()
+        println()
+    end
     
 ################################## CONSTANTS ###################################
     
@@ -120,12 +150,26 @@ function
 
     phi = (bptype == "TABL") ? lookupTable() : nothing
 
-    Residues = (mode == "RBP" || mode == "Random-RBP") ? H*0.0 : nothing
-
-    samples = (mode == "Random-RBP" && samplesize != 0) ?
-                Vector{Int}(undef,samplesize) : nothing
-
     Factors, num_edges = (supermode == "RBP") ? (1.0*H, sum(H)) : (nothing,nothing)
+
+    if mode == "RBP"
+        residues = zeros(num_edges)
+        address = zeros(Int,2,num_edges)
+        addressinv = 0*H
+        e = 0
+        for m in axes(H,1)
+            for n in cn2vn[m]
+                e += 1
+                address[1,e] = m
+                address[2,e] = n
+                addressinv[m,n] = e
+            end
+        end
+    else
+        residues = nothing
+        address = nothing
+        addressinv = nothing
+    end
 
     if mode == "List-RBP"
         listres1 = zeros(listsize1+1)
@@ -213,14 +257,16 @@ function
 
         if supermode == "RBP"
             for m in eachindex(cn2vn)
-                calc_residues!(Residues,nothing,Ms,nothing,Lq,Lrn,signs,phi,0,m,
+                calc_residues!(addressinv,residues,nothing,Ms,nothing,Lq,Lrn,signs,phi,0,m,
                 cn2vn,listres1,listm1,listn1,nothing,nothing,nothing,listsize1,0,
                 inlist)
             end
         end
             
         # SPA routine
-        BP!(supermode,
+        BP!(address,
+            addressinv,
+            supermode,
             stop,
             test,
             maxiter,
@@ -240,13 +286,12 @@ function
             signs,
             phi,
             printtest,
-            Residues,
+            residues,
             Factors,
             decayfactor,
             num_edges,
             Ldn,
             visited_vns,
-            samples,
             rng_sample,
             listsize1,
             listsize2,

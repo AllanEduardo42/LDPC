@@ -49,7 +49,7 @@ STOP::Bool = true # stop simulation at zero syndrome (if true, BER curves are
 
 ################################## 5) NUMBERS ##################################
 
-TRIALS::Int = 32
+TRIALS::Int = 10240
 MAX::Int = 20
 MAXRBP::Int = 10
 SNRTEST = [4]
@@ -59,7 +59,7 @@ SNR = collect(1.0:0.4:2.2)
 
 Modes = zeros(Bool,7)
 
-Names = ["Flooding","LBP","iLBP","RBP","Random-RBP","Local-RBP","List-RBP"]
+Names = ["Flooding","LBP","iLBP","RBP","Local-RBP","List-RBP"]
 
 # BP type: "MKAY", "TANH", "FAST", "ALTN", "TABL", "MSUM"
 Bptypes = Vector{String}(undef,7)
@@ -89,28 +89,18 @@ Modes[4] = 1
 Bptypes[4] = "MSUM"
 Maxiters[4] = MAXRBP
 Decays[4] = 0.9
-
-
-#Random-RBP
+     
+#Local-RBP
 Modes[5] = 0
 Bptypes[5] = "MSUM"
 Maxiters[5] = MAXRBP
 Decays[5] = 0.9
-# Random-RBP sample size
-    SAMPLESIZE::Int = 51
 
-     
-#Local-RBP
-Modes[6] = 0
+#List-RBP
+Modes[6] = 1
 Bptypes[6] = "MSUM"
 Maxiters[6] = MAXRBP
 Decays[6] = 0.9
-
-#List-RBP
-Modes[7] = 0
-Bptypes[7] = "MSUM"
-Maxiters[7] = MAXRBP
-Decays[7] = 0.9
     # List-RBP size
     LISTSIZE::UInt = 64
     LISTSIZE2::UInt = 4
@@ -155,7 +145,6 @@ else
         M::Int,N::Int = size(H)
         L = N
         girth = find_girth(H,100000)
-        # println("H*Cword = $(iszero(H*Cword))")
     else
         throw(ArgumentError(
                     lazy"CHECK = $CHECK, but must be 1, 2 or 3"
@@ -176,36 +165,6 @@ for i in eachindex(Rgn_noise_seeds)
     Rgn_samples_seeds[i] = SEED_SAMPL + i - 1
     Rgn_message_seeds[i] = SEED_MESSA + 1 - 1
 end
-
-######################### PRIN INFORMATION ON SCREEN ##########################
-# println()
-# print("############################### LDPC parameters #######################")
-# println("#########")
-# println()
-# println("Parity Check Matrix: $M x $N")
-# println()
-# display(sparse(H))
-# println()
-# println("Graph girth = ", girth)
-# println()
-# println("Msg (L = $(length(Msg))):")
-# for i in eachindex(Msg)
-#     print(Int(Msg[i]))
-#     if i%80 == 0
-#         println()
-#     end
-# end
-# println()
-# println()
-# println("Cword (L = $(length(Cword))):")
-# for i in eachindex(Cword)
-#     print(Int(Cword[i]))
-#     if i%80 == 0
-#         println()
-#     end
-# end
-# println()
-# println()
 
 #################### JULIA COMPILATION (FOR SPEED) AND TEST ####################
 LR = Dict()

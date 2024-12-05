@@ -7,7 +7,8 @@ include("findmaxresidue.jl")
 
 function
     calc_residues!(
-        Residues::Union{Matrix{<:AbstractFloat},Nothing},
+        addressinv::Union{Matrix{<:Integer},Nothing},
+        residues::Union{Vector{<:AbstractFloat},Nothing},
         Factors::Union{Matrix{<:AbstractFloat},Nothing},
         Ms::Matrix{<:AbstractFloat},
         Lr::Union{Matrix{<:AbstractFloat},Nothing},                      
@@ -32,9 +33,10 @@ function
     update_Lr!(Ms,Lq,m,cn2vn,Lrn,signs,phi)
     @inbounds for n in cn2vn[m]
         if n ≠ vnmax
-            x = calc_residue(Ms,Factors,Lr,m,n)
+            l = LinearIndices(Ms)[m,n]
+            x = calc_residue(Ms,Factors,Lr,l)
             @fastmath if x != 0.0
-                findmaxresidue!(Residues,m,n,x,listres1,listm1,listn1,listres2,
+                findmaxresidue!(addressinv,residues,m,n,l,x,listres1,listm1,listn1,listres2,
                 listm2,listn2,listsize1,listsize2,inlist)
             end            
         end
@@ -51,17 +53,16 @@ function
         Ms::Matrix{<:AbstractFloat},
         Factors::Matrix{<:AbstractFloat},
         Lr::Matrix{<:AbstractFloat},
-        m::Integer,
-        n::Integer
+        l::Integer
     )
 
-    @inbounds i = LinearIndices(Ms)[m,n]
+    
 
-    @fastmath @inbounds x = Ms[i] - Lr[i]
+    @fastmath @inbounds x = Ms[l] - Lr[l]
     @fastmath if signbit(x)
         x = -x
     end
-    @fastmath @inbounds x *= Factors[i]
+    @fastmath @inbounds x *= Factors[l]
 
     return x
 
@@ -73,11 +74,10 @@ function
         Ms::Matrix{<:AbstractFloat},
         ::Nothing,
         ::Nothing,
-        m::Integer,
-        n::Integer
+        l::Integer
     )
 
-    @fastmath @inbounds return abs(Ms[m,n])
+    @fastmath @inbounds return abs(Ms[l])
 
 end
 

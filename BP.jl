@@ -13,7 +13,9 @@ include("LBP.jl")
 include("RBP.jl")
 
 function 
-    BP!(supermode::String,
+    BP!(address::Union{Matrix{<:Integer},Nothing},
+        addressinv::Union{Matrix{<:Integer},Nothing},
+        supermode::String,
         stop::Bool,
         test::Bool,
         maxiter::Integer,
@@ -33,13 +35,12 @@ function
         signs::Union{Vector{Bool},Nothing},        
         phi::Union{Vector{<:AbstractFloat},Nothing},
         printtest::Union{Bool,Nothing},        
-        Residues::Union{Matrix{<:AbstractFloat},Nothing},
+        residues::Union{Vector{<:AbstractFloat},Nothing},
         Factors::Union{Matrix{<:AbstractFloat},Nothing},
         rbpfactor::Union{AbstractFloat,Nothing},
         num_edges::Union{Integer,Nothing},
         Ldn::Union{Vector{<:AbstractFloat},Nothing},
         visited_vns::Union{Vector{Bool},Nothing},
-        samples::Union{Vector{<:Integer},Nothing},
         rgn_sample::Union{AbstractRNG,Nothing},
         listsize::Integer,
         listsize2::Integer,
@@ -81,7 +82,9 @@ function
                  visited_vns,
                  i)   
         elseif supermode == "RBP"
-            RBP!(Residues,
+            RBP!(address,
+                 addressinv,
+                 residues,
                  bitvector,
                  Lr,
                  Ms,
@@ -96,7 +99,6 @@ function
                  rbpfactor,
                  num_edges,
                  Ldn,
-                 samples,
                  rgn_sample,
                  listsize,
                  listsize2,

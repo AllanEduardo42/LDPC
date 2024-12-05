@@ -1,9 +1,16 @@
-# RBP and Random-RBP
+################################################################################
+# Allan Eduardo Feitosa
+# 05 dez 2024
+# Function to find the maximum residue
+
+# RBP
 function 
     findmaxresidue!(
-        Residues::Matrix{<:AbstractFloat},
+        addressinv::Matrix{<:Integer},
+        residues::Vector{<:AbstractFloat},
         m::Integer,
         n::Integer,
+        l::Integer,
         x::AbstractFloat,
         listres1::Vector{<:AbstractFloat},
         listm1::Vector{<:Integer},
@@ -16,7 +23,7 @@ function
         ::Nothing
     )
 
-    @inbounds Residues[m,n] = x
+    @inbounds residues[addressinv[l]] = x
 
     @fastmath @inbounds if x > listres1[1]
         listres1[1] = x
@@ -30,8 +37,10 @@ end
 function 
     findmaxresidue!(
         ::Nothing,
+        ::Nothing,
         m::Integer,
         n::Integer,
+        ::Integer,
         x::AbstractFloat,
         listres1::Vector{<:AbstractFloat},
         listm1::Vector{<:Integer},
@@ -56,8 +65,10 @@ end
 function 
     findmaxresidue!(
         ::Nothing,
+        ::Nothing,
         m::Integer,
         n::Integer,
+        l::Integer,
         x::AbstractFloat,
         listres1::Vector{<:AbstractFloat},
         listm1::Vector{<:Integer},
@@ -70,8 +81,8 @@ function
         inlist::Matrix{<:Integer}
     )
 
-    @inbounds if inlist[m,n]  # if residue(m,n) is in the list
-        inlist[m,n] = false   # remove from the list
+    @inbounds if inlist[l]  # if residue(m,n) is in the list
+        inlist[l] = false   # remove from the list
         pos = 0
         for i = 1:listsize1
             if listm1[i] == m
