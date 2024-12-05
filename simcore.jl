@@ -10,28 +10,39 @@ include("calc_Lf.jl")
 
 function
     performance_simcore(
-        msg::Vector{Bool},
-        cword::Vector{Bool},
+        a::Integer,
         snr::Real,
         H::BitMatrix,
+        E_H::Matrix{<:Integer},
+        zf::Integer,
         Zc::Integer,
         mode::String,
-        supermode::String,
-        flootype::String,
-        alpha::AbstractFloat,
+        bptype::String,
         trials::Integer,
         maxiter::Integer,
         stop::Bool,
-        fast::Bool,
-        rbpfactor::Union{AbstractFloat,Nothing},
+        decayfactor::AbstractFloat,
         listsize1::Integer,
         listsize2::Integer,
         samplesize::Integer,
         rgn_seed_noise::Integer,
         rng_seed_sample::Integer,
+        rgn_seed_msg::Integer,
         test::Bool,
         printtest::Bool
     )
+
+    if mode == "RBP" || mode == "Local-RBP" || mode == "Random-RBP" ||
+    mode == "List-RBP" 
+        supermode = "RBP"
+    elseif mode == "LBP" || mode == "iLBP"
+        supermode = "LBP"  
+    else
+        supermode = "Flooding"
+    end
+
+    msg = rand(Xoshiro(rgn_seed_msg),Bool,a)
+    cword = IEEE80216e_parity_bits(msg,zf,E_H)
     
 ################################## CONSTANTS ###################################
     
@@ -61,7 +72,7 @@ function
     syndrome = Vector{Bool}(undef,M)
 
     # prior llr (if mode == "MKAY" just the prior probabilities)
-    Lf = (mode != "MKAY") ? zeros(N) : zeros(N,2)
+    Lf = (bptype != "MKAY") ? zeros(N) : zeros(N,2)
 
     # noise
     L = length(cword)
@@ -76,20 +87,20 @@ function
     # Lq -> matrix of vn2cn messages (N x M)
     # Lr -> matrix of cn2vn messages (M x N)
     # if mode == "MKAY" the are matrices for bit = 0 and bit = 1
-    Lq = (mode != "MKAY") ? zeros(N,M) : zeros(N,M,2)
+    Lq = (bptype != "MKAY") ? zeros(N,M) : zeros(N,M,2)
 
-    Lr = (mode != "MKAY") ? zeros(M,N) : zeros(M,N,2)
+    Lr = (bptype != "MKAY") ? zeros(M,N) : zeros(M,N,2)
 
     Ms = (supermode == "RBP") ? H*0.0 : nothing
     
-    # Set variables Lrn and signs depending on the floooding type (also used for dispatch)
-    if (flootype == "TANH" && fast) || supermode == "LBP"
+    # Set variables Lrn and signs depending on the BP type (also used for dispatch)
+    if bptype == "FAST"
         Lrn = zeros(N)
         signs = nothing
-    elseif flootype == "ALTN" || flootype == "TABL" 
+    elseif bptype == "ALTN" || bptype == "TABL" 
         Lrn = zeros(N)
         signs = zeros(Bool,N)
-    elseif flootype == "MSUM"
+    elseif bptype == "MSUM"
         Lrn = nothing
         signs = zeros(Bool,N)
     else
@@ -107,14 +118,12 @@ function
         Ldn = nothing
     end
 
-    phi = (mode == "TABL") ? lookupTable() : nothing
+    phi = (bptype == "TABL") ? lookupTable() : nothing
 
     Residues = (mode == "RBP" || mode == "Random-RBP") ? H*0.0 : nothing
 
     samples = (mode == "Random-RBP" && samplesize != 0) ?
                 Vector{Int}(undef,samplesize) : nothing
-
-    maxresidue = 0.0
 
     Factors, num_edges = (supermode == "RBP") ? (1.0*H, sum(H)) : (nothing,nothing)
 
@@ -178,7 +187,6 @@ function
             end
         end
 
-        # received signal for the next realization (j+1)
         received_signal!(signal,noise,stdev,u,rng_noise)
 
         bitvector .= true
@@ -204,13 +212,15 @@ function
         init_Lq!(Lq,Lf,vn2cn)
 
         if supermode == "RBP"
-            init_residues!(alpha,Residues,Lq,Lrn,signs,phi,cn2vn,Ms,listres1,
-                listm1,listn1,listsize1,inlist)
+            for m in eachindex(cn2vn)
+                calc_residues!(Residues,nothing,Ms,nothing,Lq,Lrn,signs,phi,0,m,
+                cn2vn,listres1,listm1,listn1,nothing,nothing,nothing,listsize1,0,
+                inlist)
+            end
         end
             
         # SPA routine
         BP!(supermode,
-            alpha,
             stop,
             test,
             maxiter,
@@ -232,7 +242,7 @@ function
             printtest,
             Residues,
             Factors,
-            rbpfactor,
+            decayfactor,
             num_edges,
             Ldn,
             visited_vns,

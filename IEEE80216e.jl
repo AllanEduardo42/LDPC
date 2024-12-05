@@ -4,7 +4,6 @@ function
     IEEE80216e(
         N::Integer,
         R::Float64,
-        msg::Vector{Bool};
         mode = "A"
     )
     # N takes values in {576,672,768,864,960,1056,1152,1248,1344,1440,1536,1632,
@@ -114,28 +113,26 @@ function
         end
     end
 
-    cword = IEEE80216e_parity_bits(msg,zf,E_H)
-
     base_M = size(E_H,1)
     base_N = size(E_H,2)
-    H_sparse = zeros(Bool, zf * base_M, zf * base_N)
+    H = zeros(Bool, zf * base_M, zf * base_N)
     I_matrix = Matrix(I(zf))
     for i = 1:base_M
         for j = 1:base_N
             if E_H[i,j] != -1
-                H_sparse[(i-1)*zf+1 : i*zf,(j-1)*zf+1 : j*zf] = circshift(I_matrix,(0,E_H[i,j]))
+                H[(i-1)*zf+1 : i*zf,(j-1)*zf+1 : j*zf] = circshift(I_matrix,(0,E_H[i,j]))
             end
         end
     end
 
-    return BitMatrix(H_sparse), cword
+    return BitMatrix(H), zf, E_H
 end
 
 function 
     IEEE80216e_parity_bits(
         c::Vector{Bool},
         zf::Integer,
-        E_H::Matrix{<:Integer}
+        E_H::Matrix{<:Integer},
     )
 
     M,N = size(E_H)

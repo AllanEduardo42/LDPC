@@ -3,12 +3,10 @@
 # 24 set 2024
 # Specialized methods for the RBP algorithm
 
-include("minsum.jl")
 include("findmaxresidue.jl")
 
 function
     calc_residues!(
-        alpha::AbstractFloat,
         Residues::Union{Matrix{<:AbstractFloat},Nothing},
         Factors::Union{Matrix{<:AbstractFloat},Nothing},
         Ms::Matrix{<:AbstractFloat},
@@ -31,7 +29,7 @@ function
         inlist::Union{Matrix{<:Integer},Nothing}   
     )
     
-    update_Lr!(Ms,Lq,m,cn2vn,Lrn,signs,phi,alpha)
+    update_Lr!(Ms,Lq,m,cn2vn,Lrn,signs,phi)
     @inbounds for n in cn2vn[m]
         if n ≠ vnmax
             x = calc_residue(Ms,Factors,Lr,m,n)
@@ -80,31 +78,6 @@ function
     )
 
     @fastmath @inbounds return abs(Ms[m,n])
-
-end
-
-function
-    init_residues!(
-        alpha::AbstractFloat,  
-        Residues::Union{Matrix{<:AbstractFloat},Nothing},              
-        Lq::Matrix{<:AbstractFloat},
-        Lrn::Union{Vector{<:AbstractFloat},Nothing},
-        signs::Union{Vector{Bool},Nothing},        
-        phi::Union{Vector{<:AbstractFloat},Nothing},
-        cn2vn::Vector{Vector{T}} where {T<:Integer},
-        Ms::Matrix{<:AbstractFloat},
-        listres1::Union{Vector{<:AbstractFloat},Nothing},
-        listm1::Union{Vector{<:Integer},Nothing},
-        listn1::Union{Vector{<:Integer},Nothing},
-        listsize1::Integer,
-        inlist::Union{Matrix{<:Integer},Nothing}
-    )
-    
-    for m in eachindex(cn2vn)
-        calc_residues!(alpha,Residues,nothing,Ms,nothing,Lq,Lrn,signs,phi,0,m,
-            cn2vn,listres1,listm1,listn1,nothing,nothing,nothing,listsize1,0,
-            inlist)
-    end
 
 end
 

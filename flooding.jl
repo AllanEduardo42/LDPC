@@ -8,7 +8,6 @@ include("update_Lq.jl")
 
 function
     flooding!(
-        alpha::AbstractFloat,
         bitvector::Vector{Bool},
         Lq::Matrix{<:AbstractFloat},
         Lr::Matrix{<:AbstractFloat},
@@ -23,7 +22,7 @@ function
     # Lr update
     @inbounds for m in eachindex(cn2vn)
 
-        update_Lr!(Lr,Lq,m,cn2vn,Lrn,signs,phi,alpha)
+        update_Lr!(Lr,Lq,m,cn2vn,Lrn,signs,phi)
 
     end
 

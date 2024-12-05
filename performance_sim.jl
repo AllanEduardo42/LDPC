@@ -10,54 +10,55 @@ function
         snr::Vector{<:Real},
         mode::String,
         trials::Integer,
-        maxiter::Integer;
-        rgn_samples_seeds=ones(Int,NTHREADS),
+        maxiter::Integer,
+        bptype::String,
+        decayfactor::AbstractFloat;
         printtest=false    
     )
 
 ############################### CHECK VALID MODE ###############################
-    if !(FLOOTYPE == "MKAY" || FLOOTYPE == "TANH" || FLOOTYPE == "ALTN" || 
-        FLOOTYPE == "TABL" || FLOOTYPE == "MSUM")      
-        throw(
-            ArgumentError(
-                "$FLOOTYPE is not a valid flooding mode"
-            )
-        )
-    end    
+    # if !(bptype == "MKAY" || bptype == "TANH" || bptype == "ALTN" || 
+    #     bptype == "TABL" || bptype == "MSUM")      
+    #     throw(
+    #         ArgumentError(
+    #             "$bptype is not a valid flooding mode"
+    #         )
+    #     )
+    # end    
 
-    if mode == "Flooding"
-        supermode, mode = mode, FLOOTYPE        
-    elseif mode == "LBP" || mode == "iLBP"
-        supermode = "LBP"    
-    elseif mode == "RBP" || mode == "Local-RBP" || mode == "Random-RBP"||
-           mode == "List-RBP" 
-        supermode = "RBP"
-    else
-        throw(
-            ArgumentError(
-                "$mode is not a valid mode"
-            )
-        )
-    end
+    # if mode == "Flooding"
+    #     supermode, mode = mode, bptype        
+    # elseif mode == "LBP" || mode == "iLBP"
+    #     supermode = "LBP"    
+    # elseif mode == "RBP" || mode == "Local-RBP" || mode == "Random-RBP"||
+    #        mode == "List-RBP" 
+    #     supermode = "RBP"
+    # else
+    #     throw(
+    #         ArgumentError(
+    #             "$mode is not a valid mode"
+    #         )
+    #     )
+    # end
 
 ########################### PRINT SIMULATION DETAILS ###########################
     
     # if trials = 1, set test mode
     test = (trials < 3) ? true : false
 
-    if supermode == "RBP"
-        if mode == "RBP"
-            rbpfactor = DECAYRBP
-        elseif mode == "Local-RBP"
-            rbpfactor = DECAYLRBP
-        elseif mode == "Random-RBP"
-            rbpfactor = DECAYRRBP
-        elseif mode == "List-RBP"
-            rbpfactor = DECAYLIST
-        end           
-    else
-        rbpfactor = nothing
-    end    
+    # if supermode == "RBP"
+    #     if mode == "RBP"
+    #         decayfactor = DECAYRBP
+    #     elseif mode == "Local-RBP"
+    #         decayfactor = DECAYLRBP
+    #     elseif mode == "Random-RBP"
+    #         decayfactor = DECAYRRBP
+    #     elseif mode == "List-RBP"
+    #         decayfactor = DECAYLIST
+    #     end           
+    # else
+    #     decayfactor = nothing
+    # end    
     
     if test && printtest
         println()
@@ -72,41 +73,27 @@ function
         println("Number of trials: $trials")
     end
     if !test || printtest
-        if supermode == "Flooding"
-            print("Message passing protocol: Flooding (using ")
-            if FLOOTYPE == "MKAY"
-                println("Mckay's SPA method)")
-            elseif FLOOTYPE == "TANH"
-                println("LLR-SPA calculated by tanh)")
-            elseif FLOOTYPE == "ALTN"
-                println("LLR-SPA calculated by ϕ function)")
-            elseif FLOOTYPE == "TABL"
-                println("LLR-SPA precalculated in look-up table)")
-            elseif FLOOTYPE == "MSUM"
-                println("LLRs calculated by min-sum algorithm)")
-            end
-        elseif supermode == "RBP"
-            print("Message passing protocol: $mode (residuals calculated by ")
-            if FLOOTYPE == "MKAY"
-                println("Mckay's SPA method)")
-            elseif FLOOTYPE == "TANH"
-                println("tanh)")
-            elseif FLOOTYPE == "ALTN"
-                println("ϕ function)")
-            elseif FLOOTYPE == "TABL"
-                println("look-up table)")
-            elseif FLOOTYPE == "MSUM"
-                println("min-sum algorithm)")
-            end
-        else
-            println("Message passing protocol: $mode")
+        print("Message passing protocol: $mode (using ")
+        if bptype == "MKAY"
+            println("Mckay's SPA method)")
+        elseif bptype == "TANH"
+            println("LLR-SPA calculated by tanh)")
+        elseif bptype == "FAST"
+            println("LLR-SPA calculated by fast tanh)")
+        elseif bptype == "ALTN"
+            println("LLR-SPA calculated by ϕ function)")
+        elseif bptype == "TABL"
+            println("LLR-SPA precalculated in look-up table)")
+        elseif bptype == "MSUM"
+            println("LLRs calculated by min-sum algorithm)")
         end
-
         println("Maximum number of iterations: $maxiter")
         println("Simulated for SNR (dB): $snr")
         println("Stop at zero syndrome ? $STOP")
-        (supermode == "RBP") ? println("Decaying factor: $rbpfactor") : nothing
-        (mode == "Random-RBP") ? println("Sample size: $SAMPLESIZE") : nothing 
+        (decayfactor != 0) ? println("Decaying factor: $decayfactor") : nothing
+        (mode == "Random-RBP") ? println("Sample size: $SAMPLESIZE") : nothing
+        (mode == "List-RBP") ? println("List 1 size: $LISTSIZE") : nothing 
+        (mode == "List-RBP") ? println("List 2 size: $LISTSIZE2") : nothing 
         println()
     end
 
@@ -125,49 +112,47 @@ function
             if MTHR
                 Threads.@threads for i in 1:NTHREADS
                     decoded[:,k,i], ber[:,k,i] = performance_simcore(
-                                            Msg,
-                                            Cword,
+                                            A,
                                             snr[k],
                                             H,
+                                            E_H,
+                                            zf,
                                             Zc,
                                             mode,
-                                            supermode,
-                                            FLOOTYPE,
-                                            ALPHA,
+                                            bptype,
                                             trials_multh,
                                             maxiter,
                                             STOP,
-                                            FAST,
-                                            rbpfactor,
+                                            decayfactor,
                                             LISTSIZE,
                                             LISTSIZE2,
                                             SAMPLESIZE,
                                             Rgn_noise_seeds[i],
-                                            rgn_samples_seeds[i],
+                                            Rgn_samples_seeds[i],
+                                            Rgn_message_seeds[i],
                                             test,
                                             printtest)
                 end
             else
                 decoded[:,k], ber[:,k] = performance_simcore(
-                                            Msg,
-                                            Cword,
+                                            A,
                                             snr[k],
                                             H,
+                                            E_H,
+                                            zf,
                                             Zc,
                                             mode,
-                                            supermode,
-                                            FLOOTYPE,
-                                            ALPHA,
+                                            bptype,
                                             trials,
                                             maxiter,
                                             STOP,
-                                            FAST,
-                                            rbpfactor,
+                                            decayfactor,
                                             LISTSIZE,
                                             LISTSIZE2,
                                             SAMPLESIZE,
                                             Rgn_noise_seeds[1],
-                                            rgn_samples_seeds[1],
+                                            Rgn_samples_seeds[1],
+                                            Rgn_message_seeds[1],
                                             test,
                                             printtest)
             end
@@ -188,27 +173,25 @@ function
     else # IF TESTING
 
         Lr, Lq = performance_simcore(
-                                    Msg,
-                                    Cword,
+                                    A,
                                     snr[1],
                                     H,
+                                    E_H,
+                                    zf,
                                     Zc,
                                     mode,
-                                    supermode,
-                                    FLOOTYPE,
-                                    ALPHA,
+                                    bptype,
                                     trials,
                                     maxiter,
                                     STOP,
-                                    FAST,
-                                    rbpfactor,
+                                    decayfactor,
                                     LISTSIZE,
                                     LISTSIZE2,
                                     SAMPLESIZE,
                                     Rgn_noise_seeds[1],
-                                    rgn_samples_seeds[1],
+                                    Rgn_samples_seeds[1],
+                                    Rgn_message_seeds[1],
                                     test,
-                                    # testsignal,
                                     printtest)
         
         return Lr, Lq        
