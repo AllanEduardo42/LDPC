@@ -1,7 +1,7 @@
 ################################################################################
 # Allan Eduardo Feitosa
 # 27 ago 2024
-# LDPC coding-decoding performance simulation using Believe Propagation (BP)
+# Compare residue decaying for RBP
 
 ############################## 1) JULIA PACKAGES ###############################
 
@@ -27,11 +27,11 @@ include("find_girth.jl")
 const INF = typemax(Int64)
 const INFFLOAT = 1e2
 const NINFFLOAT = -INFFLOAT
-const ALPHA = 0.875               # Min-Sum attenuation factor
+const ALPHA = 0.8               # Min-Sum attenuation factor
 const ALPHA2 = 2*ALPHA 
 
 
-name = string(now())
+Name = string(now())
 
 # Seeds
 SEED_NOISE::Int = 1428
@@ -49,12 +49,12 @@ STOP::Bool = true # stop simulation at zero syndrome (if true, BER curves are
 
 ################################## 5) NUMBERS ##################################
 
-TRIALS::Int = 102400
+TRIALS::Int = 10240
 MAX::Int = 10
 MAXRBP::Int = 10
-DECAY::Float64 = 0.9
+DECAYS = [0.9]
 SNRTEST = [3]
-SNR = collect(1:0.4:2.2)
+SNR = collect(1:1:2)
 
 ################################ 6) BP SCHEDULE ################################
 
@@ -71,12 +71,12 @@ Maxiters = zeros(Int,7)
 Decays = zeros(7)
 
 #Flooding
-Modes[1] = 0
+Modes[1] = 1
 Bptypes[1] = "FAST"
 Maxiters[1] = MAX
 
 #LBP
-Modes[2] = 0
+Modes[2] = 1
 Bptypes[2] = "FAST"
 Maxiters[2] = MAX
 
@@ -86,22 +86,22 @@ Bptypes[3] = "FAST"
 Maxiters[3] = MAX
 
 #RBP
-Modes[4] = 0
+Modes[4] = 1
 Bptypes[4] = "FAST"
 Maxiters[4] = MAXRBP
-Decays[4] = DECAY
+Decays[4] = DECAYS[1]
      
 #Local-RBP
 Modes[5] = 0
 Bptypes[5] = "MSUM"
 Maxiters[5] = MAXRBP
-Decays[5] = DECAY
+Decays[5] = DECAYS[1]
 
 #List-RBP
-Modes[6] = 1
-Bptypes[6] = "FAST"
+Modes[6] = 0
+Bptypes[6] = "MSUM"
 Maxiters[6] = MAXRBP
-Decays[6] = DECAY
+Decays[6] = DECAYS[1]
     # List-RBP size
     LISTSIZE::UInt = 64
     LISTSIZE2::UInt = 4
@@ -115,6 +115,12 @@ R::Float64 = 1/2
 # LDPC protocol: 1 = NR-LDPC; 2 = PEG; 3 = IEEE80216e;
 LDPC::Int = 3
     densities = 2:11
+
+
+
+
+
+
 
 ############################# PARITY-CHECK MATRIX #############################
 
@@ -185,16 +191,30 @@ if TRIALS > 2
     BER = Dict()
     for i in eachindex(Modes)
         if Modes[i]
-            @time FER[Names[i]], BER[Names[i]] = performance_sim(
-                SNR,
-                Names[i],
-                TRIALS,
-                Maxiters[i],
-                Bptypes[i],
-                Decays[i])
-
-            push!(Fer_labels,Names[i]*" ($(Bptypes[i]))")
-            push!(Fermax,FER[Names[i]][Maxiters[i],:])
+            if Names[i] != "RBP"
+                @time FER[Names[i]], BER[Names[i]] = performance_sim(
+                    SNR,
+                    Names[i],
+                    TRIALS,
+                    Maxiters[i],
+                    Bptypes[i],
+                    Decays[i])
+                push!(Fer_labels,Names[i])
+                push!(Fermax,FER[Names[i]][Maxiters[i],:])
+            else
+                for decay in DECAYS
+                    name = Names[i]*" (d = $decay)"
+                    @time FER[name], BER[name] = performance_sim(
+                        SNR,
+                        Names[i],
+                        TRIALS,
+                        Maxiters[i],
+                        Bptypes[i],
+                        decay)
+                    push!(Fer_labels,name)
+                    push!(Fermax,FER[name][Maxiters[i],:])
+                end
+            end
         end            
     end
 end
@@ -211,72 +231,9 @@ if TRIALS > 2
             xlabel="SNR (dB)",
             label=Fer_labels,
             lw=2,
-            title="FER (Decay factor = $DECAY)",
+            title="FER x SNR (Graph girth = $girth)",
             ylims=(lim,0)
         )
-        SAVE ? savefig(p,"FER_"*name*".svg") : display(p) 
+        SAVE ? savefig(p,"FER_"*Name*".svg") : display(p) 
     end
-
-    # BER x Iterations
-    if !STOP
-
-        # FER x Iterations
-        labels = Vector{String}()
-        for snr in SNR
-            push!(labels,"SNR (dB) = $snr")
-        end
-        labels = permutedims(labels)
-        for i in eachindex(Modes)
-            if Modes[i]
-                if Names[i] == "RBP" || Names[i] == "Random-RBP" ||
-                Names[i] == "Local-RBP" || Names[i] == "List-RBP"
-                    titlefer = "FER $(Names[i]) (decay factor = $(decay[Names[i]]))"
-                else
-                    titlefer = "FER $(Names[i])"
-                end
-                local p = plot(
-                    1:Maxiters[i],
-                    FER[Names[i]],                
-                    xlabel="Iteration",
-                    label=labels,
-                    lw=2,
-                    title=titlefer,
-                    ylims=(lim,0)
-                )
-                SAVE ? savefig(p,"FER_"*Names[i]*"_"*name*".svg") : display(p) 
-            end
-        end
-
-        for i in eachindex(Modes)
-            if Modes[i]
-                if Names[i] == "RBP" || Names[i] == "Random-RBP" || 
-                   Names[i] == "Local-RBP" || Names[i] == "List-RBP"
-                    titleber = "BER $(Names[i]) (decay factor = $(decay[Names[i]]))"
-                else
-                    titleber = "BER $(Names[i])"
-                end
-                local p = plot(
-                    1:Maxiters[i],
-                    BER[Names[i]],                
-                    xlabel="Iteration",
-                    label=labels,
-                    lw=2,
-                    title=titleber,
-                    ylims=(lim-2,0)
-                )
-                SAVE ? savefig(p,"BER_"*Names[i]*"_"*name*".svg") : display(p)
-            end
-        end
-    end
-end
-################################### SAVE DATA ##################################
-if TRIALS > 2 && SAVE
-
-    aux = []
-    for i in eachindex(Fermax)
-        push!(aux,(Fer_labels[i],Fermax[i]))
-    end
-    FERS = Dict(aux)
-    CSV.write("FERMAX_"*name*".csv", DataFrame(FERS), header=true)
-
 end

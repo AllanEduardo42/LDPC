@@ -13,7 +13,7 @@ function make_vn2cn_list(H::BitMatrix)
     N = size(H,2)
     vn2cn = Vector{Vector{Int}}()
     @inbounds for n in 1:N
-        push!(vn2cn,findall(x -> x == true, H[:,n]))
+        push!(vn2cn,findall(isone, H[:,n]))
     end
 
     return vn2cn
@@ -28,7 +28,7 @@ function make_cn2vn_list(H::BitMatrix)
     M = size(H,1)
     cn2vn = Vector{Vector{Int}}()
     @inbounds for m in 1:M
-        push!(cn2vn,findall(x -> x == true, H[m,:]))
+        push!(cn2vn,findall(isone, H[m,:]))
     end
 
     return cn2vn

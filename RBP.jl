@@ -41,6 +41,8 @@ function
 
     @fastmath @inbounds for e in 1:num_edges
 
+        # println(listres1[1])
+
         if listres1[1] == 0
             break
         end

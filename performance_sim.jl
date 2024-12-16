@@ -51,7 +51,7 @@ function
         println("Maximum number of iterations: $maxiter")
         println("Simulated for SNR (dB): $snr")
         println("Stop at zero syndrome ? $STOP")
-        (decayfactor != 0) ? println("Decaying factor: $decayfactor") : nothing
+        println("Decaying factor: $decayfactor")
         (mode == "Random-RBP") ? println("Sample size: $SAMPLESIZE") : nothing
         (mode == "List-RBP") ? println("List 1 size: $LISTSIZE") : nothing 
         (mode == "List-RBP") ? println("List 2 size: $LISTSIZE2") : nothing 

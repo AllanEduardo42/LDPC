@@ -249,7 +249,7 @@ function
 
         # init the llr priors
         calc_Lf!(view(Lf,2*Zc+1:N),signal,variance)
-        if mode == "TABL"
+        if bptype == "TABL"
             # scale for table
             Lf .*= SIZE_per_RANGE
         end

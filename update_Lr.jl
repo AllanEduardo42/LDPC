@@ -124,8 +124,9 @@ function
         phi::Union{Vector{<:AbstractFloat},Nothing}
     )
 
-    _sign = signbit(Lq)
-    return ϕ(abs(Lq),phi), _sign, s ⊻ _sign
+    sig = signbit(Lq)
+    @fastmath ab = abs(Lq)
+    return ϕ(ab,phi), sig, s ⊻ sig
 
 end
 

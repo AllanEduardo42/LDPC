@@ -56,8 +56,6 @@ function
         l::Integer
     )
 
-    
-
     @fastmath @inbounds x = Ms[l] - Lr[l]
     @fastmath if signbit(x)
         x = -x
