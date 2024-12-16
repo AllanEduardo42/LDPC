@@ -39,37 +39,18 @@ function
         supermode = "Flooding"
     end
 
-# ######################### PRINT INFORMATION ON SCREEN ##########################
-#     if test && printtest   
-#         println()
-#         print("############################### LDPC parameters #######################")
-#         println("#########")
-#         println()
-#         println("Parity Check Matrix: $M x $N")
-#         println()
-#         display(sparse(H))
-#         println()
-#         println("Graph girth = ", girth)
-#         println()
-#         println("msg (L = $(length(msg))):")
-#         for i in eachindex(msg)
-#             print(Int(msg[i]))
-#             if i%80 == 0
-#                 println()
-#             end
-#         end
-#         println()
-#         println()
-#         println("cword (L = $(length(cword))):")
-#         for i in eachindex(cword)
-#             print(Int(cword[i]))
-#             if i%80 == 0
-#                 println()
-#             end
-#         end
-#         println()
-#         println()
-#     end
+######################### PRINT INFORMATION ON SCREEN ##########################
+    if test && printtest   
+        println()
+        print("############################### LDPC parameters #######################")
+        println("#########")
+        println()
+        println("Parity Check Matrix: $M x $N")
+        println()
+        display(sparse(H))
+        println()
+        println("Graph girth = ", girth)
+    end
     
 ################################## CONSTANTS ###################################
     
@@ -203,6 +184,8 @@ function
     
     rng_noise = Xoshiro(rgn_seed_noise)
 
+    rgn_msg = Xoshiro(rgn_seed_msg)
+
     rng_sample = (supermode == "RBP") ? Xoshiro(rng_seed_sample) : nothing  
     
     # if Zc > 0
@@ -210,11 +193,33 @@ function
     # end
 
     for j in 1:trials
-        display(rgn_seed_msg)
-        msg = rand(Xoshiro(rgn_seed_msg),Bool,a)
-        display(msg[1:20])
+
+        msg = rand(rgn_msg,Bool,a)
         cword = IEEE80216e_parity_bits(msg,zf,E_H)
 
+        if test && printtest
+            println()
+            println("Realization #$j:")
+            println()
+            println("msg (L = $(length(msg))):")
+            for i in eachindex(msg)
+                print(Int(msg[i]))
+                if i%80 == 0
+                    println()
+                end
+            end
+            println()
+            println()
+            println("cword (L = $(length(cword))):")
+            for i in eachindex(cword)
+                print(Int(cword[i]))
+                if i%80 == 0
+                    println()
+                end
+            end
+            println()
+            println()
+        end
         u = Float64.(2*cword .- 1)
 
         if mode == "List-RBP"

@@ -43,13 +43,13 @@ SEED_MESSA::Int = 1000
 
 MTHR::Bool = true                       
 SAVE::Bool = false
-PRIN::Bool = false
+PRIN::Bool = true
 STOP::Bool = true # stop simulation at zero syndrome (if true, BER curves are 
 # not printed)
 
 ################################## 5) NUMBERS ##################################
 
-TRIALS::Int = 2
+TRIALS::Int = 1024
 MAX::Int = 50
 MAXRBP::Int = 50
 DECAY::Float64 = 1.0
@@ -148,7 +148,11 @@ else
 end
 
 # Number of Threads
-NTHREADS::Int = min(Threads.nthreads(),TRIALS)
+if MTHR && TRIALS > 2
+    NTHREADS = min(Threads.nthreads(),TRIALS)
+else
+    NTHREADS = 1
+end
 
 ####################### GENERATE NOISE AND SAMPLE SEEDS ########################
 
