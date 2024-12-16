@@ -50,8 +50,8 @@ STOP::Bool = true # stop simulation at zero syndrome (if true, BER curves are
 ################################## 5) NUMBERS ##################################
 
 TRIALS::Int = 102400
-MAX::Int = 10
-MAXRBP::Int = 10
+MAX::Int = 50
+MAXRBP::Int = 50
 DECAY::Float64 = 0.9
 SNRTEST = [3]
 SNR = collect(1:0.4:2.2)
@@ -71,7 +71,7 @@ Maxiters = zeros(Int,7)
 Decays = zeros(7)
 
 #Flooding
-Modes[1] = 0
+Modes[1] = 1
 Bptypes[1] = "FAST"
 Maxiters[1] = MAX
 
@@ -86,7 +86,7 @@ Bptypes[3] = "FAST"
 Maxiters[3] = MAX
 
 #RBP
-Modes[4] = 0
+Modes[4] = 1
 Bptypes[4] = "FAST"
 Maxiters[4] = MAXRBP
 Decays[4] = DECAY
@@ -98,7 +98,7 @@ Maxiters[5] = MAXRBP
 Decays[5] = DECAY
 
 #List-RBP
-Modes[6] = 1
+Modes[6] = 0
 Bptypes[6] = "FAST"
 Maxiters[6] = MAXRBP
 Decays[6] = DECAY
@@ -214,7 +214,7 @@ if TRIALS > 2
             title="FER (Decay factor = $DECAY)",
             ylims=(lim,0)
         )
-        SAVE ? savefig(p,"FER_"*name*".svg") : display(p) 
+        SAVE ? savefig(p,"./Saved Data/FER_"*name*".svg") : display(p) 
     end
 
     # BER x Iterations
@@ -243,7 +243,7 @@ if TRIALS > 2
                     title=titlefer,
                     ylims=(lim,0)
                 )
-                SAVE ? savefig(p,"FER_"*Names[i]*"_"*name*".svg") : display(p) 
+                SAVE ? savefig(p,"./Saved Data/FER_"*Names[i]*"_"*name*".svg") : display(p) 
             end
         end
 
@@ -264,7 +264,7 @@ if TRIALS > 2
                     title=titleber,
                     ylims=(lim-2,0)
                 )
-                SAVE ? savefig(p,"BER_"*Names[i]*"_"*name*".svg") : display(p)
+                SAVE ? savefig(p,"./Saved Data/BER_"*Names[i]*"_"*name*".svg") : display(p)
             end
         end
     end
@@ -277,6 +277,6 @@ if TRIALS > 2 && SAVE
         push!(aux,(Fer_labels[i],Fermax[i]))
     end
     FERS = Dict(aux)
-    CSV.write("FERMAX_"*name*".csv", DataFrame(FERS), header=true)
+    CSV.write("./Saved Data/FERMAX_"*name*".csv", DataFrame(FERS), header=true)
 
 end

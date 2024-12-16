@@ -1,7 +1,7 @@
 ################################################################################
 # Allan Eduardo Feitosa
 # 24 set 2024
-# Specialized methods for the RBP algorithm
+# Calculate the residues for the RBP algorithm
 
 include("findmaxresidue.jl")
 
@@ -19,31 +19,34 @@ function
         vnmax::Integer,
         m::Integer,
         cn2vn::Vector{Vector{T}} where {T<:Integer},
-        listres1::Vector{<:AbstractFloat},
-        listm1::Vector{<:Integer},
-        listn1::Vector{<:Integer},
+        listres::Vector{<:AbstractFloat},
+        listm::Vector{<:Integer},
+        listn::Vector{<:Integer},
         listres2::Union{Vector{<:AbstractFloat},Nothing},
         listm2::Union{Vector{<:Integer},Nothing},
         listn2::Union{Vector{<:Integer},Nothing},
-        listsize1::Integer,
+        listsize::Integer,
         listsize2::Integer,
         inlist::Union{Matrix{<:Integer},Nothing}   
     )
     
+    # calculate the new check to node messages
     update_Lr!(Ms,Lq,m,cn2vn,Lrn,signs,phi)
-    @inbounds for n in cn2vn[m]
+
+    # calculate the residues
+    @fastmath @inbounds for n in cn2vn[m]
         if n ≠ vnmax
             l = LinearIndices(Ms)[m,n]
             x = calc_residue(Ms,Factors,Lr,l)
-            @fastmath if x != 0.0
-                findmaxresidue!(addressinv,residues,m,n,l,x,listres1,listm1,listn1,listres2,
-                listm2,listn2,listsize1,listsize2,inlist)
+            if x != 0.0
+                findmaxresidue!(addressinv,residues,m,n,l,x,listres,listm,listn,
+                                listres2,listm2,listn2,listsize,listsize2,inlist)
             end            
         end
     end
 
-    if listres1[1] == 0 # no update
-        listres1[1] = -1
+    if listres[1] == 0 # no update: this will triger random selection of a check
+        listres[1] = -1
     end
 
 end

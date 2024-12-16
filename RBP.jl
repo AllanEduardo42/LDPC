@@ -3,9 +3,11 @@
 # 11 out 2024
 # RBP Sum-Product Algorithm using min-sum to calculate the residues
 
-include("calc_residues.jl")
-include("findmaxcoords.jl")
-include("update_list.jl")
+include("./RBP functions/RBP_update_Lr.jl")
+include("./RBP functions/RBP_set_zero_or_remove.jl")
+include("./RBP functions/calc_residues.jl")
+include("./RBP functions/findmaxcoords.jl")
+include("./RBP functions/update_list.jl")
 
 #RBP
 function
@@ -28,11 +30,11 @@ function
         num_edges::Integer,
         Ldn::Vector{<:AbstractFloat},
         rng_sample::AbstractRNG,
-        listsize1::Integer,
+        listsize::Integer,
         listsize2::Integer,
-        listres1::Vector{<:AbstractFloat},
-        listm1::Vector{<:Integer},
-        listn1::Vector{<:Integer},
+        listres::Vector{<:AbstractFloat},
+        listm::Vector{<:Integer},
+        listn::Vector{<:Integer},
         listres2::Union{Vector{<:AbstractFloat},Nothing},
         listm2::Union{Vector{<:Integer},Nothing},
         listn2::Union{Vector{<:Integer},Nothing},
@@ -41,168 +43,76 @@ function
 
     @fastmath @inbounds for e in 1:num_edges
 
-        # println(listres1[1])
-
-        if listres1[1] == 0
+        # 1) if maximum residue is zero, the RBP has converged
+        if listres[1] == 0
             break
         end
         
-        cnmax = listm1[1]
-        vnmax = listn1[1]
+        # 2) get the check and node of the maximum residue
+        cnmax = listm[1]
+        vnmax = listn[1]
 
-        if cnmax == 0 || listm1[1]== -1
+        # 3) verify if the list was not updated
+        if cnmax == 0 || listm[1]== -1
             cnmax = rand(rng_sample,1:length(cn2vn))
             vnmax = rand(rng_sample,cn2vn[cnmax])
         end
 
+        # 4) for optimization, get the linear indice of the maximum residue
         lmax = LinearIndices(Factors)[cnmax,vnmax]
 
+        # 5) Decay the RBP factor corresponding to the maximum residue
         Factors[lmax] *= decayfactor
 
-        ### update Lr[cnmax,vnmax]
-        _RBP_update_Lr!(lmax,cnmax,vnmax,cn2vn,Lq,Lr,Ms,Lrn,signs)
+        # 6) update check to node message Lr[cnmax,vnmax]
+        RBP_update_Lr!(lmax,cnmax,vnmax,cn2vn,Lq,Lr,Ms,Lrn,signs)
 
-        __RBP(addressinv,residues,lmax,listsize1,listres1,listm1,listn1,inlist)
+        # 7) set maximum residue to zero or remove it from the list
+        set_zero_or_remove!(addressinv,residues,lmax,listsize,listres,listm,
+                            listn,inlist)
 
-        # update Ldn[vmax] and bitvector[vnmax]
+        # 8) update Ldn[vmax] and bitvector[vnmax]
         Ldn[vnmax] = Lf[vnmax]
         for m in vn2cn[vnmax]
             Ldn[vnmax] += Lr[m,vnmax]
             bitvector[vnmax] = signbit(Ldn[vnmax])
         end
 
-        leaf = true
+        # 9) update vn2cn messages Lq[vnmax,m], ∀m ≠ cnmax, and calculate residues
+        leaf = true # suppose node vnmax is a leaf in the graph
         for m in vn2cn[vnmax]
             if m ≠ cnmax
-                leaf = false
-                # update vn2cn messages Lq[vnmax,m], ∀m ≠ cnmax
+                leaf = false # vnmax is not a leaf
                 Lq[vnmax,m] = Ldn[vnmax] - Lr[m,vnmax]
-                calc_residues!(addressinv,residues,Factors,Ms,Lr,Lq,Lrn,signs,phi,vnmax,m,
-                    cn2vn,listres1,listm1,listn1,listres2,listm2,listn2,
-                    listsize1,listsize2,inlist)
+                calc_residues!(addressinv,residues,Factors,Ms,Lr,Lq,Lrn,signs,
+                               phi,vnmax,m,cn2vn,listres,listm,listn,listres2,
+                               listm2,listn2,listsize,listsize2,inlist)
             end
         end
 
+        # 10) if vnmax is a leaf in the graph, triggers the random selection of 
+        #     a check in 3)
         if leaf
-            if listsize1 == 1
-                listm1[1] = 0
+            if listsize == 1
+                listm[1] = 0
             end
         end
 
+        # 11) Update list 2
         if listsize2 ≠ 0
             for k in listsize2:-1:1
-            # for k in 1:listsize2
-                update_list!(inlist,listres1,listm1,listn1,listres2[k],
-                    listm2[k],listn2[k],listsize1)
+                update_list!(inlist,listres,listm,listn,listres2[k],listm2[k],
+                             listn2[k],listsize)
             end
             listres2 .*= 0.0
             listm2 .*= 0
             listn2 .*= 0
         end
 
-        findmaxcoords!(address,residues,listres1,listm1,listn1)
+        # 12) find maximum residue (only for the original RBP)
+
+        findmaxcoords!(address,residues,listres,listm,listn)
 
     end
 end
 
-# RBP
-function 
-    __RBP(
-        addressinv::Matrix{<:Integer},
-        residues::Vector{<:AbstractFloat},
-        lmax::Integer,
-        ::Integer,
-        listres1::Vector{<:AbstractFloat},
-        ::Vector{<:Integer},
-        ::Vector{<:Integer},
-        ::Nothing
-    )
-
-    @inbounds listres1[1] = 0
-    @inbounds residues[addressinv[lmax]] = 0.0
-
-end
-
-# Local-RBP
-function 
-    __RBP(
-        ::Nothing,
-        ::Nothing,
-        ::Integer,
-        ::Integer,
-        listres1::Vector{<:AbstractFloat},
-        ::Vector{<:Integer},
-        ::Vector{<:Integer},
-        ::Nothing
-    )
-    
-    @inbounds listres1[1] = 0
-
-end
-
-# List-RBP
-function 
-    __RBP(
-        ::Nothing,
-        ::Nothing,
-        lmax::Integer,
-        listsize::Integer,
-        listres1::Vector{<:AbstractFloat},
-        listm1::Vector{<:Integer},
-        listn1::Vector{<:Integer},
-        inlist::Matrix{Bool}
-    )
-
-    @inbounds inlist[lmax] = false
-    @inbounds for i in 1:listsize
-        listres1[i] = listres1[i+1]
-        listm1[i] = listm1[i+1]
-        listn1[i] = listn1[i+1]
-    end    
-end
-
-function 
-    _RBP_update_Lr!(
-        lmax::Integer,
-        ::Integer,
-        ::Integer,
-        ::Vector{Vector{T}} where {T<:Integer},
-        ::Matrix{<:AbstractFloat},
-        Lr::Matrix{<:AbstractFloat},
-        Ms::Matrix{<:AbstractFloat},
-        ::Vector{<:AbstractFloat},
-        ::Nothing
-    )
-
-    @inbounds Lr[lmax] = Ms[lmax]
-
-end
-
-function 
-    _RBP_update_Lr!(
-        lmax::Integer,
-        cnmax::Integer,
-        vnmax::Integer,
-        cn2vn::Vector{Vector{T}} where {T<:Integer},
-        Lq::Matrix{<:AbstractFloat},
-        Lr::Matrix{<:AbstractFloat},
-        ::Matrix{<:AbstractFloat},
-        ::Union{Vector{<:AbstractFloat},Nothing},
-        ::Vector{Bool}
-    )
-
-    pLr = 1.0
-    @fastmath @inbounds for n in cn2vn[cnmax]
-        if n != vnmax
-            pLr *= tanh(0.5*Lq[n,cnmax])
-        end
-    end    
-    if @fastmath abs(pLr) < 1 
-        @fastmath @inbounds Lr[lmax] = 2*atanh(pLr)
-    elseif pLr > 0
-        @fastmath @inbounds Lr[lmax] = INFFLOAT
-    else
-        @fastmath @inbounds Lr[lmax] = NINFFLOAT
-    end
-
-end

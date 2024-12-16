@@ -12,9 +12,9 @@ function
         n::Integer,
         l::Integer,
         x::AbstractFloat,
-        listres1::Vector{<:AbstractFloat},
-        listm1::Vector{<:Integer},
-        listn1::Vector{<:Integer},
+        listres::Vector{<:AbstractFloat},
+        listm::Vector{<:Integer},
+        listn::Vector{<:Integer},
         ::Nothing,
         ::Nothing,
         ::Nothing,
@@ -25,10 +25,10 @@ function
 
     @inbounds residues[addressinv[l]] = x
 
-    @fastmath @inbounds if x > listres1[1]
-        listres1[1] = x
-        listm1[1] = m
-        listn1[1] = n
+    @fastmath @inbounds if x > listres[1]
+        listres[1] = x
+        listm[1] = m
+        listn[1] = n
     end
 
 end
@@ -42,9 +42,9 @@ function
         n::Integer,
         ::Integer,
         x::AbstractFloat,
-        listres1::Vector{<:AbstractFloat},
-        listm1::Vector{<:Integer},
-        listn1::Vector{<:Integer},
+        listres::Vector{<:AbstractFloat},
+        listm::Vector{<:Integer},
+        listn::Vector{<:Integer},
         ::Nothing,
         ::Nothing,
         ::Nothing,
@@ -53,10 +53,10 @@ function
         ::Nothing
     )
 
-    @fastmath @inbounds if x > listres1[1]
-        listres1[1] = x
-        listm1[1] = m
-        listn1[1] = n
+    @fastmath @inbounds if x > listres[1]
+        listres[1] = x
+        listm[1] = m
+        listn[1] = n
     end
 
 end
@@ -70,13 +70,13 @@ function
         n::Integer,
         l::Integer,
         x::AbstractFloat,
-        listres1::Vector{<:AbstractFloat},
-        listm1::Vector{<:Integer},
-        listn1::Vector{<:Integer},
+        listres::Vector{<:AbstractFloat},
+        listm::Vector{<:Integer},
+        listn::Vector{<:Integer},
         listres2::Union{Vector{<:AbstractFloat},Nothing},
         listm2::Union{Vector{<:Integer},Nothing},
         listn2::Union{Vector{<:Integer},Nothing},
-        listsize1::Integer,
+        listsize::Integer,
         listsize2::Integer,
         inlist::Matrix{<:Integer}
     )
@@ -84,9 +84,9 @@ function
     @inbounds if inlist[l]  # if residue(m,n) is in the list
         inlist[l] = false   # remove from the list
         pos = 0
-        for i = 1:listsize1
-            if listm1[i] == m
-                if listn1[i] == n
+        for i = 1:listsize
+            if listm[i] == m
+                if listn[i] == n
                     pos = i
                     break
                 end
@@ -95,15 +95,15 @@ function
         if pos == 0
             throw(error("($m,$n) is on the list, but it's not registered."))
         end
-        for j in pos:listsize1
-            listres1[j] = listres1[j+1]
-            listm1[j] = listm1[j+1]
-            listn1[j] = listn1[j+1]
+        for j in pos:listsize
+            listres[j] = listres[j+1]
+            listm[j] = listm[j+1]
+            listn[j] = listn[j+1]
         end
     end
 
     if listsize2 == 0
-        update_list!(inlist,listres1,listm1,listn1,x,m,n,listsize1)
+        update_list!(inlist,listres,listm,listn,x,m,n,listsize)
     else
         update_list!(nothing,listres2,listm2,listn2,x,m,n,listsize2)
     end

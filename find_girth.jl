@@ -1,3 +1,9 @@
+################################################################################
+# Allan Eduardo Feitosa
+# 16 dez 2024
+# Function to find the girth (shortest cicle) in a bipartite graph using random
+# walk
+
 include("auxiliary_functions.jl")
 
 function find_girth(H,max)
@@ -10,11 +16,7 @@ function find_girth(H,max)
 
     girth = N
 
-    # println("i = 1")
-
     node = rand(1:N)
-
-    # println("node = $node")
 
     count[node] = 1
 
@@ -24,13 +26,9 @@ function find_girth(H,max)
 
     check = rand(vn2cn[node])
 
-    # println("check = $check")
-
     cn2vn = make_cn2vn_list(H)
 
     for i = 1:max
-        # println()
-        # println("i = $(i+1)")
         if check == -1
             visited .*= false
             node = rand(1:N)
@@ -38,10 +36,8 @@ function find_girth(H,max)
             nodes = filter(x->x!=node,cn2vn[check])
             node = rand(nodes)
         end
-        # println("node = $node")
         if visited[node]
             girth = min(girth,i - count[node])
-            # println("    girth = $(2*girth)")
         end
         count[node] = i
         visited[node] = true
@@ -51,7 +47,6 @@ function find_girth(H,max)
         else
             check = rand(checks)
         end
-        # println("check = $check")
     end
 
     return 2*girth
