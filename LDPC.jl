@@ -43,16 +43,16 @@ SEED_MESSA::Int = 1000
 
 MTHR::Bool = true                       
 SAVE::Bool = false
-PRIN::Bool = true
+PRIN::Bool = false
 STOP::Bool = true # stop simulation at zero syndrome (if true, BER curves are 
 # not printed)
 
 ################################## 5) NUMBERS ##################################
 
-TRIALS::Int = 102400
+TRIALS::Int = 2
 MAX::Int = 50
 MAXRBP::Int = 50
-DECAY::Float64 = 0.9
+DECAY::Float64 = 1.0
 SNRTEST = [3]
 SNR = collect(1:0.4:2.2)
 
@@ -86,7 +86,7 @@ Bptypes[3] = "FAST"
 Maxiters[3] = MAX
 
 #RBP
-Modes[4] = 1
+Modes[4] = 0
 Bptypes[4] = "FAST"
 Maxiters[4] = MAXRBP
 Decays[4] = DECAY

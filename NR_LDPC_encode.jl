@@ -16,6 +16,7 @@ function
         a::Vector{Bool},
         R::Float64,
         rv::Integer;
+        E_H = nothing,
         I_LBRM = 0,
         TBS_LBRM = Inf,
         CBGTI = [],
@@ -165,7 +166,7 @@ function
         display("new R = $(round(R*1000)/1000)")
     end
 
-    d, H, cw = channel_coding(c,C,K_prime,K,Zc,iLS,N,bg)
+    d, H, E_H = channel_coding(c,C,K_prime,K,Zc,iLS,N,bg)
 
     # d[1:(K_prime-2*Zc),:] == c[(2*Zc+1):K_prime,:] #(payload + CRC)
     # d[(K_prime-2*Zc+1):(K-2*Zc),:] == c[(K_prime+1):K,:] #(filler bits)
@@ -218,7 +219,7 @@ function
                 ))
     end
 
-    return H, g, Zc
+    return H, g, Zc, E_H
 
 end
 

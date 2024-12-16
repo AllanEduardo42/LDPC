@@ -39,40 +39,37 @@ function
         supermode = "Flooding"
     end
 
-    msg = rand(Xoshiro(rgn_seed_msg),Bool,a)
-    cword = IEEE80216e_parity_bits(msg,zf,E_H)
-
-######################### PRINT INFORMATION ON SCREEN ##########################
-    if test && printtest   
-        println()
-        print("############################### LDPC parameters #######################")
-        println("#########")
-        println()
-        println("Parity Check Matrix: $M x $N")
-        println()
-        display(sparse(H))
-        println()
-        println("Graph girth = ", girth)
-        println()
-        println("msg (L = $(length(msg))):")
-        for i in eachindex(msg)
-            print(Int(msg[i]))
-            if i%80 == 0
-                println()
-            end
-        end
-        println()
-        println()
-        println("cword (L = $(length(cword))):")
-        for i in eachindex(cword)
-            print(Int(cword[i]))
-            if i%80 == 0
-                println()
-            end
-        end
-        println()
-        println()
-    end
+# ######################### PRINT INFORMATION ON SCREEN ##########################
+#     if test && printtest   
+#         println()
+#         print("############################### LDPC parameters #######################")
+#         println("#########")
+#         println()
+#         println("Parity Check Matrix: $M x $N")
+#         println()
+#         display(sparse(H))
+#         println()
+#         println("Graph girth = ", girth)
+#         println()
+#         println("msg (L = $(length(msg))):")
+#         for i in eachindex(msg)
+#             print(Int(msg[i]))
+#             if i%80 == 0
+#                 println()
+#             end
+#         end
+#         println()
+#         println()
+#         println("cword (L = $(length(cword))):")
+#         for i in eachindex(cword)
+#             print(Int(cword[i]))
+#             if i%80 == 0
+#                 println()
+#             end
+#         end
+#         println()
+#         println()
+#     end
     
 ################################## CONSTANTS ###################################
     
@@ -80,7 +77,6 @@ function
     variance = 1 ./ (exp10.(snr/10))
     stdev = sqrt.(variance)
     
-    u = Float64.(2*cword .- 1)
     # list of checks and variables nodes
     vn2cn  = make_vn2cn_list(H)
     cn2vn  = make_cn2vn_list(H)
@@ -105,11 +101,11 @@ function
     Lf = (bptype != "MKAY") ? zeros(N) : zeros(N,2)
 
     # noise
-    L = length(cword)
-    noise = Vector{Float64}(undef,L)
+    # L = length(cword)
+    noise = Vector{Float64}(undef,N)
 
     # received signal
-    signal = zeros(L)
+    signal = zeros(N)
 
     # bit-error
     biterror = Vector{Bool}(undef,N) 
@@ -209,11 +205,17 @@ function
 
     rng_sample = (supermode == "RBP") ? Xoshiro(rng_seed_sample) : nothing  
     
-    if Zc > 0
-        cword = [msg[1:N-L]; cword]
-    end
+    # if Zc > 0
+    #     cword = [msg[1:N-L]; cword]
+    # end
 
     for j in 1:trials
+        display(rgn_seed_msg)
+        msg = rand(Xoshiro(rgn_seed_msg),Bool,a)
+        display(msg[1:20])
+        cword = IEEE80216e_parity_bits(msg,zf,E_H)
+
+        u = Float64.(2*cword .- 1)
 
         if mode == "List-RBP"
             listres1 .*= 0.0
