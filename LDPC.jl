@@ -52,7 +52,7 @@ STOP::Bool = true # stop simulation at zero syndrome (if true, BER curves are
 TRIALS::Int = 1024
 MAX::Int = 50
 MAXRBP::Int = 50
-DECAY::Float64 = 1.0
+DECAY::Float64 = 0.9
 SNRTEST = [3]
 SNR = collect(1:0.4:2.2)
 

@@ -10,7 +10,7 @@ include("calc_Lf.jl")
 
 function
     performance_simcore(
-        a::Integer,
+        A::Integer,
         snr::Real,
         H::BitMatrix,
         E_H::Matrix{<:Integer},
@@ -53,7 +53,7 @@ function
     end
     
 ################################## CONSTANTS ###################################
-    
+
     # transform snr in standard deviations
     variance = 1 ./ (exp10.(snr/10))
     stdev = sqrt.(variance)
@@ -63,6 +63,8 @@ function
     cn2vn  = make_cn2vn_list(H)
 
     ############################# PREALLOCATIONS ###############################
+
+    msg = Vector{Bool}(undef,A)
 
     # frame error rate
     DECODED = zeros(Int,maxiter)
@@ -192,9 +194,9 @@ function
     #     cword = [msg[1:N-L]; cword]
     # end
 
-    for j in 1:trials
+    @fastmath @inbounds for j in 1:trials
 
-        msg = rand(rgn_msg,Bool,a)
+        rand!(rgn_msg,msg,Bool)
         cword = IEEE80216e_parity_bits(msg,zf,E_H)
 
         if test && printtest
@@ -231,7 +233,7 @@ function
                 listm2 .*= 0
                 listn2 .*= 0
             end
-            @inbounds for m in 1:M
+            for m in 1:M
                 for n in cn2vn[m]
                     inlist[m,n] = false
                 end
@@ -247,7 +249,7 @@ function
         decoded .= false
         
         # reinitialize matrices Lr and Lq
-        @inbounds for m in 1:M
+        for m in 1:M
             for n in cn2vn[m]
                 Lr[m,n] *= 0.0
                 Lq[n,m] *= 0.0

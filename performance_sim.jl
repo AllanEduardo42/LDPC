@@ -49,12 +49,12 @@ function
             println("LLRs calculated by min-sum algorithm)")
         end
         println("Maximum number of iterations: $maxiter")
+        println("Number of threads (multithreading): $NTHREADS")
         println("Simulated for SNR (dB): $snr")
         println("Stop at zero syndrome ? $STOP")
-        println("Decaying factor: $decayfactor")
-        (mode == "Random-RBP") ? println("Sample size: $SAMPLESIZE") : nothing
-        (mode == "List-RBP") ? println("List 1 size: $LISTSIZE") : nothing 
-        (mode == "List-RBP") ? println("List 2 size: $LISTSIZE2") : nothing 
+        (mode == "RBP") || (mode == "Local-RBP") || (mode == "List-RBP") ?
+        println("RBP decaying factor: $decayfactor") : nothing
+        (mode == "List-RBP") ? println("List 1 size: $LISTSIZE\nList 2 size: $LISTSIZE2") : nothing 
         println()
     end
 
