@@ -65,7 +65,7 @@ function
         Factors[lmax] *= decayfactor
 
         # 6) update check to node message Lr[cnmax,vnmax]
-        RBP_update_Lr!(lmax,cnmax,vnmax,cn2vn,Lq,Lr,Ms,Lrn,signs)
+        RBP_update_Lr!(lmax,cnmax,vnmax,cn2vn,Lq,Lr,Ms,Lrn,signs,phi)
 
         # 7) set maximum residue to zero or remove it from the list
         set_zero_or_remove!(addressinv,residues,lmax,listsize,listres,listm,
@@ -73,8 +73,9 @@ function
 
         # 8) update Ldn[vmax] and bitvector[vnmax]
         Ldn[vnmax] = Lf[vnmax]
+        nl = LinearIndices(Lr)[1,vnmax]-1
         for m in vn2cn[vnmax]
-            Ldn[vnmax] += Lr[m,vnmax]
+            Ldn[vnmax] += Lr[nl+m]
             bitvector[vnmax] = signbit(Ldn[vnmax])
         end
 
@@ -83,7 +84,7 @@ function
         for m in vn2cn[vnmax]
             if m ≠ cnmax
                 leaf = false # vnmax is not a leaf
-                Lq[vnmax,m] = Ldn[vnmax] - Lr[m,vnmax]
+                Lq[vnmax,m] = Ldn[vnmax] - Lr[nl+m]
                 calc_residues!(addressinv,residues,Factors,Ms,Lr,Lq,Lrn,signs,
                                phi,vnmax,m,cn2vn,listres,listm,listn,listres2,
                                listm2,listn2,listsize,listsize2,inlist)

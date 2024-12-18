@@ -42,40 +42,6 @@ function
     LBP!(
         bitvector::Vector{Bool},
         Lq::Matrix{<:AbstractFloat},
-        Lr::Matrix{<:AbstractFloat},        
-        Lf::Vector{<:AbstractFloat},
-        cn2vn::Vector{Vector{T}} where {T<:Integer},
-        vn2cn::Vector{Vector{T}} where {T<:Integer},
-        Lrn::Vector{<:AbstractFloat},
-        ::Vector{Bool},
-        ::Nothing,
-        ::Nothing,
-        ::Integer,
-        address::Union{Matrix{<:Integer},Nothing},
-        addressinv::Union{Matrix{<:Integer},Nothing},
-        residues::Union{Vector{<:AbstractFloat},Nothing},
-    )
-
-    @fastmath @inbounds for m in eachindex(cn2vn)
-        # Lq updates       
-        for n in cn2vn[m] # for every n in Neighborhood(m)
-            _,_ = update_Lq!(Lq,Lr,Lf[n],n,vn2cn)
-        end
-        # Lr updates
-        update_Lr!(Lr,Lq,m,cn2vn,Lrn,nothing,nothing)
-    end
-
-    @fastmath @inbounds for n in eachindex(vn2cn)
-        m = vn2cn[n][1]
-        bitvector[n] = signbit(Lq[n,m] + Lr[m,n])
-    end
-
-end
-
-function
-    LBP!(
-        bitvector::Vector{Bool},
-        Lq::Matrix{<:AbstractFloat},
         Lr::Matrix{<:AbstractFloat},
         Lf::Vector{<:AbstractFloat},
         cn2vn::Vector{Vector{T}} where {T<:Integer},

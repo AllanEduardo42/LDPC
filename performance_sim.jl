@@ -9,31 +9,39 @@ function
     performance_sim(
         snr::Vector{<:Real},
         mode::String,
-        trials::Integer,
+        trials::Vector{<:Integer},
         maxiter::Integer,
         bptype::String,
         decayfactor::AbstractFloat;
-        printtest=false    
+        compile = false,
+        test = false,
+        printtest = false    
     )
 
 ########################### PRINT SIMULATION DETAILS ###########################
-    
-    # if trials = 1, set test mode
-    test = (trials < 3) ? true : false  
-    
-    if test && printtest
+    if !compile || test
         println()
+        print("############################### LDPC parameters #######################")
+        println("#########")
+        println()
+        println("Parity Check Matrix: $M x $N")
+        println()
+        display(sparse(H))
+        println()
+        println("Graph girth = ", girth)
+        println()
+    end
+    if test
         print("###################### Starting simulation (Testing mode) #####")
         println("#################")
         println()
-    elseif !test
-        println()
+    elseif !compile
         print("############################# Starting simulation #############")
         println("#################")
         println()
-        println("Number of trials: $trials")
     end
-    if !test || printtest
+    if !compile || test
+        println("Number of trials: $trials")
         print("Message passing protocol: $mode (using ")
         if bptype == "MKAY"
             println("Mckay's SPA method)")
@@ -60,9 +68,30 @@ function
 
 ################################ MULTITHREADING ################################
 
-    trials_multh = trials ÷ NTHREADS
+    if compile
+        Lr, Lq = performance_simcore(
+            A,
+            snr[1],
+            H,
+            E_H,
+            zf,
+            Zc,
+            mode,
+            bptype,
+            trials[1],
+            maxiter,
+            STOP,
+            decayfactor,
+            LISTSIZE,
+            LISTSIZE2,
+            Rgn_noise_seeds[1],
+            Rgn_samples_seeds[1],
+            Rgn_message_seeds[1];
+            test=true,
+            printtest=printtest)
 
-    if !test
+        return Lr, Lq 
+    else
         K = length(SNR)
         if MTHR
             decoded, ber = zeros(maxiter,K,NTHREADS), zeros(maxiter,K,NTHREADS)
@@ -71,7 +100,7 @@ function
         end
         for k in 1:K
             if MTHR
-                Threads.@threads for i in 1:NTHREADS
+                @time Threads.@threads for i in 1:NTHREADS
                     decoded[:,k,i], ber[:,k,i] = performance_simcore(
                                             A,
                                             snr[k],
@@ -81,7 +110,7 @@ function
                                             Zc,
                                             mode,
                                             bptype,
-                                            trials_multh,
+                                            trials[k]÷NTHREADS,
                                             maxiter,
                                             STOP,
                                             decayfactor,
@@ -89,12 +118,10 @@ function
                                             LISTSIZE2,
                                             Rgn_noise_seeds[i],
                                             Rgn_samples_seeds[i],
-                                            Rgn_message_seeds[i],
-                                            test,
-                                            printtest)
+                                            Rgn_message_seeds[i])
                 end
             else
-                decoded[:,k], ber[:,k] = performance_simcore(
+                @time decoded[:,k], ber[:,k] = performance_simcore(
                                             A,
                                             snr[k],
                                             H,
@@ -103,7 +130,7 @@ function
                                             Zc,
                                             mode,
                                             bptype,
-                                            trials,
+                                            trials[k],
                                             maxiter,
                                             STOP,
                                             decayfactor,
@@ -111,47 +138,33 @@ function
                                             LISTSIZE2,
                                             Rgn_noise_seeds[1],
                                             Rgn_samples_seeds[1],
-                                            Rgn_message_seeds[1],
-                                            test,
-                                            printtest)
+                                            Rgn_message_seeds[1])
             end
         end
 
         if MTHR
-            FER = zeros(maxiter,K)
-            BER = zeros(maxiter,K)
-            FER .= 1 .- sum(decoded,dims=3)/trials
-            BER .= sum(ber,dims=3)/(trials*N)
+            FER = sum(decoded,dims=3)
+            for k = 1:K
+                FER[:,k] ./= trials[k]
+            end
+            @. FER = 1 - FER
+            BER = sum(ber,dims=3)
+            for k = 1:K
+                BER[:,k] ./= (N*trials[k])
+            end
         else
-            FER = 1 .- decoded/trials
-            BER = ber/(trials*N)
+            FER = similar(decoded)
+            BER = similar(ber)
+            for k = 1:K
+                FER[:,k] = decoded[:,k]/trials[k]
+            end
+            FER = 1 .- FER
+            for k = 1:K
+                BER[:,k] = ber[:,k]/(N*trials[k])
+            end
         end
 
         return log10.(FER), log10.(BER)
-    
-    else # IF TESTING
-
-        Lr, Lq = performance_simcore(
-                                    A,
-                                    snr[1],
-                                    H,
-                                    E_H,
-                                    zf,
-                                    Zc,
-                                    mode,
-                                    bptype,
-                                    trials,
-                                    maxiter,
-                                    STOP,
-                                    decayfactor,
-                                    LISTSIZE,
-                                    LISTSIZE2,
-                                    Rgn_noise_seeds[1],
-                                    Rgn_samples_seeds[1],
-                                    Rgn_message_seeds[1],
-                                    test,
-                                    printtest)
-        
-        return Lr, Lq        
+       
     end
 end

@@ -48,8 +48,9 @@ function
 
     Ld = calc_Ld(n,vn2cn,Lf,Lr)
     # for m in vn2cn[n]
+    nl = LinearIndices(Lr)[1,n]-1
     @fastmath @inbounds for m in vn2cn[n]
-        Lq[n,m] = Ld - Lr[m,n]
+        Lq[n,m] = Ld - Lr[nl+m]
     end
 
     return Ld, signbit(Ld)
@@ -62,13 +63,14 @@ function
         Lf::AbstractFloat,
         Lr::Matrix{<:AbstractFloat}
     )
-    Ld = Lf
+
     # for m in vn2cn[n]
+    nl = LinearIndices(Lr)[1,n]-1
     @fastmath @inbounds for m in vn2cn[n]
-        Ld += Lr[m,n]
+        Lf += Lr[nl+m]
     end
     
-    return Ld
+    return Lf
 
 end
 

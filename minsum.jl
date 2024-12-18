@@ -21,8 +21,9 @@ function minsum!(
     minL = INFFLOAT
     minL2 = INFFLOAT
     max_idx = 0
+    ml = LinearIndices(Lq)[1,m]-1
     @fastmath @inbounds for n in cn2vn[m]
-        β, signs[n], s = abs_sign!(Lq[n,m],s)
+        β, signs[n], s = abs_sign!(Lq[ml+n],s)
         if β < minL
             max_idx = n
             minL, minL2 = β, minL

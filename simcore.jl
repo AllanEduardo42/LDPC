@@ -26,9 +26,9 @@ function
         listsize2::Integer,
         rgn_seed_noise::Integer,
         rng_seed_sample::Integer,
-        rgn_seed_msg::Integer,
-        test::Bool,
-        printtest::Bool
+        rgn_seed_msg::Integer;
+        test=false,
+        printtest=false
     )
 
     if mode == "RBP" || mode == "Local-RBP" || mode == "List-RBP" 
@@ -37,19 +37,6 @@ function
         supermode = "LBP"  
     else
         supermode = "Flooding"
-    end
-
-######################### PRINT INFORMATION ON SCREEN ##########################
-    if test && printtest   
-        println()
-        print("############################### LDPC parameters #######################")
-        println("#########")
-        println()
-        println("Parity Check Matrix: $M x $N")
-        println()
-        display(sparse(H))
-        println()
-        println("Graph girth = ", girth)
     end
     
 ################################## CONSTANTS ###################################

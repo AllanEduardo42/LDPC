@@ -42,19 +42,21 @@ SEED_MESSA::Int = 1000
 ############################### 4) CONTROL FLAGS ###############################
 
 MTHR::Bool = true                       
-SAVE::Bool = false
-PRIN::Bool = true
+SAVE::Bool = true
 STOP::Bool = true # stop simulation at zero syndrome (if true, BER curves are 
 # not printed)
+TEST::Bool = false
+PRIN::Bool = false
 
 ################################## 5) NUMBERS ##################################
 
-TRIALS::Int = 1024
 MAX::Int = 50
 MAXRBP::Int = 50
 DECAY::Float64 = 0.9
+SNR = collect(0.6:0.4:2.2)
 SNRTEST = [3]
-SNR = collect(1:0.4:2.2)
+TRIALS = 32*[10, 100, 1000, 10000, 100000]
+TRIALSTEST = [1]
 
 ################################ 6) BP SCHEDULE ################################
 
@@ -76,7 +78,7 @@ Bptypes[1] = "FAST"
 Maxiters[1] = MAX
 
 #LBP
-Modes[2] = 0
+Modes[2] = 1
 Bptypes[2] = "FAST"
 Maxiters[2] = MAX
 
@@ -86,7 +88,7 @@ Bptypes[3] = "FAST"
 Maxiters[3] = MAX
 
 #RBP
-Modes[4] = 0
+Modes[4] = 1
 Bptypes[4] = "FAST"
 Maxiters[4] = MAXRBP
 Decays[4] = DECAY
@@ -98,13 +100,13 @@ Maxiters[5] = MAXRBP
 Decays[5] = DECAY
 
 #List-RBP
-Modes[6] = 0
+Modes[6] = 1
 Bptypes[6] = "FAST"
 Maxiters[6] = MAXRBP
 Decays[6] = DECAY
     # List-RBP size
     LISTSIZE::UInt = 64
-    LISTSIZE2::UInt = 4
+    LISTSIZE2::UInt = 8
 
 ########################### 7) MESSAGE AND CODEWORD ############################
 
@@ -148,8 +150,8 @@ else
 end
 
 # Number of Threads
-if MTHR && TRIALS > 2
-    NTHREADS = min(Threads.nthreads(),TRIALS)
+if MTHR && !TEST
+    NTHREADS = Threads.nthreads()
 else
     NTHREADS = 1
 end
@@ -165,31 +167,32 @@ for i in eachindex(Rgn_noise_seeds)
     Rgn_message_seeds[i] = SEED_MESSA + 1 - 1
 end
 
-#################### JULIA COMPILATION (FOR SPEED) AND TEST ####################
-LR = Dict()
-LQ = Dict()
-p = (TRIALS ≤ 2) ? PRIN : false
-for i in eachindex(Modes)
-    if Modes[i]
-        LR[Names[i]] , LQ[Names[i]] = performance_sim(
-            SNRTEST,
-            Names[i],
-            min(TRIALS,2),
-            Maxiters[i],
-            Bptypes[i],
-            Decays[i];
-            printtest=p)
-    end
-end                             
 ############################ PERFORMANCE SIMULATION ############################
-if TRIALS > 2
+if TEST
+    LR = Dict()
+    LQ = Dict()
+    for i in eachindex(Modes)
+        if Modes[i]
+            LR[Names[i]] , LQ[Names[i]] = performance_sim(
+                SNRTEST,
+                Names[i],
+                TRIALSTEST,
+                Maxiters[i],
+                Bptypes[i],
+                Decays[i];
+                compile=true,
+                test=TEST,
+                printtest = TEST ? PRIN : false)
+        end
+    end                             
+else
     Fer_labels = Vector{String}()
     Fermax = Vector{Vector{<:AbstractFloat}}()
     FER = Dict()
     BER = Dict()
     for i in eachindex(Modes)
         if Modes[i]
-            @time FER[Names[i]], BER[Names[i]] = performance_sim(
+            FER[Names[i]], BER[Names[i]] = performance_sim(
                 SNR,
                 Names[i],
                 TRIALS,
@@ -201,11 +204,9 @@ if TRIALS > 2
             push!(Fermax,FER[Names[i]][Maxiters[i],:])
         end            
     end
-end
 ################################### PLOTTING ###################################
-if TRIALS > 2
     plotlyjs()
-    lim = log10(1/TRIALS)
+    lim = log10(1/maximum(TRIALS))
 
     # FER x SNR
     if length(SNR) > 1
@@ -272,15 +273,15 @@ if TRIALS > 2
             end
         end
     end
-end
 ################################### SAVE DATA ##################################
-if TRIALS > 2 && SAVE
+    if SAVE
 
-    aux = []
-    for i in eachindex(Fermax)
-        push!(aux,(Fer_labels[i],Fermax[i]))
+        aux = []
+        for i in eachindex(Fermax)
+            push!(aux,(Fer_labels[i],Fermax[i]))
+        end
+        FERS = Dict(aux)
+        CSV.write("./Saved Data/FERMAX_"*name*".csv", DataFrame(FERS), header=true)
+
     end
-    FERS = Dict(aux)
-    CSV.write("./Saved Data/FERMAX_"*name*".csv", DataFrame(FERS), header=true)
-
 end

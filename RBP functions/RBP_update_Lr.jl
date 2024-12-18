@@ -14,7 +14,26 @@ function
         Lr::Matrix{<:AbstractFloat},
         Ms::Matrix{<:AbstractFloat},
         ::Vector{<:AbstractFloat},
+        ::Nothing,
         ::Nothing
+    )
+
+    @inbounds Lr[lmax] = Ms[lmax]
+
+end
+
+function 
+    RBP_update_Lr!(
+        lmax::Integer,
+        ::Integer,
+        ::Integer,
+        ::Vector{Vector{T}} where {T<:Integer},
+        ::Matrix{<:AbstractFloat},
+        Lr::Matrix{<:AbstractFloat},
+        Ms::Matrix{<:AbstractFloat},
+        ::Vector{<:AbstractFloat},
+        ::Vector{Bool},
+        ::Vector{<:AbstractFloat}
     )
 
     @inbounds Lr[lmax] = Ms[lmax]
@@ -32,7 +51,8 @@ function
         Lr::Matrix{<:AbstractFloat},
         ::Matrix{<:AbstractFloat},
         ::Union{Vector{<:AbstractFloat},Nothing},
-        ::Vector{Bool}
+        ::Vector{Bool},
+        ::Nothing
     )
 
     pLr = 1.0

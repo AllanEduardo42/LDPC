@@ -45,9 +45,10 @@ function
     pLr = 1.0
     countzeros = 0
     n0 = 0
+    ml = LinearIndices(Lq)[1,m]-1
     @fastmath @inbounds for n in cn2vn[m]
     # for n in cn2vn[m]
-        x = tanh(0.5*Lq[n,m])
+        x = tanh(0.5*Lq[ml+n])
         if x == 0.0 # Lr[m,n] = 0 for n ≠ n0
             countzeros += 1
             n0 = n
@@ -143,8 +144,9 @@ function
 
     sLr = 0.0
     s = false
+    ml = LinearIndices(Lq)[1,m]-1
     for n in cn2vn[m]
-        @inbounds Lrn[n], signs[n], s = phi_sign!(Lq[n,m],s,phi)
+        @inbounds Lrn[n], signs[n], s = phi_sign!(Lq[ml+n],s,phi)
         @fastmath @inbounds sLr += Lrn[n] 
     end
     for n in cn2vn[m]
