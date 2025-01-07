@@ -30,7 +30,6 @@ const NINFFLOAT = -INFFLOAT
 const ALPHA = 0.875               # Min-Sum attenuation factor
 const ALPHA2 = 2*ALPHA 
 
-
 name = string(now())
 
 # Seeds
@@ -42,11 +41,17 @@ SEED_MESSA::Int = 1000
 ############################### 4) CONTROL FLAGS ###############################
 
 MTHR::Bool = true                       
-SAVE::Bool = true
 STOP::Bool = true # stop simulation at zero syndrome (if true, BER curves are 
 # not printed)
 TEST::Bool = false
-PRIN::Bool = false
+PRIN::Bool = true
+if length(ARGS) == 0
+    SAVE = false
+elseif ARGS[1] == "true"
+    SAVE = true
+else
+    SAVE = false
+end
 
 ################################## 5) NUMBERS ##################################
 
@@ -88,19 +93,19 @@ Bptypes[3] = "FAST"
 Maxiters[3] = MAX
 
 #RBP
-Modes[4] = 1
+Modes[4] = 0
 Bptypes[4] = "FAST"
 Maxiters[4] = MAXRBP
 Decays[4] = DECAY
      
 #Local-RBP
-Modes[5] = 0
-Bptypes[5] = "MSUM"
+Modes[5] = 1
+Bptypes[5] = "FAST"
 Maxiters[5] = MAXRBP
 Decays[5] = DECAY
 
 #List-RBP
-Modes[6] = 1
+Modes[6] = 0
 Bptypes[6] = "FAST"
 Maxiters[6] = MAXRBP
 Decays[6] = DECAY
@@ -128,7 +133,6 @@ if LDPC == 1
     M::Int, N::Int = size(H)
     girth = find_girth(H,100000)
 else
-    Zc = 0
     L = round(Int,A/R)
     if LDPC == 2
         N::Int = L           
@@ -138,7 +142,7 @@ else
         # Generate Parity-Check Matrix by the PEG algorithm
         H, girth = PEG(D,M,N)
     elseif LDPC == 3
-        H,zf,E_H = IEEE80216e(L,R)
+        H,Zc,E_H = IEEE80216e(L,R)
         M::Int,N::Int = size(H)
         L = N
         girth = find_girth(H,100000)
@@ -148,6 +152,17 @@ else
                 ))
     end
 end
+
+println()
+print("############################### LDPC parameters #######################")
+println("#########")
+println()
+println("Parity Check Matrix: $M x $N")
+println()
+display(sparse(H))
+println()
+println("Graph girth = ", girth)
+println()
 
 # Number of Threads
 if MTHR && !TEST
@@ -170,17 +185,16 @@ end
 ############################ PERFORMANCE SIMULATION ############################
 if TEST
     LR = Dict()
-    LQ = Dict()
+    LQ_ = Dict()
     for i in eachindex(Modes)
         if Modes[i]
-            LR[Names[i]] , LQ[Names[i]] = performance_sim(
+            LR[Names[i]] , LQ_[Names[i]] = performance_sim(
                 SNRTEST,
                 Names[i],
                 TRIALSTEST,
                 Maxiters[i],
                 Bptypes[i],
                 Decays[i];
-                compile=true,
                 test=TEST,
                 printtest = TEST ? PRIN : false)
         end

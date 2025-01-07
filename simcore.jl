@@ -14,7 +14,6 @@ function
         snr::Real,
         H::BitMatrix,
         E_H::Matrix{<:Integer},
-        zf::Integer,
         Zc::Integer,
         mode::String,
         bptype::String,
@@ -184,10 +183,9 @@ function
     @fastmath @inbounds for j in 1:trials
 
         rand!(rgn_msg,msg,Bool)
-        cword = IEEE80216e_parity_bits(msg,zf,E_H)
+        cword = IEEE80216e_parity_bits(msg,Zc,E_H)
 
         if test && printtest
-            println()
             println("Realization #$j:")
             println()
             println("msg (L = $(length(msg))):")
