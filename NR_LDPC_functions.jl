@@ -87,51 +87,8 @@ function
         Zc::Integer,
         iLS::Integer,
         N::Integer,
-        bg::String
-    )
-
-    d = zeros(Union{Bool,Missing},N,C)
-    cw = zeros(Bool,N+2*Zc,C)
-    cw[1:K_prime,:] = c[1:K_prime,:]
-
-    @inbounds for r = 1:C
-        for k = 2*Zc +1 : K_prime
-            d[k-2*Zc,r] = c[k,r]
-        end
-        for k = K_prime + 1 : K #(filler bits)
-            d[k-2*Zc,r] = missing
-        end
-    end
-    
-    H, E_H = make_parity_check_matrix(Zc,iLS,bg)
-
-    @inbounds for r = 1:C
-        w = parity_bits(cw[1:K,r],bg,Zc,K,E_H)
-        cw[K+1:end,r] = w
-        if !iszero(H*cw[:,r])
-            throw(error(
-                    lazy"""Wrong encoding"."""
-                ))
-        end
-        for k = (K + 1) : N + 2*Zc
-            d[k - 2*Zc,r] = w[k - K]
-        end
-    end
-    return d, H, E_H
-
-end
-
-function 
-    channel_coding(
-        c::Matrix{Union{Bool,Missing}},
-        C::Integer,
-        K_prime::Integer,
-        K::Integer,
-        Zc::Integer,
-        iLS::Integer,
-        N::Integer,
         bg::String,
-        E_H::Matrix{<:Integer}
+        E_H::Union{Matrix{<:Integer},Nothing}
     )
 
     d = zeros(Union{Bool,Missing},N,C)
@@ -147,10 +104,16 @@ function
         end
     end
 
+    if E_H === nothing    
+        H, E_H = make_parity_check_matrix(Zc,iLS,bg)
+    else
+        H = nothing
+    end
+
     @inbounds for r = 1:C
         w = parity_bits(cw[1:K,r],bg,Zc,K,E_H)
         cw[K+1:end,r] = w
-        if !iszero(H*cw[:,r])
+        if H !== nothing && !iszero(H*cw[:,r])
             throw(error(
                     lazy"""Wrong encoding"."""
                 ))
@@ -162,7 +125,6 @@ function
     return d, H, E_H
 
 end
-
 
 function 
     rate_matching(
@@ -521,7 +483,7 @@ function
         bg::String
     )
 
-    E_H = readdlm("./exponent_matrices/EM_$(bg)_$(iLS)_$(Zc).txt",'\t', Int,'\n')
+    E_H = readdlm("./5G_exponent_matrices/EM_$(bg)_$(iLS)_$(Zc).txt",'\t', Int,'\n')
 
     m, n = size(E_H)
 

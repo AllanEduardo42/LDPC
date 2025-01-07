@@ -166,7 +166,7 @@ function
         display("new R = $(round(R*1000)/1000)")
     end
 
-    d, H, E_H = channel_coding(c,C,K_prime,K,Zc,iLS,N,bg)
+    d, H, E_H = channel_coding(c,C,K_prime,K,Zc,iLS,N,bg,E_H)
 
     # d[1:(K_prime-2*Zc),:] == c[(2*Zc+1):K_prime,:] #(payload + CRC)
     # d[(K_prime-2*Zc+1):(K-2*Zc),:] == c[(K_prime+1):K,:] #(filler bits)
@@ -210,16 +210,81 @@ function
     # display("d: $(sum(d_prime[k0+1:k0+E_r[1],1] .=== d[k0+1:k0+E_r[1],1]) === E_r[1])")
     # display("d: $(d_prime[k0+1:k0+E_r[1],1] == d[k0+1:k0+E_r[1],1])")
 
-    H = H[1:end-P,1:end-P]
-    H = [H[:,1:K_prime] H[:,K+1:end]]
+    if H !== nothing
+        H = H[1:end-P,1:end-P]
+        H = [H[:,1:K_prime] H[:,K+1:end]]
 
-    if !iszero(H*[b[1:2*Zc];g])
-        throw(error(
-                    lazy"""Wrong encoding"."""
-                ))
+        if !iszero(H*[b[1:2*Zc];g])
+            throw(error(
+                        lazy"""Wrong encoding"."""
+                    ))
+        end
     end
 
-    return H, g, Zc, E_H
+    return g, H, E_H, A, B, C, G, K_prime, K, L_2, Zc, iLS, N, bg, N_cb, E_r, k0, g_CRC
 
 end
+
+function 
+    NR_LDPC_encode(
+        E_H::Matrix{<:Integer},
+        a::Vector{Bool},
+        A::Integer,
+        B::Integer,
+        C::Integer,
+        G::Integer,
+        K_prime::Integer,
+        K::Integer,
+        L::Integer,
+        Zc::Integer,
+        iLS::Integer,
+        N::Integer,
+        bg::String,
+        N_cb::Integer,
+        E_r::Vector{<:Integer},
+        k0::Integer,        
+        g_CRC::Vector{Bool};
+        Q_m = 1
+    )
+
+    b = zeros(Bool,B)
+    @inbounds b[1:A] = a
+    @inbounds _,b[A+1:end] = divide_poly(b,g_CRC)
+
+    c = code_block_segmentation(b,C,K_prime,K,L)
+
+    d, ___ = channel_coding(c,C,K_prime,K,Zc,iLS,N,bg,E_H)
+
+    e =  rate_matching(d,C,N_cb,E_r,k0)
+
+    f =  bit_interleaving(e,C,E_r,Q_m)
+
+    g = code_concatenation(f,C,G,E_r)
+
+    return g
+
+end
+
+# # Message (Payload) size
+# A::Int = 2000
+# # Rate
+# R::Float64 = 1/2
+# a = rand(Bool,A)
+# rv = 0
+# g, H, E_H, A, B, C, G, K_prime, K, L, Zc, iLS, N, bg, N_cb, E_r, k0, g_CRC = NR_LDPC_encode(a,R,rv)
+# if !iszero(H*[a[1:2*Zc];g])
+#     throw(error(
+#                 lazy"""Wrong encoding"."""
+#             ))
+# end
+# for i = 1:10
+#     global a = rand(Bool,A)
+#     global g = NR_LDPC_encode(E_H,a,A,B,C,G,K_prime,K,L,Zc,iLS,N,bg,N_cb,E_r,k0,g_CRC)
+#     if !iszero(H*[a[1:2*Zc];g])
+#         throw(error(
+#                     lazy"""Wrong encoding"."""
+#                 ))
+#     end
+# end
+
 

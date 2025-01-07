@@ -43,7 +43,7 @@ SEED_MESSA::Int = 1000
 MTHR::Bool = true                       
 STOP::Bool = true # stop simulation at zero syndrome (if true, BER curves are 
 # not printed)
-TEST::Bool = false
+TEST::Bool = true
 PRIN::Bool = true
 if length(ARGS) == 0
     SAVE = false
@@ -60,7 +60,7 @@ MAXRBP::Int = 50
 DECAY::Float64 = 0.9
 SNR = collect(0.6:0.4:2.2)
 SNRTEST = [3]
-TRIALS = 32*[10, 100, 1000, 10000, 100000]
+TRIALS = 32*[1, 10, 100, 1000, 10000]
 TRIALSTEST = [1]
 
 ################################ 6) BP SCHEDULE ################################
@@ -83,7 +83,7 @@ Bptypes[1] = "FAST"
 Maxiters[1] = MAX
 
 #LBP
-Modes[2] = 1
+Modes[2] = 0
 Bptypes[2] = "FAST"
 Maxiters[2] = MAX
 
@@ -99,7 +99,7 @@ Maxiters[4] = MAXRBP
 Decays[4] = DECAY
      
 #Local-RBP
-Modes[5] = 1
+Modes[5] = 0
 Bptypes[5] = "FAST"
 Maxiters[5] = MAXRBP
 Decays[5] = DECAY
