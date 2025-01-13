@@ -7,6 +7,8 @@ include("auxiliary_functions.jl")
 include("lookupTable.jl")
 include("BP.jl")
 include("calc_Lf.jl")
+include("./RBP functions/calc_residues.jl")
+include("./RBP functions/find_local_maxresidue.jl")
 
 function
     performance_simcore(
@@ -179,10 +181,12 @@ function
     rgn_msg = Xoshiro(rgn_seed_msg)
 
     rng_sample = (supermode == "RBP") ? Xoshiro(rng_seed_sample) : nothing  
-    
-    # if Zc > 0
-    #     cword = [msg[1:N-L]; cword]
+
+    # if mode == "Local-RBP"
+    #     supermode = "Local-RBP"
     # end
+    maxcoords = zeros(Int,2)
+    maxresidue = 0.0
 
     @fastmath @inbounds for j in 1:trials
 
@@ -266,6 +270,11 @@ function
                 cn2vn,listres1,listm1,listn1,nothing,nothing,nothing,listsize1,0,
                 inlist)
             end
+        elseif supermode == "Local-RBP"
+            for m in eachindex(cn2vn)
+                maxresidue = find_local_maxresidue!(nothing,Ms,nothing,Lq,Lrn,signs,phi,0,m,
+                cn2vn,maxcoords)
+            end
         end
             
         # SPA routine
@@ -306,7 +315,11 @@ function
             listres2,
             listm2,
             listn2,
-            inlist)                
+            inlist,
+            maxresidue,
+            maxcoords
+            )                
+
 
         # bit error rate
         @. BER += ber

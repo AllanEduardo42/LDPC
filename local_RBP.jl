@@ -12,6 +12,8 @@ include("./RBP functions/update_list.jl")
 #Local-RBP
 function
     local_RBP!(
+        maxresidue::AbstractFloat,
+        maxcoords::Vector{<:Integer},
         bitvector::Vector{Bool},
         Lr::Matrix{<:AbstractFloat},
         Ms::Matrix{<:AbstractFloat},

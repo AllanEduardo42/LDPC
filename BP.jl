@@ -14,7 +14,8 @@ include("RBP.jl")
 include("local_RBP.jl")
 
 function 
-    BP!(address::Union{Matrix{<:Integer},Nothing},
+    BP!(
+        address::Union{Matrix{<:Integer},Nothing},
         addressinv::Union{Matrix{<:Integer},Nothing},
         supermode::String,
         stop::Bool,
@@ -51,7 +52,9 @@ function
         listres2::Union{Vector{<:AbstractFloat},Nothing},
         listm2::Union{Vector{<:Integer},Nothing},
         listn2::Union{Vector{<:Integer},Nothing},
-        inlist::Union{Matrix{<:Integer},Nothing}
+        inlist::Union{Matrix{<:Integer},Nothing},
+        maxresidue::AbstractFloat,
+        maxcoords::Vector{<:Integer}
     )
     
     for i in 1:maxiter
@@ -114,6 +117,8 @@ function
             resetfactors!(Factors,vn2cn)
         elseif supermode == "Local-RBP"
             local_RBP!(
+                maxresidue,
+                maxcoords,
                 bitvector,
                 Lr,
                 Ms,
