@@ -11,6 +11,7 @@ include("calc_syndrome.jl")
 include("LBP.jl")
 # include("LBP_NO_OPT.jl")
 include("RBP.jl")
+include("local_RBP.jl")
 
 function 
     BP!(address::Union{Matrix{<:Integer},Nothing},
@@ -109,6 +110,26 @@ function
                  listm2,
                  listn2,
                  inlist)
+            # reset factors
+            resetfactors!(Factors,vn2cn)
+        elseif supermode == "Local-RBP"
+            local_RBP!(
+                bitvector,
+                Lr,
+                Ms,
+                Lq,
+                Lf,
+                cn2vn,
+                vn2cn,
+                Lrn,
+                signs,
+                phi,
+                Factors,
+                decay,
+                num_edges,
+                Ldn,
+                rng_sample
+            )
             # reset factors
             resetfactors!(Factors,vn2cn)
         end

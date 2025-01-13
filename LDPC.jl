@@ -40,18 +40,18 @@ SEED_MESSA::Int = 1000
 
 ############################### 4) CONTROL FLAGS ###############################
 
+TEST::Bool = false
+PRIN::Bool = true
 MTHR::Bool = true                       
 STOP::Bool = true # stop simulation at zero syndrome (if true, BER curves are 
 # not printed)
-TEST::Bool = false
-PRIN::Bool = true
 
 ################################## 5) NUMBERS ##################################
 
 MAX::Int = 50
 MAXRBP::Int = 50
 DECAY::Float64 = 0.8
-SNR = collect(0.6:0.4:1.4)
+SNR = collect(0.6:0.4:1.8)
 SNRTEST = [3]
 TRIALS = 32*[1, 10, 100, 1000, 10000]
 TRIALSTEST = [1]
@@ -95,7 +95,8 @@ Decays[4] = [DECAY]
 Modes[5] = 1
 Bptypes[5] = "FAST"
 Maxiters[5] = MAXRBP
-Decays[5] = collect(0.0:0.1:1.0)
+# Decays[5] = collect(0.0:0.1:1.0)
+Decays[5] = [DECAY]
 
 #List-RBP
 Modes[6] = 0
