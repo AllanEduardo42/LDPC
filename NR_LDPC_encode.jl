@@ -11,6 +11,25 @@ include("NR_LDPC_functions.jl")
 
 const R_LBRM = 2//3
 
+struct NR_LDPC_DATA
+    A::Integer
+    B::Integer
+    C::Integer
+    G::Integer
+    K_prime::Integer
+    K::Integer
+    L_2::Integer
+    Zc::Integer
+    iLS::Integer
+    N::Integer
+    bg::String
+    N_cb::Integer
+    E_r::Vector{<:Integer}
+    k0::Integer
+    g_CRC::Vector{Bool}
+end
+
+
 function
     NR_LDPC_encode(
         a::Vector{Bool},
@@ -221,7 +240,9 @@ function
         end
     end
 
-    return g, H, E_H, A, B, C, G, K_prime, K, L_2, Zc, iLS, N, bg, N_cb, E_r, k0, g_CRC
+    nr_ldpc_data = NR_LDPC_DATA(A, B, C, G, K_prime, K, L_2, Zc, iLS, N, bg, N_cb, E_r, k0, g_CRC)
+
+    return g, H, E_H, nr_ldpc_data
 
 end
 
@@ -229,29 +250,32 @@ function
     NR_LDPC_encode(
         E_H::Matrix{<:Integer},
         a::Vector{Bool},
-        A::Integer,
-        B::Integer,
-        C::Integer,
-        G::Integer,
-        K_prime::Integer,
-        K::Integer,
-        L::Integer,
-        Zc::Integer,
-        iLS::Integer,
-        N::Integer,
-        bg::String,
-        N_cb::Integer,
-        E_r::Vector{<:Integer},
-        k0::Integer,        
-        g_CRC::Vector{Bool};
+        nr_ldpc_data::Any;
         Q_m = 1
     )
+
+    A = nr_ldpc_data.A
+    B = nr_ldpc_data.B
+    C = nr_ldpc_data.C
+    G = nr_ldpc_data.G
+    K_prime = nr_ldpc_data.K_prime
+    K = nr_ldpc_data.K
+    L_2 = nr_ldpc_data.L_2
+    Zc = nr_ldpc_data.Zc
+    iLS = nr_ldpc_data.iLS
+    N = nr_ldpc_data.N
+    bg = nr_ldpc_data.bg
+    N_cb = nr_ldpc_data.N_cb
+    E_r = nr_ldpc_data.E_r
+    k0 = nr_ldpc_data.k0
+    g_CRC = nr_ldpc_data.g_CRC
+    
 
     b = zeros(Bool,B)
     @inbounds b[1:A] = a
     @inbounds _,b[A+1:end] = divide_poly(b,g_CRC)
 
-    c = code_block_segmentation(b,C,K_prime,K,L)
+    c = code_block_segmentation(b,C,K_prime,K,L_2)
 
     d, ___ = channel_coding(c,C,K_prime,K,Zc,iLS,N,bg,E_H)
 

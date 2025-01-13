@@ -53,7 +53,7 @@ function
         vnmax = listn[1]
 
         # 3) verify if the list was not updated
-        if cnmax == 0 || listm[1]== -1
+        if cnmax == 0 || listres[1]== -1
             cnmax = rand(rng_sample,1:length(cn2vn))
             vnmax = rand(rng_sample,cn2vn[cnmax])
         end
@@ -93,10 +93,8 @@ function
 
         # 10) if vnmax is a leaf in the graph, triggers the random selection of 
         #     a check in 3)
-        if leaf
-            if listsize == 1
-                listm[1] = 0
-            end
+        if leaf && listsize == 1
+            listres[1] = -1
         end
 
         # 11) Update list 2

@@ -12,7 +12,7 @@ function
         trials::Vector{<:Integer},
         maxiter::Integer,
         bptype::String,
-        decayfactor::AbstractFloat;
+        decay::Union{AbstractFloat,Nothing};
         test = false,
         printtest = false    
     )
@@ -47,7 +47,7 @@ function
     println("Simulated for SNR (dB): $snr")
     println("Stop at zero syndrome ? $STOP")
     (mode == "RBP") || (mode == "Local-RBP") || (mode == "List-RBP") ?
-    println("RBP decaying factor: $decayfactor") : nothing
+    println("RBP decaying factor: $decay") : nothing
     (mode == "List-RBP") ? println("List 1 size: $LISTSIZE\nList 2 size: $LISTSIZE2") : nothing 
     println()
 
@@ -60,13 +60,15 @@ function
                     snr[1],
                     H,
                     E_H,
-                    Zc,
+                    LDPC,
+                    Zf,
+                    nr_ldpc_data,
                     mode,
                     bptype,
                     trials[1],
                     maxiter,
                     STOP,
-                    decayfactor,
+                    decay,
                     LISTSIZE,
                     LISTSIZE2,
                     Rgn_noise_seeds[1],
@@ -94,13 +96,15 @@ function
                                                     snr[k],
                                                     H,
                                                     E_H,
-                                                    Zc,
+                                                    LDPC,
+                                                    Zf,
+                                                    nr_ldpc_data,
                                                     mode,
                                                     bptype,
                                                     trials[k]÷NTHREADS,
                                                     maxiter,
                                                     STOP,
-                                                    decayfactor,
+                                                    decay,
                                                     LISTSIZE,
                                                     LISTSIZE2,
                                                     Rgn_noise_seeds[i],
@@ -113,13 +117,15 @@ function
                                                     snr[k],
                                                     H,
                                                     E_H,
-                                                    Zc,
+                                                    LDPC,
+                                                    Zf,
+                                                    nr_ldpc_data,
                                                     mode,
                                                     bptype,
                                                     trials[k],
                                                     maxiter,
                                                     STOP,
-                                                    decayfactor,
+                                                    decay,
                                                     LISTSIZE,
                                                     LISTSIZE2,
                                                     Rgn_noise_seeds[1],

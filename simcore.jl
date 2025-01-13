@@ -14,13 +14,15 @@ function
         snr::Real,
         H::BitMatrix,
         E_H::Matrix{<:Integer},
-        Zc::Integer,
+        LDPC::Integer,
+        Zf::Integer,
+        nr_ldpc_data::NR_LDPC_DATA,
         mode::String,
         bptype::String,
         trials::Integer,
         maxiter::Integer,
         stop::Bool,
-        decayfactor::AbstractFloat,
+        decay::Union{AbstractFloat,Nothing},
         listsize1::Integer,
         listsize2::Integer,
         rgn_seed_noise::Integer,
@@ -39,6 +41,8 @@ function
     end
     
 ################################## CONSTANTS ###################################
+
+    Zc = nr_ldpc_data.Zc
 
     # transform snr in standard deviations
     variance = 1 ./ (exp10.(snr/10))
@@ -71,10 +75,10 @@ function
 
     # noise
     # L = length(cword)
-    noise = Vector{Float64}(undef,N)
+    noise = Vector{Float64}(undef,N-2*Zc)
 
     # received signal
-    signal = zeros(N)
+    signal = zeros(N-2*Zc)
 
     # bit-error
     biterror = Vector{Bool}(undef,N) 
@@ -183,7 +187,11 @@ function
     @fastmath @inbounds for j in 1:trials
 
         rand!(rgn_msg,msg,Bool)
-        cword = IEEE80216e_parity_bits(msg,Zc,E_H)
+        if LDPC == 1
+            cword = NR_LDPC_encode(E_H, msg, nr_ldpc_data)
+        elseif LDPC == 3
+            cword = IEEE80216e_parity_bits(msg,Zf,E_H)
+        end
 
         if test && printtest
             println("Realization #$j:")
@@ -208,6 +216,9 @@ function
             println()
         end
         u = Float64.(2*cword .- 1)
+        if Zc > 0
+            cword = [msg[1:2*Zc]; cword]
+        end
 
         if mode == "List-RBP"
             listres1 .*= 0.0
@@ -282,7 +293,7 @@ function
             printtest,
             residues,
             Factors,
-            decayfactor,
+            decay,
             num_edges,
             Ldn,
             visited_vns,

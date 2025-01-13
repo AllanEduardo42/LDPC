@@ -30,7 +30,7 @@ const NINFFLOAT = -INFFLOAT
 const ALPHA = 0.875               # Min-Sum attenuation factor
 const ALPHA2 = 2*ALPHA 
 
-name = string(now())
+now_ = string(now())
 
 # Seeds
 SEED_NOISE::Int = 1428
@@ -43,22 +43,15 @@ SEED_MESSA::Int = 1000
 MTHR::Bool = true                       
 STOP::Bool = true # stop simulation at zero syndrome (if true, BER curves are 
 # not printed)
-TEST::Bool = true
+TEST::Bool = false
 PRIN::Bool = true
-if length(ARGS) == 0
-    SAVE = false
-elseif ARGS[1] == "true"
-    SAVE = true
-else
-    SAVE = false
-end
 
 ################################## 5) NUMBERS ##################################
 
 MAX::Int = 50
 MAXRBP::Int = 50
-DECAY::Float64 = 0.9
-SNR = collect(0.6:0.4:2.2)
+DECAY::Float64 = 0.8
+SNR = collect(0.6:0.4:1.4)
 SNRTEST = [3]
 TRIALS = 32*[1, 10, 100, 1000, 10000]
 TRIALSTEST = [1]
@@ -75,7 +68,7 @@ Bptypes = Vector{String}(undef,7)
 # maximum number of BP iterations
 Maxiters = zeros(Int,7)
 
-Decays = zeros(7)
+Decays = Vector{Union{Vector{<:AbstractFloat},Nothing}}(nothing,6)
 
 #Flooding
 Modes[1] = 1
@@ -96,19 +89,19 @@ Maxiters[3] = MAX
 Modes[4] = 0
 Bptypes[4] = "FAST"
 Maxiters[4] = MAXRBP
-Decays[4] = DECAY
+Decays[4] = [DECAY]
      
 #Local-RBP
-Modes[5] = 0
+Modes[5] = 1
 Bptypes[5] = "FAST"
 Maxiters[5] = MAXRBP
-Decays[5] = DECAY
+Decays[5] = collect(0.0:0.1:1.0)
 
 #List-RBP
 Modes[6] = 0
 Bptypes[6] = "FAST"
 Maxiters[6] = MAXRBP
-Decays[6] = DECAY
+Decays[6] = [DECAY]
     # List-RBP size
     LISTSIZE::UInt = 64
     LISTSIZE2::UInt = 8
@@ -120,7 +113,7 @@ A::Int = 1008
 # Rate
 R::Float64 = 1/2
 # LDPC protocol: 1 = NR-LDPC; 2 = PEG; 3 = IEEE80216e;
-LDPC::Int = 3
+LDPC::Int = 1
     densities = 2:11
 
 ############################# PARITY-CHECK MATRIX #############################
@@ -128,11 +121,13 @@ LDPC::Int = 3
 Msg = zeros(Bool,A)
 
 if LDPC == 1
+    Zf = 0
     rv = 0
-    H, Cword, Zc = NR_LDPC_encode(Msg,R,rv)
+    Cword, H, E_H, nr_ldpc_data = NR_LDPC_encode(Msg,R,rv)
     M::Int, N::Int = size(H)
     girth = find_girth(H,100000)
 else
+    nr_ldpc_data = NR_LDPC_DATA(0,0,0,0,0,0,0,0,0,0,"0",0,[0],0,[false])
     L = round(Int,A/R)
     if LDPC == 2
         N::Int = L           
@@ -142,7 +137,7 @@ else
         # Generate Parity-Check Matrix by the PEG algorithm
         H, girth = PEG(D,M,N)
     elseif LDPC == 3
-        H,Zc,E_H = IEEE80216e(L,R)
+        H,Zf,E_H = IEEE80216e(L,R)
         M::Int,N::Int = size(H)
         L = N
         girth = find_girth(H,100000)
@@ -188,15 +183,30 @@ if TEST
     LQ_ = Dict()
     for i in eachindex(Modes)
         if Modes[i]
-            LR[Names[i]] , LQ_[Names[i]] = performance_sim(
-                SNRTEST,
-                Names[i],
-                TRIALSTEST,
-                Maxiters[i],
-                Bptypes[i],
-                Decays[i];
-                test=TEST,
-                printtest = TEST ? PRIN : false)
+            if Decays[i] !== nothing
+                for decay in Decays[i]                
+                    name = Names[i]*"_$decay"
+                    LR[name] , LQ_[name] = performance_sim(
+                        SNRTEST,
+                        Names[i],
+                        TRIALSTEST,
+                        Maxiters[i],
+                        Bptypes[i],
+                        decay;
+                        test=TEST,
+                        printtest = TEST ? PRIN : false)
+                end
+            else
+                LR[Names[i]] , LQ_[Names[i]] = performance_sim(
+                    SNRTEST,
+                    Names[i],
+                    TRIALSTEST,
+                    Maxiters[i],
+                    Bptypes[i],
+                    Decays[i];
+                    test=TEST,
+                    printtest = TEST ? PRIN : false)
+            end
         end
     end                             
 else
@@ -206,18 +216,43 @@ else
     BER = Dict()
     for i in eachindex(Modes)
         if Modes[i]
-            FER[Names[i]], BER[Names[i]] = performance_sim(
-                SNR,
-                Names[i],
-                TRIALS,
-                Maxiters[i],
-                Bptypes[i],
-                Decays[i])
-
-            push!(Fer_labels,Names[i]*" ($(Bptypes[i]))")
-            push!(Fermax,FER[Names[i]][Maxiters[i],:])
+            if Decays[i] !== nothing
+                for decay in Decays[i]                
+                    name = Names[i]*"_$decay"
+                    FER[name], BER[name] = performance_sim(
+                        SNR,
+                        Names[i],
+                        TRIALS,
+                        Maxiters[i],
+                        Bptypes[i],
+                        decay)
+                    push!(Fer_labels,name*" ($(Bptypes[i])")
+                    push!(Fermax,FER[name][Maxiters[i],:])
+                end
+            else
+                FER[Names[i]], BER[Names[i]] = performance_sim(
+                    SNR,
+                    Names[i],
+                    TRIALS,
+                    Maxiters[i],
+                    Bptypes[i],
+                    Decays[i])
+                push!(Fer_labels,Names[i]*" ($(Bptypes[i])")
+                push!(Fermax,FER[Names[i]][Maxiters[i],:])
+            end
         end            
     end
+
+##################################### SAVE #####################################
+
+    if length(ARGS) == 0
+        SAVE = false
+    elseif ARGS[1] == "true"
+        SAVE = true
+    else
+        SAVE = false
+    end
+    
 ################################### PLOTTING ###################################
     plotlyjs()
     lim = log10(1/maximum(TRIALS))
@@ -283,7 +318,7 @@ else
                     title=titleber,
                     ylims=(lim-2,0)
                 )
-                SAVE ? savefig(p,"./Saved Data/BER_"*Names[i]*"_"*name*".svg") : display(p)
+                SAVE ? savefig(p,"./Saved Data/BER_"*Names[i]*"_"*now_*".svg") : display(p)
             end
         end
     end
@@ -295,7 +330,7 @@ else
             push!(aux,(Fer_labels[i],Fermax[i]))
         end
         FERS = Dict(aux)
-        CSV.write("./Saved Data/FERMAX_"*name*".csv", DataFrame(FERS), header=true)
+        CSV.write("./Saved Data/FERMAX_"*now_*".csv", DataFrame(FERS), header=true)
 
     end
 end
