@@ -185,8 +185,10 @@ function
     if mode == "Local-RBP"
         supermode = "Local-RBP"
     end
-    maxcoords = zeros(Int,2)
-    maxresidue = 0.0
+    maxcoords = zeros(Int,4)
+    maxresidues = zeros(2)
+
+    maxcoords_alt = zeros(Int,2)
 
     @fastmath @inbounds for j in 1:trials
 
@@ -272,9 +274,11 @@ function
             end
         elseif supermode == "Local-RBP"
             for m in eachindex(cn2vn)
-                maxresidue = find_local_maxresidue!(maxresidue,nothing,Ms,nothing,Lq,Lrn,signs,phi,0,m,
+                find_local_maxresidue!(maxresidues,nothing,Ms,nothing,Lq,Lrn,signs,phi,0,m,
                 cn2vn,maxcoords)
             end
+            maxcoords_alt[1] = maxcoords[3]
+            maxcoords_alt[2] = maxcoords[4]
         end
             
         # SPA routine
@@ -316,8 +320,9 @@ function
             listm2,
             listn2,
             inlist,
-            maxresidue,
-            maxcoords
+            maxresidues,
+            maxcoords,
+            maxcoords_alt
             )                
 
 

@@ -51,9 +51,9 @@ STOP::Bool = true # stop simulation at zero syndrome (if true, BER curves are
 MAX::Int = 50
 MAXRBP::Int = 50
 DECAY::Float64 = 0.8
-SNR = collect(0.6:0.4:1.4)
+SNR = collect(0.6:0.4:2.2)
 SNRTEST = [3]
-TRIALS = 32*[1, 10, 100, 1000, 10000]
+TRIALS = 128*[1, 10, 100, 1000, 10000]
 TRIALSTEST = [1]
 
 ################################ 6) BP SCHEDULE ################################
@@ -71,12 +71,12 @@ Maxiters = zeros(Int,7)
 Decays = Vector{Union{Vector{<:AbstractFloat},Nothing}}(nothing,6)
 
 #Flooding
-Modes[1] = 0
+Modes[1] = 1
 Bptypes[1] = "FAST"
 Maxiters[1] = MAX
 
 #LBP
-Modes[2] = 0
+Modes[2] = 1
 Bptypes[2] = "FAST"
 Maxiters[2] = MAX
 
@@ -86,7 +86,7 @@ Bptypes[3] = "FAST"
 Maxiters[3] = MAX
 
 #RBP
-Modes[4] = 0
+Modes[4] = 1
 Bptypes[4] = "FAST"
 Maxiters[4] = MAXRBP
 Decays[4] = [DECAY]
@@ -99,7 +99,7 @@ Maxiters[5] = MAXRBP
 Decays[5] = [DECAY]
 
 #List-RBP
-Modes[6] = 0
+Modes[6] = 1
 Bptypes[6] = "FAST"
 Maxiters[6] = MAXRBP
 Decays[6] = [DECAY]
@@ -227,7 +227,7 @@ else
                         Maxiters[i],
                         Bptypes[i],
                         decay)
-                    push!(Fer_labels,name*" ($(Bptypes[i])")
+                    push!(Fer_labels,name*" ($(Bptypes[i]))")
                     push!(Fermax,FER[name][Maxiters[i],:])
                 end
             else
@@ -238,7 +238,7 @@ else
                     Maxiters[i],
                     Bptypes[i],
                     Decays[i])
-                push!(Fer_labels,Names[i]*" ($(Bptypes[i])")
+                push!(Fer_labels,Names[i]*" ($(Bptypes[i]))")
                 push!(Fermax,FER[Names[i]][Maxiters[i],:])
             end
         end            

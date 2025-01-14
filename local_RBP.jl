@@ -12,7 +12,7 @@ include("./RBP functions/update_list.jl")
 #Local-RBP
 function
     local_RBP!(
-        maxresidue::AbstractFloat,
+        maxresidues::Vector{<:AbstractFloat},
         maxcoords::Vector{<:Integer},
         bitvector::Vector{Bool},
         Lr::Matrix{<:AbstractFloat},
@@ -29,23 +29,20 @@ function
         num_edges::Integer,
         Ldn::Vector{<:AbstractFloat},
         rng_sample::AbstractRNG,
+        maxcoords_alt::Vector{<:Integer}
     )
+
+    maxresidue_alt = maxresidues[2]
 
     @fastmath @inbounds for e in 1:num_edges
 
-        # 1) if maximum residue is zero, the RBP has converged
-        if maxresidue == 0
-            break
-        end
-        
-        # 2) get the check and node of the maximum residue
-        cnmax = maxcoords[1]
-        vnmax = maxcoords[2]
-
-        # 3) verify if the list was not updated
-        if cnmax == 0 || maxresidue == -1
+        if maxresidues[1] == 0.0
             cnmax = rand(rng_sample,1:length(cn2vn))
             vnmax = rand(rng_sample,cn2vn[cnmax])
+        else
+            maxresidues[1] = 0.0
+            cnmax = maxcoords[1]
+            vnmax = maxcoords[2]
         end
 
         # 4) for optimization, get the linear indice of the maximum residue
@@ -55,10 +52,7 @@ function
         Factors[lmax] *= decay
 
         # 6) update check to node message Lr[cnmax,vnmax]
-        RBP_update_Lr!(lmax,cnmax,vnmax,cn2vn,Lq,Lr,Ms,Lrn,signs,phi)
-
-        # 7) set maximum residue to zero or remove it from the list
-        maxresidue = 0.0
+        RBP_update_Lr!(lmax,cnmax,vnmax,cn2vn,Lq,Lr,Ms,Lrn,signs,phi)        
 
         # 8) update Ldn[vmax] and bitvector[vnmax]
         Ldn[vnmax] = Lf[vnmax]
@@ -74,7 +68,7 @@ function
             if m ≠ cnmax
                 leaf = false # vnmax is not a leaf
                 Lq[vnmax,m] = Ldn[vnmax] - Lr[nl+m]
-                maxresidue = find_local_maxresidue!(maxresidue,Factors,Ms,Lr,Lq,
+                find_local_maxresidue!(maxresidues,Factors,Ms,Lr,Lq,
                     Lrn,signs,phi,vnmax,m,cn2vn,maxcoords)
             end
         end
@@ -82,9 +76,20 @@ function
         # 10) if vnmax is a leaf in the graph, triggers the random selection of 
         #     a check in 3)
         if leaf
-            maxresidue = -1.0
+            # maxresidue = -1.0
+            Lq[vnmax,cnmax] = Ldn[vnmax] - Lr[nl+cnmax]
+            find_local_maxresidue!(maxresidues,Factors,Ms,Lr,Lq,
+                Lrn,signs,phi,vnmax,cnmax,cn2vn,maxcoords)
         end
-
+        if maxresidues[1] < maxresidue_alt
+            maxcoords[1], maxcoords_alt[1] = maxcoords_alt[1], maxcoords[1]
+            maxcoords[2], maxcoords_alt[2] = maxcoords_alt[2], maxcoords[2]
+            maxresidue_alt = maxresidues[1]            
+        else
+            maxresidue_alt = maxresidues[2]
+            maxcoords_alt[1] = maxcoords[3]
+            maxcoords_alt[2] = maxcoords[4]
+        end
     end
 end
 

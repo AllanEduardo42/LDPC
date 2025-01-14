@@ -53,8 +53,9 @@ function
         listm2::Union{Vector{<:Integer},Nothing},
         listn2::Union{Vector{<:Integer},Nothing},
         inlist::Union{Matrix{<:Integer},Nothing},
-        maxresidue::AbstractFloat,
-        maxcoords::Vector{<:Integer}
+        maxresidues::Vector{<:AbstractFloat},
+        maxcoords::Vector{<:Integer},
+        maxcoords_alt::Vector{<:Integer}
     )
     
     for i in 1:maxiter
@@ -117,7 +118,7 @@ function
             resetfactors!(Factors,vn2cn)
         elseif supermode == "Local-RBP"
             local_RBP!(
-                maxresidue,
+                maxresidues,
                 maxcoords,
                 bitvector,
                 Lr,
@@ -133,7 +134,8 @@ function
                 decay,
                 num_edges,
                 Ldn,
-                rgn_sample
+                rgn_sample,
+                maxcoords_alt
             )
             # reset factors
             resetfactors!(Factors,vn2cn)
