@@ -7,6 +7,7 @@ include("findmaxresidue.jl")
 
 function
     find_local_maxresidue!(
+        maxresidue::AbstractFloat,
         Factors::Union{Matrix{<:AbstractFloat},Nothing},
         Ms::Matrix{<:AbstractFloat},
         Lr::Union{Matrix{<:AbstractFloat},Nothing},                      
@@ -24,23 +25,20 @@ function
     update_Lr!(Ms,Lq,m,cn2vn,Lrn,signs,phi)
 
     # calculate the residues
-    maxresidue = 0
     @fastmath @inbounds for n in cn2vn[m]
         if n ≠ vnmax
             l = LinearIndices(Ms)[m,n]
             x = calc_residue(Ms,Factors,Lr,l)
-            if x != 0.0
-                if x > maxresidue
-                    maxresidue = x
-                    maxcoords[1] = m
-                    maxcoords[2] = n
-                end
-            end            
+            if x > maxresidue
+                maxresidue = x
+                maxcoords[1] = m
+                maxcoords[2] = n
+            end         
         end
     end
 
     if maxresidue == 0 # no update: this will triger random selection of a check
-        maxresidue = -1
+        maxresidue = -1.0
     end
 
     return maxresidue

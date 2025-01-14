@@ -58,7 +58,7 @@ function
         RBP_update_Lr!(lmax,cnmax,vnmax,cn2vn,Lq,Lr,Ms,Lrn,signs,phi)
 
         # 7) set maximum residue to zero or remove it from the list
-        maxresidue = 0
+        maxresidue = 0.0
 
         # 8) update Ldn[vmax] and bitvector[vnmax]
         Ldn[vnmax] = Lf[vnmax]
@@ -74,15 +74,15 @@ function
             if m ≠ cnmax
                 leaf = false # vnmax is not a leaf
                 Lq[vnmax,m] = Ldn[vnmax] - Lr[nl+m]
-                maxresidue = find_local_maxresidue!(Factors,Ms,Lr,Lq,Lrn,signs,
-                               phi,vnmax,m,cn2vn,maxcoords)
+                maxresidue = find_local_maxresidue!(maxresidue,Factors,Ms,Lr,Lq,
+                    Lrn,signs,phi,vnmax,m,cn2vn,maxcoords)
             end
         end
 
         # 10) if vnmax is a leaf in the graph, triggers the random selection of 
         #     a check in 3)
         if leaf
-            maxresidue = -1
+            maxresidue = -1.0
         end
 
     end

@@ -51,7 +51,7 @@ STOP::Bool = true # stop simulation at zero syndrome (if true, BER curves are
 MAX::Int = 50
 MAXRBP::Int = 50
 DECAY::Float64 = 0.8
-SNR = collect(0.6:0.4:1.8)
+SNR = collect(0.6:0.4:1.4)
 SNRTEST = [3]
 TRIALS = 32*[1, 10, 100, 1000, 10000]
 TRIALSTEST = [1]
@@ -71,7 +71,7 @@ Maxiters = zeros(Int,7)
 Decays = Vector{Union{Vector{<:AbstractFloat},Nothing}}(nothing,6)
 
 #Flooding
-Modes[1] = 1
+Modes[1] = 0
 Bptypes[1] = "FAST"
 Maxiters[1] = MAX
 

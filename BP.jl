@@ -133,7 +133,7 @@ function
                 decay,
                 num_edges,
                 Ldn,
-                rng_sample
+                rgn_sample
             )
             # reset factors
             resetfactors!(Factors,vn2cn)

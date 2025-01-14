@@ -182,9 +182,9 @@ function
 
     rng_sample = (supermode == "RBP") ? Xoshiro(rng_seed_sample) : nothing  
 
-    # if mode == "Local-RBP"
-    #     supermode = "Local-RBP"
-    # end
+    if mode == "Local-RBP"
+        supermode = "Local-RBP"
+    end
     maxcoords = zeros(Int,2)
     maxresidue = 0.0
 
@@ -272,7 +272,7 @@ function
             end
         elseif supermode == "Local-RBP"
             for m in eachindex(cn2vn)
-                maxresidue = find_local_maxresidue!(nothing,Ms,nothing,Lq,Lrn,signs,phi,0,m,
+                maxresidue = find_local_maxresidue!(maxresidue,nothing,Ms,nothing,Lq,Lrn,signs,phi,0,m,
                 cn2vn,maxcoords)
             end
         end
