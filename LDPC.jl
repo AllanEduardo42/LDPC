@@ -41,7 +41,7 @@ SEED_MESSA::Int = 1000
 ############################### 4) CONTROL FLAGS ###############################
 
 TEST::Bool = false
-PRIN::Bool = true
+PRIN::Bool = false
 MTHR::Bool = true                       
 STOP::Bool = true # stop simulation at zero syndrome (if true, BER curves are 
 # not printed)
@@ -51,10 +51,10 @@ STOP::Bool = true # stop simulation at zero syndrome (if true, BER curves are
 MAX::Int = 50
 MAXRBP::Int = 50
 DECAY::Float64 = 0.8
-SNR = collect(0.6:0.4:2.2)
-SNRTEST = [3]
-TRIALS = 128*[1, 10, 100, 1000, 10000]
-TRIALSTEST = [1]
+SNR = collect(0.8:0.4:2.0)
+SNRTEST = [1.8]
+TRIALS = 320*[1, 10, 100, 1000, 10000]
+TRIALSTEST = [1000]
 
 ################################ 6) BP SCHEDULE ################################
 
@@ -71,12 +71,12 @@ Maxiters = zeros(Int,7)
 Decays = Vector{Union{Vector{<:AbstractFloat},Nothing}}(nothing,6)
 
 #Flooding
-Modes[1] = 1
+Modes[1] = 0
 Bptypes[1] = "FAST"
 Maxiters[1] = MAX
 
 #LBP
-Modes[2] = 1
+Modes[2] = 0
 Bptypes[2] = "FAST"
 Maxiters[2] = MAX
 
@@ -86,7 +86,7 @@ Bptypes[3] = "FAST"
 Maxiters[3] = MAX
 
 #RBP
-Modes[4] = 1
+Modes[4] = 0
 Bptypes[4] = "FAST"
 Maxiters[4] = MAXRBP
 Decays[4] = [DECAY]
@@ -99,7 +99,7 @@ Maxiters[5] = MAXRBP
 Decays[5] = [DECAY]
 
 #List-RBP
-Modes[6] = 1
+Modes[6] = 0
 Bptypes[6] = "FAST"
 Maxiters[6] = MAXRBP
 Decays[6] = [DECAY]
@@ -186,7 +186,7 @@ if TEST
         if Modes[i]
             if Decays[i] !== nothing
                 for decay in Decays[i]                
-                    name = Names[i]*"_$decay"
+                    name = Names[i]*" $decay"
                     LR[name] , LQ_[name] = performance_sim(
                         SNRTEST,
                         Names[i],
@@ -219,7 +219,7 @@ else
         if Modes[i]
             if Decays[i] !== nothing
                 for decay in Decays[i]                
-                    name = Names[i]*"_$decay"
+                    name = Names[i]*" $decay"
                     FER[name], BER[name] = performance_sim(
                         SNR,
                         Names[i],
@@ -269,7 +269,7 @@ else
             title="FER (Decay factor = $DECAY)",
             ylims=(lim,0)
         )
-        SAVE ? savefig(p,"./Saved Data/FER_"*name*".svg") : display(p) 
+        SAVE ? savefig(p,"./Saved Data/FER_"*now_*".svg") : display(p) 
     end
 
     # BER x Iterations
@@ -283,43 +283,67 @@ else
         labels = permutedims(labels)
         for i in eachindex(Modes)
             if Modes[i]
-                if Names[i] == "RBP" || Names[i] == "Random-RBP" ||
-                Names[i] == "Local-RBP" || Names[i] == "List-RBP"
-                    titlefer = "FER $(Names[i]) (decay factor = $(decay[Names[i]]))"
+                if Decays[i] !== nothing
+                    for decay in Decays[i]
+                        name = Names[i]*" $decay"
+                        titlefer = "FER "*name             
+                        local p = plot(
+                            1:Maxiters[i],
+                            FER[name],                
+                            xlabel="Iteration",
+                            label=labels,
+                            lw=2,
+                            title=titlefer,
+                            ylims=(lim,0)
+                        )
+                        SAVE ? savefig(p,"./Saved Data/FER_"*Names[i]*"_"*now_*".svg") : display(p)
+                    end
                 else
-                    titlefer = "FER $(Names[i])"
+                    titlefer = "FER $(Names[i])"                
+                    local p = plot(
+                        1:Maxiters[i],
+                        FER[Names[i]],                
+                        xlabel="Iteration",
+                        label=labels,
+                        lw=2,
+                        title=titlefer,
+                        ylims=(lim,0)
+                    )
+                    SAVE ? savefig(p,"./Saved Data/FER_"*Names[i]*"_"*now_*".svg") : display(p)
                 end
-                local p = plot(
-                    1:Maxiters[i],
-                    FER[Names[i]],                
-                    xlabel="Iteration",
-                    label=labels,
-                    lw=2,
-                    title=titlefer,
-                    ylims=(lim,0)
-                )
-                SAVE ? savefig(p,"./Saved Data/FER_"*Names[i]*"_"*name*".svg") : display(p) 
             end
         end
 
         for i in eachindex(Modes)
             if Modes[i]
-                if Names[i] == "RBP" || Names[i] == "Random-RBP" || 
-                   Names[i] == "Local-RBP" || Names[i] == "List-RBP"
-                    titleber = "BER $(Names[i]) (decay factor = $(decay[Names[i]]))"
+                if Decays[i] !== nothing
+                    for decay in Decays[i]
+                        name = Names[i]*" $decay"
+                        titleber = "BER $name"
+                        local p = plot(
+                            1:Maxiters[i],
+                            BER[name],                
+                            xlabel="Iteration",
+                            label=labels,
+                            lw=2,
+                            title=titleber,
+                            ylims=(lim-2,0)
+                        )
+                        SAVE ? savefig(p,"./Saved Data/BER_"*Names[i]*"_"*now_*".svg") : display(p)
+                    end                    
                 else
                     titleber = "BER $(Names[i])"
+                    local p = plot(
+                            1:Maxiters[i],
+                            BER[Names[i]],                
+                            xlabel="Iteration",
+                            label=labels,
+                            lw=2,
+                            title=titleber,
+                            ylims=(lim-2,0)
+                        )
+                        SAVE ? savefig(p,"./Saved Data/BER_"*Names[i]*"_"*now_*".svg") : display(p)
                 end
-                local p = plot(
-                    1:Maxiters[i],
-                    BER[Names[i]],                
-                    xlabel="Iteration",
-                    label=labels,
-                    lw=2,
-                    title=titleber,
-                    ylims=(lim-2,0)
-                )
-                SAVE ? savefig(p,"./Saved Data/BER_"*Names[i]*"_"*now_*".svg") : display(p)
             end
         end
     end

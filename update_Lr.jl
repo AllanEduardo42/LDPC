@@ -48,7 +48,7 @@ function
     ml = LinearIndices(Lq)[1,m]-1
     @fastmath @inbounds for n in cn2vn[m]
     # for n in cn2vn[m]
-        x = tanh(0.5*Lq[ml+n])
+        x = Lq[ml+n]
         if x == 0.0 # Lr[m,n] = 0 for n ≠ n0
             countzeros += 1
             n0 = n
@@ -57,7 +57,7 @@ function
                 break
             end
         else
-            Lrn[n] = x 
+            Lrn[n] = tanh(0.5*x)
         end
         pLr *= Lrn[n]
     end

@@ -36,11 +36,11 @@ function
 
     @fastmath @inbounds for e in 1:num_edges
 
-        if maxresidues[1] == 0.0
+        if maxresidues[1] == 0.5
             cnmax = rand(rng_sample,1:length(cn2vn))
             vnmax = rand(rng_sample,cn2vn[cnmax])
         else
-            maxresidues[1] = 0.0
+            maxresidues[1] = 0.5
             cnmax = maxcoords[1]
             vnmax = maxcoords[2]
         end
@@ -76,7 +76,6 @@ function
         # 10) if vnmax is a leaf in the graph, triggers the random selection of 
         #     a check in 3)
         if leaf
-            # maxresidue = -1.0
             Lq[vnmax,cnmax] = Ldn[vnmax] - Lr[nl+cnmax]
             find_local_maxresidue!(maxresidues,Factors,Ms,Lr,Lq,
                 Lrn,signs,phi,vnmax,cnmax,cn2vn,maxcoords)
@@ -84,7 +83,7 @@ function
         if maxresidues[1] < maxresidue_alt
             maxcoords[1], maxcoords_alt[1] = maxcoords_alt[1], maxcoords[1]
             maxcoords[2], maxcoords_alt[2] = maxcoords_alt[2], maxcoords[2]
-            maxresidue_alt = maxresidues[1]            
+            maxresidues[1], maxresidue_alt = maxresidue_alt, maxresidues[1]            
         else
             maxresidue_alt = maxresidues[2]
             maxcoords_alt[1] = maxcoords[3]

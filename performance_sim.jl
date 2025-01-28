@@ -135,12 +135,12 @@ function
         end
 
         if MTHR
-            FER = sum(decoded,dims=3)
+            FER = sum(decoded,dims=3)[:,:,1]
             for k = 1:K
                 FER[:,k] ./= trials[k]
             end
             @. FER = 1 - FER
-            BER = sum(ber,dims=3)
+            BER = sum(ber,dims=3)[:,:,1]
             for k = 1:K
                 BER[:,k] ./= (N*trials[k])
             end
