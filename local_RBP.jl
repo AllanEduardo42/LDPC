@@ -36,11 +36,11 @@ function
 
     @fastmath @inbounds for e in 1:num_edges
 
-        if maxresidues[1] == 0.5
+        if maxresidues[1] == 0
             cnmax = rand(rng_sample,1:length(cn2vn))
             vnmax = rand(rng_sample,cn2vn[cnmax])
         else
-            maxresidues[1] = 0.5
+            maxresidues[1] = 0
             cnmax = maxcoords[1]
             vnmax = maxcoords[2]
         end

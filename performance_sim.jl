@@ -12,13 +12,15 @@ function
         trials::Vector{<:Integer},
         maxiter::Integer,
         bptype::String,
-        decay::Union{AbstractFloat,Nothing};
+        decay::Union{AbstractFloat,Nothing},
+        stop::Bool,
+        mthr::Bool;
         test = false,
         printtest = false    
     )
 
 ########################### PRINT SIMULATION DETAILS ###########################
-    if TEST
+    if test
         print("###################### Starting simulation (Testing mode) #####")
         println("#################")
         println()
@@ -45,7 +47,7 @@ function
     println("Maximum number of iterations: $maxiter")
     println("Number of threads (multithreading): $NTHREADS")
     println("Simulated for SNR (dB): $snr")
-    println("Stop at zero syndrome ? $STOP")
+    println("Stop at zero syndrome ? $stop")
     (mode == "RBP") || (mode == "Local-RBP") || (mode == "List-RBP") ?
     println("RBP decaying factor: $decay") : nothing
     (mode == "List-RBP") ? println("List 1 size: $LISTSIZE\nList 2 size: $LISTSIZE2") : nothing 
@@ -67,7 +69,7 @@ function
                     bptype,
                     trials[1],
                     maxiter,
-                    STOP,
+                    stop,
                     decay,
                     LISTSIZE,
                     LISTSIZE2,
@@ -82,14 +84,14 @@ function
         return Lr, Lq
 
     else
-        K = length(SNR)
-        if MTHR
+        K = length(snr)
+        if mthr
             decoded, ber = zeros(maxiter,K,NTHREADS), zeros(maxiter,K,NTHREADS)
         else
             decoded, ber = zeros(maxiter,K), zeros(maxiter,K)
         end
         for k in 1:K
-            if MTHR
+            if mthr
                 @time Threads.@threads for i in 1:NTHREADS
                     decoded[:,k,i], ber[:,k,i] = performance_simcore(
                                                     A,
@@ -103,7 +105,7 @@ function
                                                     bptype,
                                                     trials[k]÷NTHREADS,
                                                     maxiter,
-                                                    STOP,
+                                                    stop,
                                                     decay,
                                                     LISTSIZE,
                                                     LISTSIZE2,
@@ -124,7 +126,7 @@ function
                                                     bptype,
                                                     trials[k],
                                                     maxiter,
-                                                    STOP,
+                                                    stop,
                                                     decay,
                                                     LISTSIZE,
                                                     LISTSIZE2,
@@ -134,7 +136,7 @@ function
             end
         end
 
-        if MTHR
+        if mthr
             FER = sum(decoded,dims=3)[:,:,1]
             for k = 1:K
                 FER[:,k] ./= trials[k]
@@ -157,6 +159,10 @@ function
         end
 
         println()
+
+        lower = 1/maximum(trials)
+        replace!(x-> x < lower ? lower : x, FER)
+        replace!(x-> x < lower ? lower : x, BER)
 
         return log10.(FER), log10.(BER)
         

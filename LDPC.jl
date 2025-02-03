@@ -40,10 +40,10 @@ SEED_MESSA::Int = 1000
 
 ############################### 4) CONTROL FLAGS ###############################
 
-TEST::Bool = false
-PRIN::Bool = false
-MTHR::Bool = true                       
-STOP::Bool = true # stop simulation at zero syndrome (if true, BER curves are 
+TEST::Bool = true
+PRIN::Bool = true
+MTHR::Bool = false                       
+STOP::Bool = false # stop simulation at zero syndrome (if true, BER curves are 
 # not printed)
 
 ################################## 5) NUMBERS ##################################
@@ -51,10 +51,10 @@ STOP::Bool = true # stop simulation at zero syndrome (if true, BER curves are
 MAX::Int = 50
 MAXRBP::Int = 50
 DECAY::Float64 = 0.8
-SNR = collect(0.8:0.4:2.0)
-SNRTEST = [1.8]
-TRIALS = 320*[1, 10, 100, 1000, 10000]
-TRIALSTEST = [1000]
+SNR = collect(0.8:0.4:1.6)
+SNRTEST = [1.6]
+TRIALS = 32*[1, 10, 100, 1000, 10000]
+TRIALSTEST = [1]
 
 ################################ 6) BP SCHEDULE ################################
 
@@ -86,13 +86,13 @@ Bptypes[3] = "FAST"
 Maxiters[3] = MAX
 
 #RBP
-Modes[4] = 0
+Modes[4] = 1
 Bptypes[4] = "FAST"
 Maxiters[4] = MAXRBP
 Decays[4] = [DECAY]
      
 #Local-RBP
-Modes[5] = 1
+Modes[5] = 0
 Bptypes[5] = "FAST"
 Maxiters[5] = MAXRBP
 # Decays[5] = collect(0.0:0.1:1.0)
@@ -104,8 +104,8 @@ Bptypes[6] = "FAST"
 Maxiters[6] = MAXRBP
 Decays[6] = [DECAY]
     # List-RBP size
-    LISTSIZE::UInt = 64
-    LISTSIZE2::UInt = 8
+    LISTSIZE::UInt = 32
+    LISTSIZE2::UInt = 4
 
 ########################### 7) MESSAGE AND CODEWORD ############################
 
@@ -114,7 +114,7 @@ A::Int = 1008
 # Rate
 R::Float64 = 1/2
 # LDPC protocol: 1 = NR-LDPC; 2 = PEG; 3 = IEEE80216e;
-LDPC::Int = 1
+LDPC::Int = 3
     densities = 2:11
 
 ############################# PARITY-CHECK MATRIX #############################
@@ -193,7 +193,9 @@ if TEST
                         TRIALSTEST,
                         Maxiters[i],
                         Bptypes[i],
-                        decay;
+                        decay,
+                        STOP,
+                        MTHR;
                         test=TEST,
                         printtest = TEST ? PRIN : false)
                 end
@@ -204,7 +206,9 @@ if TEST
                     TRIALSTEST,
                     Maxiters[i],
                     Bptypes[i],
-                    Decays[i];
+                    Decays[i],
+                    STOP,
+                    MTHR;
                     test=TEST,
                     printtest = TEST ? PRIN : false)
             end

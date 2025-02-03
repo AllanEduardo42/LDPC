@@ -3,8 +3,6 @@
 # 13 jan 2025
 # Calculate the residues for the RBP algorithm
 
-include("findmaxresidue.jl")
-
 function
     find_local_maxresidue!(
         maxresidues::Vector{<:AbstractFloat},

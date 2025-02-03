@@ -186,7 +186,7 @@ function
         supermode = "Local-RBP"
     end
     maxcoords = zeros(Int,4)
-    maxresidues = ones(2)*0.5
+    maxresidues = ones(2)*0
     maxcoords_alt = zeros(Int,2)
 
     @fastmath @inbounds for j in 1:trials

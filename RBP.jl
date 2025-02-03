@@ -44,16 +44,19 @@ function
     @fastmath @inbounds for e in 1:num_edges
 
         # 1) if maximum residue is zero, the RBP has converged
-        if listres[1] == 0
-            break
-        end
+        # if listres[1] == 0
+        #     break
+        # end
         
         # 2) get the check and node of the maximum residue
-        cnmax = listm[1]
-        vnmax = listn[1]
+        # cnmax = listm[1]
+        # vnmax = listn[1]
 
         # 3) verify if the list was not updated
-        if cnmax == 0 || listres[1]== -1
+        if listres[1] != 0
+            cnmax = listm[1]
+            vnmax = listn[1]
+        else
             cnmax = rand(rng_sample,1:length(cn2vn))
             vnmax = rand(rng_sample,cn2vn[cnmax])
         end
