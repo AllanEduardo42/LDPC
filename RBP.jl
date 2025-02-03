@@ -96,11 +96,13 @@ function
 
         # 10) if vnmax is a leaf in the graph, triggers the random selection of 
         #     a check in 3)
-        if leaf && listsize == 1
-            listres[1] = -1
+        if leaf
+            Lq[vnmax,cnmax] = Ldn[vnmax] - Lr[nl+cnmax]
+            find_local_maxresidue!(maxresidues,Factors,Ms,Lr,Lq,
+                Lrn,signs,phi,vnmax,cnmax,cn2vn,maxcoords)
         end
 
-        # 11) Update list 2
+        # 11) Update list 1
         if listsize2 ≠ 0
             for k in listsize2:-1:1
                 update_list!(inlist,listres,listm,listn,listres2[k],listm2[k],

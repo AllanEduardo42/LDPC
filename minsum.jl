@@ -20,7 +20,7 @@ function minsum!(
     s = false
     minL = INFFLOAT
     minL2 = INFFLOAT
-    max_idx = 0
+    max_idx = cn2vn[m][1]
     ml = LinearIndices(Lq)[1,m]-1
     @fastmath @inbounds for n in cn2vn[m]
         β, signs[n], s = abs_sign!(Lq[ml+n],s)
@@ -31,13 +31,20 @@ function minsum!(
             minL2 = β
         end
     end
+    minL *= ALPHA
+    minL2 *= ALPHA
 
     @fastmath @inbounds for n in cn2vn[m]
-        if n == max_idx #(pick the second least Lq)
-            Ms[m,n] = (ALPHA - ALPHA2*(signs[n] ⊻ s))*minL2
+        if signs[n] ⊻ s
+            Ms[m,n] = -minL
         else
-            Ms[m,n] = (ALPHA - ALPHA2*(signs[n] ⊻ s))*minL
+            Ms[m,n] = minL
         end
+    end
+    @fastmath @inbounds if signbit(Ms[m,max_idx])
+        Ms[m,max_idx] = -minL2
+    else
+        Ms[m,max_idx] = minL2
     end
 
 end

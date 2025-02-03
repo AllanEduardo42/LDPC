@@ -267,13 +267,13 @@ function
 
         if supermode == "RBP"
             for m in eachindex(cn2vn)
-                calc_residues!(addressinv,residues,nothing,Ms,nothing,Lq,Lrn,signs,phi,0,m,
+                calc_residues!(addressinv,residues,Factors,Ms,nothing,Lq,Lrn,signs,phi,0,m,
                 cn2vn,listres1,listm1,listn1,nothing,nothing,nothing,listsize1,0,
                 inlist)
             end
         elseif supermode == "Local-RBP"
             for m in eachindex(cn2vn)
-                find_local_maxresidue!(maxresidues,nothing,Ms,nothing,Lq,Lrn,signs,phi,0,m,
+                find_local_maxresidue!(maxresidues,Factors,Ms,nothing,Lq,Lrn,signs,phi,0,m,
                 cn2vn,maxcoords)
             end
             maxcoords_alt[1] = maxcoords[3]

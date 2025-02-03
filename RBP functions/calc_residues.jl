@@ -3,7 +3,7 @@
 # 24 set 2024
 # Calculate the residues for the RBP algorithm
 
-include("findmaxresidue.jl")
+include("update_residue.jl")
 
 function
     calc_residues!(
@@ -37,16 +37,12 @@ function
     @fastmath @inbounds for n in cn2vn[m]
         if n ≠ vnmax
             l = LinearIndices(Ms)[m,n]
-            x = calc_residue(Ms,Factors,Lr,l)
+            x = calc_residue(Ms,Lr,l)
             if x != 0.0
-                findmaxresidue!(addressinv,residues,m,n,l,x,listres,listm,listn,
+                update_residue!(addressinv,residues,m,n,l,x,Factors,listres,listm,listn,
                                 listres2,listm2,listn2,listsize,listsize2,inlist)
             end            
         end
-    end
-
-    if listres[1] == 0 # no update: this will triger random selection of a check
-        listres[1] = -1
     end
 
 end
@@ -54,7 +50,6 @@ end
 function 
     calc_residue(
         Ms::Matrix{<:AbstractFloat},
-        Factors::Matrix{<:AbstractFloat},
         Lr::Matrix{<:AbstractFloat},
         l::Integer
     )
@@ -63,7 +58,6 @@ function
     @fastmath if signbit(x)
         x = -x
     end
-    @fastmath @inbounds x *= Factors[l]
 
     return x
 
@@ -73,7 +67,6 @@ end
 function 
     calc_residue(
         Ms::Matrix{<:AbstractFloat},
-        ::Nothing,
         ::Nothing,
         l::Integer
     )

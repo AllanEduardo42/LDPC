@@ -28,7 +28,6 @@ const INF = typemax(Int64)
 const INFFLOAT = 1e2
 const NINFFLOAT = -INFFLOAT
 const ALPHA = 0.875               # Min-Sum attenuation factor
-const ALPHA2 = 2*ALPHA 
 
 now_ = string(now())
 
@@ -40,20 +39,20 @@ SEED_MESSA::Int = 1000
 
 ############################### 4) CONTROL FLAGS ###############################
 
-TEST::Bool = true
+TEST::Bool = false
 PRIN::Bool = true
-MTHR::Bool = false                       
+MTHR::Bool = true                       
 STOP::Bool = false # stop simulation at zero syndrome (if true, BER curves are 
 # not printed)
 
 ################################## 5) NUMBERS ##################################
 
 MAX::Int = 50
-MAXRBP::Int = 50
+MAXRBP::Int = 10
 DECAY::Float64 = 0.8
 SNR = collect(0.8:0.4:1.6)
 SNRTEST = [1.6]
-TRIALS = 32*[1, 10, 100, 1000, 10000]
+TRIALS = 64*[1, 10, 100, 1000, 10000]
 TRIALSTEST = [1]
 
 ################################ 6) BP SCHEDULE ################################
@@ -230,7 +229,9 @@ else
                         TRIALS,
                         Maxiters[i],
                         Bptypes[i],
-                        decay)
+                        decay,
+                        STOP,
+                        MTHR)
                     push!(Fer_labels,name*" ($(Bptypes[i]))")
                     push!(Fermax,FER[name][Maxiters[i],:])
                 end
@@ -241,7 +242,9 @@ else
                     TRIALS,
                     Maxiters[i],
                     Bptypes[i],
-                    Decays[i])
+                    Decays[i],
+                    STOP,
+                    MTHR)
                 push!(Fer_labels,Names[i]*" ($(Bptypes[i]))")
                 push!(Fermax,FER[Names[i]][Maxiters[i],:])
             end

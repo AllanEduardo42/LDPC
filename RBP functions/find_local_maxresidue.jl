@@ -26,7 +26,8 @@ function
     @fastmath @inbounds for n in cn2vn[m]
         if n ≠ vnmax
             l = LinearIndices(Ms)[m,n]
-            x = calc_residue(Ms,Factors,Lr,l)
+            x = calc_residue(Ms,Lr,l)
+            x *= Factors[l]
             if x > maxresidues[1]
                 maxresidues[1], maxresidues[2] = x, maxresidues[1]
                 maxcoords[3] = maxcoords[1]

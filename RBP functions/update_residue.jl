@@ -5,16 +5,17 @@
 
 # RBP
 function 
-    findmaxresidue!(
+    update_residue!(
         addressinv::Matrix{<:Integer},
         residues::Vector{<:AbstractFloat},
-        m::Integer,
-        n::Integer,
+        ::Integer,
+        ::Integer,
         l::Integer,
         x::AbstractFloat,
-        listres::Vector{<:AbstractFloat},
-        listm::Vector{<:Integer},
-        listn::Vector{<:Integer},
+        Factors::Union{Matrix{<:AbstractFloat},Nothing},
+        ::Vector{<:AbstractFloat},
+        ::Vector{<:Integer},
+        ::Vector{<:Integer},
         ::Nothing,
         ::Nothing,
         ::Nothing,
@@ -23,25 +24,21 @@ function
         ::Nothing
     )
 
+    @fastmath @inbounds x *= Factors[l]
     @inbounds residues[addressinv[l]] = x
-
-    @fastmath @inbounds if x > listres[1]
-        listres[1] = x
-        listm[1] = m
-        listn[1] = n
-    end
 
 end
 
 # Local-RBP
 function 
-    findmaxresidue!(
+    update_residue!(
         ::Nothing,
         ::Nothing,
         m::Integer,
         n::Integer,
         ::Integer,
         x::AbstractFloat,
+        Factors::Union{Matrix{<:AbstractFloat},Nothing},
         listres::Vector{<:AbstractFloat},
         listm::Vector{<:Integer},
         listn::Vector{<:Integer},
@@ -53,6 +50,7 @@ function
         ::Nothing
     )
 
+    @fastmath @inbounds x *= Factors[l]
     @fastmath @inbounds if x > listres[1]
         listres[1] = x
         listm[1] = m
@@ -63,13 +61,14 @@ end
 
 # List-RBP
 function 
-    findmaxresidue!(
+    update_residue!(
         ::Nothing,
         ::Nothing,
         m::Integer,
         n::Integer,
         l::Integer,
         x::AbstractFloat,
+        Factors::Union{Matrix{<:AbstractFloat},Nothing},
         listres::Vector{<:AbstractFloat},
         listm::Vector{<:Integer},
         listn::Vector{<:Integer},
@@ -81,7 +80,8 @@ function
         inlist::Matrix{<:Integer}
     )
 
-    @inbounds if inlist[l]  # if residue(m,n) is in the list
+    @fastmath @inbounds if inlist[l]  # if residue(m,n) is in the list
+        x *= Factors[l]
         inlist[l] = false   # remove from the list
         pos = 0
         for i = 1:listsize
