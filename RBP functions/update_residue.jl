@@ -81,7 +81,6 @@ function
     )
 
     @fastmath @inbounds if inlist[l]  # if residue(m,n) is in the list
-        x *= Factors[l]
         inlist[l] = false   # remove from the list
         pos = 0
         for i = 1:listsize
@@ -102,10 +101,13 @@ function
         end
     end
 
-    if listsize2 == 0
-        update_list!(inlist,listres,listm,listn,x,m,n,listsize)
-    else
-        update_list!(nothing,listres2,listm2,listn2,x,m,n,listsize2)
+    if x != 0.0
+        x *= Factors[l]
+        if listsize2 == 0
+            update_list!(inlist,listres,listm,listn,x,m,n,listsize)
+        else
+            update_list!(nothing,listres2,listm2,listn2,x,m,n,listsize2)
+        end
     end
     
 end

@@ -38,10 +38,8 @@ function
         if n ≠ vnmax
             l = LinearIndices(Ms)[m,n]
             x = calc_residue(Ms,Lr,l)
-            if x != 0.0
-                update_residue!(addressinv,residues,m,n,l,x,Factors,listres,listm,listn,
-                                listres2,listm2,listn2,listsize,listsize2,inlist)
-            end            
+            update_residue!(addressinv,residues,m,n,l,x,Factors,listres,listm,listn,
+                            listres2,listm2,listn2,listsize,listsize2,inlist)
         end
     end
 

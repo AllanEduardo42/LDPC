@@ -40,7 +40,7 @@ SEED_MESSA::Int = 1000
 ############################### 4) CONTROL FLAGS ###############################
 
 TEST::Bool = false
-PRIN::Bool = true
+PRIN::Bool = false
 MTHR::Bool = true                       
 STOP::Bool = false # stop simulation at zero syndrome (if true, BER curves are 
 # not printed)
@@ -50,9 +50,9 @@ STOP::Bool = false # stop simulation at zero syndrome (if true, BER curves are
 MAX::Int = 50
 MAXRBP::Int = 10
 DECAY::Float64 = 0.8
-SNR = collect(0.8:0.4:1.6)
+SNR = collect(0.8:0.4:2.0)
 SNRTEST = [1.6]
-TRIALS = 64*[1, 10, 100, 1000, 10000]
+TRIALS = 256*[1, 10, 100, 1000, 10000]
 TRIALSTEST = [1]
 
 ################################ 6) BP SCHEDULE ################################
@@ -85,13 +85,13 @@ Bptypes[3] = "FAST"
 Maxiters[3] = MAX
 
 #RBP
-Modes[4] = 1
+Modes[4] = 0
 Bptypes[4] = "FAST"
 Maxiters[4] = MAXRBP
 Decays[4] = [DECAY]
      
 #Local-RBP
-Modes[5] = 0
+Modes[5] = 1
 Bptypes[5] = "FAST"
 Maxiters[5] = MAXRBP
 # Decays[5] = collect(0.0:0.1:1.0)
@@ -103,8 +103,8 @@ Bptypes[6] = "FAST"
 Maxiters[6] = MAXRBP
 Decays[6] = [DECAY]
     # List-RBP size
-    LISTSIZE::UInt = 32
-    LISTSIZE2::UInt = 4
+    LISTSIZE::UInt = 16
+    LISTSIZE2::UInt = 1
 
 ########################### 7) MESSAGE AND CODEWORD ############################
 
