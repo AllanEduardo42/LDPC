@@ -101,10 +101,16 @@ function
         end
     end
 
-    if x != 0.0
+    @fastmath @inbounds if x != 0.0
         x *= Factors[l]
         if listsize2 == 0
             update_list!(inlist,listres,listm,listn,x,m,n,listsize)
+        elseif listsize2 == 1
+            if x > listres2[1]
+                listres2[1] = x
+                listm2[1] = m
+                listn2[1] = n
+            end
         else
             update_list!(nothing,listres2,listm2,listn2,x,m,n,listsize2)
         end

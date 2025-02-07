@@ -39,8 +39,8 @@ SEED_MESSA::Int = 1000
 
 ############################### 4) CONTROL FLAGS ###############################
 
-TEST::Bool = false
-PRIN::Bool = false
+TEST::Bool = true
+PRIN::Bool = true
 MTHR::Bool = true                       
 STOP::Bool = false # stop simulation at zero syndrome (if true, BER curves are 
 # not printed)
@@ -50,7 +50,7 @@ STOP::Bool = false # stop simulation at zero syndrome (if true, BER curves are
 MAX::Int = 50
 MAXRBP::Int = 5
 DECAY::Float64 = 0.8
-SNR = collect(0.8:0.4:2.0)
+SNR = collect(0.8:0.4:1.6)
 SNRTEST = [1.6]
 TRIALS = 512*[1, 10, 100, 1000, 10000]
 TRIALSTEST = [1]
@@ -59,7 +59,7 @@ TRIALSTEST = [1]
 
 Modes = zeros(Bool,7)
 
-Names = ["Flooding","LBP","iLBP","RBP","Local-RBP","List-RBP"]
+Modes = ["Flooding","LBP","iLBP","RBP","Local-RBP","List-RBP"]
 
 # BP type: "MKAY", "TANH", "FAST", "ALTN", "TABL", "MSUM"
 Bptypes = Vector{String}(undef,7)
@@ -70,12 +70,12 @@ Maxiters = zeros(Int,7)
 Decays = Vector{Union{Vector{<:AbstractFloat},Nothing}}(nothing,6)
 
 #Flooding
-Modes[1] = 1
+Modes[1] = 0
 Bptypes[1] = "FAST"
 Maxiters[1] = MAX
 
 #LBP
-Modes[2] = 1
+Modes[2] = 0
 Bptypes[2] = "FAST"
 Maxiters[2] = MAX
 
@@ -85,13 +85,13 @@ Bptypes[3] = "FAST"
 Maxiters[3] = MAX
 
 #RBP
-Modes[4] = 1
+Modes[4] = 0
 Bptypes[4] = "FAST"
 Maxiters[4] = MAXRBP
 Decays[4] = [DECAY]
      
 #Local-RBP
-Modes[5] = 1
+Modes[5] = 0
 Bptypes[5] = "FAST"
 Maxiters[5] = MAXRBP
 # Decays[5] = collect(0.0:0.1:1.0)
@@ -185,10 +185,10 @@ if TEST
         if Modes[i]
             if Decays[i] !== nothing
                 for decay in Decays[i]                
-                    name = Names[i]*" $decay"
+                    name = Modes[i]*" $decay"
                     LR[name] , LQ_[name] = performance_sim(
                         SNRTEST,
-                        Names[i],
+                        Modes[i],
                         TRIALSTEST,
                         Maxiters[i],
                         Bptypes[i],
@@ -199,9 +199,9 @@ if TEST
                         printtest = TEST ? PRIN : false)
                 end
             else
-                LR[Names[i]] , LQ_[Names[i]] = performance_sim(
+                LR[Modes[i]] , LQ_[Modes[i]] = performance_sim(
                     SNRTEST,
-                    Names[i],
+                    Modes[i],
                     TRIALSTEST,
                     Maxiters[i],
                     Bptypes[i],
@@ -222,10 +222,10 @@ else
         if Modes[i]
             if Decays[i] !== nothing
                 for decay in Decays[i]                
-                    name = Names[i]*" $decay"
+                    name = Modes[i]*" $decay"
                     FER[name], BER[name] = performance_sim(
                         SNR,
-                        Names[i],
+                        Modes[i],
                         TRIALS,
                         Maxiters[i],
                         Bptypes[i],
@@ -236,17 +236,17 @@ else
                     push!(Fermax,FER[name][Maxiters[i],:])
                 end
             else
-                FER[Names[i]], BER[Names[i]] = performance_sim(
+                FER[Modes[i]], BER[Modes[i]] = performance_sim(
                     SNR,
-                    Names[i],
+                    Modes[i],
                     TRIALS,
                     Maxiters[i],
                     Bptypes[i],
                     Decays[i],
                     STOP,
                     MTHR)
-                push!(Fer_labels,Names[i]*" ($(Bptypes[i]))")
-                push!(Fermax,FER[Names[i]][Maxiters[i],:])
+                push!(Fer_labels,Modes[i]*" ($(Bptypes[i]))")
+                push!(Fermax,FER[Modes[i]][Maxiters[i],:])
             end
         end            
     end
@@ -292,7 +292,7 @@ else
             if Modes[i]
                 if Decays[i] !== nothing
                     for decay in Decays[i]
-                        name = Names[i]*" $decay"
+                        name = Modes[i]*" $decay"
                         titlefer = "FER "*name             
                         local p = plot(
                             1:Maxiters[i],
@@ -303,20 +303,20 @@ else
                             title=titlefer,
                             ylims=(lim,0)
                         )
-                        SAVE ? savefig(p,"./Saved Data/FER_"*Names[i]*"_"*now_*".svg") : display(p)
+                        SAVE ? savefig(p,"./Saved Data/FER_"*Modes[i]*"_"*now_*".svg") : display(p)
                     end
                 else
-                    titlefer = "FER $(Names[i])"                
+                    titlefer = "FER $(Modes[i])"                
                     local p = plot(
                         1:Maxiters[i],
-                        FER[Names[i]],                
+                        FER[Modes[i]],                
                         xlabel="Iteration",
                         label=labels,
                         lw=2,
                         title=titlefer,
                         ylims=(lim,0)
                     )
-                    SAVE ? savefig(p,"./Saved Data/FER_"*Names[i]*"_"*now_*".svg") : display(p)
+                    SAVE ? savefig(p,"./Saved Data/FER_"*Modes[i]*"_"*now_*".svg") : display(p)
                 end
             end
         end
@@ -325,7 +325,7 @@ else
             if Modes[i]
                 if Decays[i] !== nothing
                     for decay in Decays[i]
-                        name = Names[i]*" $decay"
+                        name = Modes[i]*" $decay"
                         titleber = "BER $name"
                         local p = plot(
                             1:Maxiters[i],
@@ -336,20 +336,20 @@ else
                             title=titleber,
                             ylims=(lim-2,0)
                         )
-                        SAVE ? savefig(p,"./Saved Data/BER_"*Names[i]*"_"*now_*".svg") : display(p)
+                        SAVE ? savefig(p,"./Saved Data/BER_"*Modes[i]*"_"*now_*".svg") : display(p)
                     end                    
                 else
-                    titleber = "BER $(Names[i])"
+                    titleber = "BER $(Modes[i])"
                     local p = plot(
                             1:Maxiters[i],
-                            BER[Names[i]],                
+                            BER[Modes[i]],                
                             xlabel="Iteration",
                             label=labels,
                             lw=2,
                             title=titleber,
                             ylims=(lim-2,0)
                         )
-                        SAVE ? savefig(p,"./Saved Data/BER_"*Names[i]*"_"*now_*".svg") : display(p)
+                        SAVE ? savefig(p,"./Saved Data/BER_"*Modes[i]*"_"*now_*".svg") : display(p)
                 end
             end
         end
