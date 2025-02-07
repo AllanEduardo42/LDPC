@@ -12,10 +12,11 @@ function
         listres::Vector{<:AbstractFloat},
         ::Vector{<:Integer},
         ::Vector{<:Integer},
-        ::Nothing
+        ::Nothing,
+        index::Integer
     )
 
-    @inbounds listres[1] = 0
+    @inbounds listres[index] = 0
     @inbounds residues[addressinv[lmax]] = 0.0
 
 end
@@ -47,13 +48,14 @@ function
         listres::Vector{<:AbstractFloat},
         listm::Vector{<:Integer},
         listn::Vector{<:Integer},
-        inlist::Matrix{Bool}
+        inlist::Matrix{Bool},
+        index::Integer
     )
 
     @inbounds inlist[lmax] = false
 
     # update the list
-    @inbounds for i in 1:listsize
+    @inbounds for i in index:listsize
         listres[i] = listres[i+1]
         listm[i] = listm[i+1]
         listn[i] = listn[i+1]

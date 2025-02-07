@@ -8,6 +8,7 @@ include("./RBP functions/RBP_set_zero_or_remove.jl")
 include("./RBP functions/calc_residues.jl")
 include("./RBP functions/findmaxcoords.jl")
 include("./RBP functions/update_list.jl")
+include("calc_syndrome.jl")
 
 #RBP
 function
@@ -16,6 +17,7 @@ function
         addressinv::Union{Matrix{<:Integer},Nothing},
         residues::Union{Vector{<:AbstractFloat},Nothing},
         bitvector::Vector{Bool},
+        bitvector2::Vector{Bool},
         Lr::Matrix{<:AbstractFloat},
         Ms::Matrix{<:AbstractFloat},
         Lq::Matrix{<:AbstractFloat},
@@ -38,15 +40,57 @@ function
         listres2::Union{Vector{<:AbstractFloat},Nothing},
         listm2::Union{Vector{<:Integer},Nothing},
         listn2::Union{Vector{<:Integer},Nothing},
-        inlist::Union{Matrix{<:Integer},Nothing}
+        inlist::Union{Matrix{<:Integer},Nothing},
+        syndrome::Vector{Bool},
+        syndrome2::Vector{Bool}
     )
+
+    sum_syndrome = zeros(Int,listsize)
 
     @fastmath @inbounds for e in 1:num_edges
 
+        # println("e = $e")
+
+        # sum_syndrome .= M
+
+        # for i=1:listsize
+        #     if listres[i] != 0
+        #         vnmax = listn[i]
+        #     else
+        #         break
+        #     end
+        #     bitvector2 = copy(bitvector)
+        #     syndrome2 = copy(syndrome)
+        #     nl = LinearIndices(Lr)[1,vnmax]-1
+        #     cum = Lf[vnmax]
+        #     for m in vn2cn[vnmax]
+        #         cum += Ms[nl+m]
+        #     end
+        #     bitvector2[vnmax] = signbit(cum)
+        #     for m in eachindex(cn2vn)
+        #         for n in cn2vn[m]
+        #             if n == vnmax
+        #                 syndrome2[m] = syndrome[m] ⊻ bitvector[vnmax] ⊻ bitvector2[vnmax]
+        #             else
+        #                 syndrome2[m] = syndrome[m]
+        #             end
+        #         end
+        #     end
+        #     # calc_syndrome!(syndrome2,bitvector2,cn2vn)
+        #     sum_syndrome[i] = sum(syndrome2)
+        # end
+
+        # display([sum_syndrome listres[1:end-1]])
+
+        # _,index = findmin(sum_syndrome)
+
+        # display(index)
+
         # 1) verify if the list was not updated
-        if listres[1] != 0
-            cnmax = listm[1]
-            vnmax = listn[1]
+        index = 1
+        if listres[index] != 0
+            cnmax = listm[index]
+            vnmax = listn[index]
         else
             cnmax = rand(rng_sample,1:length(cn2vn))
             vnmax = rand(rng_sample,cn2vn[cnmax])
@@ -63,15 +107,15 @@ function
 
         # 5) set maximum residue to zero or remove it from the list
         set_zero_or_remove!(addressinv,residues,lmax,listsize,listres,listm,
-                            listn,inlist)
+                            listn,inlist,1)
 
         # 6) update Ldn[vmax] and bitvector[vnmax]
         Ldn[vnmax] = Lf[vnmax]
         nl = LinearIndices(Lr)[1,vnmax]-1
         for m in vn2cn[vnmax]
             Ldn[vnmax] += Lr[nl+m]
-            bitvector[vnmax] = signbit(Ldn[vnmax])
         end
+        bitvector[vnmax] = signbit(Ldn[vnmax])
 
         # 7) update vn2cn messages Lq[vnmax,m], ∀m ≠ cnmax, and calculate residues
         leaf = true # suppose node vnmax is a leaf in the graph

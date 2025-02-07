@@ -68,9 +68,11 @@ function
 
     # estimate
     bitvector = Vector{Bool}(undef,N)
+    bitvector2 = Vector{Bool}(undef,N)
 
     # syndrome
     syndrome = Vector{Bool}(undef,M)
+    syndrome2 = Vector{Bool}(undef,M)
 
     # prior llr (if mode == "MKAY" just the prior probabilities)
     Lf = (bptype != "MKAY") ? zeros(N) : zeros(N,2)
@@ -244,8 +246,10 @@ function
         received_signal!(signal,noise,stdev,u,rng_noise)
 
         bitvector .= true
+        bitvector2 .= true
 
         syndrome .= true
+        syndrome2 .= true
 
         decoded .= false
         
@@ -288,7 +292,9 @@ function
             test,
             maxiter,
             syndrome,
+            syndrome2,
             bitvector,
+            bitvector2,
             cword,
             biterror,
             ber,

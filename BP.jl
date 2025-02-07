@@ -22,7 +22,9 @@ function
         test::Bool,
         maxiter::Integer,
         syndrome::Vector{Bool},
+        syndrome2::Vector{Bool},
         bitvector::Vector{Bool},
+        bitvector2::Vector{Bool},
         codeword::Vector{Bool},
         biterror::Vector{Bool},
         ber::Vector{<:Integer},
@@ -91,6 +93,7 @@ function
                  addressinv,
                  residues,
                  bitvector,
+                 bitvector2,
                  Lr,
                  Ms,
                  Lq,
@@ -113,7 +116,9 @@ function
                  listres2,
                  listm2,
                  listn2,
-                 inlist)
+                 inlist,
+                 syndrome,
+                 syndrome2)
             # reset factors
             resetfactors!(Factors,vn2cn)
         elseif supermode == "Local-RBP"
