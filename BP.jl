@@ -15,6 +15,7 @@ include("local_RBP.jl")
 
 function 
     BP!(
+        H::BitMatrix,
         address::Union{Matrix{<:Integer},Nothing},
         addressinv::Union{Matrix{<:Integer},Nothing},
         supermode::String,
@@ -57,10 +58,13 @@ function
         inlist::Union{Matrix{<:Integer},Nothing},
         maxresidues::Vector{<:AbstractFloat},
         maxcoords::Vector{<:Integer},
-        maxcoords_alt::Vector{<:Integer}
+        maxcoords_alt::Vector{<:Integer},
+        max_residues::Union{Vector{<:AbstractFloat},Nothing}
     )
     
     for i in 1:maxiter
+
+        # global iter = i
 
         if test && printtest  
             println("### Iteration #$i ###")
@@ -89,7 +93,8 @@ function
                  visited_vns,
                  i)   
         elseif supermode == "RBP"
-            RBP!(address,
+            RBP!(H,
+                 address,
                  addressinv,
                  residues,
                  bitvector,
@@ -118,7 +123,10 @@ function
                  listn2,
                  inlist,
                  syndrome,
-                 syndrome2)
+                 syndrome2,
+                 max_residues,
+                 test,
+                 i)
             # reset factors
             resetfactors!(Factors,vn2cn)
         elseif supermode == "Local-RBP"

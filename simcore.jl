@@ -11,7 +11,7 @@ include("./RBP functions/calc_residues.jl")
 include("./RBP functions/find_local_maxresidue.jl")
 
 function
-    performance_simcore(
+    simcore(
         A::Integer,
         snr::Real,
         H::BitMatrix,
@@ -124,6 +124,8 @@ function
     phi = (bptype == "TABL") ? lookupTable() : nothing
 
     Factors, num_edges = (supermode == "RBP") ? (1.0*H, sum(H)) : (nothing,nothing)
+
+    max_residues = (test && mode == "RBP") ? zeros(MAXRBP*sum(H)) : nothing
 
     if mode == "RBP"
         residues = zeros(num_edges)
@@ -269,10 +271,10 @@ function
         end
         init_Lq!(Lq,Lf,vn2cn)
 
-        if supermode == "RBP"
+        if supermode == "RBP" && mode != "List-RBP"
             for m in eachindex(cn2vn)
                 calc_residues!(addressinv,residues,Factors,Ms,nothing,Lq,Lrn,signs,phi,0,m,
-                cn2vn,listres1,listm1,listn1,nothing,nothing,nothing,listsize1,0,
+                cn2vn,listres1,listm1,listn1,nothing,nothing,nothing,listsize1,0,0,
                 inlist)
             end
         elseif supermode == "Local-RBP"
@@ -285,7 +287,8 @@ function
         end
             
         # SPA routine
-        BP!(address,
+        BP!(H,
+            address,
             addressinv,
             supermode,
             stop,
@@ -327,7 +330,8 @@ function
             inlist,
             maxresidues,
             maxcoords,
-            maxcoords_alt
+            maxcoords_alt,
+            max_residues
             )                
 
 
@@ -338,7 +342,7 @@ function
     end
 
     if test
-        return Lr, Lq
+        return Lr, Lq, max_residues
     else
         return DECODED, BER
     end

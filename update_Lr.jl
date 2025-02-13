@@ -30,7 +30,7 @@ function
 
 end
 
-######################### SPA USING HYPERBOLIC TANGENT #########################
+####################### SPA USING FAST HYPERBOLIC TANGENT ######################
 function
     update_Lr!(
         Lr::Matrix{<:AbstractFloat},
@@ -83,7 +83,7 @@ function
     end
 end
 
-###################### SPA USING HYPERBOLIC TANGENT VER 2 ######################
+###################### SPA USING HYPERBOLIC TANGENT NO OPT #####################
 
 function 
     update_Lr!(

@@ -13,7 +13,7 @@ function
         ::Matrix{<:AbstractFloat},
         Lr::Matrix{<:AbstractFloat},
         Ms::Matrix{<:AbstractFloat},
-        ::Vector{<:AbstractFloat},
+        ::Union{Vector{<:AbstractFloat},Nothing},
         ::Nothing,
         ::Nothing
     )
@@ -21,6 +21,8 @@ function
     @inbounds Lr[lmax] = Ms[lmax]
 
 end
+
+# 2) if the residues are calculate by TABL
 
 function 
     RBP_update_Lr!(
@@ -40,7 +42,7 @@ function
 
 end
 
-# 2) otherwise
+# 3) if the residues are calculate by MSUM or ALTN
 function 
     RBP_update_Lr!(
         lmax::Integer,

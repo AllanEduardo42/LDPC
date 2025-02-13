@@ -29,7 +29,7 @@ function
     # Lq update
     @inbounds for n in eachindex(vn2cn)
 
-        _, bitvector[n] = update_Lq!(Lq,Lr,Lf[n],n,vn2cn)
+        _, bitvector[n] = update_Lq!(Lq,Lr,Lf[n],n,vn2cn,Lrn)
         
     end
 end

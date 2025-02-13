@@ -43,11 +43,11 @@ function
         listn2::Union{Vector{<:Integer},Nothing},
         inlist::Union{Matrix{<:Integer},Nothing},
         syndrome::Vector{Bool},
-        syndrome2::Vector{Bool},
-        max_residues::Union{Vector{<:AbstractFloat},Nothing},
-        test::Bool,
-        i::Integer
+        syndrome2::Vector{Bool}
     )
+
+    # sum_syndrome = zeros(Int,4)
+    # sum_syndrome2 = zeros(Int,listsize)
 
     @fastmath for e in 1:num_edges
 
@@ -57,9 +57,81 @@ function
 
         # display([listm listn listres])
 
-        if test
-            max_residues[e + (i-1)*num_edges] = maximum(residues)
-        end
+        # sum_syndrome .= M
+
+        # calc_syndrome!(syndrome,bitvector,cn2vn)
+        # # println("sum syndrome = $(sum(syndrome))")
+        # sum_syndrome .= 0
+
+        # for i=1:4
+        #     if listres[i] != 0
+        #         cnmax = listm[i]
+        #         vnmax = listn[i]
+        #     else
+        #         break
+        #     end
+        #     bitvector2 = copy(bitvector)
+        #     # syndrome2 = copy(syndrome)
+        #     nl = LinearIndices(Lr)[1,vnmax]-1
+        #     cum = Lf[vnmax]
+        #     for m in vn2cn[vnmax]
+        #         if m == cnmax
+        #             cum += Ms[nl+m]
+        #         else
+        #             cum += Lr[nl+m]
+        #         end
+        #     end
+        #     new_bit = signbit(cum) 
+        #     # bitvector2[vnmax] = new_bit           
+        #     if bitvector[vnmax] != new_bit
+        #         for m in eachindex(cn2vn)
+        #             if H[nl+m]
+        #                 if syndrome[m] == true
+        #                     sum_syndrome[i] -= 1
+        #                 else
+        #                     sum_syndrome[i] += 1
+        #                 end
+        #             end
+        #         end
+        #     end 
+        #     # calc_syndrome!(syndrome2,bitvector2,cn2vn)     
+        #     # sum_syndrome2[i] = sum(syndrome2)     
+        # end
+
+        # # println("[index sum_syndrome listres] =")
+        # # display([collect(1:4) sum_syndrome listres[1:4]])
+
+        # _,index = findmin(sum_syndrome)
+
+        # display(index)
+
+        #######
+
+        # cum = zeros(listsize+1)
+
+        # for i=1:listsize
+        #     if listres[i] != 0
+        #         cnmax = listm[i]
+        #         vnmax = listn[i]
+        #     else
+        #         break
+        #     end
+        #     cum[i] = Lf[vnmax]
+        #     nl = LinearIndices(Lr)[1,vnmax]-1
+        #     for m in vn2cn[vnmax]
+        #         if m == cnmax
+        #             cum[i] += Ms[nl+m]
+        #         else
+        #             cum[i] += Lr[nl+m]
+        #         end
+        #     end
+        # end
+
+        # # display(cum)
+
+        # _,index = findmax(abs.(cum))
+
+        # display(index)
 
         index = 1
         if listres[index] != 0
@@ -71,6 +143,8 @@ function
         end
 
         # display([cnmax vnmax])
+
+        # display([listm listn listres cum])
 
         # 2) for optimization, get the linear indice of the maximum residue
         lmax = LinearIndices(Factors)[cnmax,vnmax]
@@ -86,6 +160,12 @@ function
                             listn,inlist,index)
 
         # 6) update Ldn[vmax] and bitvector[vnmax]
+        # Ldn[vnmax] = Lf[vnmax]
+        # nl = LinearIndices(Lr)[1,vnmax]-1
+        # for m in vn2cn[vnmax]
+        #     Ldn[vnmax] += Lr[nl+m]
+        # end
+        # bitvector[vnmax] = signbit(Ldn[vnmax])
         _, bitvector[vnmax] = update_Lq!(Lq,Lr,Lf[vnmax],vnmax,vn2cn,Lrn)
 
         # 7) update vn2cn messages Lq[vnmax,m], ∀m ≠ cnmax, and calculate residues
@@ -95,6 +175,7 @@ function
         for m in vn2cn[vnmax]
             if m ≠ cnmax
                 leaf = false # vnmax is not a leaf
+                # Lq[vnmax,m] = Ldn[vnmax] - Lr[nl+m]
                 count_size = calc_residues!(addressinv,residues,Factors,Ms,Lr,Lq,Lrn,signs,
                                phi,vnmax,m,cn2vn,listres,listm,listn,listres2,
                                listm2,listn2,listsize,listsize2,count_size,inlist)

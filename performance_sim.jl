@@ -57,7 +57,7 @@ function
     ################################ MULTITHREADING ################################
 
     if test
-        Lr, Lq = performance_simcore(
+        Lr, Lq, max_residues = simcore(
                     A,
                     snr[1],
                     H,
@@ -81,7 +81,7 @@ function
         
         println()
 
-        return Lr, Lq
+        return Lr, Lq, max_residues
 
     else
         K = length(snr)
@@ -93,7 +93,7 @@ function
         for k in 1:K
             if mthr
                 @time Threads.@threads for i in 1:NTHREADS
-                    decoded[:,k,i], ber[:,k,i] = performance_simcore(
+                    decoded[:,k,i], ber[:,k,i] = simcore(
                                                     A,
                                                     snr[k],
                                                     H,
@@ -114,7 +114,7 @@ function
                                                     Rgn_message_seeds[i])
                 end
             else
-                @time decoded[:,k], ber[:,k] = performance_simcore(
+                @time decoded[:,k], ber[:,k] = simcore(
                                                     A,
                                                     snr[k],
                                                     H,

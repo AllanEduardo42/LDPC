@@ -27,9 +27,9 @@ function
         listn2::Union{Vector{<:Integer},Nothing},
         listsize::Integer,
         listsize2::Integer,
+        count_size::Integer,
         inlist::Union{Matrix{<:Integer},Nothing}   
     )
-    
     # calculate the new check to node messages
     update_Lr!(Ms,Lq,m,cn2vn,Lrn,signs,phi)
 
@@ -38,10 +38,12 @@ function
         if n ≠ vnmax
             l = LinearIndices(Ms)[m,n]
             x = calc_residue(Ms,Lr,l)
-            update_residue!(addressinv,residues,m,n,l,x,Factors,listres,listm,listn,
-                            listres2,listm2,listn2,listsize,listsize2,inlist)
+            count_size = update_residue!(addressinv,residues,m,n,l,x,Factors,listres,listm,listn,
+                            listres2,listm2,listn2,listsize,listsize2,count_size,inlist)
         end
     end
+
+    return count_size
 
 end
 

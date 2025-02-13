@@ -48,11 +48,11 @@ STOP::Bool = false # stop simulation at zero syndrome (if true, BER curves are
 ################################## 5) NUMBERS ##################################
 
 MAX::Int = 50
-MAXRBP::Int = 5
+MAXRBP::Int = 4
 DECAY::Float64 = 0.8
 SNR = collect(0.8:0.4:2.0)
-SNRTEST = [1.6]
-TRIALS = [1, 10, 100, 1000, 10000]*2^6
+SNRTEST = [1.2]
+TRIALS = [1, 10, 100, 1000, 10000]*2^5
 TRIALS = TRIALS[1:length(SNR)]
 TRIALSTEST = [1]
 
@@ -72,7 +72,7 @@ Decays = Vector{Union{Vector{<:AbstractFloat},Nothing}}(nothing,6)
 
 #Flooding
 Modes[1] = 0
-Bptypes[1] = "FAST"
+Bptypes[1] = "TANH"
 Maxiters[1] = MAX
 
 #LBP
@@ -86,10 +86,11 @@ Bptypes[3] = "FAST"
 Maxiters[3] = MAX
 
 #RBP
-Modes[4] = 0
-Bptypes[4] = "FAST"
+Modes[4] = 1
+Bptypes[4] = "TANH"
 Maxiters[4] = MAXRBP
-Decays[4] = [DECAY]
+# Decays[4] = [DECAY]
+Decays[4] = collect(1.0:-0.1:0.8)
      
 #Local-RBP
 Modes[5] = 0
@@ -99,13 +100,13 @@ Maxiters[5] = MAXRBP
 Decays[5] = [DECAY]
 
 #List-RBP
-Modes[6] = 1
+Modes[6] = 0
 Bptypes[6] = "FAST"
 Maxiters[6] = MAXRBP
 Decays[6] = [DECAY]
     # List-RBP size
     LISTSIZE::UInt = 16
-    LISTSIZE2::UInt = 1
+    LISTSIZE2::UInt = 2
 
 ########################### 7) MESSAGE AND CODEWORD ############################
 
@@ -182,12 +183,13 @@ end
 if TEST
     LR = Dict()
     LQ_ = Dict()
+    Max_residues = Dict()
     for i in eachindex(Modes)
         if Modes[i]
             if Decays[i] !== nothing
                 for decay in Decays[i]                
                     name = Names[i]*" $decay"
-                    LR[name] , LQ_[name] = performance_sim(
+                    LR[name] , LQ_[name], Max_residues[name] = performance_sim(
                         SNRTEST,
                         Names[i],
                         TRIALSTEST,
@@ -200,7 +202,7 @@ if TEST
                         printtest = TEST ? PRIN : false)
                 end
             else
-                LR[Names[i]] , LQ_[Names[i]] = performance_sim(
+                LR[Names[i]] , LQ_[Names[i]], Max_residues[Names[i]] = performance_sim(
                     SNRTEST,
                     Names[i],
                     TRIALSTEST,
