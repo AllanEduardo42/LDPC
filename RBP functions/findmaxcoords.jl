@@ -21,9 +21,9 @@ function
             maxedge = e
         end
     end
-    if maxedge ≠ 0
-        @inbounds listm[1] = address[1,maxedge]
-        @inbounds listn[1] = address[2,maxedge]
+    @inbounds if maxedge ≠ 0
+        listm[1] = address[1,maxedge]
+        listn[1] = address[2,maxedge]
     end
 
 end

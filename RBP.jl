@@ -13,12 +13,10 @@ include("calc_syndrome.jl")
 #RBP
 function
     RBP!(
-        H::BitMatrix,
         address::Union{Matrix{<:Integer},Nothing},
         addressinv::Union{Matrix{<:Integer},Nothing},
         residues::Union{Vector{<:AbstractFloat},Nothing},
         bitvector::Vector{Bool},
-        bitvector2::Vector{Bool},
         Lr::Matrix{<:AbstractFloat},
         Ms::Matrix{<:AbstractFloat},
         Lq::Matrix{<:AbstractFloat},
@@ -31,8 +29,7 @@ function
         Factors::Matrix{<:AbstractFloat},
         decayfactor::AbstractFloat,
         num_edges::Integer,
-        Ldn::Vector{<:AbstractFloat},
-        rng_sample::AbstractRNG,
+        rng_rbp::AbstractRNG,
         listsize::Integer,
         listsize2::Integer,
         listres::Vector{<:AbstractFloat},
@@ -42,32 +39,23 @@ function
         listm2::Union{Vector{<:Integer},Nothing},
         listn2::Union{Vector{<:Integer},Nothing},
         inlist::Union{Matrix{<:Integer},Nothing},
-        syndrome::Vector{Bool},
-        syndrome2::Vector{Bool},
-        max_residues::Union{Vector{<:AbstractFloat},Nothing},
-        test::Bool,
-        i::Integer
+        max_residues::Vector{<:AbstractFloat}
     )
 
-    @fastmath for e in 1:num_edges
+    @fastmath @inbounds for e in 1:num_edges
 
-        # println("e = $e")
-        # x = e +(iter-1)*num_edges
-        # global Residues[x] = mean(residues)
-
+        # display("e = $e")
         # display([listm listn listres])
 
-        if test
-            max_residues[e + (i-1)*num_edges] = maximum(residues)
-        end
+        max_residues[e] = listres[1]       
 
         index = 1
         if listres[index] != 0
             cnmax = listm[index]
             vnmax = listn[index]
         else
-            cnmax = rand(rng_sample,1:length(cn2vn))
-            vnmax = rand(rng_sample,cn2vn[cnmax])
+            cnmax = rand(rng_rbp,1:length(cn2vn))
+            vnmax = rand(rng_rbp,cn2vn[cnmax])
         end
 
         # display([cnmax vnmax])
@@ -91,7 +79,6 @@ function
         # 7) update vn2cn messages Lq[vnmax,m], ∀m ≠ cnmax, and calculate residues
         leaf = true # suppose node vnmax is a leaf in the graph
         count_size = listsize2
-        # display(vn2cn[vnmax])
         for m in vn2cn[vnmax]
             if m ≠ cnmax
                 leaf = false # vnmax is not a leaf
@@ -103,12 +90,10 @@ function
 
         # 8) if vnmax is a leaf in the graph
         if leaf
-            Lq[vnmax,cnmax] = Ldn[vnmax] - Lr[nl+cnmax]
-            find_local_maxresidue!(maxresidues,Factors,Ms,Lr,Lq,
-                Lrn,signs,phi,vnmax,cnmax,cn2vn,maxcoords)
+            count_size = calc_residues!(addressinv,residues,Factors,Ms,Lr,Lq,Lrn,signs,
+                               phi,vnmax,cnmax,cn2vn,listres,listm,listn,listres2,
+                               listm2,listn2,listsize,listsize2,count_size,inlist)
         end
-
-        # display([listm2 listn2 listres2])
 
         # 9) Update list 1
         if listsize2 ≠ 0
@@ -124,7 +109,6 @@ function
                     inlist[m,n] = false
                 end
             end
-            # display([listm listn listres])
             for k in count_size:-1:1
                 update_list!(inlist,listres,listm,listn,listres2[k],listm2[k],
                              listn2[k],listsize)
@@ -133,8 +117,6 @@ function
             listm2 .*= 0
             listn2 .*= 0
         end
-
-        # display([listm listn listres])
 
         # 10) find maximum residue (only for the original RBP)
 

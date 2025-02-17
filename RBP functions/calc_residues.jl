@@ -37,7 +37,7 @@ function
     @fastmath @inbounds for n in cn2vn[m]
         if n ≠ vnmax
             l = LinearIndices(Ms)[m,n]
-            x = calc_residue(Ms,Lr,l)
+            x = calc_residue(Ms,Lr,l,Lrn)
             count_size = update_residue!(addressinv,residues,m,n,l,x,Factors,listres,listm,listn,
                             listres2,listm2,listn2,listsize,listsize2,count_size,inlist)
         end
@@ -47,11 +47,14 @@ function
 
 end
 
+# FAST
+
 function 
     calc_residue(
         Ms::Matrix{<:AbstractFloat},
         Lr::Matrix{<:AbstractFloat},
-        l::Integer
+        l::Integer,
+        ::Vector{<:AbstractFloat}
     )
 
     @fastmath @inbounds x = Ms[l] - Lr[l]
@@ -63,14 +66,36 @@ function
 
 end
 
+#TANH
+
+function 
+    calc_residue(
+        Ms::Matrix{<:AbstractFloat},
+        Lr::Matrix{<:AbstractFloat},
+        l::Integer,
+        ::Nothing
+    )
+
+    @inbounds x = Ms[l] - Lr[l]
+    if isnan(x)
+        return 0.0
+    else
+        if signbit(x)
+            x = -x
+        end
+        return x
+    end
+end
+
 # for initialization (Lr[m,n] = 0.0 and Factors[m,n] = 1.0 ∀m,n)
 function 
     calc_residue(
         Ms::Matrix{<:AbstractFloat},
         ::Nothing,
-        l::Integer
+        l::Integer,
+        ::Union{Vector{<:AbstractFloat},Nothing}
     )
-
+    
     @fastmath @inbounds return abs(Ms[l])
 
 end

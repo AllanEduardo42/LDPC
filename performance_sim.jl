@@ -58,28 +58,31 @@ function
 
     if test
         Lr, Lq, max_residues = simcore(
-                    A,
-                    snr[1],
-                    H,
-                    E_H,
-                    LDPC,
-                    Zf,
-                    nr_ldpc_data,
-                    mode,
-                    bptype,
-                    trials[1],
-                    maxiter,
-                    stop,
-                    decay,
-                    LISTSIZE,
-                    LISTSIZE2,
-                    Rgn_noise_seeds[1],
-                    Rgn_samples_seeds[1],
-                    Rgn_message_seeds[1];
-                    test=true,
-                    printtest=printtest)
+            A,
+            snr[1],
+            H,
+            E_H,
+            LDPC,
+            Zf,
+            nr_ldpc_data,
+            mode,
+            bptype,
+            trials[1],
+            maxiter,
+            stop,
+            decay,
+            LISTSIZE,
+            LISTSIZE2,
+            Rgn_noise_seeds[1],
+            Rgn_samples_seeds[1],
+            Rgn_message_seeds[1];
+            test=true,
+            printtest=printtest)
         
         println()
+        aux = filter(isfinite,max_residues)
+        maxi = maximum(aux)
+        replace!(x -> isfinite(x) ? x : 2maxi, max_residues)
 
         return Lr, Lq, max_residues
 

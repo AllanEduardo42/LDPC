@@ -5,7 +5,7 @@
 
 function
     find_local_maxresidue!(
-        maxresidues::Vector{<:AbstractFloat},
+        largest_res::Vector{<:AbstractFloat},
         Factors::Union{Matrix{<:AbstractFloat},Nothing},
         Ms::Matrix{<:AbstractFloat},
         Lr::Union{Matrix{<:AbstractFloat},Nothing},                      
@@ -16,7 +16,7 @@ function
         vnmax::Integer,
         m::Integer,
         cn2vn::Vector{Vector{T}} where {T<:Integer},
-        maxcoords::Vector{<:Integer}
+        largestcoords::Vector{<:Integer}
     )
     
     # calculate the new check to node messages
@@ -26,18 +26,18 @@ function
     @fastmath @inbounds for n in cn2vn[m]
         if n ≠ vnmax
             l = LinearIndices(Ms)[m,n]
-            x = calc_residue(Ms,Lr,l)
+            x = calc_residue(Ms,Lr,l,Lrn)
             x *= Factors[l]
-            if x > maxresidues[1]
-                maxresidues[1], maxresidues[2] = x, maxresidues[1]
-                maxcoords[3] = maxcoords[1]
-                maxcoords[4] = maxcoords[2]
-                maxcoords[1] = m
-                maxcoords[2] = n
-            elseif x > maxresidues[2]
-                maxresidues[2] = x
-                maxcoords[3] = m
-                maxcoords[4] = n
+            if x > largest_res[1]
+                largest_res[1], largest_res[2] = x, largest_res[1]
+                largestcoords[3] = largestcoords[1]
+                largestcoords[4] = largestcoords[2]
+                largestcoords[1] = m
+                largestcoords[2] = n
+            elseif x > largest_res[2]
+                largest_res[2] = x
+                largestcoords[3] = m
+                largestcoords[4] = n
             end         
         end
     end

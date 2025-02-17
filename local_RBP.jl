@@ -12,8 +12,9 @@ include("./RBP functions/update_list.jl")
 #Local-RBP
 function
     local_RBP!(
-        maxresidues::Vector{<:AbstractFloat},
-        maxcoords::Vector{<:Integer},
+        largest_res::Vector{<:AbstractFloat},
+        largestcoords::Vector{<:Integer},
+        largestcoords_alt::Vector{<:Integer},
         bitvector::Vector{Bool},
         Lr::Matrix{<:AbstractFloat},
         Ms::Matrix{<:AbstractFloat},
@@ -28,21 +29,20 @@ function
         decay::AbstractFloat,
         num_edges::Integer,
         Ldn::Vector{<:AbstractFloat},
-        rng_sample::AbstractRNG,
-        maxcoords_alt::Vector{<:Integer}
+        rng_sample::AbstractRNG
     )
 
-    maxresidue_alt = maxresidues[2]
+    largest_res_alt = largest_res[2]
 
     @fastmath @inbounds for e in 1:num_edges
 
-        if maxresidues[1] == 0
+        if largest_res[1] == 0
             cnmax = rand(rng_sample,1:length(cn2vn))
             vnmax = rand(rng_sample,cn2vn[cnmax])
         else
-            maxresidues[1] = 0
-            cnmax = maxcoords[1]
-            vnmax = maxcoords[2]
+            largest_res[1] = 0
+            cnmax = largestcoords[1]
+            vnmax = largestcoords[2]
         end
 
         # 4) for optimization, get the linear indice of the maximum residue
@@ -68,8 +68,8 @@ function
             if m ≠ cnmax
                 leaf = false # vnmax is not a leaf
                 Lq[vnmax,m] = Ldn[vnmax] - Lr[nl+m]
-                find_local_maxresidue!(maxresidues,Factors,Ms,Lr,Lq,
-                    Lrn,signs,phi,vnmax,m,cn2vn,maxcoords)
+                find_local_maxresidue!(largest_res,Factors,Ms,Lr,Lq,
+                    Lrn,signs,phi,vnmax,m,cn2vn,largestcoords)
             end
         end
 
@@ -77,17 +77,17 @@ function
         #     a check in 3)
         if leaf
             Lq[vnmax,cnmax] = Ldn[vnmax] - Lr[nl+cnmax]
-            find_local_maxresidue!(maxresidues,Factors,Ms,Lr,Lq,
-                Lrn,signs,phi,vnmax,cnmax,cn2vn,maxcoords)
+            find_local_maxresidue!(largest_res,Factors,Ms,Lr,Lq,
+                Lrn,signs,phi,vnmax,cnmax,cn2vn,largestcoords)
         end
-        if maxresidues[1] < maxresidue_alt
-            maxcoords[1], maxcoords_alt[1] = maxcoords_alt[1], maxcoords[1]
-            maxcoords[2], maxcoords_alt[2] = maxcoords_alt[2], maxcoords[2]
-            maxresidues[1], maxresidue_alt = maxresidue_alt, maxresidues[1]            
+        if largest_res[1] < largest_res_alt
+            largestcoords[1], largestcoords_alt[1] = largestcoords_alt[1], largestcoords[1]
+            largestcoords[2], largestcoords_alt[2] = largestcoords_alt[2], largestcoords[2]
+            largest_res[1], largest_res_alt = largest_res_alt, largest_res[1]            
         else
-            maxresidue_alt = maxresidues[2]
-            maxcoords_alt[1] = maxcoords[3]
-            maxcoords_alt[2] = maxcoords[4]
+            largest_res_alt = largest_res[2]
+            largestcoords_alt[1] = largestcoords[3]
+            largestcoords_alt[2] = largestcoords[4]
         end
     end
 end
