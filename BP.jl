@@ -92,6 +92,7 @@ function
             RBP!(address,
                  addressinv,
                  residues,
+                 Ldn,
                  bitvector,
                  Lr,
                  Ms,

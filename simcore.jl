@@ -129,7 +129,7 @@ function
     Factors, num_edges = (supermode == "RBP") ? (1.0*H, sum(H)) : (nothing,nothing)
 
     max_residues = (test && supermode == "RBP") ? zeros(MAXRBP*num_edges) : nothing
-    max_residues_new = (supermode == "RBP") ? zeros(num_edges) : nothing
+    max_residues_new = (test && supermode == "RBP") ? zeros(num_edges) : nothing
 
     if mode == "RBP"
         residues = zeros(num_edges)

@@ -16,6 +16,7 @@ function
         address::Union{Matrix{<:Integer},Nothing},
         addressinv::Union{Matrix{<:Integer},Nothing},
         residues::Union{Vector{<:AbstractFloat},Nothing},
+        Ldn::Vector{<:AbstractFloat},
         bitvector::Vector{Bool},
         Lr::Matrix{<:AbstractFloat},
         Ms::Matrix{<:AbstractFloat},
@@ -39,7 +40,7 @@ function
         listm2::Union{Vector{<:Integer},Nothing},
         listn2::Union{Vector{<:Integer},Nothing},
         inlist::Union{Matrix{<:Integer},Nothing},
-        max_residues::Vector{<:AbstractFloat}
+        max_residues::Union{Vector{<:AbstractFloat},Nothing}
     )
 
     @inbounds @fastmath for e in 1:num_edges
@@ -47,7 +48,9 @@ function
         # display("e = $e")
         # display([listm listn listres])
 
-        max_residues[e] = listres[1]       
+        if max_residues !== nothing
+            max_residues[e] = listres[1]     
+        end  
 
         index = 1
         if listres[index] != 0
@@ -73,8 +76,13 @@ function
         set_zero_or_remove!(addressinv,residues,lmax,listsize,listres,listm,
                             listn,inlist,index)
 
-        # 6) update Ldn[vmax] and bitvector[vnmax]
-        _, bitvector[vnmax] = update_Lq!(Lq,Lr,Lf[vnmax],vnmax,vn2cn,Lrn)
+        # 8) update Ldn[vmax] and bitvector[vnmax]
+        Ldn[vnmax] = Lf[vnmax]
+        nl = LinearIndices(Lr)[1,vnmax]-1
+        for m in vn2cn[vnmax]
+            Ldn[vnmax] += Lr[nl+m]
+            bitvector[vnmax] = signbit(Ldn[vnmax])
+        end
 
         # 7) update vn2cn messages Lq[vnmax,m], ∀m ≠ cnmax, and calculate residues
         leaf = true # suppose node vnmax is a leaf in the graph
@@ -82,6 +90,7 @@ function
         for m in vn2cn[vnmax]
             if m ≠ cnmax
                 leaf = false # vnmax is not a leaf
+                Lq[vnmax,m] = Ldn[vnmax] - Lr[nl+m]
                 count_size = calc_residues!(addressinv,residues,Factors,Ms,Lr,Lq,Lrn,signs,
                                phi,vnmax,m,cn2vn,listres,listm,listn,listres2,
                                listm2,listn2,listsize,listsize2,count_size,inlist)
@@ -90,6 +99,7 @@ function
 
         # 8) if vnmax is a leaf in the graph
         if leaf
+            Lq[vnmax,cnmax] = Ldn[vnmax] - Lr[nl+cnmax]
             count_size = calc_residues!(addressinv,residues,Factors,Ms,Lr,Lq,Lrn,signs,
                                phi,vnmax,cnmax,cn2vn,listres,listm,listn,listres2,
                                listm2,listn2,listsize,listsize2,count_size,inlist)
