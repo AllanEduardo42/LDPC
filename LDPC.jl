@@ -12,6 +12,7 @@ using Plots
 using SparseArrays
 using CSV, DataFrames
 using Dates
+using DelimitedFiles
 
 ############################## 2) INCLUDED FILES ###############################
 
@@ -60,11 +61,11 @@ STOP::Bool = false # stop simulation at zero syndrome (if true, BER curves are
 ################################## 5) NUMBERS ##################################
 
 MAX::Int = 50
-MAXRBP::Int = 2
+MAXRBP::Int = 16
 DECAY::Float64 = 0.8
 SNR = collect(1.2:0.4:2.0)
 SNRTEST = [2.0]
-TRIALS = [1, 10, 1000]*2^5
+TRIALS = [1, 10, 1000]*2^10
 TRIALS = TRIALS[1:length(SNR)]
 TRIALSTEST = [1]
 
