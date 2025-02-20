@@ -88,8 +88,11 @@ function
     )
 
     @fastmath @inbounds if inlist[l]  # if residue(m,n) is in the list
+        # display("($m,$n) is on the list")
         inlist[l] = false   # remove from the list
-        count_size += 1
+        if listsize2 == 1
+            count_size += 1
+        end
         pos = 0
         for i = 1:listsize
             if listm[i] == m

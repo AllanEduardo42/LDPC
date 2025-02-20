@@ -128,8 +128,8 @@ function
 
     Factors, num_edges = (supermode == "RBP") ? (1.0*H, sum(H)) : (nothing,nothing)
 
-    max_residues = (test && mode == "RBP") ? zeros(MAXRBP*num_edges) : nothing
-    max_residues_new = (mode == "RBP") ? zeros(num_edges) : nothing
+    max_residues = (test && supermode == "RBP") ? zeros(MAXRBP*num_edges) : nothing
+    max_residues_new = (supermode == "RBP") ? zeros(num_edges) : nothing
 
     if mode == "RBP"
         residues = zeros(num_edges)
@@ -155,10 +155,16 @@ function
         listm1 = zeros(Int,listsize1+1)
         listn1 = zeros(Int,listsize1+1)
         inlist = Matrix(false*H)
-        if listsize2 != 0
-            listres2 = zeros(listsize2+1)
-            listm2 = zeros(Int,listsize2+1)
-            listn2 = zeros(Int,listsize2+1)
+        if listsize2 > 0
+            if listsize2 == 1
+                listres2 = zeros(listsize1+1)
+                listm2 = zeros(Int,listsize1+1)
+                listn2 = zeros(Int,listsize1+1)
+            else
+                listres2 = zeros(listsize2+1)
+                listm2 = zeros(Int,listsize2+1)
+                listn2 = zeros(Int,listsize2+1)
+            end
         else
             listres2 = nothing
             listm2 = nothing
@@ -214,7 +220,7 @@ function
 
         # print info in test mode
         if test && printtest
-            println("Realization #$j:")
+            println("Trial #$j:")
             println()
             println("msg (L = $(length(msg))):")
             for i in eachindex(msg)
@@ -272,7 +278,8 @@ function
         init_Lq!(Lq,Lf,vn2cn)
 
         # precalculate the residues in RBP
-        if supermode == "RBP" && mode != "List-RBP"
+        # if supermode == "RBP" && mode != "List-RBP"
+        if supermode == "RBP"
             for m in eachindex(cn2vn)
                 calc_residues!(addressinv,residues,Factors,Ms,nothing,Lq,Lrn,
                 signs,phi,0,m,cn2vn,listres1,listm1,listn1,nothing,nothing,

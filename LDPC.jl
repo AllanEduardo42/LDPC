@@ -22,14 +22,26 @@ include("NR_LDPC_encode.jl")
 include("performance_sim.jl")
 include("find_girth.jl")
 
+##################################### SAVE #####################################
+
+if length(ARGS) == 0
+    SAVE = false
+elseif ARGS[1] == "true"
+    SAVE = true
+    now_ = string(now())
+    mkdir("./Saved Data/"*now_)
+    file = open("./Saved Data/"*now_*"/output.txt", "w")
+else
+    SAVE = false
+end
+
+
 ################################# 3) CONSTANTS #################################
 
 const INF = typemax(Int64)
 const INFFLOAT = 1e3
 const NINFFLOAT = -INFFLOAT
 const ALPHA = 0.875               # Min-Sum attenuation factor
-
-now_ = string(now())
 
 # Seeds
 SEED_NOISE::Int = 1428
@@ -48,11 +60,11 @@ STOP::Bool = false # stop simulation at zero syndrome (if true, BER curves are
 ################################## 5) NUMBERS ##################################
 
 MAX::Int = 50
-MAXRBP::Int = 15
+MAXRBP::Int = 2
 DECAY::Float64 = 0.8
-SNR = collect(0.8:0.4:2.0)
+SNR = collect(1.2:0.4:2.0)
 SNRTEST = [2.0]
-TRIALS = [1, 10, 100, 1000, 10000]*2^9
+TRIALS = [1, 10, 1000]*2^5
 TRIALS = TRIALS[1:length(SNR)]
 TRIALSTEST = [1]
 
@@ -68,7 +80,10 @@ Bptypes = Vector{String}(undef,7)
 # maximum number of BP iterations
 Maxiters = zeros(Int,7)
 
-Decays = Vector{Union{Vector{<:AbstractFloat},Nothing}}(nothing,6)
+Decays = Vector{Vector{<:AbstractFloat}}(undef,6)
+for i in eachindex(Decays)
+    Decays[i] = [0.0]
+end
 
 #Flooding
 Modes[1] = 0
@@ -80,7 +95,7 @@ Modes[2] = 0
 Bptypes[2] = "FAST"
 Maxiters[2] = MAX
 
-#instantaneos-LBP
+# #instantaneos-LBP
 Modes[3] = 0
 Bptypes[3] = "FAST"
 Maxiters[3] = MAX
@@ -93,10 +108,9 @@ Decays[4] = [DECAY]
 # Decays[4] = collect(1.0:-0.1:0.8)
 
 #Local-RBP
-Modes[5] = 0
+Modes[5] = 1
 Bptypes[5] = "FAST"
 Maxiters[5] = MAXRBP
-# Decays[5] = collect(0.0:0.1:1.0)
 Decays[5] = [DECAY]
 
 #List-RBP
@@ -150,16 +164,26 @@ else
     end
 end
 
-println()
-print("############################### LDPC parameters #######################")
-println("#########")
-println()
-println("Parity Check Matrix: $M x $N")
-println()
+str = 
+"""############################### LDPC parameters ################################
+
+Parity Check Matrix: $M x $N"""
+
+println(str)
+if SAVE
+    println(file,str)
+end
+
 display(sparse(H))
-println()
-println("Graph girth = ", girth)
-println()
+
+str = """
+
+Graph girth = $girth
+"""
+println(str)
+if SAVE
+    println(file,str)
+end
 
 # Number of Threads
 if MTHR && !TEST
@@ -186,83 +210,56 @@ if TEST
     Max_residues = Dict()
     for i in eachindex(Modes)
         if Modes[i]
-            if Decays[i] !== nothing
-                for decay in Decays[i]
+            for decay in Decays[i]
+                if decay != 0.0
                     name = Names[i]*" $decay"
-                    LR[name], LQ_[name], Max_residues[name] = performance_sim(
-                                                SNRTEST,
-                                                Names[i],
-                                                TRIALSTEST,
-                                                Maxiters[i],
-                                                Bptypes[i],
-                                                decay,
-                                                STOP,
-                                                MTHR;
-                                                test=TEST,
-                                                printtest = TEST ? PRIN : false)
+                else
+                    name = Names[i]
                 end
-            else
-                LR[Names[i]] , LQ_[Names[i]], 
-                Max_residues[Names[i]] = performance_sim(
-                                                SNRTEST,
-                                                Names[i],
-                                                TRIALSTEST,
-                                                Maxiters[i],
-                                                Bptypes[i],
-                                                Decays[i],
-                                                STOP,
-                                                MTHR;
-                                                test=TEST,
-                                                printtest = TEST ? PRIN : false)
+                LR[name], LQ_[name], Max_residues[name] = performance_sim(
+                                            SNRTEST,
+                                            Names[i],
+                                            TRIALSTEST,
+                                            Maxiters[i],
+                                            Bptypes[i],
+                                            decay,
+                                            STOP,
+                                            MTHR;
+                                            test=TEST,
+                                            printtest = TEST ? PRIN : false)
             end
         end
     end
 else
-    Fer_labels = Vector{String}()
-    Fermax = Vector{Vector{<:AbstractFloat}}()
+    if STOP
+        Fer_labels = Vector{String}()
+        Fermax = Vector{Vector{<:AbstractFloat}}()
+    end
     FER = Dict()
     BER = Dict()
     for i in eachindex(Modes)
         if Modes[i]
-            if Decays[i] !== nothing
-                for decay in Decays[i]
+            for decay in Decays[i]
+                if decay != 0.0
                     name = Names[i]*" $decay"
-                    FER[name], BER[name] = performance_sim(
-                        SNR,
-                        Names[i],
-                        TRIALS,
-                        Maxiters[i],
-                        Bptypes[i],
-                        decay,
-                        STOP,
-                        MTHR)
-                    push!(Fer_labels,name*" ($(Bptypes[i]))")
-                    push!(Fermax,FER[name][Maxiters[i],:])
+                else
+                    name = Names[i]
                 end
-            else
-                FER[Names[i]], BER[Names[i]] = performance_sim(
+                FER[name], BER[name] = performance_sim(
                     SNR,
                     Names[i],
                     TRIALS,
                     Maxiters[i],
                     Bptypes[i],
-                    Decays[i],
+                    decay,
                     STOP,
                     MTHR)
-                push!(Fer_labels,Names[i]*" ($(Bptypes[i]))")
-                push!(Fermax,FER[Names[i]][Maxiters[i],:])
+                if STOP
+                    push!(Fer_labels,name*" ($(Bptypes[i]))")
+                    push!(Fermax,FER[name][Maxiters[i],:])
+                end
             end
         end
-    end
-
-##################################### SAVE #####################################
-
-    if length(ARGS) == 0
-        SAVE = false
-    elseif ARGS[1] == "true"
-        SAVE = true
-    else
-        SAVE = false
     end
 
 ################################### PLOTTING ###################################
@@ -270,20 +267,19 @@ else
     lim = log10(1/maximum(TRIALS))
 
     # FER x SNR
-    if length(SNR) > 1
+    if STOP && length(SNR) > 1
         Fer_labels = permutedims(Fer_labels)
         p = plot(
             SNR,Fermax,
             xlabel="SNR (dB)",
             label=Fer_labels,
             lw=2,
-            title="FER (Decay factor = $DECAY)",
+            title="FER MAX",
             ylims=(lim,0)
         )
-        SAVE ? savefig(p,"./Saved Data/FER_"*now_*".svg") : display(p)
+        SAVE ? savefig(p,"./Saved Data/"*now_*"/FERMAX.svg") : display(p)
     end
 
-    # BER x Iterations
     if !STOP
 
         # FER x Iterations
@@ -294,79 +290,82 @@ else
         labels = permutedims(labels)
         for i in eachindex(Modes)
             if Modes[i]
-                if Decays[i] !== nothing
-                    for decay in Decays[i]
+                for decay in Decays[i]
+                    if decay != 0.0
                         name = Names[i]*" $decay"
-                        titlefer = "FER "*name
-                        local p = plot(
-                            1:Maxiters[i],
-                            FER[name],
-                            xlabel="Iteration",
-                            label=labels,
-                            lw=2,
-                            title=titlefer,
-                            ylims=(lim,0)
-                        )
-                        SAVE ? savefig(p,"./Saved Data/FER_"*Names[i]*"_"*now_*".svg") : display(p)
+                    else
+                        name = Names[i]
                     end
-                else
-                    titlefer = "FER $(Modes[i])"
+                    titlefer = "FER "*name
                     local p = plot(
                         1:Maxiters[i],
-                        FER[Names[i]],
+                        FER[name],
                         xlabel="Iteration",
                         label=labels,
                         lw=2,
                         title=titlefer,
                         ylims=(lim,0)
                     )
-                    SAVE ? savefig(p,"./Saved Data/FER_"*Names[i]*"_"*now_*".svg") : display(p)
+                    SAVE ? savefig(p,"./Saved Data/"*now_*"/FER_"*name*".svg") : display(p)
                 end
             end
         end
 
         for i in eachindex(Modes)
             if Modes[i]
-                if Decays[i] !== nothing
-                    for decay in Decays[i]
+                for decay in Decays[i]
+                    if decay != 0.0
                         name = Names[i]*" $decay"
-                        titleber = "BER $name"
-                        local p = plot(
-                            1:Maxiters[i],
-                            BER[name],
-                            xlabel="Iteration",
-                            label=labels,
-                            lw=2,
-                            title=titleber,
-                            ylims=(lim-2,0)
-                        )
-                        SAVE ? savefig(p,"./Saved Data/BER_"*Names[i]*"_"*now_*".svg") : display(p)
+                    else
+                        name = Names[i]
                     end
-                else
-                    titleber = "BER $(Names[i])"
+                    titleber = "BER $name"
                     local p = plot(
-                            1:Maxiters[i],
-                            BER[Names[i]],
-                            xlabel="Iteration",
-                            label=labels,
-                            lw=2,
-                            title=titleber,
-                            ylims=(lim-2,0)
-                        )
-                        SAVE ? savefig(p,"./Saved Data/BER_"*Names[i]*"_"*now_*".svg") : display(p)
+                        1:Maxiters[i],
+                        BER[name],
+                        xlabel="Iteration",
+                        label=labels,
+                        lw=2,
+                        title=titleber,
+                        ylims=(lim-2,0)
+                    )
+                    SAVE ? savefig(p,"./Saved Data/"*now_*"/BER_"*name*".svg") : display(p)
                 end
             end
         end
     end
 ################################### SAVE DATA ##################################
-    if SAVE
-
-        aux = []
-        for i in eachindex(Fermax)
-            push!(aux,(Fer_labels[i],Fermax[i]))
+    if SAVE        
+        if STOP
+            aux = []
+            for i in eachindex(Fermax)
+                push!(aux,(Fer_labels[i],Fermax[i]))
+            end
+            FERS = Dict(aux)
+            CSV.write("./Saved Data/"*now_*"/FERMAX.csv", DataFrame(FERS), header=true)
+        else
+            for i in eachindex(Modes)
+                if Modes[i]
+                    for decay in Decays[i]
+                        if decay != 0.0
+                            name = Names[i]*" $decay"
+                        else
+                            name = Names[i]
+                        end
+                        open("./Saved Data/"*now_*"/FER_"*name*".txt","w") do io
+                            writedlm(io,FER[name])
+                        end
+                        open("./Saved Data/"*now_*"/BER_"*name*".txt","w") do io
+                            writedlm(io,BER[name])
+                        end
+                    end
+                end
+            end
         end
-        FERS = Dict(aux)
-        CSV.write("./Saved Data/FERMAX_"*now_*".csv", DataFrame(FERS), header=true)
-
     end
+end
+println("The End!")
+if SAVE
+    println(file, "The End!")
+    close(f)
 end

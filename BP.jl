@@ -147,27 +147,30 @@ function
         calc_syndrome!(syndrome,bitvector,cn2vn)
 
         if test && printtest
-            max_residues[(1 + (iter-1)*num_edges):(iter*num_edges)] = max_residues_new
+
+            if supermode == "RBP"
+                max_residues[(1 + (iter-1)*num_edges):(iter*num_edges)] = max_residues_new
+            end
                 println("Max LLR estimate errors: ")
-                for j in eachindex(bitvector)
-                    print(Int(bitvector[j] != codeword[j]))
-                    if j%80 == 0
-                        println()
-                    end
-                end     
-                println() 
-                println("Syndrome: ")
-                for j in eachindex(syndrome)
-                    print(Int(syndrome[j]))
-                    if j%80 == 0
-                        println()
-                    end
-                end     
-                println()
-                if iszero(syndrome) && stop
-                    break
+            for j in eachindex(bitvector)
+                print(Int(bitvector[j] != codeword[j]))
+                if j%80 == 0
+                    println()
                 end
-                println()     
+            end     
+            println() 
+            println("Syndrome: ")
+            for j in eachindex(syndrome)
+                print(Int(syndrome[j]))
+                if j%80 == 0
+                    println()
+                end
+            end     
+            println()
+            if iszero(syndrome) && stop
+                break
+            end
+            println()     
         else
             if iszero(syndrome)
                 if bitvector == codeword

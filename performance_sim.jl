@@ -21,38 +21,69 @@ function
 
 ########################### PRINT SIMULATION DETAILS ###########################
     if test
-        print("###################### Starting simulation (Testing mode) #####")
-        println("#################")
-        println()
-    else
-        print("############################# Starting simulation #############")
-        println("#################")
-        println()
-    end
-    println("Number of trials: $trials")
-    print("Message passing protocol: $mode (using ")
-    if bptype == "MKAY"
-        println("Mckay's SPA method)")
-    elseif bptype == "TANH"
-        println("LLR-SPA calculated by tanh)")
-    elseif bptype == "FAST"
-        println("LLR-SPA calculated by fast tanh)")
-    elseif bptype == "ALTN"
-        println("LLR-SPA calculated by ϕ function)")
-    elseif bptype == "TABL"
-        println("LLR-SPA precalculated in look-up table)")
-    elseif bptype == "MSUM"
-        println("LLRs calculated by min-sum algorithm)")
-    end
-    println("Maximum number of iterations: $maxiter")
-    println("Number of threads (multithreading): $NTHREADS")
-    println("Simulated for SNR (dB): $snr")
-    println("Stop at zero syndrome ? $stop")
-    (mode == "RBP") || (mode == "Local-RBP") || (mode == "List-RBP") ?
-    println("RBP decaying factor: $decay") : nothing
-    (mode == "List-RBP") ? println("List 1 size: $LISTSIZE\nList 2 size: $LISTSIZE2") : nothing 
-    println()
+        str =
+        """###################### Starting simulation (Testing mode) ######################
+        """
 
+    else
+        str = 
+        """############################# Starting simulation ##############################
+        """
+    end
+    println(str)
+    if SAVE
+        println(file,str)
+    end
+    str = "Number of trials: $trials"
+    println(str)
+    if SAVE
+        println(file,str)
+    end
+    str = "Message passing protocol: $mode (using "
+    if bptype == "MKAY"
+        str = str*"Mckay's SPA method)"
+    elseif bptype == "TANH"
+        str = str*"LLR-SPA calculated by tanh)"
+    elseif bptype == "FAST"
+        str = str*"LLR-SPA calculated by fast tanh)"
+    elseif bptype == "ALTN"
+        str = str*"LLR-SPA calculated by ϕ function)"
+    elseif bptype == "TABL"
+        str = str*"LLR-SPA precalculated in look-up table)"
+    elseif bptype == "MSUM"
+        str = str*"LLRs calculated by min-sum algorithm)"
+    end
+    println(str)
+    if SAVE
+        println(file,str)
+    end
+    str=
+    """Maximum number of iterations: $maxiter
+    Number of threads (multithreading): $NTHREADS
+    Simulated for SNR (dB): $snr
+    Stop at zero syndrome ? $stop"""
+    println(str)
+    if SAVE
+        println(file,str)
+    end
+    if (mode == "RBP") || (mode == "Local-RBP") || (mode == "List-RBP")
+        str = "RBP decaying factor: $decay"
+        println(str)
+        if SAVE
+            println(file,str)
+        end
+    end
+    if (mode == "List-RBP") 
+        str = "List 1 size: $LISTSIZE\nList 2 size: $LISTSIZE2"
+        println(str)
+        if SAVE
+            println(file,str)
+        end
+    end
+    println()
+    if SAVE
+        println(file,"")
+    end
 
     ################################ MULTITHREADING ################################
 
@@ -80,9 +111,9 @@ function
             printtest=printtest)
         
         println()
-        aux = filter(isfinite,max_residues)
-        maxi = maximum(aux)
-        replace!(x -> isfinite(x) ? x : 2maxi, max_residues)
+        # aux = filter(isfinite,max_residues)
+        # maxi = maximum(aux)
+        # replace!(x -> isfinite(x) ? x : 2maxi, max_residues)
 
         return Lr, Lq, max_residues
 
@@ -95,7 +126,7 @@ function
         end
         for k in 1:K
             if mthr
-                @time Threads.@threads for i in 1:NTHREADS
+                stats = @timed Threads.@threads for i in 1:NTHREADS
                     decoded[:,k,i], ber[:,k,i] = simcore(
                                                     A,
                                                     snr[k],
@@ -117,7 +148,7 @@ function
                                                     Rgn_message_seeds[i])
                 end
             else
-                @time decoded[:,k], ber[:,k] = simcore(
+                stats = @timed decoded[:,k], ber[:,k] = simcore(
                                                     A,
                                                     snr[k],
                                                     H,
@@ -136,6 +167,11 @@ function
                                                     Rgn_noise_seeds[1],
                                                     Rgn_samples_seeds[1],
                                                     Rgn_message_seeds[1])
+            end
+            str = """Elapsed $(round(stats.time;digits=1)) seconds ($(round(stats.gctime/stats.time*100;digits=2))% gc time, $(round(stats.compile_time/stats.time*100,digits=2))% compilation time)"""
+            println(str)
+            if SAVE
+                println(file,str)
             end
         end
 

@@ -42,7 +42,7 @@ function
         max_residues::Vector{<:AbstractFloat}
     )
 
-    @fastmath @inbounds for e in 1:num_edges
+    @inbounds @fastmath for e in 1:num_edges
 
         # display("e = $e")
         # display([listm listn listres])
@@ -95,6 +95,11 @@ function
                                listm2,listn2,listsize,listsize2,count_size,inlist)
         end
 
+        # display("list 1")
+        # display([listm listn listres])
+        # display("list 2")
+        # display([listm2 listn2 listres2])
+
         # 9) Update list 1
         if listsize2 ≠ 0
             count = 0
@@ -117,6 +122,9 @@ function
             listm2 .*= 0
             listn2 .*= 0
         end
+
+        # display("list 1 updated")
+        # display([listm listn listres])
 
         # 10) find maximum residue (only for the original RBP)
 
