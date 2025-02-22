@@ -4,41 +4,46 @@
 # RBP Sum-Product Algorithm using the only local strategy
 
 include("./RBP functions/RBP_update_Lr.jl")
-include("./RBP functions/RBP_set_zero_or_remove.jl")
-include("./RBP functions/calc_residues.jl")
 include("./RBP functions/find_local_maxresidue.jl")
-include("./RBP functions/update_list.jl")
 
-#Local-RBP
+
 function
     local_RBP!(
-        largest_res::Vector{<:AbstractFloat},
-        largestcoords::Vector{<:Integer},
-        largestcoords_alt::Vector{<:Integer},
         bitvector::Vector{Bool},
-        Lr::Matrix{<:AbstractFloat},
-        Ms::Matrix{<:AbstractFloat},
         Lq::Matrix{<:AbstractFloat},
+        Lr::Matrix{<:AbstractFloat},
         Lf::Vector{<:AbstractFloat},
         cn2vn::Vector{Vector{T}} where {T<:Integer},
         vn2cn::Vector{Vector{T}} where {T<:Integer},
         Lrn::Union{Vector{<:AbstractFloat},Nothing},
-        signs::Union{Vector{Bool},Nothing},        
+        signs::Union{Vector{Bool},Nothing},
         phi::Union{Vector{<:AbstractFloat},Nothing},
-        Factors::Matrix{<:AbstractFloat},
-        decay::AbstractFloat,
+        decayfactor::AbstractFloat,
         num_edges::Integer,
         Ldn::Vector{<:AbstractFloat},
-        rng_sample::AbstractRNG
+        Ms::Matrix{<:AbstractFloat},
+        Factors::Matrix{<:AbstractFloat},        
+        all_max_res_alt::Union{Vector{<:AbstractFloat},Nothing},
+        test::Bool,
+        rng_rbp::AbstractRNG,
+        largest_res::Vector{<:AbstractFloat},
+        largestcoords::Vector{<:Integer},
+        largestcoords_alt::Vector{<:Integer}
     )
 
     largest_res_alt = largest_res[2]
 
     @fastmath @inbounds for e in 1:num_edges
 
+        # display("e = $e")
+
+        if test
+            all_max_res_alt[e] = largest_res[1] 
+        end 
+
         if largest_res[1] == 0
-            cnmax = rand(rng_sample,1:length(cn2vn))
-            vnmax = rand(rng_sample,cn2vn[cnmax])
+            cnmax = rand(rng_rbp,1:length(cn2vn))
+            vnmax = rand(rng_rbp,cn2vn[cnmax])
         else
             largest_res[1] = 0
             cnmax = largestcoords[1]
@@ -49,7 +54,7 @@ function
         lmax = LinearIndices(Factors)[cnmax,vnmax]
 
         # 5) Decay the RBP factor corresponding to the maximum residue
-        Factors[lmax] *= decay
+        Factors[lmax] *= decayfactor
 
         # 6) update check to node message Lr[cnmax,vnmax]
         RBP_update_Lr!(lmax,cnmax,vnmax,cn2vn,Lq,Lr,Ms,Lrn,signs,phi)        

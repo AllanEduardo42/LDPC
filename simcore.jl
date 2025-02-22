@@ -5,8 +5,13 @@
 
 include("auxiliary_functions.jl")
 include("lookupTable.jl")
-include("BP.jl")
 include("calc_Lf.jl")
+include("calc_syndrome.jl")
+include("flooding.jl")
+include("LBP.jl")
+include("RBP.jl")
+include("Local_RBP.jl")
+include("List-RBP.jl")
 include("./RBP functions/calc_residues.jl")
 include("./RBP functions/find_local_maxresidue.jl")
 
@@ -24,7 +29,7 @@ function
         trials::Integer,
         maxiter::Integer,
         stop::Bool,
-        decay::Union{AbstractFloat,Nothing},
+        decayfactor::AbstractFloat,
         listsize1::Integer,
         listsize2::Integer,
         rgn_seed_noise::Integer,
@@ -35,16 +40,18 @@ function
     )
 
     if mode == "RBP" || mode == "Local-RBP" || mode == "List-RBP" 
-        supermode = "RBP"
-    elseif mode == "LBP" || mode == "iLBP"
-        supermode = "LBP"  
+        RBP = true
     else
-        supermode = "Flooding"
+        RBP = false
     end
     
 ################################## CONSTANTS ###################################
-
+    
+    # constant Zc of NR/5G
     Zc = nr_ldpc_data.Zc
+
+    # number of edges in the graph
+    num_edges = sum(H)
 
     # transform snr in standard deviations
     variance = 1 ./ (exp10.(snr/10))
@@ -57,7 +64,7 @@ function
     # Set the random seeds
     rng_noise = Xoshiro(rgn_seed_noise)
     rgn_msg = Xoshiro(rgn_seed_msg)
-    rng_rbp = (supermode == "RBP") ? Xoshiro(rng_seed_sample) : nothing  
+    rng_rbp = RBP ? Xoshiro(rng_seed_sample) : nothing  
 
 ################################# PREALLOCATIONS ###############################
 
@@ -96,10 +103,8 @@ function
     Lq = (bptype != "MKAY") ? zeros(N,M) : zeros(N,M,2)
 
     Lr = (bptype != "MKAY") ? zeros(M,N) : zeros(M,N,2)
-
-    Ms = (supermode == "RBP") ? H*0.0 : nothing
     
-    # Set variables Lrn and signs depending on the BP type (also used for dispatch)
+    # Set variables Lrn and signs depending on the BP type (used for dispatch)
     if bptype == "FAST"
         Lrn = zeros(N)
         signs = nothing
@@ -114,23 +119,18 @@ function
         signs = nothing
     end
 
-   # Set other variables that depend on the mode
-
-    visited_vns = (mode == "iLBP") ? zeros(Bool,N) : nothing
-
-    if mode == "iLBP" || supermode == "RBP"       
-        Ldn = zeros(N)
-    else
-        Ldn = nothing
-    end
-
     phi = (bptype == "TABL") ? lookupTable() : nothing
 
-    Factors, num_edges = (supermode == "RBP") ? (1.0*H, sum(H)) : (nothing,nothing)
+    # Set other variables that depend on the mode
 
-    max_residues = (test && supermode == "RBP") ? zeros(MAXRBP*num_edges) : nothing
-    max_residues_new = (test && supermode == "RBP") ? zeros(num_edges) : nothing
+    # supermode = RBP
+    Ldn = RBP ? zeros(N) : nothing
+    Ms = RBP ? H*0.0 : nothing
+    Factors  = RBP ? 1.0*H  : nothing
+    all_max_res = (test && RBP) ? zeros(MAXRBP*num_edges) : nothing
+    all_max_res_alt = (test && RBP) ? zeros(num_edges) : nothing
 
+    # mode = RBP
     if mode == "RBP"
         residues = zeros(num_edges)
         address = zeros(Int,2,num_edges)
@@ -150,10 +150,16 @@ function
         addressinv = nothing
     end
 
+    # mode = Local-RBP
+    largestcoords = (mode == "Local-RBP") ? zeros(Int,4) : nothing
+    largest_res = (mode == "Local-RBP") ? ones(2)*0 : nothing
+    largestcoords_alt = (mode == "Local-RBP") ? zeros(Int,2) : nothing
+
+    # mode = List-RBP
     if mode == "List-RBP"
-        listres1 = zeros(listsize1+1)
-        listm1 = zeros(Int,listsize1+1)
-        listn1 = zeros(Int,listsize1+1)
+        listres = zeros(listsize1+1)
+        listm = zeros(Int,listsize1+1)
+        listn = zeros(Int,listsize1+1)
         inlist = Matrix(false*H)
         if listsize2 > 0
             if listsize2 == 1
@@ -171,16 +177,9 @@ function
             listn2 = nothing
         end
     else        
-        if mode == "RBP" || mode == "Local-RBP"
-            listsize1 = 1
-            listres1 = zeros(1)
-            listm1 = zeros(Int,1)
-            listn1 = zeros(Int,1)
-        else
-            listres1 = nothing
-            listm1 = nothing
-            listn1 = nothing
-        end
+        listres = nothing
+        listm = nothing
+        listn = nothing
         listres2 = nothing
         listm2 = nothing
         listn2 = nothing
@@ -188,34 +187,29 @@ function
         listsize2 = 0
     end
 
-    # to change later: gambiarra
-    if mode == "Local-RBP"
-        supermode = "Local-RBP"
-    end
-    largestcoords = zeros(Int,4)
-    largest_res = ones(2)*0
-    largestcoords_alt = zeros(Int,2)
-    #
-
 ################################## MAIN LOOP ###################################
 
     @inbounds for j in 1:trials
 
         # generate the random message
         rand!(rgn_msg,msg,Bool)
-        # generate the codeword
+
+        # generate the cword
         if LDPC == 1
             cword = NR_LDPC_encode(E_H, msg, nr_ldpc_data)
         elseif LDPC == 3
             cword = IEEE80216e_parity_bits(msg,Zf,E_H)
         end
-        # Modulation of the codeword
+
+        # Modulation of the cword
         u = Float64.(2*cword .- 1)
-        # Include the punctured bits in the codeword for biterror calculation
+
+        # Include the punctured bits in the cword for biterror calculation
         if Zc > 0
             cword = [msg[1:2*Zc]; cword]
         end
-        # sum the noise to the modulated codeword to produce the received signal
+
+        # sum the noise to the modulated cword to produce the received signal
         received_signal!(signal,noise,stdev,u,rng_noise)
 
         # print info in test mode
@@ -253,9 +247,9 @@ function
             end
         end
         if mode == "List-RBP"
-            listres1 .= 0.0
-            listm1 .= 0
-            listn1 .= 0
+            listres .= 0.0
+            listm .= 0
+            listn .= 0
             if listsize2 != 0
                 listres2 .= 0.0
                 listm2 .= 0
@@ -278,67 +272,179 @@ function
         init_Lq!(Lq,Lf,vn2cn)
 
         # precalculate the residues in RBP
-        # if supermode == "RBP" && mode != "List-RBP"
-        if supermode == "RBP"
+        if mode == "RBP"
             for m in eachindex(cn2vn)
                 calc_residues!(addressinv,residues,Factors,Ms,nothing,Lq,Lrn,
-                signs,phi,0,m,cn2vn,listres1,listm1,listn1,nothing,nothing,
-                nothing,listsize1,0,0,inlist)
+                signs,phi,0,m,cn2vn)
             end
-        elseif supermode == "Local-RBP"
+        elseif mode == "Local-RBP"
             for m in eachindex(cn2vn)
                 find_local_maxresidue!(largest_res,Factors,Ms,nothing,Lq,Lrn,
                 signs,phi,0,m,cn2vn,largestcoords)
             end
             largestcoords_alt[1] = largestcoords[3]
             largestcoords_alt[2] = largestcoords[4]
+        elseif mode == "List-RBP"
+            for m in eachindex(cn2vn)
+                _ = calc_residues!(Factors,Ms,nothing,Lq,Lrn,
+                signs,phi,0,m,cn2vn,listres,listm,listn,listres2,listm2,listn2,
+                listsize1,listsize2,listsize2,inlist)
+            end
         end
         
         # BP routine
-        BP!(address,
-            addressinv,
-            supermode,
-            stop,
-            test,
-            maxiter,
-            syndrome,
-            bitvector,
-            cword,
-            biterror,
-            ber,
-            decoded,
-            Lf,
-            Lq,
-            Lr,
-            Ms,
-            cn2vn,
-            vn2cn,
-            Lrn,
-            signs,
-            phi,
-            printtest,
-            residues,
-            Factors,
-            decay,
-            num_edges,
-            Ldn,
-            visited_vns,
-            rng_rbp,
-            listsize1,
-            listsize2,
-            listres1,
-            listm1,
-            listn1,
-            listres2,
-            listm2,
-            listn2,
-            inlist,
-            largest_res,
-            largestcoords,
-            largestcoords_alt,
-            max_residues,
-            max_residues_new
-            )
+        
+        for iter in 1:maxiter
+
+            if test && printtest  
+                println("### Iteration #$iter ###")
+            end
+    
+            if mode == "Flooding"
+                flooding!(
+                    bitvector,
+                    Lq,
+                    Lr,
+                    Lf,
+                    cn2vn,
+                    vn2cn,
+                    Lrn,
+                    signs,
+                    phi)  
+            elseif mode == "LBP"
+                LBP!(
+                    bitvector,
+                    Lq,
+                    Lr,
+                    Lf,
+                    cn2vn,
+                    vn2cn,
+                    Lrn)
+            elseif mode == "RBP"
+                RBP!(
+                    bitvector,
+                    Lq,
+                    Lr,
+                    Lf,
+                    cn2vn,
+                    vn2cn,
+                    Lrn,
+                    signs,
+                    phi,
+                    decayfactor,
+                    num_edges,
+                    Ldn,
+                    Ms,
+                    Factors,
+                    all_max_res_alt,
+                    test,
+                    address,
+                    addressinv,
+                    residues,
+                    )
+                # reset factors
+                resetfactors!(Factors,vn2cn)
+            elseif mode == "Local-RBP"
+                local_RBP!(
+                    bitvector,
+                    Lq,
+                    Lr,
+                    Lf,
+                    cn2vn,
+                    vn2cn,
+                    Lrn,
+                    signs,
+                    phi,
+                    decayfactor,
+                    num_edges,
+                    Ldn,
+                    Ms,
+                    Factors,
+                    all_max_res_alt,
+                    test,
+                    rng_rbp,
+                    largest_res,
+                    largestcoords,
+                    largestcoords_alt,
+                )
+                # reset factors
+                resetfactors!(Factors,vn2cn)
+            elseif mode == "List-RBP"
+                list_RBP!(
+                    bitvector,
+                    Lq,
+                    Lr,
+                    Lf,
+                    cn2vn,
+                    vn2cn,
+                    Lrn,
+                    signs,
+                    phi,
+                    decayfactor,
+                    num_edges,
+                    Ldn,
+                    Ms,
+                    Factors,
+                    all_max_res_alt,
+                    test,
+                    rng_rbp,
+                    listsize1,
+                    listsize2,
+                    listres,
+                    listm,
+                    listn,
+                    listres2,
+                    listm2,
+                    listn2,
+                    inlist
+                )
+                # reset factors
+                resetfactors!(Factors,vn2cn)
+            end
+    
+            calc_syndrome!(syndrome,bitvector,cn2vn)
+    
+            if test && printtest
+    
+                if RBP
+                    all_max_res[(1 + (iter-1)*num_edges):(iter*num_edges)] = all_max_res_alt
+                end
+                    println("Max LLR estimate errors: ")
+                for j in eachindex(bitvector)
+                    print(Int(bitvector[j] != cword[j]))
+                    if j%80 == 0
+                        println()
+                    end
+                end     
+                println() 
+                println("Syndrome: ")
+                for j in eachindex(syndrome)
+                    print(Int(syndrome[j]))
+                    if j%80 == 0
+                        println()
+                    end
+                end     
+                println()
+                if iszero(syndrome) && stop
+                    break
+                end
+                println()     
+            else
+                if iszero(syndrome)
+                    if bitvector == cword
+                        @inbounds decoded[iter] = true
+                    end
+                    if stop
+                        if iter < maxiter
+                            @inbounds decoded[iter+1:end] .= decoded[iter]
+                        end
+                        break
+                    end
+                end
+                biterror .= (bitvector .≠ cword)
+                @inbounds ber[iter] = sum(biterror)
+            end
+        end
 
         # bit error rate
         @. BER += ber
@@ -347,7 +453,7 @@ function
     end
 
     if test
-        return Lr, Lq, max_residues
+        return Lr, Lq, all_max_res
     else
         return DECODED, BER
     end

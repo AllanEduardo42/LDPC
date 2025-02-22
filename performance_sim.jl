@@ -12,7 +12,7 @@ function
         trials::Vector{<:Integer},
         maxiter::Integer,
         bptype::String,
-        decay::Union{AbstractFloat,Nothing},
+        decay::AbstractFloat,
         stop::Bool,
         mthr::Bool;
         test = false,

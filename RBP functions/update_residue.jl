@@ -1,6 +1,6 @@
 ################################################################################
 # Allan Eduardo Feitosa
-# 05 dez 2024
+# 22 Feb 2024
 # Function to find the maximum residue
 
 # RBP
@@ -8,68 +8,19 @@ function
     update_residue!(
         addressinv::Matrix{<:Integer},
         residues::Vector{<:AbstractFloat},
-        ::Integer,
-        ::Integer,
         l::Integer,
         x::AbstractFloat,
-        Factors::Union{Matrix{<:AbstractFloat},Nothing},
-        ::Vector{<:AbstractFloat},
-        ::Vector{<:Integer},
-        ::Vector{<:Integer},
-        ::Nothing,
-        ::Nothing,
-        ::Nothing,
-        ::Integer,
-        ::Integer,
-        count_size::Integer,
-        ::Nothing
+        Factors::Union{Matrix{<:AbstractFloat},Nothing}
     )
 
     @fastmath @inbounds x *= Factors[l]
     @inbounds residues[addressinv[l]] = x
-
-    return count_size
-
-end
-
-# Local-RBP
-function 
-    update_residue!(
-        ::Nothing,
-        ::Nothing,
-        m::Integer,
-        n::Integer,
-        ::Integer,
-        x::AbstractFloat,
-        Factors::Union{Matrix{<:AbstractFloat},Nothing},
-        listres::Vector{<:AbstractFloat},
-        listm::Vector{<:Integer},
-        listn::Vector{<:Integer},
-        ::Nothing,
-        ::Nothing,
-        ::Nothing,
-        ::Integer,
-        ::Integer,
-        count_size::Integer,
-        ::Nothing
-    )
-
-    @fastmath @inbounds x *= Factors[l]
-    @fastmath @inbounds if x > listres[1]
-        listres[1] = x
-        listm[1] = m
-        listn[1] = n
-    end
-
-    return count_size
 
 end
 
 # List-RBP
 function 
     update_residue!(
-        ::Nothing,
-        ::Nothing,
         m::Integer,
         n::Integer,
         l::Integer,
@@ -81,7 +32,7 @@ function
         listres2::Union{Vector{<:AbstractFloat},Nothing},
         listm2::Union{Vector{<:Integer},Nothing},
         listn2::Union{Vector{<:Integer},Nothing},
-        listsize::Integer,
+        listsize1::Integer,
         listsize2::Integer,
         count_size::Integer,
         inlist::Matrix{<:Integer}
@@ -94,7 +45,7 @@ function
             count_size += 1
         end
         pos = 0
-        for i = 1:listsize
+        for i = 1:listsize1
             if listm[i] == m
                 if listn[i] == n
                     pos = i
@@ -105,7 +56,7 @@ function
         if pos == 0
             throw(error("($m,$n) is on the list, but it's not registered."))
         end
-        for j in pos:listsize
+        for j in pos:listsize1
             listres[j] = listres[j+1]
             listm[j] = listm[j+1]
             listn[j] = listn[j+1]
@@ -115,7 +66,7 @@ function
     @fastmath @inbounds if x != 0.0
         x *= Factors[l]
         if listsize2 == 0
-            update_list!(inlist,listres,listm,listn,x,m,n,listsize)
+            update_list!(inlist,listres,listm,listn,x,m,n,listsize1)
         elseif count_size == 1
             if x > listres2[1]
                 listres2[1] = x

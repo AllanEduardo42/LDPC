@@ -14,10 +14,7 @@ include("RBP.jl")
 include("local_RBP.jl")
 
 function 
-    BP!(
-        address::Union{Matrix{<:Integer},Nothing},
-        addressinv::Union{Matrix{<:Integer},Nothing},
-        supermode::String,
+    BP!(supermode::String,
         stop::Bool,
         test::Bool,
         maxiter::Integer,
@@ -39,11 +36,16 @@ function
         printtest::Union{Bool,Nothing},        
         residues::Union{Vector{<:AbstractFloat},Nothing},
         Factors::Union{Matrix{<:AbstractFloat},Nothing},
-        decay::Union{AbstractFloat,Nothing},
+        decay::AbstractFloat,
         num_edges::Union{Integer,Nothing},
         Ldn::Union{Vector{<:AbstractFloat},Nothing},
         visited_vns::Union{Vector{Bool},Nothing},
         rng_rbp::Union{AbstractRNG,Nothing},
+        address::Union{Matrix{<:Integer},Nothing},
+        addressinv::Union{Matrix{<:Integer},Nothing},
+        largest_res::Vector{<:AbstractFloat},
+        largestcoords::Vector{<:Integer},
+        largestcoords_alt::Vector{<:Integer},
         listsize::Integer,
         listsize2::Integer,
         listres1::Union{Vector{<:AbstractFloat},Nothing},
@@ -52,10 +54,7 @@ function
         listres2::Union{Vector{<:AbstractFloat},Nothing},
         listm2::Union{Vector{<:Integer},Nothing},
         listn2::Union{Vector{<:Integer},Nothing},
-        inlist::Union{Matrix{<:Integer},Nothing},
-        largest_res::Vector{<:AbstractFloat},
-        largestcoords::Vector{<:Integer},
-        largestcoords_alt::Vector{<:Integer},
+        inlist::Union{Matrix{<:Integer},Nothing},        
         max_residues::Union{Vector{<:AbstractFloat},Nothing},
         max_residues_new::Union{Vector{<:AbstractFloat},Nothing},
     )
@@ -106,16 +105,6 @@ function
                  Factors,
                  decay,
                  num_edges,
-                 rng_rbp,
-                 listsize,
-                 listsize2,
-                 listres1,
-                 listm1,
-                 listn1,
-                 listres2,
-                 listm2,
-                 listn2,
-                 inlist,
                  max_residues_new
                  )
             # reset factors

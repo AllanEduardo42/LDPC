@@ -47,9 +47,8 @@ function
         ::Vector{<:AbstractFloat}
     )
 
-    Ld = calc_Ld(n,vn2cn,Lf,Lr)
+    Ld, nl = calc_Ld(n,vn2cn,Lf,Lr)
     # for m in vn2cn[n]
-    nl = LinearIndices(Lr)[1,n]-1
     @fastmath @inbounds for m in vn2cn[n]
         Lq[n,m] = Ld - Lr[nl+m]
     end
@@ -71,7 +70,7 @@ function
         Lf += Lr[nl+m]
     end
     
-    return Lf
+    return Lf, nl
 
 end
 

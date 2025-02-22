@@ -42,6 +42,8 @@ end
 const INF = typemax(Int64)
 const INFFLOAT = 1e3
 const NINFFLOAT = -INFFLOAT
+const CLIP = 0.1*INFFLOAT
+const NCLIP = -CLIP
 const ALPHA = 0.875               # Min-Sum attenuation factor
 
 # Seeds
@@ -60,14 +62,14 @@ STOP::Bool = false # stop simulation at zero syndrome (if true, BER curves are
 
 ################################## 5) NUMBERS ##################################
 
-MAX::Int = 50
-MAXRBP::Int = 6
+MAX::Int = 20
+MAXRBP::Int = 5
 DECAY::Float64 = 0.8
 SNR = collect(1.2:0.4:2.0)
 SNRTEST = [2.0]
-TRIALS = [1, 10, 1000]*2^10
+TRIALS = [1, 10, 1000]*2^5
 TRIALS = TRIALS[1:length(SNR)]
-TRIALSTEST = [1]
+TRIALSTEST = [2]
 
 ################################ 6) BP SCHEDULE ################################
 
@@ -87,19 +89,14 @@ for i in eachindex(Decays)
 end
 
 #Flooding
-Modes[1] = 0
-Bptypes[1] = "TANH"
+Modes[1] = 1
+Bptypes[1] = "FAST"
 Maxiters[1] = MAX
 
 #LBP
-Modes[2] = 0
+Modes[2] = 1
 Bptypes[2] = "FAST"
 Maxiters[2] = MAX
-
-# #instantaneos-LBP
-Modes[3] = 0
-Bptypes[3] = "FAST"
-Maxiters[3] = MAX
 
 #RBP
 Modes[4] = 1
@@ -368,5 +365,5 @@ end
 println("The End!")
 if SAVE
     println(file, "The End!")
-    close(f)
+    close(file)
 end
