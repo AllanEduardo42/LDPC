@@ -4,6 +4,7 @@
 # Calculate the residues for the RBP algorithm
 
 include("../update_Lr.jl")
+include("_calc_residue.jl")
 include("calc_residues.jl")
 
 function
@@ -29,7 +30,7 @@ function
     @fastmath @inbounds for n in cn2vn[m]
         if n ≠ vnmax
             l = LinearIndices(Ms)[m,n]
-            x = calc_residue(Ms,Lr,l,Lrn)
+            x = _calc_residue(Ms,Lr,l,Lrn)
             x *= Factors[l]
             if x > largest_res[1]
                 largest_res[1], largest_res[2] = x, largest_res[1]
@@ -44,5 +45,4 @@ function
             end         
         end
     end
-
 end

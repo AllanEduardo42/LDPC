@@ -3,6 +3,8 @@
 # 24 set 2024
 # Calculate the residues for the RBP algorithm
 
+include("../update_Lr.jl")
+include("_calc_residue.jl")
 include("update_residue.jl")
 
 # RBP
@@ -28,7 +30,7 @@ function
     @fastmath @inbounds for n in cn2vn[m]
         if n ≠ vnmax
             l = LinearIndices(Ms)[m,n]
-            x = calc_residue(Ms,Lr,l,Lrn)
+            x = _calc_residue(Ms,Lr,l,Lrn)
             update_residue!(addressinv,residues,l,x,Factors)
         end
     end
@@ -56,7 +58,7 @@ function
         listn2::Union{Vector{<:Integer},Nothing},
         listsize1::Integer,
         listsize2::Integer,
-        count_size::Integer,
+        new_listsize2::Integer,
         inlist::Union{Matrix{<:Integer},Nothing}   
     )
     # calculate the new check to node messages
@@ -66,66 +68,14 @@ function
     @fastmath @inbounds for n in cn2vn[m]
         if n ≠ vnmax
             l = LinearIndices(Ms)[m,n]
-            x = calc_residue(Ms,Lr,l,Lrn)
-            count_size = update_residue!(m,n,l,x,Factors,listres,listm,listn,
-                            listres2,listm2,listn2,listsize1,listsize2,count_size,inlist)
+            x = _calc_residue(Ms,Lr,l,Lrn)
+            new_listsize2 = update_residue!(m,n,l,x,Factors,listres,listm,listn,
+                            listres2,listm2,listn2,listsize1,listsize2,
+                            new_listsize2,inlist)
         end
     end
 
-    return count_size
-
-end
-
-# FAST
-
-function 
-    calc_residue(
-        Ms::Matrix{<:AbstractFloat},
-        Lr::Matrix{<:AbstractFloat},
-        l::Integer,
-        ::Vector{<:AbstractFloat}
-    )
-
-    @fastmath @inbounds x = Ms[l] - Lr[l]
-    @fastmath if signbit(x)
-        x = -x
-    end
-
-    return x
-
-end
-
-#TANH
-
-function 
-    calc_residue(
-        Ms::Matrix{<:AbstractFloat},
-        Lr::Matrix{<:AbstractFloat},
-        l::Integer,
-        ::Nothing
-    )
-
-    @inbounds x = Ms[l] - Lr[l]
-    if isnan(x)
-        return 0.0
-    else
-        if signbit(x)
-            x = -x
-        end
-        return x
-    end
-end
-
-# for initialization (Lr[m,n] = 0.0 and Factors[m,n] = 1.0 ∀m,n)
-function 
-    calc_residue(
-        Ms::Matrix{<:AbstractFloat},
-        ::Nothing,
-        l::Integer,
-        ::Union{Vector{<:AbstractFloat},Nothing}
-    )
-    
-    @fastmath @inbounds return abs(Ms[l])
+    return new_listsize2
 
 end
 

@@ -1,11 +1,13 @@
 ################################################################################
 # Allan Eduardo Feitosa
-# 11 out 2024
-# List-RBP Sum-Product Algorithm with residual decay factor
+# 22 Feb 2024
+# List-RBP Sum-Product Algorithm with residual decaying factor
 
 include("./RBP functions/RBP_update_Lr.jl")
 include("./RBP functions/calc_residues.jl")
 include("./RBP functions/update_list.jl")
+include("./RBP functions/decay.jl")
+include("./RBP functions/remove_from_list.jl")
 
 function
     list_RBP!(
@@ -34,8 +36,7 @@ function
         listres2::Union{Vector{<:AbstractFloat},Nothing},
         listm2::Union{Vector{<:Integer},Nothing},
         listn2::Union{Vector{<:Integer},Nothing},
-        inlist::Union{Matrix{<:Integer},Nothing},
-        
+        inlist::Union{Matrix{<:Integer},Nothing}        
     )
 
     @inbounds @fastmath for e in 1:num_edges
@@ -46,6 +47,7 @@ function
             all_max_res_alt[e] = listres[1]     
         end
         
+        # 1) get the largest residues coordenates if not clipped
         new_listsize2 = listsize2
         index = 1
         if listsize1 > 1
@@ -53,7 +55,7 @@ function
             i = 0
             while search_index
                 i += 1
-                if listres[index] < CLIP && listres[index] > NCLIP
+                if abs(listres[index]) < CLIP
                     search_index = false
                     index = i
                 else
@@ -61,50 +63,32 @@ function
                     m = listm[index]
                     n = listn[index]
                     lmax = LinearIndices(Factors)[m,n]
-                    inlist[lmax] = false
-                    for i in index:listsize1
-                        listres[i] = listres[i+1]
-                        listm[i] = listm[i+1]
-                        listn[i] = listn[i+1]
-                    end  
+                    remove_from_list!(lmax,listsize1,listres,listm,listn,inlist,index)
                 end
             end
         end
-
         if listres[index] != 0
             cnmax = listm[index]
             vnmax = listn[index]
         else
             cnmax = rand(rng_rbp,1:length(cn2vn))
             vnmax = rand(rng_rbp,cn2vn[cnmax])
-        end    
+        end        
 
-        # 2) for optimization, get the linear indice of the maximum residue
-        lmax = LinearIndices(Factors)[cnmax,vnmax]
+        # 2) Decay the RBP factor corresponding to the maximum residue
+        lmax = decay!(cnmax,vnmax,Factors,decayfactor)
 
-        # 3) Decay the RBP factor corresponding to the maximum residue
-        Factors[lmax] *= decayfactor
+        # 3) update check to node message Lr[cnmax,vnmax]
+        RBP_update_Lr!(lmax,Lr,Ms,cnmax,vnmax,cn2vn,Lq,Lrn,signs,phi)
 
-        # 4) update check to node message Lr[cnmax,vnmax]
-        RBP_update_Lr!(lmax,cnmax,vnmax,cn2vn,Lq,Lr,Ms,Lrn,signs,phi)
+        # 4) Remove max residue from the list and update the list
+        remove_from_list!(lmax,listsize1,listres,listm,listn,inlist,index) 
 
-        # 5) Remove max residue from the list and update the list
-        inlist[lmax] = false
-        for i in index:listsize1
-            listres[i] = listres[i+1]
-            listm[i] = listm[i+1]
-            listn[i] = listn[i+1]
-        end  
+        # 5) update Ldn[vmax] and bitvector[vnmax]
+        Ldn[vnmax], nl = calc_Ld(vnmax,vn2cn,Lf[vnmax],Lr)
+        bitvector[vnmax] = signbit(Ldn[vnmax])
 
-        # 8) update Ldn[vmax] and bitvector[vnmax]
-        Ldn[vnmax] = Lf[vnmax]
-        nl = LinearIndices(Lr)[1,vnmax]-1
-        for m in vn2cn[vnmax]
-            Ldn[vnmax] += Lr[nl+m]
-            bitvector[vnmax] = signbit(Ldn[vnmax])
-        end
-
-        # 7) update vn2cn messages Lq[vnmax,m], ∀m ≠ cnmax, and calculate residues
+        # 6) update vn2cn messages Lq[vnmax,m], ∀m ≠ cnmax, and calculate residues
         leaf = true # suppose node vnmax is a leaf in the graph
         for m in vn2cn[vnmax]
             if m ≠ cnmax
@@ -116,7 +100,7 @@ function
             end
         end
 
-        # 8) if vnmax is a leaf in the graph
+        # 7) if vnmax is a leaf in the graph
         if leaf
             Lq[vnmax,cnmax] = Ldn[vnmax] - Lr[nl+cnmax]
             new_listsize2 = calc_residues!(Factors,Ms,Lr,Lq,Lrn,signs,
@@ -124,12 +108,7 @@ function
                                listm2,listn2,listsize1,listsize2,new_listsize2,inlist)
         end
 
-        # display("list 1")
-        # display([listm listn listres])
-        # display("list 2")
-        # display([listm2 listn2 listres2])
-
-        # 9) Update list 1
+        # 8) update list
         if listsize2 ≠ 0
             count = 0
             k = listsize1
@@ -150,14 +129,7 @@ function
             listres2 .*= 0.0
             listm2 .*= 0
             listn2 .*= 0
-        end
-
-        # display("list 1 updated")
-        # display([listm listn listres])
-
-        # 10) find maximum residue (only for the original RBP)
-
-        
+        end     
 
     end
 end

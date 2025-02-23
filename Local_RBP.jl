@@ -1,10 +1,12 @@
 ################################################################################
 # Allan Eduardo Feitosa
 # 13 jan 2025
-# RBP Sum-Product Algorithm using the only local strategy
+# RBP Sum-Product Algorithm using the only local strategy with residual decaying
+# factor
 
 include("./RBP functions/RBP_update_Lr.jl")
 include("./RBP functions/find_local_maxresidue.jl")
+include("./RBP functions/decay.jl")
 
 
 function
@@ -37,10 +39,12 @@ function
 
         # display("e = $e")
 
+        # if in test mode, store the values of the maximum residues
         if test
             all_max_res_alt[e] = largest_res[1] 
         end 
 
+        # 1) get the largest residues coordenates
         if largest_res[1] == 0
             cnmax = rand(rng_rbp,1:length(cn2vn))
             vnmax = rand(rng_rbp,cn2vn[cnmax])
@@ -48,26 +52,19 @@ function
             largest_res[1] = 0
             cnmax = largestcoords[1]
             vnmax = largestcoords[2]
-        end
+        end        
 
-        # 4) for optimization, get the linear indice of the maximum residue
-        lmax = LinearIndices(Factors)[cnmax,vnmax]
+        # 2) Decay the RBP factor corresponding to the maximum residue
+        lmax = decay!(cnmax,vnmax,Factors,decayfactor)
 
-        # 5) Decay the RBP factor corresponding to the maximum residue
-        Factors[lmax] *= decayfactor
+        # 3) update check to node message Lr[cnmax,vnmax]
+        RBP_update_Lr!(lmax,Lr,Ms,cnmax,vnmax,cn2vn,Lq,Lrn,signs,phi)    
 
-        # 6) update check to node message Lr[cnmax,vnmax]
-        RBP_update_Lr!(lmax,cnmax,vnmax,cn2vn,Lq,Lr,Ms,Lrn,signs,phi)        
+        # 4) update Ldn[vmax] and bitvector[vnmax]
+        Ldn[vnmax], nl = calc_Ld(vnmax,vn2cn,Lf[vnmax],Lr)
+        bitvector[vnmax] = signbit(Ldn[vnmax])
 
-        # 8) update Ldn[vmax] and bitvector[vnmax]
-        Ldn[vnmax] = Lf[vnmax]
-        nl = LinearIndices(Lr)[1,vnmax]-1
-        for m in vn2cn[vnmax]
-            Ldn[vnmax] += Lr[nl+m]
-            bitvector[vnmax] = signbit(Ldn[vnmax])
-        end
-
-        # 9) update vn2cn messages Lq[vnmax,m], ∀m ≠ cnmax, and calculate residues
+        # 5) update vn2cn messages Lq[vnmax,m], ∀m ≠ cnmax, and calculate residues
         leaf = true # suppose node vnmax is a leaf in the graph
         for m in vn2cn[vnmax]
             if m ≠ cnmax
@@ -78,13 +75,14 @@ function
             end
         end
 
-        # 10) if vnmax is a leaf in the graph, triggers the random selection of 
-        #     a check in 3)
+        # 6) if vnmax is a leaf in the graph
         if leaf
             Lq[vnmax,cnmax] = Ldn[vnmax] - Lr[nl+cnmax]
             find_local_maxresidue!(largest_res,Factors,Ms,Lr,Lq,
                 Lrn,signs,phi,vnmax,cnmax,cn2vn,largestcoords)
         end
+
+        # 7) update list
         if largest_res[1] < largest_res_alt
             largestcoords[1], largestcoords_alt[1] = largestcoords_alt[1], largestcoords[1]
             largestcoords[2], largestcoords_alt[2] = largestcoords_alt[2], largestcoords[2]

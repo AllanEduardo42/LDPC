@@ -62,12 +62,12 @@ STOP::Bool = false # stop simulation at zero syndrome (if true, BER curves are
 
 ################################## 5) NUMBERS ##################################
 
-MAX::Int = 20
-MAXRBP::Int = 5
+MAX::Int = 50
+MAXRBP::Int = 20
 DECAY::Float64 = 0.8
 SNR = collect(1.2:0.4:2.0)
 SNRTEST = [2.0]
-TRIALS = [1, 10, 1000]*2^5
+TRIALS = [1, 10, 1000]*2^10
 TRIALS = TRIALS[1:length(SNR)]
 TRIALSTEST = [2]
 
@@ -75,47 +75,47 @@ TRIALSTEST = [2]
 
 Modes = zeros(Bool,7)
 
-Names = ["Flooding","LBP","iLBP","RBP","Local-RBP","List-RBP"]
+Names = ["Flooding","LBP","RBP","Local-RBP","List-RBP"]
 
 # BP type: "MKAY", "TANH", "FAST", "ALTN", "TABL", "MSUM"
-Bptypes = Vector{String}(undef,7)
+Bptypes = Vector{String}(undef,6)
 
 # maximum number of BP iterations
-Maxiters = zeros(Int,7)
+Maxiters = zeros(Int,5)
 
-Decays = Vector{Vector{<:AbstractFloat}}(undef,6)
+Decays = Vector{Vector{<:AbstractFloat}}(undef,5)
 for i in eachindex(Decays)
     Decays[i] = [0.0]
 end
 
 #Flooding
-Modes[1] = 1
+Modes[1] = 0
 Bptypes[1] = "FAST"
 Maxiters[1] = MAX
 
 #LBP
-Modes[2] = 1
+Modes[2] = 0
 Bptypes[2] = "FAST"
 Maxiters[2] = MAX
 
 #RBP
-Modes[4] = 1
-Bptypes[4] = "FAST"
-Maxiters[4] = MAXRBP
-Decays[4] = [DECAY]
+Modes[3] = 1
+Bptypes[3] = "FAST"
+Maxiters[3] = MAXRBP
+Decays[3] = [DECAY]
 # Decays[4] = collect(1.0:-0.1:0.8)
 
 #Local-RBP
-Modes[5] = 1
+Modes[4] = 0
+Bptypes[4] = "FAST"
+Maxiters[4] = MAXRBP
+Decays[4] = [DECAY]
+
+#List-RBP
+Modes[5] = 0
 Bptypes[5] = "FAST"
 Maxiters[5] = MAXRBP
 Decays[5] = [DECAY]
-
-#List-RBP
-Modes[6] = 1
-Bptypes[6] = "FAST"
-Maxiters[6] = MAXRBP
-Decays[6] = [DECAY]
     # List-RBP size
     LISTSIZE::UInt = 16
     LISTSIZE2::UInt = 1

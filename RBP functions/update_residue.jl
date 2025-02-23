@@ -26,15 +26,15 @@ function
         l::Integer,
         x::AbstractFloat,
         Factors::Union{Matrix{<:AbstractFloat},Nothing},
-        listres::Vector{<:AbstractFloat},
-        listm::Vector{<:Integer},
-        listn::Vector{<:Integer},
+        listres1::Vector{<:AbstractFloat},
+        listm1::Vector{<:Integer},
+        listn1::Vector{<:Integer},
         listres2::Union{Vector{<:AbstractFloat},Nothing},
         listm2::Union{Vector{<:Integer},Nothing},
         listn2::Union{Vector{<:Integer},Nothing},
         listsize1::Integer,
         listsize2::Integer,
-        count_size::Integer,
+        new_listsize2::Integer,
         inlist::Matrix{<:Integer}
     )
 
@@ -42,12 +42,12 @@ function
         # display("($m,$n) is on the list")
         inlist[l] = false   # remove from the list
         if listsize2 == 1
-            count_size += 1
+            new_listsize2 += 1
         end
         pos = 0
         for i = 1:listsize1
-            if listm[i] == m
-                if listn[i] == n
+            if listm1[i] == m
+                if listn1[i] == n
                     pos = i
                     break
                 end
@@ -56,28 +56,25 @@ function
         if pos == 0
             throw(error("($m,$n) is on the list, but it's not registered."))
         end
-        for j in pos:listsize1
-            listres[j] = listres[j+1]
-            listm[j] = listm[j+1]
-            listn[j] = listn[j+1]
-        end
+        # remove from list
+        remove_from_list!(l,listsize1,listres1,listm1,listn1,inlist,pos)
     end
 
     @fastmath @inbounds if x != 0.0
         x *= Factors[l]
         if listsize2 == 0
-            update_list!(inlist,listres,listm,listn,x,m,n,listsize1)
-        elseif count_size == 1
+            update_list!(inlist,listres1,listm1,listn1,x,m,n,listsize1)
+        elseif new_listsize2 == 1
             if x > listres2[1]
                 listres2[1] = x
                 listm2[1] = m
                 listn2[1] = n
             end
         else
-            update_list!(nothing,listres2,listm2,listn2,x,m,n,count_size)
+            update_list!(nothing,listres2,listm2,listn2,x,m,n,new_listsize2)
         end
     end
 
-    return count_size
+    return new_listsize2
     
 end

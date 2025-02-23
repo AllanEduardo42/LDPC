@@ -47,7 +47,6 @@ function
     n0 = 0
     ml = LinearIndices(Lq)[1,m]-1
     @fastmath @inbounds for n in cn2vn[m]
-    # for n in cn2vn[m]
         x = Lq[ml+n]
         if x == 0.0 # Lr[m,n] = 0 for n ≠ n0
             countzeros += 1
@@ -63,7 +62,6 @@ function
     end
     if countzeros == 0
         @fastmath @inbounds for n in cn2vn[m]
-        # for n in cn2vn[m]
             x = pLr/Lrn[n]
             if abs(x) < 1 # controls divergent values of Lr
                 Lr[m,n] = 2*atanh(x)
