@@ -65,60 +65,81 @@ STOP::Bool = false # stop simulation at zero syndrome (if true, BER curves are
 MAX::Int = 50
 MAXRBP::Int = 5
 DECAY::Float64 = 0.8
-SNR = collect(1.2:0.4:2.0)
+SNR = [1.2, 1.6, 1.8]
 SNRTEST = [2.0]
-TRIALS = [1, 10, 1000]*2^5
+TRIALS = [1, 10, 100]*2^6
 TRIALS = TRIALS[1:length(SNR)]
 TRIALSTEST = [1]
 
 ################################ 6) BP SCHEDULE ################################
 
-Modes = zeros(Bool,7)
-
-Names = ["Flooding","LBP","RBP","Local-RBP","List-RBP"]
+Modes = ["Flooding","LBP","RBP","Local-RBP","List-RBP","Mod-List-RBP",
+         "Random-List-RBP"]
+Num_modes = length(Modes)
+Active = zeros(Bool,Num_modes)
+Listsizes = zeros(Int,3)
 
 # BP type: "MKAY", "TANH", "FAST", "ALTN", "TABL", "MSUM"
-Bptypes = Vector{String}(undef,6)
+Bptypes = Vector{String}(undef,Num_modes)
 
 # maximum number of BP iterations
-Maxiters = zeros(Int,5)
+Maxiters = zeros(Int,Num_modes)
 
-Decays = Vector{Vector{<:AbstractFloat}}(undef,5)
-for i in eachindex(Decays)
+Decays = Vector{Vector{<:AbstractFloat}}(undef,Num_modes)
+for i in 1:Num_modes
     Decays[i] = [0.0]
 end
 
-#Flooding
-Modes[1] = 0
+# Flooding
+Active[1] = 0
 Bptypes[1] = "FAST"
 Maxiters[1] = MAX
 
-#LBP
-Modes[2] = 0
+# LBP
+Active[2] = 0
 Bptypes[2] = "FAST"
 Maxiters[2] = MAX
 
-#RBP
-Modes[3] = 0
+# RBP
+Active[3] = 0
 Bptypes[3] = "FAST"
 Maxiters[3] = MAXRBP
 Decays[3] = [DECAY]
-# Decays[4] = collect(1.0:-0.1:0.8)
 
-#Local-RBP
-Modes[4] = 0
+# Local-RBP
+Active[4] = 0
 Bptypes[4] = "FAST"
 Maxiters[4] = MAXRBP
 Decays[4] = [DECAY]
 
-#List-RBP
-Modes[5] = 1
+# List-RBP
+Active[5] = 1
 Bptypes[5] = "FAST"
 Maxiters[5] = MAXRBP
 Decays[5] = [DECAY]
-    # List-RBP size
-    LISTSIZE::UInt = 16
-    LISTSIZE2::UInt = 2
+    # List-RBP sizes
+    Listsizes[1] = 16
+    Listsizes[2] = 1
+
+# Mod-List-RBP
+Active[6] = 0
+Bptypes[6] = "FAST"
+Maxiters[6] = MAXRBP
+Decays[6] = [DECAY]
+    # Mod-List-RBP sizes
+    Listsizes[1] = 16
+    Listsizes[2] = 1
+    Listsizes[3] = 16
+
+# Random-List-RBP
+Active[7] = 0
+Bptypes[7] = "FAST"
+Maxiters[7] = MAXRBP
+Decays[7] = [DECAY]
+    # Random-List-RBP sizes
+    Listsizes[1] = 16
+    Listsizes[2] = 2
+
 
 ########################### 7) MESSAGE AND CODEWORD ############################
 
@@ -206,17 +227,17 @@ if TEST
     LR = Dict()
     LQ_ = Dict()
     Max_residues = Dict()
-    for i in eachindex(Modes)
-        if Modes[i]
+    for i in eachindex(Active)
+        if Active[i]
             for decay in Decays[i]
                 if decay != 0.0
-                    name = Names[i]*" $decay"
+                    mode = Modes[i]*" $decay"
                 else
-                    name = Names[i]
+                    mode = Modes[i]
                 end
-                LR[name], LQ_[name], Max_residues[name] = performance_sim(
+                LR[mode], LQ_[mode], Max_residues[mode] = performance_sim(
                                             SNRTEST,
-                                            Names[i],
+                                            Modes[i],
                                             TRIALSTEST,
                                             Maxiters[i],
                                             Bptypes[i],
@@ -235,17 +256,17 @@ else
     end
     FER = Dict()
     BER = Dict()
-    for i in eachindex(Modes)
-        if Modes[i]
+    for i in eachindex(Active)
+        if Active[i]
             for decay in Decays[i]
                 if decay != 0.0
-                    name = Names[i]*" $decay"
+                    mode = Modes[i]*" $decay"
                 else
-                    name = Names[i]
+                    mode = Modes[i]
                 end
-                FER[name], BER[name] = performance_sim(
+                FER[mode], BER[mode] = performance_sim(
                     SNR,
-                    Names[i],
+                    Modes[i],
                     TRIALS,
                     Maxiters[i],
                     Bptypes[i],
@@ -253,8 +274,8 @@ else
                     STOP,
                     MTHR)
                 if STOP
-                    push!(Fer_labels,name*" ($(Bptypes[i]))")
-                    push!(Fermax,FER[name][Maxiters[i],:])
+                    push!(Fer_labels,mode*" ($(Bptypes[i]))")
+                    push!(Fermax,FER[mode][Maxiters[i],:])
                 end
             end
         end
@@ -286,48 +307,48 @@ else
             push!(labels,"SNR (dB) = $snr")
         end
         labels = permutedims(labels)
-        for i in eachindex(Modes)
-            if Modes[i]
+        for i in eachindex(Active)
+            if Active[i]
                 for decay in Decays[i]
                     if decay != 0.0
-                        name = Names[i]*" $decay"
+                        mode = Modes[i]*" $decay"
                     else
-                        name = Names[i]
+                        mode = Modes[i]
                     end
-                    titlefer = "FER "*name
+                    titlefer = "FER "*mode
                     local p = plot(
                         1:Maxiters[i],
-                        FER[name],
+                        FER[mode],
                         xlabel="Iteration",
                         label=labels,
                         lw=2,
                         title=titlefer,
                         ylims=(lim,0)
                     )
-                    SAVE ? savefig(p,"./Saved Data/"*now_*"/FER_"*name*".svg") : display(p)
+                    SAVE ? savefig(p,"./Saved Data/"*now_*"/FER_"*mode*".svg") : display(p)
                 end
             end
         end
 
-        for i in eachindex(Modes)
-            if Modes[i]
+        for i in eachindex(Active)
+            if Active[i]
                 for decay in Decays[i]
                     if decay != 0.0
-                        name = Names[i]*" $decay"
+                        mode = Modes[i]*" $decay"
                     else
-                        name = Names[i]
+                        mode = Modes[i]
                     end
-                    titleber = "BER $name"
+                    titleber = "BER $mode"
                     local p = plot(
                         1:Maxiters[i],
-                        BER[name],
+                        BER[mode],
                         xlabel="Iteration",
                         label=labels,
                         lw=2,
                         title=titleber,
                         ylims=(lim-2,0)
                     )
-                    SAVE ? savefig(p,"./Saved Data/"*now_*"/BER_"*name*".svg") : display(p)
+                    SAVE ? savefig(p,"./Saved Data/"*now_*"/BER_"*mode*".svg") : display(p)
                 end
             end
         end
@@ -342,19 +363,19 @@ else
             FERS = Dict(aux)
             CSV.write("./Saved Data/"*now_*"/FERMAX.csv", DataFrame(FERS), header=true)
         else
-            for i in eachindex(Modes)
-                if Modes[i]
+            for i in eachindex(Active)
+                if Active[i]
                     for decay in Decays[i]
                         if decay != 0.0
-                            name = Names[i]*" $decay"
+                            mode = Modes[i]*" $decay"
                         else
-                            name = Names[i]
+                            mode = Modes[i]
                         end
-                        open("./Saved Data/"*now_*"/FER_"*name*".txt","w") do io
-                            writedlm(io,FER[name])
+                        open("./Saved Data/"*now_*"/FER_"*mode*".txt","w") do io
+                            writedlm(io,FER[mode])
                         end
-                        open("./Saved Data/"*now_*"/BER_"*name*".txt","w") do io
-                            writedlm(io,BER[name])
+                        open("./Saved Data/"*now_*"/BER_"*mode*".txt","w") do io
+                            writedlm(io,BER[mode])
                         end
                     end
                 end

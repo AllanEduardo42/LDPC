@@ -30,7 +30,7 @@ function
     @fastmath @inbounds for n in cn2vn[m]
         if n ≠ vnmax
             l = LinearIndices(Ms)[m,n]
-            x = _calc_residue(Ms,Lr,l,Lrn)
+            x = _calc_residue(Ms,Lr,l,Lrn,Lq)
             update_residue!(addressinv,residues,l,x,Factors)
         end
     end
@@ -56,8 +56,7 @@ function
         listres2::Union{Vector{<:AbstractFloat},Nothing},
         listm2::Union{Vector{<:Integer},Nothing},
         listn2::Union{Vector{<:Integer},Nothing},
-        listsize1::Integer,
-        listsize2::Integer,
+        listsizes::Vector{<:Integer},
         new_listsize2::Integer,
         inlist::Union{Matrix{<:Integer},Nothing}   
     )
@@ -68,10 +67,9 @@ function
     @fastmath @inbounds for n in cn2vn[m]
         if n ≠ vnmax
             l = LinearIndices(Ms)[m,n]
-            x = _calc_residue(Ms,Lr,l,Lrn)
+            x = _calc_residue(Ms,Lr,l,Lrn,Lq)
             new_listsize2 = update_residue!(m,n,l,x,Factors,listres,listm,listn,
-                            listres2,listm2,listn2,listsize1,listsize2,
-                            new_listsize2,inlist)
+                            listres2,listm2,listn2,listsizes,new_listsize2,inlist)
         end
     end
 

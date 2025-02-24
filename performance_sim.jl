@@ -66,15 +66,16 @@ function
     if SAVE
         println(file,str)
     end
-    if (mode == "RBP") || (mode == "Local-RBP") || (mode == "List-RBP")
+    if mode == "RBP" || mode == "Local-RBP" || mode == "List-RBP" ||
+       mode == "Mod-List-RBP" || mode == "Random-List-RBP"
         str = "RBP decaying factor: $decay"
         println(str)
         if SAVE
             println(file,str)
         end
     end
-    if (mode == "List-RBP") 
-        str = "List 1 size: $LISTSIZE\nList 2 size: $LISTSIZE2"
+    if mode == "List-RBP" || mode == "Mod-List-RBP" || mode == "Random-List-RBP"
+        str = "List 1 size: $(Listsizes[1])\nList 2 size: $(Listsizes[2])"
         println(str)
         if SAVE
             println(file,str)
@@ -102,8 +103,7 @@ function
             maxiter,
             stop,
             decay,
-            LISTSIZE,
-            LISTSIZE2,
+            Listsizes,
             Rgn_noise_seeds[1],
             Rgn_samples_seeds[1],
             Rgn_message_seeds[1];
@@ -141,8 +141,7 @@ function
                                                     maxiter,
                                                     stop,
                                                     decay,
-                                                    LISTSIZE,
-                                                    LISTSIZE2,
+                                                    Listsizes,
                                                     Rgn_noise_seeds[i],
                                                     Rgn_samples_seeds[i],
                                                     Rgn_message_seeds[i])
@@ -162,8 +161,7 @@ function
                                                     maxiter,
                                                     stop,
                                                     decay,
-                                                    LISTSIZE,
-                                                    LISTSIZE2,
+                                                    Listsizes,
                                                     Rgn_noise_seeds[1],
                                                     Rgn_samples_seeds[1],
                                                     Rgn_message_seeds[1])

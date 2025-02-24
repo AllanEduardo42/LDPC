@@ -1,7 +1,7 @@
 ################################################################################
 # Allan Eduardo Feitosa
-# 22 Feb 2024
-# List-RBP Sum-Product Algorithm with residual decaying factor
+# 24 Feb 2024
+# Random-List-RBP Sum-Product Algorithm with residual decaying factor
 
 include("./RBP functions/RBP_update_Lr.jl")
 include("./RBP functions/calc_residues.jl")
@@ -10,7 +10,7 @@ include("./RBP functions/decay.jl")
 include("./RBP functions/remove_from_list.jl")
 
 function
-    list_RBP!(
+    random_list_RBP!(
         bitvector::Vector{Bool},
         Lq::Matrix{<:AbstractFloat},
         Lr::Matrix{<:AbstractFloat},
@@ -45,35 +45,27 @@ function
             all_max_res_alt[e] = listres[1]     
         end
         
-        # 1) get the largest residues coordenates if not clipped
+        # 1) random select in the list of largest residues
         new_listsize2 = listsizes[2]
-        index = 1
-        # if listsizes[1] > 1
-        #     search_index = true
-        #     i = 0
-        #     while search_index
-        #         i += 1
-        #         if abs(listres[index]) < CLIP
-        #             search_index = false
-        #             index = i
-        #         else
-        #             if listsizes[2] == 1
-        #                 new_listsize2 += 1
-        #             end
-        #             m = listm[index]
-        #             n = listn[index]
-        #             lmax = LinearIndices(Factors)[m,n]
-        #             remove_from_list!(lmax,listsizes[1],listres,listm,listn,inlist,index)
-        #         end
-        #     end
-        # end
+        index = rand(rng_rbp,1:listsizes[1])
+        cnmax = 0
+        vnmax = 0
         if listres[index] != 0
             cnmax = listm[index]
             vnmax = listn[index]
         else
+            for i=1:listsizes[1]
+                if listres[i] != 0
+                    cnmax = listm[i]
+                    vnmax = listn[i]
+                    break
+                end
+            end
+        end
+        if cnmax == 0
             cnmax = rand(rng_rbp,1:length(cn2vn))
             vnmax = rand(rng_rbp,cn2vn[cnmax])
-        end        
+        end
 
         # 2) Decay the RBP factor corresponding to the maximum residue
         lmax = decay!(cnmax,vnmax,Factors,decayfactor)
@@ -132,7 +124,6 @@ function
             listm2 .*= 0
             listn2 .*= 0
         end     
-
     end
 end
 

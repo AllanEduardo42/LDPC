@@ -12,6 +12,8 @@ include("LBP.jl")
 include("RBP.jl")
 include("Local_RBP.jl")
 include("List-RBP.jl")
+include("Mod-List-RBP.jl")
+include("Random-List-RBP.jl")
 include("./RBP functions/calc_residues.jl")
 include("./RBP functions/find_local_maxresidue.jl")
 
@@ -30,8 +32,7 @@ function
         maxiter::Integer,
         stop::Bool,
         decayfactor::AbstractFloat,
-        listsize1::Integer,
-        listsize2::Integer,
+        listsizes::Vector{<:Integer},
         rgn_seed_noise::Integer,
         rng_seed_sample::Integer,
         rgn_seed_msg::Integer;
@@ -39,7 +40,8 @@ function
         printtest=false
     )
 
-    if mode == "RBP" || mode == "Local-RBP" || mode == "List-RBP" 
+    if mode == "RBP" || mode == "Local-RBP" || mode == "List-RBP" || 
+       mode == "Mod-List-RBP" || mode == "Random-List-RBP"
         RBP = true
     else
         RBP = false
@@ -155,20 +157,20 @@ function
     max_coords_alt = (mode == "Local-RBP") ? zeros(Int,2) : nothing
 
     # mode = List-RBP
-    if mode == "List-RBP"
-        listres = zeros(listsize1+1)
-        listm = zeros(Int,listsize1+1)
-        listn = zeros(Int,listsize1+1)
+    if mode == "List-RBP" || mode == "Mod-List-RBP" || mode == "Random-List-RBP"
+        listres = zeros(listsizes[1]+1)
+        listm = zeros(Int,listsizes[1]+1)
+        listn = zeros(Int,listsizes[1]+1)
         inlist = Matrix(false*H)
-        if listsize2 > 0
-            if listsize2 == 1
-                listres2 = zeros(listsize1+1)
-                listm2 = zeros(Int,listsize1+1)
-                listn2 = zeros(Int,listsize1+1)
+        if listsizes[2] > 0
+            if listsizes[2] == 1
+                listres2 = zeros(listsizes[1]+1)
+                listm2 = zeros(Int,listsizes[1]+1)
+                listn2 = zeros(Int,listsizes[1]+1)
             else
-                listres2 = zeros(listsize2+1)
-                listm2 = zeros(Int,listsize2+1)
-                listn2 = zeros(Int,listsize2+1)
+                listres2 = zeros(listsizes[2]+1)
+                listm2 = zeros(Int,listsizes[2]+1)
+                listn2 = zeros(Int,listsizes[2]+1)
             end
         else
             listres2 = nothing
@@ -183,7 +185,7 @@ function
         listm2 = nothing
         listn2 = nothing
         inlist = nothing
-        listsize2 = 0
+        listsizes[2] = 0
     end
 
 ################################## MAIN LOOP ###################################
@@ -242,14 +244,13 @@ function
         for m in 1:M
             for n in cn2vn[m]
                 Lr[m,n] = 0.0
-                Lq[n,m] = 0.0
             end
         end
-        if mode == "List-RBP"
+        if mode == "List-RBP" || mode == "Mod-List-RBP"
             listres .= 0.0
             listm .= 0
             listn .= 0
-            if listsize2 != 0
+            if listsizes[2] != 0
                 listres2 .= 0.0
                 listm2 .= 0
                 listn2 .= 0
@@ -283,11 +284,11 @@ function
             end
             max_coords_alt[1] = max_coords[3]
             max_coords_alt[2] = max_coords[4]
-        elseif mode == "List-RBP"
+        elseif mode == "List-RBP" || mode == "Mod-List-RBP" || mode == "Random-List-RBP"
             for m in eachindex(cn2vn)
                 _ = calc_residues!(Factors,Ms,nothing,Lq,Lrn,
                 signs,phi,0,m,cn2vn,listres,listm,listn,listres2,listm2,listn2,
-                listsize1,listsize2,listsize2,inlist)
+                listsizes,0,inlist)
             end
         end
         
@@ -384,8 +385,66 @@ function
                     all_max_res_alt,
                     test,
                     rng_rbp,
-                    listsize1,
-                    listsize2,
+                    listsizes,
+                    listres,
+                    listm,
+                    listn,
+                    listres2,
+                    listm2,
+                    listn2,
+                    inlist
+                )
+                # reset factors
+                resetfactors!(Factors,vn2cn)            
+            elseif mode == "Mod-List-RBP"
+                mod_list_RBP!(
+                    bitvector,
+                    Lq,
+                    Lr,
+                    Lf,
+                    cn2vn,
+                    vn2cn,
+                    Lrn,
+                    signs,
+                    phi,
+                    decayfactor,
+                    num_edges,
+                    Ms,
+                    Factors,
+                    all_max_res_alt,
+                    test,
+                    rng_rbp,
+                    listsizes,
+                    listres,
+                    listm,
+                    listn,
+                    listres2,
+                    listm2,
+                    listn2,
+                    inlist,
+                    syndrome
+                )
+                # reset factors
+                resetfactors!(Factors,vn2cn)
+            elseif mode == "Random-List-RBP"
+                random_list_RBP!(
+                    bitvector,
+                    Lq,
+                    Lr,
+                    Lf,
+                    cn2vn,
+                    vn2cn,
+                    Lrn,
+                    signs,
+                    phi,
+                    decayfactor,
+                    num_edges,
+                    Ms,
+                    Factors,
+                    all_max_res_alt,
+                    test,
+                    rng_rbp,
+                    listsizes,
                     listres,
                     listm,
                     listn,

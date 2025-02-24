@@ -32,8 +32,7 @@ function
         listres2::Union{Vector{<:AbstractFloat},Nothing},
         listm2::Union{Vector{<:Integer},Nothing},
         listn2::Union{Vector{<:Integer},Nothing},
-        listsize1::Integer,
-        listsize2::Integer,
+        listsizes::Vector{<:Integer},
         new_listsize2::Integer,
         inlist::Matrix{<:Integer}
     )
@@ -41,11 +40,11 @@ function
     @fastmath @inbounds if inlist[l]  # if residue(m,n) is in the list
         # display("($m,$n) is on the list")
         inlist[l] = false   # remove from the list
-        if listsize2 == 1
+        if listsizes[2] == 1
             new_listsize2 += 1
         end
         pos = 0
-        for i = 1:listsize1
+        for i = 1:listsizes[1]
             if listm1[i] == m
                 if listn1[i] == n
                     pos = i
@@ -57,13 +56,13 @@ function
             throw(error("($m,$n) is on the list, but it's not registered."))
         end
         # remove from list
-        remove_from_list!(l,listsize1,listres1,listm1,listn1,inlist,pos)
+        remove_from_list!(l,listsizes[1],listres1,listm1,listn1,inlist,pos)
     end
 
     @fastmath @inbounds if x != 0.0
         x *= Factors[l]
-        if listsize2 == 0
-            update_list!(inlist,listres1,listm1,listn1,x,m,n,listsize1)
+        if new_listsize2 == 0
+            update_list!(inlist,listres1,listm1,listn1,x,m,n,listsizes[1])
         elseif new_listsize2 == 1
             if x > listres2[1]
                 listres2[1] = x

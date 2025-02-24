@@ -6,30 +6,6 @@
 
 include("minsum.jl")
 
-########################### SPA USING MKAY's METHOD ############################
-function
-    update_Lr!(
-        r::Array{<:AbstractFloat,3},
-        δq::Matrix{<:AbstractFloat},
-        m::Integer,
-        cn2vn::Vector{Vector{T}} where {T<:Integer},     
-    )
-    
-    for n in cn2vn[m]
-        δr = 1
-        for n2 in cn2vn[m]
-            if n2 ≠ n
-                @fastmath @inbounds δr *= δq[n2,m]
-            end
-        end
-        @fastmath @inbounds r[m,n,1] = 0.5*(1+δr)
-        @fastmath @inbounds r[m,n,2] = 0.5*(1-δr)
-    end
-   
-        
-
-end
-
 ####################### SPA USING FAST HYPERBOLIC TANGENT ######################
 function
     update_Lr!(
@@ -170,5 +146,30 @@ function
     )
 
     minsum!(Lq,Lr,signs,m,cn2vn)
+
+end
+
+
+########################### SPA USING MKAY's METHOD ############################
+function
+    update_Lr!(
+        r::Array{<:AbstractFloat,3},
+        δq::Matrix{<:AbstractFloat},
+        m::Integer,
+        cn2vn::Vector{Vector{T}} where {T<:Integer},     
+    )
+    
+    for n in cn2vn[m]
+        δr = 1
+        for n2 in cn2vn[m]
+            if n2 ≠ n
+                @fastmath @inbounds δr *= δq[n2,m]
+            end
+        end
+        @fastmath @inbounds r[m,n,1] = 0.5*(1+δr)
+        @fastmath @inbounds r[m,n,2] = 0.5*(1-δr)
+    end
+   
+        
 
 end

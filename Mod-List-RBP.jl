@@ -1,7 +1,7 @@
 ################################################################################
 # Allan Eduardo Feitosa
-# 22 Feb 2024
-# List-RBP Sum-Product Algorithm with residual decaying factor
+# 24 Feb 2024
+# Modified List-RBP Sum-Product Algorithm with residual decaying factor
 
 include("./RBP functions/RBP_update_Lr.jl")
 include("./RBP functions/calc_residues.jl")
@@ -10,7 +10,7 @@ include("./RBP functions/decay.jl")
 include("./RBP functions/remove_from_list.jl")
 
 function
-    list_RBP!(
+    mod_list_RBP!(
         bitvector::Vector{Bool},
         Lq::Matrix{<:AbstractFloat},
         Lr::Matrix{<:AbstractFloat},
@@ -34,20 +34,93 @@ function
         listres2::Union{Vector{<:AbstractFloat},Nothing},
         listm2::Union{Vector{<:Integer},Nothing},
         listn2::Union{Vector{<:Integer},Nothing},
-        inlist::Union{Matrix{<:Integer},Nothing}        
+        inlist::Union{Matrix{<:Integer},Nothing},
+        syndrome::Vector{Bool}        
     )
 
-    @inbounds @fastmath for e in 1:num_edges
+    # @inbounds sum_syndrome = zeros(Int,listsizes[3])
 
-        # display("e = $e")
+    @inbounds @fastmath for e in 1:2
+
+        display("e = $e")
+        # calc_syndrome!(syndrome,bitvector,cn2vn)
+        # Syndrome[e] = sum(syndrome)
+        # display("sum syndrome = $(sum(syndrome))")
 
         if test
             all_max_res_alt[e] = listres[1]     
         end
+
+        # sum_syndrome .= 0
+        # for i=1:listsizes[3]
+        #     if listres[i] != 0
+        #         cnmax = listm[i]
+        #         vnmax = listn[i]
+        #     else
+        #         break
+        #     end
+        #     nl = LinearIndices(Lr)[1,vnmax]-1
+        #     cum = Lf[vnmax]
+        #     for m in vn2cn[vnmax]
+        #         if m == cnmax
+        #             cum += Ms[nl+m]
+        #         else
+        #             cum += Lr[nl+m]
+        #         end
+        #     end
+        #     new_bit = signbit(cum)         
+        #     if bitvector[vnmax] != new_bit
+        #         for m in vn2cn[vnmax]
+        #             if syndrome[m] == true
+        #                 sum_syndrome[i] -= 1
+        #             else
+        #                 sum_syndrome[i] += 1
+        #             end
+        #         end
+        #     end
+        #     # bitvector2 = copy(bitvector)
+        #     # bitvector2[vnmax] = new_bit
+        #     # calc_syndrome!(syndrome,bitvector2,cn2vn)
+        #     # sum_syndrome[i] = sum(syndrome)
+        # end
+
+        # display(sum_syndrome)
+
+        # minsyn, index = findmin(sum_syndrome)
+
+        # display("index = $index")
+
+        cum = zeros(listsizes[3])
+        diff_cum = zeros(listsizes[3])
+        for i=1:listsizes[3]
+            if listres[i] != 0
+                cnmax = listm[i]
+                vnmax = listn[i]
+            else
+                break
+            end
+            cum[i] = Lf[vnmax]
+            nl = LinearIndices(Lr)[1,vnmax]-1
+            for m in vn2cn[vnmax]
+                if m == cnmax
+                    cum[i] += Ms[nl+m]
+                else
+                    cum[i] += Lr[nl+m]
+                end
+            end
+            diff_cum[i] = abs(cum[i] - (Lq[vnmax,cnmax]+Lr[cnmax,vnmax]))
+        end
+
+        display(diff_cum)
+        display(listres)
+
+        _,index = findmax(abs.(diff_cum))
+
+        display(index)
         
         # 1) get the largest residues coordenates if not clipped
         new_listsize2 = listsizes[2]
-        index = 1
+        # index = 1
         # if listsizes[1] > 1
         #     search_index = true
         #     i = 0
@@ -92,6 +165,8 @@ function
         # step 1) Ldn[vnmax], nl = calc_Ld(vnmax,vn2cn,Lf[vnmax],Lr)
         # step 2) bitvector[vnmax] = signbit(Ldn[vnmax]
         # step 3) see below.
+        # calc_syndrome!(syndrome, bitvector,cn2vn)
+        # display("new sum syndrome = $(sum(syndrome))")
 
         # 6) update vn2cn messages Lq[vnmax,m], ∀m ≠ cnmax, and calculate residues
         checks = vn2cn[vnmax]

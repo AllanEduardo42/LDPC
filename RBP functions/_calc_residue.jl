@@ -9,9 +9,11 @@ function
         Ms::Matrix{<:AbstractFloat},
         Lr::Matrix{<:AbstractFloat},
         l::Integer,
-        ::Vector{<:AbstractFloat}
+        ::Vector{<:AbstractFloat},
+        Lq::Matrix{<:AbstractFloat}
     )
-
+    # @fastmath @inbounds Ld = Lr[l] + Lq'[l]
+    # @fastmath @inbounds x = (Ms[l] - Lr[l])/Ld
     @fastmath @inbounds x = Ms[l] - Lr[l]
     @fastmath if signbit(x)
         x = -x
@@ -28,9 +30,12 @@ function
         Ms::Matrix{<:AbstractFloat},
         Lr::Matrix{<:AbstractFloat},
         l::Integer,
-        ::Nothing
+        ::Nothing,
+        Lq::Matrix{<:AbstractFloat}
     )
 
+    # @fastmath @inbounds Ld = Lq'[l]
+    # @inbounds x = (Ms[l] - Lr[l])/Ld
     @inbounds x = Ms[l] - Lr[l]
     if isnan(x)
         return 0.0
@@ -48,9 +53,11 @@ function
         Ms::Matrix{<:AbstractFloat},
         ::Nothing,
         l::Integer,
-        ::Union{Vector{<:AbstractFloat},Nothing}
+        ::Union{Vector{<:AbstractFloat},Nothing},
+        Lq::Matrix{<:AbstractFloat}
     )
-    
+    # @fastmath @inbounds Ld = Lq'[l]
+    # @fastmath @inbounds return abs(Ms[l]/Ld)
     @fastmath @inbounds return abs(Ms[l])
 
 end
