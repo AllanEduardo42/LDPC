@@ -22,18 +22,17 @@ function
         phi::Union{Vector{<:AbstractFloat},Nothing},
         decayfactor::AbstractFloat,
         num_edges::Integer,
-        Ldn::Vector{<:AbstractFloat},
         Ms::Matrix{<:AbstractFloat},
         Factors::Matrix{<:AbstractFloat},        
         all_max_res_alt::Union{Vector{<:AbstractFloat},Nothing},
         test::Bool,
         rng_rbp::AbstractRNG,
-        largest_res::Vector{<:AbstractFloat},
-        largestcoords::Vector{<:Integer},
-        largestcoords_alt::Vector{<:Integer}
+        max_residue::Vector{<:AbstractFloat},
+        max_coords::Vector{<:Integer},
+        max_coords_alt::Vector{<:Integer}
     )
 
-    largest_res_alt = largest_res[2]
+    max_residue_alt = max_residue[2]
 
     @fastmath @inbounds for e in 1:num_edges
 
@@ -41,17 +40,17 @@ function
 
         # if in test mode, store the values of the maximum residues
         if test
-            all_max_res_alt[e] = largest_res[1] 
+            all_max_res_alt[e] = max_residue[1] 
         end 
 
         # 1) get the largest residues coordenates
-        if largest_res[1] == 0
+        if max_residue[1] == 0
             cnmax = rand(rng_rbp,1:length(cn2vn))
             vnmax = rand(rng_rbp,cn2vn[cnmax])
         else
-            largest_res[1] = 0
-            cnmax = largestcoords[1]
-            vnmax = largestcoords[2]
+            max_residue[1] = 0
+            cnmax = max_coords[1]
+            vnmax = max_coords[2]
         end        
 
         # 2) Decay the RBP factor corresponding to the maximum residue
@@ -61,36 +60,38 @@ function
         RBP_update_Lr!(lmax,Lr,Ms,cnmax,vnmax,cn2vn,Lq,Lrn,signs,phi)    
 
         # 4) update Ldn[vmax] and bitvector[vnmax]
-        Ldn[vnmax], nl = calc_Ld(vnmax,vn2cn,Lf[vnmax],Lr)
-        bitvector[vnmax] = signbit(Ldn[vnmax])
+        bitvector[vnmax] = update_Lq!(Lq,Lr,Lf[vnmax],vnmax,vn2cn,Lrn)
+        # Obs: this code update Lq[vnmax,cnmax]: no difference in performance 
+        #      was detected. The original implementation, which doesn't update
+        #      Lq[vnmax,cnmax], is as follows (steps 1, 2 and 3):
+        # step 1) Ldn[vnmax], nl = calc_Ld(vnmax,vn2cn,Lf[vnmax],Lr)
+        # step 2) bitvector[vnmax] = signbit(Ldn[vnmax]
+        # step 3) see below.
 
         # 5) update vn2cn messages Lq[vnmax,m], ∀m ≠ cnmax, and calculate residues
-        leaf = true # suppose node vnmax is a leaf in the graph
-        for m in vn2cn[vnmax]
-            if m ≠ cnmax
-                leaf = false # vnmax is not a leaf
-                Lq[vnmax,m] = Ldn[vnmax] - Lr[nl+m]
-                find_local_maxresidue!(largest_res,Factors,Ms,Lr,Lq,
-                    Lrn,signs,phi,vnmax,m,cn2vn,largestcoords)
+        checks = vn2cn[vnmax]
+        if length(checks) > 1
+            for m in checks
+                if m ≠ cnmax
+                    # step 3) Lq[vnmax,m] = Ldn[vnmax] - Lr[nl+m]        
+                    find_local_maxresidue!(max_residue,Factors,Ms,Lr,Lq,
+                        Lrn,signs,phi,vnmax,m,cn2vn,max_coords)
+                end
             end
+        else # if vnmax is a leaf in the graph
+            find_local_maxresidue!(max_residue,Factors,Ms,Lr,Lq,Lrn,signs,phi,
+                vnmax,m,cn2vn,max_coords)
         end
 
-        # 6) if vnmax is a leaf in the graph
-        if leaf
-            Lq[vnmax,cnmax] = Ldn[vnmax] - Lr[nl+cnmax]
-            find_local_maxresidue!(largest_res,Factors,Ms,Lr,Lq,
-                Lrn,signs,phi,vnmax,cnmax,cn2vn,largestcoords)
-        end
-
-        # 7) update list
-        if largest_res[1] < largest_res_alt
-            largestcoords[1], largestcoords_alt[1] = largestcoords_alt[1], largestcoords[1]
-            largestcoords[2], largestcoords_alt[2] = largestcoords_alt[2], largestcoords[2]
-            largest_res[1], largest_res_alt = largest_res_alt, largest_res[1]            
+        # 6) update list
+        if max_residue[1] < max_residue_alt
+            max_coords[1], max_coords_alt[1] = max_coords_alt[1], max_coords[1]
+            max_coords[2], max_coords_alt[2] = max_coords_alt[2], max_coords[2]
+            max_residue[1], max_residue_alt = max_residue_alt, max_residue[1]            
         else
-            largest_res_alt = largest_res[2]
-            largestcoords_alt[1] = largestcoords[3]
-            largestcoords_alt[2] = largestcoords[4]
+            max_residue_alt = max_residue[2]
+            max_coords_alt[1] = max_coords[3]
+            max_coords_alt[2] = max_coords[4]
         end
     end
 end

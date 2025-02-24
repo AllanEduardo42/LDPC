@@ -22,7 +22,6 @@ function
         phi::Union{Vector{<:AbstractFloat},Nothing},
         decayfactor::AbstractFloat,
         num_edges::Integer,
-        Ldn::Vector{<:AbstractFloat},
         Ms::Matrix{<:AbstractFloat},
         Factors::Matrix{<:AbstractFloat},        
         all_max_res_alt::Union{Vector{<:AbstractFloat},Nothing},
@@ -59,7 +58,9 @@ function
                     search_index = false
                     index = i
                 else
-                    new_listsize2 += 1
+                    if listsize2 == 1
+                        new_listsize2 += 1
+                    end
                     m = listm[index]
                     n = listn[index]
                     lmax = LinearIndices(Factors)[m,n]
@@ -85,30 +86,32 @@ function
         remove_from_list!(lmax,listsize1,listres,listm,listn,inlist,index) 
 
         # 5) update Ldn[vmax] and bitvector[vnmax]
-        Ldn[vnmax], nl = calc_Ld(vnmax,vn2cn,Lf[vnmax],Lr)
-        bitvector[vnmax] = signbit(Ldn[vnmax])
+        bitvector[vnmax] = update_Lq!(Lq,Lr,Lf[vnmax],vnmax,vn2cn,Lrn)
+        # Obs: this code update Lq[vnmax,cnmax]: no difference in performance 
+        #      was detected. The original implementation, which doesn't update
+        #      Lq[vnmax,cnmax], is as follows (steps 1, 2 and 3):
+        # step 1) Ldn[vnmax], nl = calc_Ld(vnmax,vn2cn,Lf[vnmax],Lr)
+        # step 2) bitvector[vnmax] = signbit(Ldn[vnmax]
+        # step 3) see below.
 
         # 6) update vn2cn messages Lq[vnmax,m], ∀m ≠ cnmax, and calculate residues
-        leaf = true # suppose node vnmax is a leaf in the graph
-        for m in vn2cn[vnmax]
-            if m ≠ cnmax
-                leaf = false # vnmax is not a leaf
-                Lq[vnmax,m] = Ldn[vnmax] - Lr[nl+m]
-                new_listsize2 = calc_residues!(Factors,Ms,Lr,Lq,Lrn,signs,
-                               phi,vnmax,m,cn2vn,listres,listm,listn,listres2,
-                               listm2,listn2,listsize1,listsize2,new_listsize2,inlist)
+        checks = vn2cn[vnmax]
+        if length(checks) > 1
+            for m in checks
+                if m ≠ cnmax
+                    # step 3) Lq[vnmax,m] = Ldn[vnmax] - Lr[nl+m]        
+                    new_listsize2 = calc_residues!(Factors,Ms,Lr,Lq,Lrn,signs,
+                            phi,vnmax,m,cn2vn,listres,listm,listn,listres2,
+                            listm2,listn2,listsize1,listsize2,new_listsize2,inlist)
+                end
             end
+        else # if vnmax is a leaf in the graph
+            new_listsize2 = calc_residues!(Factors,Ms,Lr,Lq,Lrn,signs,phi,vnmax,
+                            m,cn2vn,listres,listm,listn,listres2,listm2,listn2,
+                            listsize1,listsize2,new_listsize2,inlist)
         end
 
-        # 7) if vnmax is a leaf in the graph
-        if leaf
-            Lq[vnmax,cnmax] = Ldn[vnmax] - Lr[nl+cnmax]
-            new_listsize2 = calc_residues!(Factors,Ms,Lr,Lq,Lrn,signs,
-                               phi,vnmax,cnmax,cn2vn,listres,listm,listn,listres2,
-                               listm2,listn2,listsize1,listsize2,new_listsize2,inlist)
-        end
-
-        # 8) update list
+        # 7) update list
         if listsize2 ≠ 0
             count = 0
             k = listsize1

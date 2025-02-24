@@ -124,7 +124,6 @@ function
     # Set other variables that depend on the mode
 
     # supermode = RBP
-    Ldn = RBP ? zeros(N) : nothing
     Ms = RBP ? H*0.0 : nothing
     Factors  = RBP ? 1.0*H  : nothing
     all_max_res = (test && RBP) ? zeros(MAXRBP*num_edges) : nothing
@@ -151,9 +150,9 @@ function
     end
 
     # mode = Local-RBP
-    largestcoords = (mode == "Local-RBP") ? zeros(Int,4) : nothing
-    largest_res = (mode == "Local-RBP") ? ones(2)*0 : nothing
-    largestcoords_alt = (mode == "Local-RBP") ? zeros(Int,2) : nothing
+    max_coords = (mode == "Local-RBP") ? zeros(Int,4) : nothing
+    max_residue = (mode == "Local-RBP") ? ones(2)*0 : nothing
+    max_coords_alt = (mode == "Local-RBP") ? zeros(Int,2) : nothing
 
     # mode = List-RBP
     if mode == "List-RBP"
@@ -279,11 +278,11 @@ function
             end
         elseif mode == "Local-RBP"
             for m in eachindex(cn2vn)
-                find_local_maxresidue!(largest_res,Factors,Ms,nothing,Lq,Lrn,
-                signs,phi,0,m,cn2vn,largestcoords)
+                find_local_maxresidue!(max_residue,Factors,Ms,nothing,Lq,Lrn,
+                signs,phi,0,m,cn2vn,max_coords)
             end
-            largestcoords_alt[1] = largestcoords[3]
-            largestcoords_alt[2] = largestcoords[4]
+            max_coords_alt[1] = max_coords[3]
+            max_coords_alt[2] = max_coords[4]
         elseif mode == "List-RBP"
             for m in eachindex(cn2vn)
                 _ = calc_residues!(Factors,Ms,nothing,Lq,Lrn,
@@ -333,7 +332,6 @@ function
                     phi,
                     decayfactor,
                     num_edges,
-                    Ldn,
                     Ms,
                     Factors,
                     all_max_res_alt,
@@ -357,15 +355,14 @@ function
                     phi,
                     decayfactor,
                     num_edges,
-                    Ldn,
                     Ms,
                     Factors,
                     all_max_res_alt,
                     test,
                     rng_rbp,
-                    largest_res,
-                    largestcoords,
-                    largestcoords_alt,
+                    max_residue,
+                    max_coords,
+                    max_coords_alt,
                 )
                 # reset factors
                 resetfactors!(Factors,vn2cn)
@@ -382,7 +379,6 @@ function
                     phi,
                     decayfactor,
                     num_edges,
-                    Ldn,
                     Ms,
                     Factors,
                     all_max_res_alt,

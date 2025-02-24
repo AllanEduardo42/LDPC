@@ -21,7 +21,7 @@ function
     @fastmath @inbounds for m in eachindex(cn2vn)
         # Lq updates       
         for n in cn2vn[m] # for every n in Neighborhood(m)
-            _,_ = update_Lq!(Lq,Lr,Lf[n],n,vn2cn,Lrn)
+            _ = update_Lq!(Lq,Lr,Lf[n],n,vn2cn,Lrn)
         end
         # Lr updates
         update_Lr!(Lr,Lq,m,cn2vn,Lrn,nothing,nothing)
@@ -34,6 +34,7 @@ function
 
 end
 
+### old instantaneous LBP
 # function
 #     LBP!(
 #         bitvector::Vector{Bool},

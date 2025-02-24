@@ -21,7 +21,6 @@ function
         phi::Union{Vector{<:AbstractFloat},Nothing},
         decayfactor::AbstractFloat,
         num_edges::Integer,
-        Ldn::Vector{<:AbstractFloat},
         Ms::Matrix{<:AbstractFloat},
         Factors::Matrix{<:AbstractFloat},        
         all_max_res_alt::Union{Vector{<:AbstractFloat},Nothing},
@@ -58,25 +57,27 @@ function
         residues[max_edge] = 0.0
 
         # 5) update Ldn[vmax] and bitvector[vnmax]
-        Ldn[vnmax], nl = calc_Ld(vnmax,vn2cn,Lf[vnmax],Lr)
-        bitvector[vnmax] = signbit(Ldn[vnmax])
+        bitvector[vnmax] = update_Lq!(Lq,Lr,Lf[vnmax],vnmax,vn2cn,Lrn)
+        # Obs: this code update Lq[vnmax,cnmax]: no difference in performance 
+        #      was detected. The original implementation, which doesn't update
+        #      Lq[vnmax,cnmax], is as follows (steps 1, 2 and 3):
+        # step 1) Ldn[vnmax], nl = calc_Ld(vnmax,vn2cn,Lf[vnmax],Lr)
+        # step 2) bitvector[vnmax] = signbit(Ldn[vnmax]
+        # step 3) see below.
 
         # 6) update vn2cn messages Lq[vnmax,m], ∀m ≠ cnmax, and calculate residues
-        leaf = true # suppose node vnmax is a leaf in the graph
-        for m in vn2cn[vnmax]
-            if m ≠ cnmax
-                leaf = false # vnmax is not a leaf  
-                Lq[vnmax,m] = Ldn[vnmax] - Lr[nl+m]              
-                calc_residues!(addressinv,residues,Factors,Ms,Lr,Lq,Lrn,signs,
-                               phi,vnmax,m,cn2vn)
+        checks = vn2cn[vnmax]
+        if length(checks) > 1
+            for m in checks
+                if m ≠ cnmax
+                    # step 3) Lq[vnmax,m] = Ldn[vnmax] - Lr[nl+m]        
+                    calc_residues!(addressinv,residues,Factors,Ms,Lr,Lq,Lrn,signs,
+                                phi,vnmax,m,cn2vn)
+                end
             end
-        end
-
-        # 7) if vnmax is a leaf in the graph
-        if leaf
-            Lq[vnmax,cnmax] = Ldn[vnmax] - Lr[nl+cnmax]
+        else # if vnmax is a leaf in the graph
             calc_residues!(addressinv,residues,Factors,Ms,Lr,Lq,Lrn,signs,
-                            phi,vnmax,m,cn2vn)
+                           phi,vnmax,m,cn2vn)
         end
     end
 end
