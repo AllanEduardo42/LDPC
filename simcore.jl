@@ -185,7 +185,6 @@ function
         listm2 = nothing
         listn2 = nothing
         inlist = nothing
-        listsizes[2] = 0
     end
 
 ################################## MAIN LOOP ###################################
@@ -274,21 +273,8 @@ function
         # precalculate the residues in RBP
         if mode == "RBP"
             for m in eachindex(cn2vn)
-                calc_residues!(addressinv,residues,Factors,Ms,nothing,Lq,Lrn,
+                calc_residues!(addressinv,residues,Factors,Ms,Lr,Lq,Lrn,
                 signs,phi,0,m,cn2vn)
-            end
-        elseif mode == "Local-RBP"
-            for m in eachindex(cn2vn)
-                find_local_maxresidue!(max_residue,Factors,Ms,nothing,Lq,Lrn,
-                signs,phi,0,m,cn2vn,max_coords)
-            end
-            max_coords_alt[1] = max_coords[3]
-            max_coords_alt[2] = max_coords[4]
-        elseif mode == "List-RBP" || mode == "Mod-List-RBP" || mode == "Random-List-RBP"
-            for m in eachindex(cn2vn)
-                _ = calc_residues!(Factors,Ms,nothing,Lq,Lrn,
-                signs,phi,0,m,cn2vn,listres,listm,listn,listres2,listm2,listn2,
-                listsizes,0,inlist)
             end
         end
         
@@ -344,58 +330,73 @@ function
                 # reset factors
                 resetfactors!(Factors,vn2cn)
             elseif mode == "Local-RBP"
-                local_RBP!(
-                    bitvector,
-                    Lq,
-                    Lr,
-                    Lf,
-                    cn2vn,
-                    vn2cn,
-                    Lrn,
-                    signs,
-                    phi,
-                    decayfactor,
-                    num_edges,
-                    Ms,
-                    Factors,
-                    all_max_res_alt,
-                    test,
-                    rng_rbp,
-                    max_residue,
-                    max_coords,
-                    max_coords_alt,
-                )
-                # reset factors
-                resetfactors!(Factors,vn2cn)
+                for m in eachindex(cn2vn)
+                    find_local_maxresidue!(max_residue,Factors,Ms,Lr,Lq,Lrn,
+                    signs,phi,0,m,cn2vn,max_coords)
+                end
+                max_coords_alt[1] = max_coords[3]
+                max_coords_alt[2] = max_coords[4]
+                if max_residue[1] != 0
+                    local_RBP!(
+                        bitvector,
+                        Lq,
+                        Lr,
+                        Lf,
+                        cn2vn,
+                        vn2cn,
+                        Lrn,
+                        signs,
+                        phi,
+                        decayfactor,
+                        num_edges,
+                        Ms,
+                        Factors,
+                        all_max_res_alt,
+                        test,
+                        rng_rbp,
+                        max_residue,
+                        max_coords,
+                        max_coords_alt,
+                    )
+                    # reset factors
+                    resetfactors!(Factors,vn2cn)
+                end               
             elseif mode == "List-RBP"
-                list_RBP!(
-                    bitvector,
-                    Lq,
-                    Lr,
-                    Lf,
-                    cn2vn,
-                    vn2cn,
-                    Lrn,
-                    signs,
-                    phi,
-                    decayfactor,
-                    num_edges,
-                    Ms,
-                    Factors,
-                    all_max_res_alt,
-                    test,
-                    rng_rbp,
-                    listsizes,
-                    listres,
-                    listm,
-                    listn,
-                    listres2,
-                    listm2,
-                    listn2,
-                    inlist
-                )
-                # reset factors
-                resetfactors!(Factors,vn2cn)            
+                for m in eachindex(cn2vn)
+                    calc_residues!(Factors,Ms,Lr,Lq,Lrn,signs,phi,0,m,cn2vn,
+                    listres,listm,listn,listres2,listm2,listn2,listsizes[1],
+                    0,0,inlist)
+                end
+                if listres[1] != 0.0
+                    list_RBP!(
+                        bitvector,
+                        Lq,
+                        Lr,
+                        Lf,
+                        cn2vn,
+                        vn2cn,
+                        Lrn,
+                        signs,
+                        phi,
+                        decayfactor,
+                        num_edges,
+                        Ms,
+                        Factors,
+                        all_max_res_alt,
+                        test,
+                        rng_rbp,
+                        listsizes,
+                        listres,
+                        listm,
+                        listn,
+                        listres2,
+                        listm2,
+                        listn2,
+                        inlist
+                    )
+                    # reset factors
+                    resetfactors!(Factors,vn2cn)
+                end       
             elseif mode == "Mod-List-RBP"
                 mod_list_RBP!(
                     bitvector,

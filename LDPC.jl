@@ -63,11 +63,12 @@ STOP::Bool = false # stop simulation at zero syndrome (if true, BER curves are
 ################################## 5) NUMBERS ##################################
 
 MAX::Int = 50
-MAXRBP::Int = 5
+MAXRBP::Int = 20
 DECAY::Float64 = 0.8
+SNR = [1.2, 1.6, 1.8, 2.0]
 SNR = [1.2, 1.6, 1.8]
 SNRTEST = [2.0]
-TRIALS = [1, 10, 100]*2^6
+TRIALS = [1, 10, 100, 1000]*2^6
 TRIALS = TRIALS[1:length(SNR)]
 TRIALSTEST = [1]
 
@@ -117,28 +118,23 @@ Active[5] = 1
 Bptypes[5] = "FAST"
 Maxiters[5] = MAXRBP
 Decays[5] = [DECAY]
-    # List-RBP sizes
-    Listsizes[1] = 16
-    Listsizes[2] = 1
 
 # Mod-List-RBP
 Active[6] = 0
 Bptypes[6] = "FAST"
 Maxiters[6] = MAXRBP
-Decays[6] = [DECAY]
-    # Mod-List-RBP sizes
-    Listsizes[1] = 16
-    Listsizes[2] = 1
-    Listsizes[3] = 16
+Decays[6] = [DECAY]    
 
 # Random-List-RBP
 Active[7] = 0
 Bptypes[7] = "FAST"
 Maxiters[7] = MAXRBP
 Decays[7] = [DECAY]
-    # Random-List-RBP sizes
-    Listsizes[1] = 16
-    Listsizes[2] = 2
+
+# List-RBP sizes
+Listsizes[1] = 16
+Listsizes[2] = 1
+Listsizes[3] = 16
 
 
 ########################### 7) MESSAGE AND CODEWORD ############################

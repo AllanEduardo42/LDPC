@@ -9,7 +9,8 @@ include("calc_residues.jl")
 
 function
     find_local_maxresidue!(
-        largest_res::Vector{<:AbstractFloat},
+        max_residue::Vector{<:AbstractFloat},
+        max_coords::Vector{<:Integer},
         Factors::Union{Matrix{<:AbstractFloat},Nothing},
         Ms::Matrix{<:AbstractFloat},
         Lr::Union{Matrix{<:AbstractFloat},Nothing},                      
@@ -19,8 +20,7 @@ function
         phi::Union{Vector{<:AbstractFloat},Nothing},
         vnmax::Integer,
         m::Integer,
-        cn2vn::Vector{Vector{T}} where {T<:Integer},
-        largestcoords::Vector{<:Integer}
+        cn2vn::Vector{Vector{T}} where {T<:Integer}
     )
     
     # calculate the new check to node messages
@@ -29,19 +29,19 @@ function
     # calculate the residues
     @fastmath @inbounds for n in cn2vn[m]
         if n ≠ vnmax
-            l = LinearIndices(Ms)[m,n]
-            x = _calc_residue(Ms,Lr,l,Lrn)
-            x *= Factors[l]
-            if x > largest_res[1]
-                largest_res[1], largest_res[2] = x, largest_res[1]
-                largestcoords[3] = largestcoords[1]
-                largestcoords[4] = largestcoords[2]
-                largestcoords[1] = m
-                largestcoords[2] = n
-            elseif x > largest_res[2]
-                largest_res[2] = x
-                largestcoords[3] = m
-                largestcoords[4] = n
+            index = LinearIndices(Ms)[m,n]
+            residue = _calc_residue(Ms,Lr,index,Lrn,Lq)
+            residue *= Factors[index]
+            if residue > max_residue[1]
+                max_residue[1], max_residue[2] = residue, max_residue[1]
+                max_coords[3] = max_coords[1]
+                max_coords[4] = max_coords[2]
+                max_coords[1] = m
+                max_coords[2] = n
+            elseif residue > max_residue[2]
+                max_residue[2] = residue
+                max_coords[3] = m
+                max_coords[4] = n
             end         
         end
     end

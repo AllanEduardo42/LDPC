@@ -37,6 +37,10 @@ function
         inlist::Union{Matrix{<:Integer},Nothing}        
     )
 
+    @inbounds listsize1 = listsizes[1]
+    @inbounds listsize2 = listsizes[2]
+    @inbounds listsize3 = listsizes[3]
+
     @inbounds @fastmath for e in 1:num_edges
 
         # display("e = $e")
@@ -46,7 +50,7 @@ function
         end
         
         # 1) get the largest residues coordenates if not clipped
-        new_listsize2 = listsizes[2]
+        new_listsize2 = listsize2
         index = 1
         # if listsizes[1] > 1
         #     search_index = true
@@ -67,13 +71,13 @@ function
         #         end
         #     end
         # end
-        if listres[index] != 0
+        if listres[index] != 0.0
             cnmax = listm[index]
             vnmax = listn[index]
         else
             cnmax = rand(rng_rbp,1:length(cn2vn))
             vnmax = rand(rng_rbp,cn2vn[cnmax])
-        end        
+        end
 
         # 2) Decay the RBP factor corresponding to the maximum residue
         lmax = decay!(cnmax,vnmax,Factors,decayfactor)
@@ -82,7 +86,7 @@ function
         RBP_update_Lr!(lmax,Lr,Ms,cnmax,vnmax,cn2vn,Lq,Lrn,signs,phi)
 
         # 4) Remove max residue from the list and update the list
-        remove_from_list!(lmax,listsizes[1],listres,listm,listn,inlist,index) 
+        remove_from_list!(lmax,listsize1,listres,listm,listn,inlist,index) 
 
         # 5) update Ldn[vmax] and bitvector[vnmax]
         bitvector[vnmax] = update_Lq!(Lq,Lr,Lf[vnmax],vnmax,vn2cn,Lrn)
@@ -101,20 +105,20 @@ function
                     # step 3) Lq[vnmax,m] = Ldn[vnmax] - Lr[nl+m]        
                     new_listsize2 = calc_residues!(Factors,Ms,Lr,Lq,Lrn,signs,
                             phi,vnmax,m,cn2vn,listres,listm,listn,listres2,
-                            listm2,listn2,listsizes,new_listsize2,inlist)
+                            listm2,listn2,listsize1,listsize2,new_listsize2,inlist)
                 end
             end
         else # if vnmax is a leaf in the graph
             new_listsize2 = calc_residues!(Factors,Ms,Lr,Lq,Lrn,signs,phi,vnmax,
                             m,cn2vn,listres,listm,listn,listres2,listm2,listn2,
-                            listsizes,new_listsize2,inlist)
+                            listsize1,listsize2,new_listsize2,inlist)
         end
 
         # 7) update list
-        if listsizes[2] ≠ 0
+        if listsize2 ≠ 0
             count = 0
-            k = listsizes[1]
-            while count < listsizes[2]-1
+            k = listsize1
+            while count < listsize2-1
                 count += 1
                 k -= 1
                 m = listm[k]
@@ -126,13 +130,13 @@ function
             end
             for k in new_listsize2:-1:1
                 update_list!(inlist,listres,listm,listn,listres2[k],listm2[k],
-                             listn2[k],listsizes[1])
+                             listn2[k],listsize1)
             end
             listres2 .*= 0.0
             listm2 .*= 0
             listn2 .*= 0
         end     
-
     end
+
 end
 

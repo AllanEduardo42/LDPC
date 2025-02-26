@@ -44,11 +44,11 @@ function
         end 
 
         # 1) get the largest residues coordenates
-        if max_residue[1] == 0
+        if max_residue[1] == 0.0
             cnmax = rand(rng_rbp,1:length(cn2vn))
             vnmax = rand(rng_rbp,cn2vn[cnmax])
         else
-            max_residue[1] = 0
+            max_residue[1] = 0.0
             cnmax = max_coords[1]
             vnmax = max_coords[2]
         end        
@@ -74,13 +74,13 @@ function
             for m in checks
                 if m ≠ cnmax
                     # step 3) Lq[vnmax,m] = Ldn[vnmax] - Lr[nl+m]        
-                    find_local_maxresidue!(max_residue,Factors,Ms,Lr,Lq,
-                        Lrn,signs,phi,vnmax,m,cn2vn,max_coords)
+                    find_local_maxresidue!(max_residue,max_coords,Factors,Ms,Lr,
+                        Lq,Lrn,signs,phi,vnmax,m,cn2vn)
                 end
             end
         else # if vnmax is a leaf in the graph
-            find_local_maxresidue!(max_residue,Factors,Ms,Lr,Lq,Lrn,signs,phi,
-                vnmax,m,cn2vn,max_coords)
+            find_local_maxresidue!(max_residue,max_coords,Factors,Ms,Lr,Lq,Lrn,
+                signs,phi,vnmax,m,cn2vn)
         end
 
         # 6) update list

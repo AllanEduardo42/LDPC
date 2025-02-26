@@ -16,11 +16,10 @@ function
     # @fastmath @inbounds x = (Ms[l] - Lr[l])/Ld
     @fastmath @inbounds x = Ms[l] - Lr[l]
     @fastmath if signbit(x)
-        x = -x
+        return -x
+    else
+        return x
     end
-
-    return x
-
 end
 
 #TANH
@@ -41,23 +40,9 @@ function
         return 0.0
     else
         if signbit(x)
-            x = -x
-        end
-        return x
+            return -x
+        else
+            return x
+        end        
     end
-end
-
-# for initialization (Lr[m,n] = 0.0 and Factors[m,n] = 1.0 ∀m,n)
-function 
-    _calc_residue(
-        Ms::Matrix{<:AbstractFloat},
-        ::Nothing,
-        l::Integer,
-        ::Union{Vector{<:AbstractFloat},Nothing},
-        Lq::Matrix{<:AbstractFloat}
-    )
-    # @fastmath @inbounds Ld = Lq'[l]
-    # @fastmath @inbounds return abs(Ms[l]/Ld)
-    @fastmath @inbounds return abs(Ms[l])
-
 end

@@ -1,0 +1,21 @@
+############################### LDPC parameters ################################
+
+Parity Check Matrix: 1008 x 2016
+
+Graph girth = 6
+
+############################# Starting simulation ##############################
+
+Number of trials: [1024, 10240, 102400, 1024000]
+Message passing protocol: RBP (using LLR-SPA calculated by fast tanh)
+Maximum number of iterations: 20
+Number of threads (multithreading): 32
+Simulated for SNR (dB): [1.2, 1.6, 1.8, 2.0]
+Stop at zero syndrome ? false
+RBP decaying factor: 0.8
+
+Elapsed 19.5 seconds (1.05% gc time, 522.69% compilation time)
+Elapsed 97.5 seconds (0.29% gc time, 0.0% compilation time)
+Elapsed 894.4 seconds (0.08% gc time, 0.0% compilation time)
+Elapsed 8502.5 seconds (0.05% gc time, 0.0% compilation time)
+The End!
