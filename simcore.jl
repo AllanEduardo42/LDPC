@@ -19,7 +19,7 @@ include("./RBP functions/calc_residues.jl")
 function
     simcore(
         A::Integer,
-        snr::Real,
+        snr::AbstractFloat,
         H::BitMatrix,
         E_H::Matrix{<:Integer},
         LDPC::Integer,

@@ -7,20 +7,16 @@ include("simcore.jl")
 
 function 
     performance_sim(
-        snr::Vector{<:Real},
+        snr::Union{Vector{<:AbstractFloat},AbstractFloat},
         mode::String,
-        trials::Vector{<:Integer},
+        trials::Union{Vector{<:Integer},Integer},
         maxiter::Integer,
         bptype::String,
-        decay::AbstractFloat,
-        stop::Bool,
-        mthr::Bool;
-        test = false,
-        printtest = false    
+        decay::AbstractFloat 
     )
 
 ########################### PRINT SIMULATION DETAILS ###########################
-    if test
+    if TEST
         str =
         """###################### Starting simulation (Testing mode) ######################
         """
@@ -61,7 +57,7 @@ function
     """Maximum number of iterations: $maxiter
     Number of threads (multithreading): $NTHREADS
     Simulated for SNR (dB): $snr
-    Stop at zero syndrome ? $stop"""
+    Stop at zero syndrome ? $STOP"""
     println(str)
     if SAVE
         println(file,str)
@@ -88,10 +84,10 @@ function
 
     ################################ MULTITHREADING ################################
 
-    if test
+    if TEST
         Lr, Lq, max_residues = simcore(
             A,
-            snr[1],
+            snr,
             H,
             E_H,
             LDPC,
@@ -99,16 +95,16 @@ function
             nr_ldpc_data,
             mode,
             bptype,
-            trials[1],
+            trials,
             maxiter,
-            stop,
+            STOP,
             decay,
             Listsizes,
             Rgn_noise_seeds[1],
             Rgn_samples_seeds[1],
             Rgn_message_seeds[1];
-            test=true,
-            printtest=printtest)
+            test=TEST,
+            printtest = TEST ? PRIN : false)
         
         println()
         # aux = filter(isfinite,max_residues)
@@ -119,52 +115,28 @@ function
 
     else
         K = length(snr)
-        if mthr
-            decoded, ber = zeros(maxiter,K,NTHREADS), zeros(maxiter,K,NTHREADS)
-        else
-            decoded, ber = zeros(maxiter,K), zeros(maxiter,K)
-        end
+        decoded = zeros(maxiter,K,NTHREADS)
+        ber = zeros(maxiter,K,NTHREADS)
         for k in 1:K
-            if mthr
-                stats = @timed Threads.@threads for i in 1:NTHREADS
-                    decoded[:,k,i], ber[:,k,i] = simcore(
-                                                    A,
-                                                    snr[k],
-                                                    H,
-                                                    E_H,
-                                                    LDPC,
-                                                    Zf,
-                                                    nr_ldpc_data,
-                                                    mode,
-                                                    bptype,
-                                                    trials[k]÷NTHREADS,
-                                                    maxiter,
-                                                    stop,
-                                                    decay,
-                                                    Listsizes,
-                                                    Rgn_noise_seeds[i],
-                                                    Rgn_samples_seeds[i],
-                                                    Rgn_message_seeds[i])
-                end
-            else
-                stats = @timed decoded[:,k], ber[:,k] = simcore(
-                                                    A,
-                                                    snr[k],
-                                                    H,
-                                                    E_H,
-                                                    LDPC,
-                                                    Zf,
-                                                    nr_ldpc_data,
-                                                    mode,
-                                                    bptype,
-                                                    trials[k],
-                                                    maxiter,
-                                                    stop,
-                                                    decay,
-                                                    Listsizes,
-                                                    Rgn_noise_seeds[1],
-                                                    Rgn_samples_seeds[1],
-                                                    Rgn_message_seeds[1])
+            stats = @timed Threads.@threads for i in 1:NTHREADS
+                decoded[:,k,i], ber[:,k,i] = simcore(
+                                                A,
+                                                snr[k],
+                                                H,
+                                                E_H,
+                                                LDPC,
+                                                Zf,
+                                                nr_ldpc_data,
+                                                mode,
+                                                bptype,
+                                                trials[k]÷NTHREADS,
+                                                maxiter,
+                                                STOP,
+                                                decay,
+                                                Listsizes,
+                                                Rgn_noise_seeds[i],
+                                                Rgn_samples_seeds[i],
+                                                Rgn_message_seeds[i])
             end
             str = """Elapsed $(round(stats.time;digits=1)) seconds ($(round(stats.gctime/stats.time*100;digits=2))% gc time, $(round(stats.compile_time/stats.time*100,digits=2))% compilation time)"""
             println(str)
@@ -173,26 +145,14 @@ function
             end
         end
 
-        if mthr
-            FER = sum(decoded,dims=3)[:,:,1]
-            for k = 1:K
-                FER[:,k] ./= trials[k]
-            end
-            @. FER = 1 - FER
-            BER = sum(ber,dims=3)[:,:,1]
-            for k = 1:K
-                BER[:,k] ./= (N*trials[k])
-            end
-        else
-            FER = similar(decoded)
-            BER = similar(ber)
-            for k = 1:K
-                FER[:,k] = decoded[:,k]/trials[k]
-            end
-            FER = 1 .- FER
-            for k = 1:K
-                BER[:,k] = ber[:,k]/(N*trials[k])
-            end
+        FER = sum(decoded,dims=3)[:,:,1]
+        for k = 1:K
+            FER[:,k] ./= trials[k]
+        end
+        @. FER = 1 - FER
+        BER = sum(ber,dims=3)[:,:,1]
+        for k = 1:K
+            BER[:,k] ./= (N*trials[k])
         end
 
         println()

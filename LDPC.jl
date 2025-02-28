@@ -56,7 +56,7 @@ SEED_MESSA::Int = 1000
 
 TEST::Bool = false
 PRIN::Bool = true
-MTHR::Bool = true
+PROF::Bool = true
 STOP::Bool = false # stop simulation at zero syndrome (if true, BER curves are
 # not printed)
 
@@ -66,10 +66,18 @@ MAX::Int = 50
 MAXRBP::Int = 25
 DECAY::Float64 = 0.8
 SNR = [1.2, 1.6, 1.8]
-SNRTEST = [2.0]
+SNRTEST = 2.0
 TRIALS = [1, 10, 100, 1000]*2^5
 TRIALS = TRIALS[1:length(SNR)]
-TRIALSTEST = [2]
+TRIALSTEST = 2
+
+### PROF
+SNR_PROF = 1.2
+Mode_prof = "RBP"
+TRIALSPROF = 2^5
+Maxiter_prof = 2
+Bptypte_prof = "FAST"
+Decay_prof = DECAY
 
 ################################ 6) BP SCHEDULE ################################
 
@@ -201,7 +209,7 @@ if SAVE
 end
 
 # Number of Threads
-if MTHR && !TEST
+if !PROF && !TEST
     NTHREADS = Threads.nthreads()
 else
     NTHREADS = 1
@@ -219,31 +227,48 @@ for i in eachindex(Rgn_noise_seeds)
 end
 
 ############################ PERFORMANCE SIMULATION ############################
-if TEST
-    LR = Dict()
-    LQ_ = Dict()
-    Max_residues = Dict()
-    for i in eachindex(Active)
-        if Active[i]
-            for decay in Decays[i]
-                if decay != 0.0
-                    mode = Modes[i]*" $decay"
-                else
-                    mode = Modes[i]
+if TEST || PROF
+    if TEST
+        LR = Dict()
+        LQ_ = Dict()
+        Max_residues = Dict()
+        for i in eachindex(Active)
+            if Active[i]
+                for decay in Decays[i]
+                    if decay != 0.0
+                        mode = Modes[i]*" $decay"
+                    else
+                        mode = Modes[i]
+                    end
+                    LR[mode], LQ_[mode], Max_residues[mode] = performance_sim(
+                                                SNRTEST,
+                                                Modes[i],
+                                                TRIALSTEST,
+                                                Maxiters[i],
+                                                Bptypes[i],
+                                                decay)
                 end
-                LR[mode], LQ_[mode], Max_residues[mode] = performance_sim(
-                                            SNRTEST,
-                                            Modes[i],
-                                            TRIALSTEST,
-                                            Maxiters[i],
-                                            Bptypes[i],
-                                            decay,
-                                            STOP,
-                                            MTHR;
-                                            test=TEST,
-                                            printtest = TEST ? PRIN : false)
             end
         end
+    elseif PROF
+        @profview simcore(
+            A,
+            SNR_PROF,
+            H,
+            E_H,
+            LDPC,
+            Zf,
+            nr_ldpc_data,
+            Mode_prof,
+            Bptypte_prof,
+            TRIALSPROF,
+            Maxiter_prof,
+            STOP,
+            Decay_prof,
+            Listsizes,
+            Rgn_noise_seeds[1],
+            Rgn_samples_seeds[1],
+            Rgn_message_seeds[1])
     end
 else
     if STOP
@@ -261,14 +286,12 @@ else
                     mode = Modes[i]
                 end
                 FER[mode], BER[mode] = performance_sim(
-                    SNR,
-                    Modes[i],
-                    TRIALS,
-                    Maxiters[i],
-                    Bptypes[i],
-                    decay,
-                    STOP,
-                    MTHR)
+                                        SNR,
+                                        Modes[i],
+                                        TRIALS,
+                                        Maxiters[i],
+                                        Bptypes[i],
+                                        decay)
                 if STOP
                     push!(Fer_labels,mode*" ($(Bptypes[i]))")
                     push!(Fermax,FER[mode][Maxiters[i],:])
@@ -276,7 +299,8 @@ else
             end
         end
     end  
-################################### SAVE DATA ##################################
+
+    ############################### SAVE DATA ##################################
     if SAVE        
         if STOP
             aux = []
