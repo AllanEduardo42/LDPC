@@ -1,6 +1,6 @@
 ################################################################################
 # Allan Eduardo Feitosa
-# 23 Feb 2025
+# 26 Feb 2025
 # Calculate the residue for the RBP algorithm
 
 # FAST
@@ -8,41 +8,53 @@ function
     _calc_residue(
         Ms::Matrix{<:AbstractFloat},
         Lr::Matrix{<:AbstractFloat},
-        l::Integer,
+        Factors::Matrix{<:AbstractFloat},
         ::Vector{<:AbstractFloat},
-        Lq::Matrix{<:AbstractFloat}
+        Lq::Matrix{<:AbstractFloat},
+        m::Integer,
+        n::Integer
     )
-    # @fastmath @inbounds Ld = Lr[l] + Lq'[l]
-    # @fastmath @inbounds x = (Ms[l] - Lr[l])/Ld
-    @fastmath @inbounds x = Ms[l] - Lr[l]
-    @fastmath if signbit(x)
-        return -x
-    else
-        return x
+
+    @fastmath @inbounds begin
+        index = LinearIndices(Ms)[m,n]
+        # Ld = Lr[index] + Lq'[index]
+        residue = Ms[index] - Lr[index]
+        # residue /= Ld
+        residue *= Factors[index]
+        if signbit(residue)
+            return -residue, index
+        else
+            return residue, index
+        end
     end
 end
 
 #TANH
-
 function 
     _calc_residue(
         Ms::Matrix{<:AbstractFloat},
         Lr::Matrix{<:AbstractFloat},
-        l::Integer,
+        Factors::Matrix{<:AbstractFloat},
         ::Nothing,
-        Lq::Matrix{<:AbstractFloat}
+        Lq::Matrix{<:AbstractFloat},
+        m::Integer,
+        n::Integer
     )
 
-    # @fastmath @inbounds Ld = Lq'[l]
-    # @inbounds x = (Ms[l] - Lr[l])/Ld
-    @inbounds x = Ms[l] - Lr[l]
-    if isnan(x)
-        return 0.0
-    else
-        if signbit(x)
-            return -x
+    @fastmath @inbounds begin
+        index = LinearIndices(Ms)[m,n]
+        # Ld = Lr[index] + Lq'[index]
+        residue = Ms[index] - Lr[index]
+        # residue /= Ld
+        residue *= Factors[index]
+        if isnan(residue)
+            return 0.0
         else
-            return x
-        end        
+            if signbit(residue)
+                return -residue, index
+            else
+                return residue, index
+            end
+        end
     end
 end

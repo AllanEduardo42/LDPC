@@ -1,6 +1,6 @@
 ################################################################################
 # Allan Eduardo Feitosa
-# 22 Feb 2024
+# 26 Feb 2025
 # List-RBP Sum-Product Algorithm with residual decaying factor
 
 include("./RBP functions/RBP_update_Lr.jl")
@@ -28,55 +28,31 @@ function
         test::Bool,
         rng_rbp::AbstractRNG,
         listsizes::Vector{<:Integer},
-        listres::Vector{<:AbstractFloat},
-        listm::Vector{<:Integer},
-        listn::Vector{<:Integer},
+        listres1::Vector{<:AbstractFloat},
+        listm1::Vector{<:Integer},
+        listn1::Vector{<:Integer},
         listres2::Union{Vector{<:AbstractFloat},Nothing},
         listm2::Union{Vector{<:Integer},Nothing},
         listn2::Union{Vector{<:Integer},Nothing},
         inlist::Union{Matrix{<:Integer},Nothing}        
     )
 
-    @inbounds listsize1 = listsizes[1]
-    @inbounds listsize2 = listsizes[2]
-    @inbounds listsize3 = listsizes[3]
-
-    @inbounds @fastmath for e in 1:num_edges
+    @fastmath @inbounds for e in 1:num_edges
 
         # display("e = $e")
 
+        # if in test mode, store the values of the maximum residues
         if test
-            all_max_res_alt[e] = listres[1]     
+            all_max_res_alt[e] = listres1[1]     
         end
         
         # 1) get the largest residues coordenates if not clipped
-        new_listsize2 = listsize2
-        index = 1
-        # if listsizes[1] > 1
-        #     search_index = true
-        #     i = 0
-        #     while search_index
-        #         i += 1
-        #         if abs(listres[index]) < CLIP
-        #             search_index = false
-        #             index = i
-        #         else
-        #             if listsizes[2] == 1
-        #                 new_listsize2 += 1
-        #             end
-        #             m = listm[index]
-        #             n = listn[index]
-        #             lmax = LinearIndices(Factors)[m,n]
-        #             remove_from_list!(lmax,listsizes[1],listres,listm,listn,inlist,index)
-        #         end
-        #     end
-        # end
-        if listres[index] != 0.0
-            cnmax = listm[index]
-            vnmax = listn[index]
-        else
+        if listres1[1] == 0.0
             cnmax = rand(rng_rbp,1:length(cn2vn))
             vnmax = rand(rng_rbp,cn2vn[cnmax])
+        else
+            cnmax = listm1[1]
+            vnmax = listn1[1]
         end
 
         # 2) Decay the RBP factor corresponding to the maximum residue
@@ -86,57 +62,35 @@ function
         RBP_update_Lr!(lmax,Lr,Ms,cnmax,vnmax,cn2vn,Lq,Lrn,signs,phi)
 
         # 4) Remove max residue from the list and update the list
-        remove_from_list!(lmax,listsize1,listres,listm,listn,inlist,index) 
+        remove_from_list!(lmax,listsizes[1],listres1,listm1,listn1,inlist,1) 
 
         # 5) update Ldn[vmax] and bitvector[vnmax]
         bitvector[vnmax] = update_Lq!(Lq,Lr,Lf[vnmax],vnmax,vn2cn,Lrn)
-        # Obs: this code update Lq[vnmax,cnmax]: no difference in performance 
-        #      was detected. The original implementation, which doesn't update
-        #      Lq[vnmax,cnmax], is as follows (steps 1, 2 and 3):
-        # step 1) Ldn[vnmax], nl = calc_Ld(vnmax,vn2cn,Lf[vnmax],Lr)
-        # step 2) bitvector[vnmax] = signbit(Ldn[vnmax]
-        # step 3) see below.
 
         # 6) update vn2cn messages Lq[vnmax,m], ∀m ≠ cnmax, and calculate residues
-        checks = vn2cn[vnmax]
-        if length(checks) > 1
-            for m in checks
-                if m ≠ cnmax
-                    # step 3) Lq[vnmax,m] = Ldn[vnmax] - Lr[nl+m]        
-                    new_listsize2 = calc_residues!(Factors,Ms,Lr,Lq,Lrn,signs,
-                            phi,vnmax,m,cn2vn,listres,listm,listn,listres2,
-                            listm2,listn2,listsize1,listsize2,new_listsize2,inlist)
-                end
-            end
-        else # if vnmax is a leaf in the graph
-            new_listsize2 = calc_residues!(Factors,Ms,Lr,Lq,Lrn,signs,phi,vnmax,
-                            m,cn2vn,listres,listm,listn,listres2,listm2,listn2,
-                            listsize1,listsize2,new_listsize2,inlist)
-        end
-
-        # 7) update list
-        if listsize2 ≠ 0
-            count = 0
-            k = listsize1
-            while count < listsize2-1
-                count += 1
-                k -= 1
-                m = listm[k]
-                if m != 0
-                    listres[k] = 0.0
-                    n = listn[k]
-                    inlist[m,n] = false
-                end
-            end
-            for k in new_listsize2:-1:1
-                update_list!(inlist,listres,listm,listn,listres2[k],listm2[k],
-                             listn2[k],listsize1)
-            end
-            listres2 .*= 0.0
-            listm2 .*= 0
-            listn2 .*= 0
-        end     
+        calc_residues!(Factors,Ms,Lr,Lq,Lrn,signs,phi,cnmax,vnmax,cn2vn,
+            vn2cn[vnmax],listres1,listm1,listn1,listres2,listm2,listn2,
+            listsizes,inlist)
     end
-
 end
+
+# if listsizes[1] > 1
+#     search_index = true
+#     i = 0
+#     while search_index
+#         i += 1
+#         if abs(listres1[index]) < CLIP
+#             search_index = false
+#             index = i
+#         else
+#             if listsizes[2] == 1
+#                 new_listsize2 += 1
+#             end
+#             m = listm1[index]
+#             n = listn1[index]
+#             lmax = LinearIndices(Factors)[m,n]
+#             remove_from_list!(lmax,listsizes[1],listres1,listm1,listn1,inlist,index)
+#         end
+#     end
+# end
 

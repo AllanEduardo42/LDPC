@@ -1,6 +1,6 @@
 ################################################################################
 # Allan Eduardo Feitosa
-# 27 ago 2024
+# 25 Feb 2025
 # Core routine to estimate the LPCD performance (FER BER x SNR)
 
 include("auxiliary_functions.jl")
@@ -15,7 +15,6 @@ include("List-RBP.jl")
 include("Mod-List-RBP.jl")
 include("Random-List-RBP.jl")
 include("./RBP functions/calc_residues.jl")
-include("./RBP functions/find_local_maxresidue.jl")
 
 function
     simcore(
@@ -48,7 +47,9 @@ function
     end
     
 ################################## CONSTANTS ###################################
-    
+
+    M,N = size(H)
+
     # constant Zc of NR/5G
     Zc = nr_ldpc_data.Zc
 
@@ -152,15 +153,14 @@ function
     end
 
     # mode = Local-RBP
-    max_coords = (mode == "Local-RBP") ? zeros(Int,4) : nothing
-    max_residue = (mode == "Local-RBP") ? ones(2)*0 : nothing
-    max_coords_alt = (mode == "Local-RBP") ? zeros(Int,2) : nothing
+    max_coords = (mode == "Local-RBP") ? zeros(Int,6) : nothing
+    max_residue = (mode == "Local-RBP") ? zeros(3) : nothing
 
     # mode = List-RBP
     if mode == "List-RBP" || mode == "Mod-List-RBP" || mode == "Random-List-RBP"
-        listres = zeros(listsizes[1]+1)
-        listm = zeros(Int,listsizes[1]+1)
-        listn = zeros(Int,listsizes[1]+1)
+        listres1 = zeros(listsizes[1]+1)
+        listm1 = zeros(Int,listsizes[1]+1)
+        listn1 = zeros(Int,listsizes[1]+1)
         inlist = Matrix(false*H)
         if listsizes[2] > 0
             if listsizes[2] == 1
@@ -178,9 +178,9 @@ function
             listn2 = nothing
         end
     else        
-        listres = nothing
-        listm = nothing
-        listn = nothing
+        listres1 = nothing
+        listm1 = nothing
+        listn1 = nothing
         listres2 = nothing
         listm2 = nothing
         listn2 = nothing
@@ -246,9 +246,9 @@ function
             end
         end
         if mode == "List-RBP" || mode == "Mod-List-RBP"
-            listres .= 0.0
-            listm .= 0
-            listn .= 0
+            listres1 .= 0.0
+            listm1 .= 0
+            listn1 .= 0
             if listsizes[2] != 0
                 listres2 .= 0.0
                 listm2 .= 0
@@ -272,13 +272,16 @@ function
 
         # precalculate the residues in RBP
         if mode == "RBP"
-            for m in eachindex(cn2vn)
-                calc_residues!(addressinv,residues,Factors,Ms,Lr,Lq,Lrn,
-                signs,phi,0,m,cn2vn)
-            end
+            calc_residues!(addressinv,residues,Factors,Ms,Lr,Lq,Lrn,signs,phi,0,
+                0,cn2vn,eachindex(cn2vn))
+        elseif mode == "Local-RBP"
+            calc_residues!(max_residue,max_coords,Factors,Ms,Lr,Lq,Lrn,signs,
+                phi,0,0,cn2vn,eachindex(cn2vn))
         end
         
         # BP routine
+
+        rbp_not_converged = true
         
         for iter in 1:maxiter
 
@@ -330,13 +333,7 @@ function
                 # reset factors
                 resetfactors!(Factors,vn2cn)
             elseif mode == "Local-RBP"
-                for m in eachindex(cn2vn)
-                    find_local_maxresidue!(max_residue,Factors,Ms,Lr,Lq,Lrn,
-                    signs,phi,0,m,cn2vn,max_coords)
-                end
-                max_coords_alt[1] = max_coords[3]
-                max_coords_alt[2] = max_coords[4]
-                if max_residue[1] != 0
+                if rbp_not_converged
                     local_RBP!(
                         bitvector,
                         Lq,
@@ -355,19 +352,20 @@ function
                         test,
                         rng_rbp,
                         max_residue,
-                        max_coords,
-                        max_coords_alt,
+                        max_coords
                     )
                     # reset factors
                     resetfactors!(Factors,vn2cn)
-                end               
+                    if max_residue[1] == 0.0
+                        calc_residues!(max_residue,max_coords,Factors,Ms,Lr,Lq,
+                            Lrn,signs,phi,0,0,cn2vn,eachindex(cn2vn))
+                        if max_residue[1] == 0.0
+                            rbp_not_converged = false
+                        end
+                    end
+                end              
             elseif mode == "List-RBP"
-                for m in eachindex(cn2vn)
-                    calc_residues!(Factors,Ms,Lr,Lq,Lrn,signs,phi,0,m,cn2vn,
-                    listres,listm,listn,listres2,listm2,listn2,listsizes[1],
-                    0,0,inlist)
-                end
-                if listres[1] != 0.0
+                if rbp_not_converged
                     list_RBP!(
                         bitvector,
                         Lq,
@@ -386,9 +384,9 @@ function
                         test,
                         rng_rbp,
                         listsizes,
-                        listres,
-                        listm,
-                        listn,
+                        listres1,
+                        listm1,
+                        listn1,
                         listres2,
                         listm2,
                         listn2,
@@ -396,6 +394,14 @@ function
                     )
                     # reset factors
                     resetfactors!(Factors,vn2cn)
+                    if listres1[1] == 0.0
+                        calc_residues!(Factors,Ms,Lr,Lq,Lrn,signs,phi,0,0,cn2vn,
+                            eachindex(cn2vn),listres1,listm1,listn1,listres2,listm2,
+                            listn2,[listsizes[1], 0],inlist)
+                        if listres1[1] == 0.0
+                            rbp_not_converged = false
+                        end
+                    end
                 end       
             elseif mode == "Mod-List-RBP"
                 mod_list_RBP!(
@@ -416,9 +422,9 @@ function
                     test,
                     rng_rbp,
                     listsizes,
-                    listres,
-                    listm,
-                    listn,
+                    listres1,
+                    listm1,
+                    listn1,
                     listres2,
                     listm2,
                     listn2,
@@ -446,9 +452,9 @@ function
                     test,
                     rng_rbp,
                     listsizes,
-                    listres,
-                    listm,
-                    listn,
+                    listres1,
+                    listm1,
+                    listn1,
                     listres2,
                     listm2,
                     listn2,

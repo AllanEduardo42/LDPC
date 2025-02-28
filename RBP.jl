@@ -1,6 +1,6 @@
 ################################################################################
 # Allan Eduardo Feitosa
-# 22 Feb 2024
+# 26 Feb 2025
 # RBP Sum-Product Algorithm with residual decaying factor
 
 include("./RBP functions/RBP_update_Lr.jl")
@@ -30,7 +30,7 @@ function
         residues::Union{Vector{<:AbstractFloat},Nothing}
     )
 
-    @inbounds @fastmath for e in 1:num_edges
+    @fastmath @inbounds for e in 1:num_edges
 
         # display("e = $e")
 
@@ -53,32 +53,15 @@ function
         # 3) update check to node message Lr[cnmax,vnmax]
         RBP_update_Lr!(lmax,Lr,Ms,cnmax,vnmax,cn2vn,Lq,Lrn,signs,phi)
 
-        # 4) set maximum residue to zero or remove it from the list
+        # 4) set maximum residue to zero
         residues[max_edge] = 0.0
 
         # 5) update Ldn[vmax] and bitvector[vnmax]
         bitvector[vnmax] = update_Lq!(Lq,Lr,Lf[vnmax],vnmax,vn2cn,Lrn)
-        # Obs: this code update Lq[vnmax,cnmax]: no difference in performance 
-        #      was detected. The original implementation, which doesn't update
-        #      Lq[vnmax,cnmax], is as follows (steps 1, 2 and 3):
-        # step 1) Ldn[vnmax], nl = calc_Ld(vnmax,vn2cn,Lf[vnmax],Lr)
-        # step 2) bitvector[vnmax] = signbit(Ldn[vnmax]
-        # step 3) see below.
 
         # 6) update vn2cn messages Lq[vnmax,m], ∀m ≠ cnmax, and calculate residues
-        checks = vn2cn[vnmax]
-        if length(checks) > 1
-            for m in checks
-                if m ≠ cnmax
-                    # step 3) Lq[vnmax,m] = Ldn[vnmax] - Lr[nl+m]        
-                    calc_residues!(addressinv,residues,Factors,Ms,Lr,Lq,Lrn,signs,
-                                phi,vnmax,m,cn2vn)
-                end
-            end
-        else # if vnmax is a leaf in the graph
-            calc_residues!(addressinv,residues,Factors,Ms,Lr,Lq,Lrn,signs,
-                           phi,vnmax,m,cn2vn)
-        end
+        calc_residues!(addressinv,residues,Factors,Ms,Lr,Lq,Lrn,signs,phi,cnmax,
+            vnmax,cn2vn,vn2cn[vnmax])
     end
 end
 

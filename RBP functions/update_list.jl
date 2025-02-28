@@ -1,87 +1,74 @@
 function update_list!(
-        inlist::Matrix{Bool},
+        inlist::Union{Matrix{Bool},Nothing},
         listres::Vector{<:AbstractFloat},
         listm::Vector{<:Integer},
         listn::Vector{<:Integer},
-        x::AbstractFloat,
+        residue::AbstractFloat,
         m::Integer,
         n::Integer,
         listsize::Integer
     )
 
-    @fastmath @inbounds if x > listres[listsize]
+    @fastmath @inbounds if residue > listres[listsize]
 
-        i = find_index_in_list(x,listres,listsize)
+        if listsize > 1
+            if residue ≥ listres[1]
+                i = 1
+            else
+                d = listsize >> 1
+                i = d
+                while d > 1
+                    d >>= 1
+                    if residue ≥ listres[i]
+                        i -= d
+                    else
+                        i += d
+                    end
+                end
+                if residue < listres[i]
+                    i += 1
+                end
+            end
 
-        mm = listm[end-1]
-        if mm ≠ 0
-            nn = listn[end-1]
-            inlist[mm,nn] = false
-        end
+            update_inlist!(inlist,listm,listn,m,n)
 
-        for j=listsize:-1:i+1
-            listres[j] = listres[j-1]
-            listm[j] = listm[j-1]
-            listn[j] = listn[j-1]
+            for j=listsize:-1:i+1
+                listres[j] = listres[j-1]
+                listm[j] = listm[j-1]
+                listn[j] = listn[j-1]
+            end
+        else
+            i = 1
         end
 
         listm[i] = m
         listn[i] = n
-        listres[i] = x
-        inlist[m,n] = true
+        listres[i] = residue        
     end
 end
 
-function update_list!(
-    ::Nothing,
-    listres::Vector{<:AbstractFloat},
+function update_inlist!(
+    inlist::Matrix{Bool},
     listm::Vector{<:Integer},
     listn::Vector{<:Integer},
-    x::AbstractFloat,
     m::Integer,
-    n::Integer,
-    listsize::Integer
+    n::Integer
 )
-
-    @fastmath @inbounds if x > listres[listsize]
-        
-        i = find_index_in_list(x,listres,listsize)
-
-        for j=listsize:-1:i+1
-            listres[j] = listres[j-1]
-            listm[j] = listm[j-1]
-            listn[j] = listn[j-1]
-        end
-        
-        listm[i] = m
-        listn[i] = n
-        listres[i] = x
+    mm = listm[end-1]
+    if mm ≠ 0
+        nn = listn[end-1]
+        inlist[mm,nn] = false
     end
+    inlist[m,n] = true
+
 end
 
-function find_index_in_list(
-    x::AbstractFloat,
-    listres::Vector{<:AbstractFloat},
-    listsize::Integer
+function update_inlist!(
+    ::Nothing,
+    ::Vector{<:Integer},
+    ::Vector{<:Integer},
+    ::Integer,
+    ::Integer
 )
 
-    if x ≥ listres[1]
-        i = 1
-    else
-        d = listsize >> 1
-        i = d
-        while d > 1
-            d >>= 1
-            if x ≥ listres[i]
-                i -= d
-            else
-                i += d
-            end
-        end
-        if x < listres[i]
-            i += 1
-        end
-    end
-
-    return i 
 end

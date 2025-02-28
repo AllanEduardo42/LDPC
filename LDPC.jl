@@ -1,6 +1,6 @@
 ################################################################################
 # Allan Eduardo Feitosa
-# 27 ago 2024
+# 26 Feb 2025
 # LDPC coding-decoding performance simulation using Believe Propagation (BP)
 
 ############################## 1) JULIA PACKAGES ###############################
@@ -63,14 +63,13 @@ STOP::Bool = false # stop simulation at zero syndrome (if true, BER curves are
 ################################## 5) NUMBERS ##################################
 
 MAX::Int = 50
-MAXRBP::Int = 20
+MAXRBP::Int = 25
 DECAY::Float64 = 0.8
-SNR = [1.2, 1.6, 1.8, 2.0]
 SNR = [1.2, 1.6, 1.8]
 SNRTEST = [2.0]
-TRIALS = [1, 10, 100, 1000]*2^6
+TRIALS = [1, 10, 100, 1000]*2^5
 TRIALS = TRIALS[1:length(SNR)]
-TRIALSTEST = [1]
+TRIALSTEST = [2]
 
 ################################ 6) BP SCHEDULE ################################
 
@@ -106,6 +105,7 @@ Active[3] = 0
 Bptypes[3] = "FAST"
 Maxiters[3] = MAXRBP
 Decays[3] = [DECAY]
+# Decays[3] = [0.8, 0.9, 1.0]
 
 # Local-RBP
 Active[4] = 0
@@ -275,80 +275,7 @@ else
                 end
             end
         end
-    end
-
-################################### PLOTTING ###################################
-    plotlyjs()
-    lim = log10(1/maximum(TRIALS))
-
-    # FER x SNR
-    if STOP && length(SNR) > 1
-        Fer_labels = permutedims(Fer_labels)
-        p = plot(
-            SNR,Fermax,
-            xlabel="SNR (dB)",
-            label=Fer_labels,
-            lw=2,
-            title="FER MAX",
-            ylims=(lim,0)
-        )
-        SAVE ? savefig(p,"./Saved Data/"*now_*"/FERMAX.svg") : display(p)
-    end
-
-    if !STOP
-
-        # FER x Iterations
-        labels = Vector{String}()
-        for snr in SNR
-            push!(labels,"SNR (dB) = $snr")
-        end
-        labels = permutedims(labels)
-        for i in eachindex(Active)
-            if Active[i]
-                for decay in Decays[i]
-                    if decay != 0.0
-                        mode = Modes[i]*" $decay"
-                    else
-                        mode = Modes[i]
-                    end
-                    titlefer = "FER "*mode
-                    local p = plot(
-                        1:Maxiters[i],
-                        FER[mode],
-                        xlabel="Iteration",
-                        label=labels,
-                        lw=2,
-                        title=titlefer,
-                        ylims=(lim,0)
-                    )
-                    SAVE ? savefig(p,"./Saved Data/"*now_*"/FER_"*mode*".svg") : display(p)
-                end
-            end
-        end
-
-        for i in eachindex(Active)
-            if Active[i]
-                for decay in Decays[i]
-                    if decay != 0.0
-                        mode = Modes[i]*" $decay"
-                    else
-                        mode = Modes[i]
-                    end
-                    titleber = "BER $mode"
-                    local p = plot(
-                        1:Maxiters[i],
-                        BER[mode],
-                        xlabel="Iteration",
-                        label=labels,
-                        lw=2,
-                        title=titleber,
-                        ylims=(lim-2,0)
-                    )
-                    SAVE ? savefig(p,"./Saved Data/"*now_*"/BER_"*mode*".svg") : display(p)
-                end
-            end
-        end
-    end
+    end  
 ################################### SAVE DATA ##################################
     if SAVE        
         if STOP
@@ -373,6 +300,79 @@ else
                         open("./Saved Data/"*now_*"/BER_"*mode*".txt","w") do io
                             writedlm(io,BER[mode])
                         end
+                    end
+                end
+            end
+        end
+    else
+################################### PLOTTING ###################################
+        plotlyjs()
+        lim = log10(1/maximum(TRIALS))
+    
+        # FER x SNR
+        if STOP && length(SNR) > 1
+            Fer_labels = permutedims(Fer_labels)
+            p = plot(
+                SNR,Fermax,
+                xlabel="SNR (dB)",
+                label=Fer_labels,
+                lw=2,
+                title="FER MAX",
+                ylims=(lim,0)
+            )
+            display(p)
+        end
+    
+        if !STOP
+    
+            # FER x Iterations
+            labels = Vector{String}()
+            for snr in SNR
+                push!(labels,"SNR (dB) = $snr")
+            end
+            labels = permutedims(labels)
+            for i in eachindex(Active)
+                if Active[i]
+                    for decay in Decays[i]
+                        if decay != 0.0
+                            mode = Modes[i]*" $decay"
+                        else
+                            mode = Modes[i]
+                        end
+                        titlefer = "FER "*mode
+                        local p = plot(
+                            1:Maxiters[i],
+                            FER[mode],
+                            xlabel="Iteration",
+                            label=labels,
+                            lw=2,
+                            title=titlefer,
+                            ylims=(lim,0)
+                        )
+                       display(p)
+                    end
+                end
+            end
+    
+            for i in eachindex(Active)
+                if Active[i]
+                    for decay in Decays[i]
+                        if decay != 0.0
+                            mode = Modes[i]*" $decay"
+                        else
+                            mode = Modes[i]
+                        end
+                        titleber = "BER $mode"
+                        local p = plot(
+                            1:Maxiters[i],
+                            BER[mode],
+                            xlabel="Iteration",
+                            label=labels,
+                            lw=2,
+                            title=titleber,
+                            ylims=(lim-2,0)
+                        )
+                        display(p)
                     end
                 end
             end
