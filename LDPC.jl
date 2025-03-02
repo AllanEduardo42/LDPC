@@ -56,28 +56,22 @@ SEED_MESSA::Int = 1000
 
 TEST::Bool = false
 PRIN::Bool = true
-PROF::Bool = true
 STOP::Bool = false # stop simulation at zero syndrome (if true, BER curves are
 # not printed)
 
 ################################## 5) NUMBERS ##################################
 
-MAX::Int = 50
-MAXRBP::Int = 25
-DECAY::Float64 = 0.8
-SNR = [1.2, 1.6, 1.8]
-SNRTEST = 2.0
-TRIALS = [1, 10, 100, 1000]*2^5
-TRIALS = TRIALS[1:length(SNR)]
-TRIALSTEST = 2
+MAXITER::Int = 50
+MAXIRBP::Int = 30
+DECAY::Float64 = 0.85
+SNR = [1.2, 1.6, 1.8, 2.0]
+TRIALS = 10 .^(0:length(SNR)-1)*2^10
 
-### PROF
-SNR_PROF = 1.2
-Mode_prof = "RBP"
-TRIALSPROF = 2^5
-Maxiter_prof = 2
-Bptypte_prof = "FAST"
-Decay_prof = DECAY
+# TEST
+MAXITER_TEST::Int = 1
+SNR_TEST = 2.0
+TRIALS_TEST = 1
+DECAY_TEST = DECAY
 
 ################################ 6) BP SCHEDULE ################################
 
@@ -101,42 +95,42 @@ end
 # Flooding
 Active[1] = 0
 Bptypes[1] = "FAST"
-Maxiters[1] = MAX
+Maxiters[1] = MAXITER
 
 # LBP
 Active[2] = 0
 Bptypes[2] = "FAST"
-Maxiters[2] = MAX
+Maxiters[2] = MAXITER
 
 # RBP
 Active[3] = 0
 Bptypes[3] = "FAST"
-Maxiters[3] = MAXRBP
-Decays[3] = [DECAY]
-# Decays[3] = [0.8, 0.9, 1.0]
+Maxiters[3] = MAXIRBP
+# Decays[3] = [DECAY]
+Decays[3] = [0.7, 0.8, 0.9, 1.0]
 
 # Local-RBP
 Active[4] = 0
 Bptypes[4] = "FAST"
-Maxiters[4] = MAXRBP
+Maxiters[4] = MAXIRBP
 Decays[4] = [DECAY]
 
 # List-RBP
 Active[5] = 1
 Bptypes[5] = "FAST"
-Maxiters[5] = MAXRBP
-Decays[5] = [DECAY]
+Maxiters[5] = MAXIRBP
+Decays[5] = [0.7, 0.8, 0.9, 1.0]
 
 # Mod-List-RBP
 Active[6] = 0
 Bptypes[6] = "FAST"
-Maxiters[6] = MAXRBP
+Maxiters[6] = MAXIRBP
 Decays[6] = [DECAY]    
 
 # Random-List-RBP
 Active[7] = 0
 Bptypes[7] = "FAST"
-Maxiters[7] = MAXRBP
+Maxiters[7] = MAXIRBP
 Decays[7] = [DECAY]
 
 # List-RBP sizes
@@ -209,7 +203,7 @@ if SAVE
 end
 
 # Number of Threads
-if !PROF && !TEST
+if !TEST
     NTHREADS = Threads.nthreads()
 else
     NTHREADS = 1
@@ -227,48 +221,22 @@ for i in eachindex(Rgn_noise_seeds)
 end
 
 ############################ PERFORMANCE SIMULATION ############################
-if TEST || PROF
+if TEST
     if TEST
         LR = Dict()
         LQ_ = Dict()
         Max_residues = Dict()
         for i in eachindex(Active)
             if Active[i]
-                for decay in Decays[i]
-                    if decay != 0.0
-                        mode = Modes[i]*" $decay"
-                    else
-                        mode = Modes[i]
-                    end
-                    LR[mode], LQ_[mode], Max_residues[mode] = performance_sim(
-                                                SNRTEST,
-                                                Modes[i],
-                                                TRIALSTEST,
-                                                Maxiters[i],
-                                                Bptypes[i],
-                                                decay)
-                end
+                LR[Modes[i]], LQ_[Modes[i]], Max_residues[Modes[i]] = performance_sim(
+                                            SNR_TEST,
+                                            Modes[i],
+                                            TRIALS_TEST,
+                                            MAXITER_TEST,
+                                            Bptypes[i],
+                                            DECAY_TEST)
             end
         end
-    elseif PROF
-        @profview simcore(
-            A,
-            SNR_PROF,
-            H,
-            E_H,
-            LDPC,
-            Zf,
-            nr_ldpc_data,
-            Mode_prof,
-            Bptypte_prof,
-            TRIALSPROF,
-            Maxiter_prof,
-            STOP,
-            Decay_prof,
-            Listsizes,
-            Rgn_noise_seeds[1],
-            Rgn_samples_seeds[1],
-            Rgn_message_seeds[1])
     end
 else
     if STOP
@@ -341,7 +309,7 @@ else
                 xlabel="SNR (dB)",
                 label=Fer_labels,
                 lw=2,
-                title="FER MAX",
+                title="FER MAXITER",
                 ylims=(lim,0)
             )
             display(p)

@@ -1,7 +1,7 @@
 ################################################################################
 # Allan Eduardo Feitosa
 # 25 Feb 2025
-# Core routine to estimate the LPCD performance (FER BER x SNR)
+# Core routine to estimate the LPCD performance (FER sum_ber x SNR)
 
 include("auxiliary_functions.jl")
 include("lookupTable.jl")
@@ -74,11 +74,11 @@ function
     msg = Vector{Bool}(undef,A)
 
     # frame error rate
-    DECODED = zeros(Int,maxiter)
+    sum_decoded = zeros(Int,maxiter)
     decoded = Vector{Bool}(undef,maxiter)
 
     # bit error rate
-    BER = zeros(Int,maxiter)
+    sum_ber = zeros(Int,maxiter)
     ber = zeros(Int,maxiter)
 
     # estimate
@@ -129,7 +129,7 @@ function
     # supermode = RBP
     Ms = RBP ? H*0.0 : nothing
     Factors  = RBP ? 1.0*H  : nothing
-    all_max_res = (test && RBP) ? zeros(MAXRBP*num_edges) : nothing
+    all_max_res = (test && RBP) ? zeros(maxiter*num_edges) : nothing
     all_max_res_alt = (test && RBP) ? zeros(num_edges) : nothing
 
     # mode = RBP
@@ -237,7 +237,7 @@ function
         end       
 
         # reset the simulation variables
-        bitvector .= true
+        bitvector .= false
         syndrome .= true
         decoded .= false
         for m in 1:M
@@ -272,16 +272,21 @@ function
 
         # precalculate the residues in RBP
         if mode == "RBP"
+            rbp_not_converged = true
             calc_residues!(addressinv,residues,Factors,Ms,Lr,Lq,Lrn,signs,phi,0,
                 0,cn2vn,eachindex(cn2vn))
         elseif mode == "Local-RBP"
+            rbp_not_converged = true
             calc_residues!(max_residue,max_coords,Factors,Ms,Lr,Lq,Lrn,signs,
                 phi,0,0,cn2vn,eachindex(cn2vn))
+        elseif mode == "List-RBP"
+            rbp_not_converged = true
+            calc_residues!(Factors,Ms,Lr,Lq,Lrn,signs,phi,0,0,cn2vn,
+                eachindex(cn2vn),listres1,listm1,listn1,listres2,listm2,listn2,
+                [listsizes[1], 0],inlist)
         end
         
         # BP routine
-
-        rbp_not_converged = true
         
         for iter in 1:maxiter
 
@@ -471,13 +476,16 @@ function
                 if RBP
                     all_max_res[(1 + (iter-1)*num_edges):(iter*num_edges)] = all_max_res_alt
                 end
-                    println("Max LLR estimate errors: ")
+                    biterror .= (bitvector .≠ cword)
+                    println("Bit error:")
                 for j in eachindex(bitvector)
-                    print(Int(bitvector[j] != cword[j]))
+                    print(Int(biterror[j]))
                     if j%80 == 0
                         println()
                     end
-                end     
+                end
+                println() 
+                println("Bit error rate: $(sum(biterror))/$N")     
                 println() 
                 println("Syndrome: ")
                 for j in eachindex(syndrome)
@@ -487,6 +495,8 @@ function
                     end
                 end     
                 println()
+                println("Syndrome rate: $(sum(syndrome))/$M")     
+                println() 
                 if iszero(syndrome) && stop
                     break
                 end
@@ -509,15 +519,15 @@ function
         end
 
         # bit error rate
-        @. BER += ber
-        @. DECODED += decoded
+        @. sum_ber += ber
+        @. sum_decoded += decoded
 
     end
 
     if test
         return Lr, Lq, all_max_res
     else
-        return DECODED, BER
+        return sum_decoded, sum_ber
     end
 
 end

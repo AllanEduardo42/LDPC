@@ -115,11 +115,11 @@ function
 
     else
         K = length(snr)
-        decoded = zeros(maxiter,K,NTHREADS)
-        ber = zeros(maxiter,K,NTHREADS)
+        sum_decoded = zeros(maxiter,K,NTHREADS)
+        sum_ber = zeros(maxiter,K,NTHREADS)
         for k in 1:K
             stats = @timed Threads.@threads for i in 1:NTHREADS
-                decoded[:,k,i], ber[:,k,i] = simcore(
+                sum_decoded[:,k,i], sum_ber[:,k,i] = simcore(
                                                 A,
                                                 snr[k],
                                                 H,
@@ -145,21 +145,22 @@ function
             end
         end
 
-        FER = sum(decoded,dims=3)[:,:,1]
+        FER = sum(sum_decoded,dims=3)[:,:,1]
         for k = 1:K
             FER[:,k] ./= trials[k]
         end
         @. FER = 1 - FER
-        BER = sum(ber,dims=3)[:,:,1]
+        BER = sum(sum_ber,dims=3)[:,:,1]
         for k = 1:K
             BER[:,k] ./= (N*trials[k])
         end
 
         println()
 
-        lower = 1/maximum(trials)
-        replace!(x-> x < lower ? lower : x, FER)
-        replace!(x-> x < lower ? lower : x, BER)
+        lowerfer = 1/maximum(trials)
+        lowerber = lowerfer/N
+        replace!(x-> x < lowerfer ? lowerfer : x, FER)
+        replace!(x-> x < lowerber ? lowerber : x, BER)
 
         return log10.(FER), log10.(BER)
         
