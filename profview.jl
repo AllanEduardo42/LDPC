@@ -5,11 +5,11 @@
 
 
 SNR_PROF = 1.2
-Mode_prof = "RBP"
+Mode_prof = "List-RBP"
 TRIALSPROF = 2^5
 Maxiter_prof = 2
 Bptypte_prof = "FAST"
-Decay_prof = DECAY
+Decay_prof = 0.85
 
 
 @profview simcore(

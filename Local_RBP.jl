@@ -1,6 +1,6 @@
 ################################################################################
 # Allan Eduardo Feitosa
-# 26 Feb 2025
+# 3 Mar 2025
 # RBP Sum-Product Algorithm using the only local strategy with residual decaying
 # factor
 
@@ -26,12 +26,13 @@ function
         test::Bool,
         rng_rbp::AbstractRNG,
         max_residue::Vector{<:AbstractFloat},
-        max_coords::Vector{<:Integer}
+        max_indices::Vector{<:Integer}
     )
 
     @fastmath @inbounds for e in 1:num_edges
 
         # display("e = $e")
+        # display(max_residue)
 
         # if in test mode, store the values of the maximum residues
         if test
@@ -42,26 +43,57 @@ function
         if max_residue[1] == 0.0
             cnmax = rand(rng_rbp,1:length(cn2vn))
             vnmax = rand(rng_rbp,cn2vn[cnmax])
+            lmax = LinearIndices(Factors)[cnmax,vnmax]
         else
-            cnmax = max_coords[1]
-            vnmax = max_coords[2]
+            lmax = max_indices[1]
+            ci = CartesianIndices(Factors)[lmax]
+            cnmax, vnmax = ci[1], ci[2]
         end        
 
         # 2) Decay the RBP factor corresponding to the maximum residue
-        lmax = decay!(cnmax,vnmax,Factors,decayfactor)
+        Factors[lmax] *= decayfactor
 
         # 3) update check to node message Lr[cnmax,vnmax]
         RBP_update_Lr!(lmax,Lr,Ms,cnmax,vnmax,cn2vn,Lq,Lrn,signs,phi)
         
         # 4) clear the max residue
         max_residue[1] = 0.0
+        # max_residue[2] = 0.0
 
-        # 5) update Ldn[vmax] and bitvector[vnmax]
+        # 5) update vn2cn messages Lq[vnmax,m] and bitvector[vnmax]
         bitvector[vnmax] = update_Lq!(Lq,Lr,Lf[vnmax],vnmax,vn2cn,Lrn)
 
-        # 6) update vn2cn messages Lq[vnmax,m], ∀m ≠ cnmax, and calculate residues
-        calc_residues!(max_residue,max_coords,Factors,Ms,Lr,Lq,Lrn,signs,phi,
-            cnmax,vnmax,cn2vn,vn2cn[vnmax])
+        # 6) calculate residues
+        for m in vn2cn[vnmax]
+            if m ≠ cnmax    
+                # calculate the new check to node messages
+                update_Lr!(Ms,Lq,m,cn2vn,Lrn,signs,phi)
+                # calculate the residues
+                for n in cn2vn[m]
+                    if n ≠ vnmax
+                        residue, li = calc_residue(Ms,Lr,Factors,Lrn,Lq,m,n)
+                        if residue > max_residue[1]
+                            max_residue[2] = max_residue[1]
+                            max_residue[1] = residue
+                            max_indices[2] = max_indices[1]
+                            max_indices[1] = li
+                        elseif residue > max_residue[2]
+                            max_residue[2] = residue
+                            max_indices[2] = li
+                        end   
+                    end
+                end
+            end
+        end
+    
+        # update list
+        if max_residue[1] < max_residue[3]
+            max_residue[1], max_residue[3] = max_residue[3], max_residue[1] 
+            max_indices[1], max_indices[3] = max_indices[3], max_indices[1]    
+        else
+            max_residue[3] = max_residue[2]
+            max_indices[3] = max_indices[2]
+        end
     end
 end
 

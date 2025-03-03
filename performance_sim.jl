@@ -107,9 +107,6 @@ function
             printtest = TEST ? PRIN : false)
         
         println()
-        # aux = filter(isfinite,max_residues)
-        # maxi = maximum(aux)
-        # replace!(x -> isfinite(x) ? x : 2maxi, max_residues)
 
         return Lr, Lq, max_residues
 

@@ -4,7 +4,7 @@
 # RBP Sum-Product Algorithm with residual decaying factor
 
 include("./RBP functions/RBP_update_Lr.jl")
-include("./RBP functions/calc_residues.jl")
+include("./RBP functions/calc_residue.jl")
 include("./RBP functions/findmaxedge.jl")
 include("./RBP functions/decay.jl")
 
@@ -25,9 +25,9 @@ function
         Factors::Matrix{<:AbstractFloat},        
         all_max_res_alt::Union{Vector{<:AbstractFloat},Nothing},
         test::Bool,
-        address::Union{Matrix{<:Integer},Nothing},
-        addressinv::Union{Matrix{<:Integer},Nothing},
-        residues::Union{Vector{<:AbstractFloat},Nothing}
+        address::Matrix{<:Integer},
+        addressinv::Matrix{<:Integer},
+        residues::Vector{<:AbstractFloat}
     )
 
     @fastmath @inbounds for e in 1:num_edges
@@ -56,12 +56,23 @@ function
         # 4) set maximum residue to zero
         residues[max_edge] = 0.0
 
-        # 5) update Ldn[vmax] and bitvector[vnmax]
+        # 5) update vn2cn messages Lq[vnmax,m] and bitvector[vnmax]
         bitvector[vnmax] = update_Lq!(Lq,Lr,Lf[vnmax],vnmax,vn2cn,Lrn)
 
-        # 6) update vn2cn messages Lq[vnmax,m], ∀m ≠ cnmax, and calculate residues
-        calc_residues!(addressinv,residues,Factors,Ms,Lr,Lq,Lrn,signs,phi,cnmax,
-            vnmax,cn2vn,vn2cn[vnmax])
+        # 6) calculate residues
+        for m in vn2cn[vnmax]
+            if m ≠ cnmax    
+                # calculate the new check to node messages
+                update_Lr!(Ms,Lq,m,cn2vn,Lrn,signs,phi)
+                # calculate the residues
+                @fastmath @inbounds for n in cn2vn[m]
+                    if n ≠ vnmax
+                        residue, li = calc_residue(Ms,Lr,Factors,Lrn,Lq,m,n)
+                        residues[addressinv[li]] = residue
+                    end
+                end
+            end
+        end
     end
 end
 

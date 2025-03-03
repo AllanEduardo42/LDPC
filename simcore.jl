@@ -12,9 +12,9 @@ include("LBP.jl")
 include("RBP.jl")
 include("Local_RBP.jl")
 include("List-RBP.jl")
-include("Mod-List-RBP.jl")
-include("Random-List-RBP.jl")
-include("./RBP functions/calc_residues.jl")
+# include("Mod-List-RBP.jl")
+# include("Random-List-RBP.jl")
+include("./RBP functions/calc_residue.jl")
 
 function
     simcore(
@@ -153,37 +153,26 @@ function
     end
 
     # mode = Local-RBP
-    max_coords = (mode == "Local-RBP") ? zeros(Int,6) : nothing
+    max_indices = (mode == "Local-RBP") ? zeros(Int,3) : nothing
     max_residue = (mode == "Local-RBP") ? zeros(3) : nothing
 
     # mode = List-RBP
     if mode == "List-RBP" || mode == "Mod-List-RBP" || mode == "Random-List-RBP"
         listres1 = zeros(listsizes[1]+1)
-        listm1 = zeros(Int,listsizes[1]+1)
-        listn1 = zeros(Int,listsizes[1]+1)
+        indices_res1 = zeros(Int,listsizes[1]+1)
         inlist = Matrix(false*H)
-        if listsizes[2] > 0
-            if listsizes[2] == 1
-                listres2 = zeros(listsizes[1]+1)
-                listm2 = zeros(Int,listsizes[1]+1)
-                listn2 = zeros(Int,listsizes[1]+1)
-            else
-                listres2 = zeros(listsizes[2]+1)
-                listm2 = zeros(Int,listsizes[2]+1)
-                listn2 = zeros(Int,listsizes[2]+1)
-            end
+        if listsizes[2] == 1
+            listres2 = zeros(listsizes[1]+1)
+            indices_res2 = zeros(Int,listsizes[1]+1)
         else
-            listres2 = nothing
-            listm2 = nothing
-            listn2 = nothing
+            listres2 = zeros(listsizes[2]+1)
+            indices_res2 = zeros(Int,listsizes[2]+1)
         end
     else        
         listres1 = nothing
-        listm1 = nothing
-        listn1 = nothing
+        indices_res1 = nothing
         listres2 = nothing
-        listm2 = nothing
-        listn2 = nothing
+        indices_res2 = nothing
         inlist = nothing
     end
 
@@ -191,28 +180,28 @@ function
 
     @inbounds for j in 1:trials
 
-        # generate the random message
+        # 1) generate the random message
         rand!(rgn_msg,msg,Bool)
 
-        # generate the cword
+        # 2) generate the cword
         if LDPC == 1
             cword = NR_LDPC_encode(E_H, msg, nr_ldpc_data)
         elseif LDPC == 3
             cword = IEEE80216e_parity_bits(msg,Zf,E_H)
         end
 
-        # Modulation of the cword
+        # 3) Modulation of the cword
         u = Float64.(2*cword .- 1)
 
-        # Include the punctured bits in the cword for biterror calculation
+        # 4) Include the punctured bits in the cword for biterror calculation
         if Zc > 0
             cword = [msg[1:2*Zc]; cword]
         end
 
-        # sum the noise to the modulated cword to produce the received signal
+        # 5) sum the noise to the modulated cword to produce the received signal
         received_signal!(signal,noise,stdev,u,rng_noise)
 
-        # print info in test mode
+        # 6) print info in test mode
         if test && printtest
             println("Trial #$j:")
             println()
@@ -236,54 +225,50 @@ function
             println()
         end       
 
-        # reset the simulation variables
+        # 7) reset the simulation variables
         bitvector .= false
         syndrome .= true
         decoded .= false
-        for m in 1:M
-            for n in cn2vn[m]
-                Lr[m,n] = 0.0
+        for n in 1:N
+            nl = LinearIndices(Lr)[1,n]-1
+            for m in vn2cn[n]
+                Lr[nl+m] = 0.0
             end
         end
         if mode == "List-RBP" || mode == "Mod-List-RBP"
             listres1 .= 0.0
-            listm1 .= 0
-            listn1 .= 0
-            if listsizes[2] != 0
-                listres2 .= 0.0
-                listm2 .= 0
-                listn2 .= 0
-            end
-            for m in 1:M
-                for n in cn2vn[m]
-                    inlist[m,n] = false
+            indices_res1 .= 0
+            listres2 .= 0.0
+            indices_res2 .= 0
+            for n in 1:N
+                nl = LinearIndices(Lr)[1,n]-1
+                for m in vn2cn[n]
+                    inlist[nl+m] = false
                 end
             end
         end
+        rbp_not_converged = true
 
-        # init the llr priors
+        # 8) init the llr priors
         calc_Lf!(view(Lf,2*Zc+1:N),signal,variance)
         if bptype == "TABL"
             # scale for table
             Lf .*= SIZE_per_RANGE
         end
-        # init the Lq matrix
+        # 9) init the Lq matrix
         init_Lq!(Lq,Lf,vn2cn)
 
-        # precalculate the residues in RBP
+        # 10) precalculate the residues in RBP
         if mode == "RBP"
-            rbp_not_converged = true
-            calc_residues!(addressinv,residues,Factors,Ms,Lr,Lq,Lrn,signs,phi,0,
-                0,cn2vn,eachindex(cn2vn))
-        elseif mode == "Local-RBP"
-            rbp_not_converged = true
-            calc_residues!(max_residue,max_coords,Factors,Ms,Lr,Lq,Lrn,signs,
-                phi,0,0,cn2vn,eachindex(cn2vn))
-        elseif mode == "List-RBP"
-            rbp_not_converged = true
-            calc_residues!(Factors,Ms,Lr,Lq,Lrn,signs,phi,0,0,cn2vn,
-                eachindex(cn2vn),listres1,listm1,listn1,listres2,listm2,listn2,
-                [listsizes[1], 0],inlist)
+            for m in 1:M 
+                # calculate the new check to node messages
+                update_Lr!(Ms,Lq,m,cn2vn,Lrn,signs,phi)
+                # calculate the residues
+                @fastmath @inbounds for n in cn2vn[m]
+                    residue, index = calc_residue(Ms,Lr,Factors,Lrn,Lq,m,n)
+                    residues[addressinv[index]] = residue
+                end
+            end
         end
         
         # BP routine
@@ -333,11 +318,35 @@ function
                     test,
                     address,
                     addressinv,
-                    residues,
+                    residues
                     )
                 # reset factors
                 resetfactors!(Factors,vn2cn)
             elseif mode == "Local-RBP"
+                if rbp_not_converged && max_residue[1] == 0.0
+                    for m in 1:M
+                        # calculate the new check to node messages
+                        update_Lr!(Ms,Lq,m,cn2vn,Lrn,signs,phi)
+                        # calculate the residues
+                        for n in cn2vn[m]
+                            residue, li = calc_residue(Ms,Lr,Factors,Lrn,Lq,m,n)
+                            if residue > max_residue[1]
+                                max_residue[2] = max_residue[1]
+                                max_residue[1] = residue 
+                                max_indices[2] = max_indices[1]
+                                max_indices[1] = li
+                            elseif residue > max_residue[2]
+                                max_residue[2] = residue
+                                max_indices[2] = li
+                            end   
+                        end
+                    end
+                    max_residue[3] = max_residue[2]
+                    max_indices[3] = max_indices[2]
+                    if max_residue[1] == 0.0
+                        rbp_not_converged = false
+                    end
+                end
                 if rbp_not_converged
                     local_RBP!(
                         bitvector,
@@ -357,19 +366,27 @@ function
                         test,
                         rng_rbp,
                         max_residue,
-                        max_coords
+                        max_indices
                     )
                     # reset factors
                     resetfactors!(Factors,vn2cn)
-                    if max_residue[1] == 0.0
-                        calc_residues!(max_residue,max_coords,Factors,Ms,Lr,Lq,
-                            Lrn,signs,phi,0,0,cn2vn,eachindex(cn2vn))
-                        if max_residue[1] == 0.0
-                            rbp_not_converged = false
-                        end
-                    end
                 end              
             elseif mode == "List-RBP"
+                if rbp_not_converged && listres1[1] == 0.0
+                    for m in 1:M 
+                        # calculate the new check to node messages
+                        update_Lr!(Ms,Lq,m,cn2vn,Lrn,signs,phi)
+                        # calculate the residues
+                        for n in cn2vn[m]
+                            residue, li = calc_residue(Ms,Lr,Factors,Lrn,Lq,m,n)
+                            add_to_list!(inlist,listres1,indices_res1,residue,li,
+                                listsizes[1])
+                        end
+                    end
+                    if listres1[1] == 0.0
+                        rbp_not_converged = false
+                    end
+                end
                 if rbp_not_converged
                     list_RBP!(
                         bitvector,
@@ -390,23 +407,13 @@ function
                         rng_rbp,
                         listsizes,
                         listres1,
-                        listm1,
-                        listn1,
+                        indices_res1,
                         listres2,
-                        listm2,
-                        listn2,
+                        indices_res2,
                         inlist
                     )
                     # reset factors
                     resetfactors!(Factors,vn2cn)
-                    if listres1[1] == 0.0
-                        calc_residues!(Factors,Ms,Lr,Lq,Lrn,signs,phi,0,0,cn2vn,
-                            eachindex(cn2vn),listres1,listm1,listn1,listres2,listm2,
-                            listn2,[listsizes[1], 0],inlist)
-                        if listres1[1] == 0.0
-                            rbp_not_converged = false
-                        end
-                    end
                 end       
             elseif mode == "Mod-List-RBP"
                 mod_list_RBP!(
@@ -428,10 +435,10 @@ function
                     rng_rbp,
                     listsizes,
                     listres1,
-                    listm1,
+                    indices_res1,
                     listn1,
                     listres2,
-                    listm2,
+                    indices_res2,
                     listn2,
                     inlist,
                     syndrome
@@ -458,10 +465,10 @@ function
                     rng_rbp,
                     listsizes,
                     listres1,
-                    listm1,
+                    indices_res1,
                     listn1,
                     listres2,
-                    listm2,
+                    indices_res2,
                     listn2,
                     inlist
                 )

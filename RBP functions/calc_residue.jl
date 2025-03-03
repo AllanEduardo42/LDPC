@@ -5,7 +5,7 @@
 
 # FAST
 function 
-    _calc_residue(
+    calc_residue(
         Ms::Matrix{<:AbstractFloat},
         Lr::Matrix{<:AbstractFloat},
         Factors::Matrix{<:AbstractFloat},
@@ -16,22 +16,22 @@ function
     )
 
     @fastmath @inbounds begin
-        index = LinearIndices(Ms)[m,n]
-        # Ld = Lr[index] + Lq'[index]
-        residue = Ms[index] - Lr[index]
+        li = LinearIndices(Ms)[m,n]
+        # Ld = Lr[li] + Lq'[li]
+        residue = Ms[li] - Lr[li]
         # residue /= Ld
-        residue *= Factors[index]
+        residue *= Factors[li]
         if signbit(residue)
-            return -residue, index
+            return -residue, li
         else
-            return residue, index
+            return residue, li
         end
     end
 end
 
 #TANH
 function 
-    _calc_residue(
+    calc_residue(
         Ms::Matrix{<:AbstractFloat},
         Lr::Matrix{<:AbstractFloat},
         Factors::Matrix{<:AbstractFloat},
@@ -42,18 +42,18 @@ function
     )
 
     @fastmath @inbounds begin
-        index = LinearIndices(Ms)[m,n]
-        # Ld = Lr[index] + Lq'[index]
-        residue = Ms[index] - Lr[index]
+        li = LinearIndices(Ms)[m,n]
+        # Ld = Lr[li] + Lq'[li]
+        residue = Ms[li] - Lr[li]
         # residue /= Ld
-        residue *= Factors[index]
+        residue *= Factors[li]
         if isnan(residue)
             return 0.0
         else
             if signbit(residue)
-                return -residue, index
+                return -residue, li
             else
-                return residue, index
+                return residue, li
             end
         end
     end

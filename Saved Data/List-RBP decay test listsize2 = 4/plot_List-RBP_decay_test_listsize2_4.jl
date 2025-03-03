@@ -8,7 +8,7 @@ FB = ["F","B"]
 maxiter = 30
 
 plotlyjs()
-directory = "./Saved Data/List-RBP decay test/"
+directory = "./Saved Data/List-RBP decay test listsize2 = 4/"
 lim = log10(1/maximum(1000*2^10))
 
 for j=1:2

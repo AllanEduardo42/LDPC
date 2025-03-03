@@ -4,8 +4,8 @@
 # Modified List-RBP Sum-Product Algorithm with residual decaying factor
 
 include("./RBP functions/RBP_update_Lr.jl")
-include("./RBP functions/calc_residues.jl")
-include("./RBP functions/update_list.jl")
+include("./RBP functions/calc_residue.jl")
+include("./RBP functions/update_lists.jl")
 include("./RBP functions/decay.jl")
 include("./RBP functions/remove_from_list.jl")
 

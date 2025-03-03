@@ -1,11 +1,9 @@
-function update_list!(
+function add_to_list!(
         inlist::Union{Matrix{Bool},Nothing},
         listres::Vector{<:AbstractFloat},
-        listm::Vector{<:Integer},
-        listn::Vector{<:Integer},
+        indices_res::Vector{<:Integer},
         residue::AbstractFloat,
-        m::Integer,
-        n::Integer,
+        li::Integer,
         listsize::Integer
     )
 
@@ -30,44 +28,37 @@ function update_list!(
                 end
             end
 
-            update_inlist!(inlist,listm,listn,m,n)
+            update_inlist!(inlist,indices_res,li)
 
             for j=listsize:-1:i+1
                 listres[j] = listres[j-1]
-                listm[j] = listm[j-1]
-                listn[j] = listn[j-1]
+                indices_res[j] = indices_res[j-1]
             end
         else
             i = 1
         end
 
-        listm[i] = m
-        listn[i] = n
+        indices_res[i] = li
         listres[i] = residue        
     end
 end
 
 function update_inlist!(
     inlist::Matrix{Bool},
-    listm::Vector{<:Integer},
-    listn::Vector{<:Integer},
-    m::Integer,
-    n::Integer
+    indices_res::Vector{<:Integer},
+    li::Integer
 )
-    mm = listm[end-1]
-    if mm ≠ 0
-        nn = listn[end-1]
-        inlist[mm,nn] = false
+    last = indices_res[end-1]
+    if last ≠ 0
+        inlist[last] = false
     end
-    inlist[m,n] = true
+    inlist[li] = true
 
 end
 
 function update_inlist!(
     ::Nothing,
     ::Vector{<:Integer},
-    ::Vector{<:Integer},
-    ::Integer,
     ::Integer
 )
 
