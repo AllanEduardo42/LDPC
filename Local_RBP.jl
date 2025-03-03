@@ -6,6 +6,7 @@
 
 include("./RBP functions/RBP_update_Lr.jl")
 include("./RBP functions/decay.jl")
+include("./RBP functions/calc_local_residues.jl")
 
 function
     local_RBP!(
@@ -64,27 +65,8 @@ function
         bitvector[vnmax] = update_Lq!(Lq,Lr,Lf[vnmax],vnmax,vn2cn,Lrn)
 
         # 6) calculate residues
-        for m in vn2cn[vnmax]
-            if m ≠ cnmax    
-                # calculate the new check to node messages
-                update_Lr!(Ms,Lq,m,cn2vn,Lrn,signs,phi)
-                # calculate the residues
-                for n in cn2vn[m]
-                    if n ≠ vnmax
-                        residue, li = calc_residue(Ms,Lr,Factors,Lrn,Lq,m,n)
-                        if residue > max_residue[1]
-                            max_residue[2] = max_residue[1]
-                            max_residue[1] = residue
-                            max_indices[2] = max_indices[1]
-                            max_indices[1] = li
-                        elseif residue > max_residue[2]
-                            max_residue[2] = residue
-                            max_indices[2] = li
-                        end   
-                    end
-                end
-            end
-        end
+       calc_local_residues_local!(Lq,Lr,cn2vn,vn2cn,Lrn,signs,phi,Ms,Factors,
+            max_residue,max_indices,cnmax,vnmax)
     
         # update list
         if max_residue[1] < max_residue[3]

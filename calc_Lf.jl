@@ -7,15 +7,21 @@ function
     calc_Lf!(
         Lf::AbstractVector{<:AbstractFloat},
         signal::Vector{<:AbstractFloat},
-        σ²::AbstractFloat
+        σ²::AbstractFloat,
+        bptype::String
     )
 
     @fastmath @inbounds for i in eachindex(signal)
         Lf[i] = -2*signal[i]/σ²
     end
+    if bptype == "TABL"
+        # scale for table
+        Lf .*= SIZE_per_RANGE
+    end
 
 end
 
+# MKAY
 function
     calc_Lf!(
         f::Matrix{<:AbstractFloat},

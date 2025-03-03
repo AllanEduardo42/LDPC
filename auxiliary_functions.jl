@@ -80,14 +80,18 @@ function
 end
 
 function
-    resetfactors!(
-        Factors::Matrix{<:AbstractFloat},
+    resetmatrix!(
+        X::Matrix{<:Real},
         vn2cn::Vector{Vector{T}} where {T<:Integer}
     )
     
-    @fastmath @inbounds for n in eachindex(vn2cn)
-        for m in vn2cn[n]
-            Factors[m,n] = 1.0
+    
+    @fastmath @inbounds begin
+        for n in 1:N
+            nl = LinearIndices(X)[1,n]-1
+            for m in vn2cn[n]
+                X[nl+m] = 0
+            end
         end
     end
 end

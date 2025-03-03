@@ -8,6 +8,7 @@ include("./RBP functions/calc_residue.jl")
 include("./RBP functions/update_lists.jl")
 include("./RBP functions/decay.jl")
 include("./RBP functions/remove_from_list.jl")
+include("./RBP functions//calc_local_residues.jl")
 
 function
     list_RBP!(
@@ -72,23 +73,10 @@ function
         # 5) update vn2cn messages Lq[vnmax,m] and bitvector[vnmax]
         bitvector[vnmax] = update_Lq!(Lq,Lr,Lf[vnmax],vnmax,vn2cn,Lrn)
 
-        # 6) calculate residues
-        new_listsize2 = listsizes[2]
-        for m in vn2cn[vnmax]
-            if m ≠ cnmax    
-                # calculate the new check to node messages
-                update_Lr!(Ms,Lq,m,cn2vn,Lrn,signs,phi)
-                # calculate the residues
-                for n in cn2vn[m]
-                    if n ≠ vnmax
-                        residue, li = calc_residue(Ms,Lr,Factors,Lrn,Lq,m,n)
-                        new_listsize2 = update_list2!(listres1,indices_res1,
-                                            listres2,indices_res2,listsizes,
-                                            new_listsize2,inlist,li,residue)
-                    end
-                end
-            end
-        end
+        # 6) calculate local residues
+        new_listsize2 = calc_local_residues_list!(Lq,Lr,cn2vn,vn2cn,Lrn,signs,phi,Ms,
+            Factors,listsizes,listres1,indices_res1,listres2,indices_res2,inlist,
+            listsizes[2],cnmax,vnmax)
         # update list 1 
         update_list1!(listres1,indices_res1,listres2,indices_res2,listsizes,
             new_listsize2,inlist,listsize1m1,difflistsizes)

@@ -4,7 +4,7 @@
 # RBP Sum-Product Algorithm with residual decaying factor
 
 include("./RBP functions/RBP_update_Lr.jl")
-include("./RBP functions/calc_residue.jl")
+include("./RBP functions/calc_local_residues.jl")
 include("./RBP functions/findmaxedge.jl")
 include("./RBP functions/decay.jl")
 
@@ -60,19 +60,8 @@ function
         bitvector[vnmax] = update_Lq!(Lq,Lr,Lf[vnmax],vnmax,vn2cn,Lrn)
 
         # 6) calculate residues
-        for m in vn2cn[vnmax]
-            if m ≠ cnmax    
-                # calculate the new check to node messages
-                update_Lr!(Ms,Lq,m,cn2vn,Lrn,signs,phi)
-                # calculate the residues
-                @fastmath @inbounds for n in cn2vn[m]
-                    if n ≠ vnmax
-                        residue, li = calc_residue(Ms,Lr,Factors,Lrn,Lq,m,n)
-                        residues[addressinv[li]] = residue
-                    end
-                end
-            end
-        end
+        calc_local_residues!(Lq,Lr,cn2vn,vn2cn,Lrn,signs,phi,Ms,Factors,addressinv,
+            residues,cnmax,vnmax)
     end
 end
 
