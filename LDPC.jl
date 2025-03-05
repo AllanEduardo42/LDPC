@@ -54,7 +54,7 @@ SEED_MESSA::Int = 1000
 
 ############################### 4) CONTROL FLAGS ###############################
 
-TEST::Bool = true
+TEST::Bool = false
 PRIN::Bool = true
 STOP::Bool = false # stop simulation at zero syndrome (if true, BER curves are
 # not printed)
@@ -64,6 +64,7 @@ STOP::Bool = false # stop simulation at zero syndrome (if true, BER curves are
 MAXITER::Int = 50
 MAXIRBP::Int = 30
 DECAYS = [0.7, 0.8, 0.9, 1.0]
+# DECAYS = [0.9]
 SNR = [1.2, 1.6, 1.8, 2.0]
 TRIALS = 10 .^(0:length(SNR)-1)*2^10
 
@@ -103,13 +104,13 @@ Bptypes[2] = "FAST"
 Maxiters[2] = MAXITER
 
 # RBP
-Active[3] = 1
+Active[3] = 0
 Bptypes[3] = "FAST"
 Maxiters[3] = MAXIRBP
 Decays[3] = DECAYS
 
 # Local-RBP
-Active[4] = 1
+Active[4] = 0
 Bptypes[4] = "FAST"
 Maxiters[4] = MAXIRBP
 Decays[4] = DECAYS
@@ -134,7 +135,7 @@ Decays[7] = DECAYS
 
 # List-RBP sizes
 Listsizes[1] = 16
-Listsizes[2] = 1
+Listsizes[2] = 4
 Listsizes[3] = 16
 
 

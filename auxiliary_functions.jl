@@ -82,15 +82,15 @@ end
 function
     resetmatrix!(
         X::Matrix{<:Real},
-        vn2cn::Vector{Vector{T}} where {T<:Integer}
-    )
-    
+        vn2cn::Vector{Vector{T}} where {T<:Integer},
+        value::Real
+    )    
     
     @fastmath @inbounds begin
         for n in 1:N
             nl = LinearIndices(X)[1,n]-1
             for m in vn2cn[n]
-                X[nl+m] = 0
+                X[nl+m] = value
             end
         end
     end

@@ -17,9 +17,9 @@ function
 
     @fastmath @inbounds begin
         li = LinearIndices(Ms)[m,n]
-        # Ld = Lr[li] + Lq'[li]
         residue = Ms[li] - Lr[li]
-        # residue /= Ld
+        Ld = Lr[li] + Lq'[li]
+        residue /= Ld
         residue *= Factors[li]
         if signbit(residue)
             return -residue, li
@@ -43,8 +43,8 @@ function
 
     @fastmath @inbounds begin
         li = LinearIndices(Ms)[m,n]
-        # Ld = Lr[li] + Lq'[li]
         residue = Ms[li] - Lr[li]
+        # Ld = Lr[li] + Lq'[li]
         # residue /= Ld
         residue *= Factors[li]
         if isnan(residue)

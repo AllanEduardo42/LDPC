@@ -229,13 +229,13 @@ function
         bitvector .= false
         syndrome .= true
         decoded .= false
-        resetmatrix!(Lr,vn2cn)
+        resetmatrix!(Lr,vn2cn,0.0)
         if mode == "List-RBP" || mode == "Mod-List-RBP"
             listres1 .= 0.0
             indices_res1 .= 0
             listres2 .= 0.0
             indices_res2 .= 0
-            resetmatrix!(inlist,vn2cn)
+            resetmatrix!(inlist,vn2cn,false)
         end
 
         # 8) init the llr priors
@@ -301,7 +301,7 @@ function
                     residues
                     )
                 # reset factors
-                resetmatrix!(Factors,vn2cn)
+                resetmatrix!(Factors,vn2cn,1.0)
             elseif mode == "Local-RBP"
                 if rbp_not_converged && max_residue[1] == 0.0
                     calc_all_residues_local!(Lq,Lr,cn2vn,Lrn,signs,phi,Ms,Factors,
@@ -334,7 +334,7 @@ function
                         max_indices
                     )
                     # reset factors
-                    resetmatrix!(Factors,vn2cn)
+                    resetmatrix!(Factors,vn2cn,1.0)
                 end              
             elseif mode == "List-RBP"
                 if rbp_not_converged && listres1[1] == 0.0
@@ -370,7 +370,7 @@ function
                         inlist
                     )
                     # reset factors
-                    resetmatrix!(Factors,vn2cn)
+                    resetmatrix!(Factors,vn2cn,1.0)
                 end       
             elseif mode == "Mod-List-RBP"
                 mod_list_RBP!(
@@ -401,7 +401,7 @@ function
                     syndrome
                 )
                 # reset factors
-                resetmatrix!(Factors,vn2cn)
+                resetmatrix!(Factors,vn2cn,1.0)
             elseif mode == "Random-List-RBP"
                 random_list_RBP!(
                     bitvector,
@@ -430,7 +430,7 @@ function
                     inlist
                 )
                 # reset factors
-                resetmatrix!(Factors,vn2cn)
+                resetmatrix!(Factors,vn2cn,1.0)
             end
     
             calc_syndrome!(syndrome,bitvector,cn2vn)

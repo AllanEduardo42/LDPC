@@ -8,11 +8,11 @@ FB = ["F","B"]
 maxiter = 30
 
 plotlyjs()
-directory = "./Saved Data/List-RBP decay test/"
+directory = "./Saved Data/List-RBP decay test listsize2 = 4/"
 lim = log10(1/maximum(1000*2^10))
 
 for j=1:2
-    title = FB[j]*"ER List-RBP (decay, SNR)"
+    title = FB[j]*"ER List-RBP, listsizes = (16,4)"
     p = plot()
     for i in eachindex(decays)
         sdecay = string(decays[i])
@@ -31,7 +31,11 @@ for j=1:2
             ls=lines[i],
             title=title,
             ylims=(lim,0),
-            color=[1 2 3 4]
+            color=[1 2 3 4],
+            legend_title = "(decay, SNR)",
+            legend_title_font_pointsize = 8,
+            legend = :outertopright,
+            size = (900,600)
         )
     end
     display(p)
