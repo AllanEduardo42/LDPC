@@ -39,6 +39,7 @@ for j=1:1
         )
     end
     display(p)
+    Plots.pdf(p,"list_rbp_16_4.pdf")
     global lim -= 1
 end
 
