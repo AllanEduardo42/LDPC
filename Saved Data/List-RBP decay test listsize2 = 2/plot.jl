@@ -8,15 +8,15 @@ FB = ["F","B"]
 maxiter = 30
 
 plotlyjs()
-directory = "./Saved Data/Local-RBP decay test/"
+directory = "./Saved Data/List-RBP decay test listsize2 = 2/"
 lim = log10(1/maximum(1000*2^10))
 
 for j=1:1
-    title = FB[j]*"ER Local-RBP"
+    title = FB[j]*"ER List-RBP, listsizes = (16,2)"
     p = plot()
     for i in eachindex(decays)
         sdecay = string(decays[i])
-        x = readdlm(directory*FB[j]*"ER_Local-RBP "*sdecay*".txt",'\t',Float64,'\n')
+        x = readdlm(directory*FB[j]*"ER_List-RBP "*sdecay*".txt",'\t',Float64,'\n')
         labels = Vector{String}()
         for snr in SNR
             push!(labels,sdecay*", $(snr)dB")

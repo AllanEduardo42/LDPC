@@ -11,7 +11,7 @@ plotlyjs()
 directory = "./Saved Data/RBP decay test relative/"
 lim = log10(1/maximum(1000*2^10))
 
-for j=1:2
+for j=1:1
     title = FB[j]*"ER RBP Relative"
     p = plot()
     for i in eachindex(decays)
@@ -39,6 +39,7 @@ for j=1:2
         )
     end
     display(p)
+    Plots.pdf(p,"rbp_rel.pdf")
     global lim -= 1
 end
 

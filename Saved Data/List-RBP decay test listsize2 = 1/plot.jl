@@ -11,7 +11,7 @@ plotlyjs()
 directory = "./Saved Data/List-RBP decay test listsize2 = 1/"
 lim = log10(1/maximum(1000*2^10))
 
-for j=1:2
+for j=1:1
     title = FB[j]*"ER List-RBP, listsizes = (16,1)"
     p = plot()
     for i in eachindex(decays)

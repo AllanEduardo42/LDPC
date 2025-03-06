@@ -135,7 +135,7 @@ Decays[7] = DECAYS
 
 # List-RBP sizes
 Listsizes[1] = 16
-Listsizes[2] = 4
+Listsizes[2] = 2
 Listsizes[3] = 16
 
 
