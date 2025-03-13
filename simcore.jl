@@ -12,7 +12,7 @@ include("LBP.jl")
 include("RBP.jl")
 include("Local_RBP.jl")
 include("List-RBP.jl")
-# include("Mod-List-RBP.jl")
+include("Mod-List-RBP.jl")
 # include("Random-List-RBP.jl")
 include("./RBP functions/calc_all_residues.jl")
 
@@ -227,9 +227,13 @@ function
 
         # 7) reset the simulation variables
         bitvector .= false
-        syndrome .= true
+        for n = 2*Zc+1:N
+            bitvector[n] = signbit(signal[n - 2*Zc])
+        end
+        calc_syndrome!(syndrome,bitvector,cn2vn)
         decoded .= false
         resetmatrix!(Lr,vn2cn,0.0)
+        
         if mode == "List-RBP" || mode == "Mod-List-RBP"
             listres1 .= 0.0
             indices_res1 .= 0
@@ -373,35 +377,43 @@ function
                     resetmatrix!(Factors,vn2cn,1.0)
                 end       
             elseif mode == "Mod-List-RBP"
-                mod_list_RBP!(
-                    bitvector,
-                    Lq,
-                    Lr,
-                    Lf,
-                    cn2vn,
-                    vn2cn,
-                    Lrn,
-                    signs,
-                    phi,
-                    decayfactor,
-                    num_edges,
-                    Ms,
-                    Factors,
-                    all_max_res_alt,
-                    test,
-                    rng_rbp,
-                    listsizes,
-                    listres1,
-                    indices_res1,
-                    listn1,
-                    listres2,
-                    indices_res2,
-                    listn2,
-                    inlist,
-                    syndrome
-                )
-                # reset factors
-                resetmatrix!(Factors,vn2cn,1.0)
+                if rbp_not_converged && listres1[1] == 0.0
+                    calc_all_residues_list!(Lq,Lr,cn2vn,Lrn,signs,phi,Ms,Factors,
+                        listsizes,listres1,indices_res1,inlist)
+                    if listres1[1] == 0.0
+                        rbp_not_converged = false
+                    end
+                end
+                if rbp_not_converged
+                    mod_list_RBP!(
+                        bitvector,
+                        Lq,
+                        Lr,
+                        Lf,
+                        cn2vn,
+                        vn2cn,
+                        Lrn,
+                        signs,
+                        phi,
+                        decayfactor,
+                        num_edges,
+                        Ms,
+                        Factors,
+                        all_max_res_alt,
+                        test,
+                        rng_rbp,
+                        listsizes,
+                        listres1,
+                        indices_res1,
+                        listres2,
+                        indices_res2,
+                        inlist,
+                        syndrome,
+                        iter
+                    )
+                    # reset factors
+                    resetmatrix!(Factors,vn2cn,1.0)
+                end       
             elseif mode == "Random-List-RBP"
                 random_list_RBP!(
                     bitvector,

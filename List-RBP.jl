@@ -87,23 +87,3 @@ function
     end
 end
 
-# if listsizes[1] > 1
-#     search_index = true
-#     i = 0
-#     while search_index
-#         i += 1
-#         if abs(listres1[index]) < CLIP
-#             search_index = false
-#             index = i
-#         else
-#             if listsizes[2] == 1
-#                 new_listsize2 += 1
-#             end
-#             m = indices_res1[index]
-#             n = listn1[index]
-#             lmax = LinearIndices(Factors)[m,n]
-#             remove_from_list!(lmax,listsizes[1],listres1,indices_res1,listn1,inlist,index)
-#         end
-#     end
-# end
-

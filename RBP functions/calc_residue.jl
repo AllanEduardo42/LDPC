@@ -18,8 +18,12 @@ function
     @fastmath @inbounds begin
         li = LinearIndices(Ms)[m,n]
         residue = Ms[li] - Lr[li]
-        Ld = Lr[li] + Lq'[li]
-        residue /= Ld
+        # Ld = Lr[li] + Lq'[li]
+        # residue /= Ld
+        # new = Ms[li] + Lq'[li]
+        # old = Lr[li] + Lq'[li]
+        # residue = (abs(new) - abs(old))
+        # residue = abs((new - old))
         residue *= Factors[li]
         if signbit(residue)
             return -residue, li
