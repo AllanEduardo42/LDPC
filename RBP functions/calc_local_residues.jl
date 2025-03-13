@@ -19,12 +19,13 @@ function calc_local_residues!(
     addressinv::Matrix{<:Integer},
     residues::Vector{<:AbstractFloat},
     cnmax::Integer,
-    vnmax::Integer
+    vnmax::Integer,
+    N::Integer
 )
     for m in vn2cn[vnmax]
         if m ≠ cnmax    
             # calculate the new check to node messages
-            update_Lr!(Ms,Lq,m,cn2vn,Lrn,signs,phi)
+            update_Lr!(Ms,Lq,m,N*(m-1),cn2vn,Lrn,signs,phi)
             # calculate the residues
             @fastmath @inbounds for n in cn2vn[m]
                 if n ≠ vnmax

@@ -12,11 +12,12 @@ function
         Lr::Matrix{<:AbstractFloat},
         Lf::AbstractFloat,
         n::Integer,
+        nl::Integer,
         vn2cn::Vector{Vector{T}} where {T<:Integer},
         ::Vector{<:AbstractFloat}
     )
 
-    Ld, nl = calc_Ld(n,vn2cn,Lf,Lr)
+    Ld = calc_Ld(n,nl,vn2cn,Lf,Lr)
     # for m in vn2cn[n]
     @fastmath @inbounds for m in vn2cn[n]
         Lq[n,m] = Ld - Lr[nl+m]
@@ -28,18 +29,17 @@ end
 function 
     calc_Ld(
         n::Integer,
+        nl::Integer,
         vn2cn::Vector{Vector{T}} where {T<:Integer},
         Lf::AbstractFloat,
         Lr::Matrix{<:AbstractFloat}
     )
 
-    # for m in vn2cn[n]
-    nl = LinearIndices(Lr)[1,n]-1
     @fastmath @inbounds for m in vn2cn[n]
         Lf += Lr[nl+m]
     end
     
-    return Lf, nl
+    return Lf
 
 end
 

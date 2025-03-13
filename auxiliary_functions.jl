@@ -11,6 +11,12 @@ indices i where H[i,j] = 1"""
 function make_vn2cn_list(H::BitMatrix)
 
     N = size(H,2)
+    return make_vn2cn_list(H,N)
+
+end
+
+function make_vn2cn_list(H::BitMatrix, N::Integer)
+
     vn2cn = Vector{Vector{Int}}()
     @inbounds for n in 1:N
         push!(vn2cn,findall(isone, H[:,n]))
@@ -26,6 +32,13 @@ indices j where H[i,j] = 1"""
 function make_cn2vn_list(H::BitMatrix)
 
     M = size(H,1)
+   
+    return make_cn2vn_list(H,M)
+
+end
+
+function make_cn2vn_list(H::BitMatrix, M::Integer)
+
     cn2vn = Vector{Vector{Int}}()
     @inbounds for m in 1:M
         push!(cn2vn,findall(isone, H[m,:]))
@@ -39,12 +52,16 @@ function
     init_Lq!(
         Lq::Matrix{<:AbstractFloat},
         Lf::Vector{<:AbstractFloat},
-        vn2cn::Vector{Vector{T}} where {T<:Integer}
+        cn2vn::Vector{Vector{T}} where {T<:Integer},
+        M::Integer,
+        N::Integer
     )
-    
-    @inbounds for n in eachindex(vn2cn)
-        for m in vn2cn[n]
-            Lq[n,m] = Lf[n]
+
+    m = 0
+    @inbounds for ml in 0:N:M*(N-1)
+        m += 1
+        for n in cn2vn[m]
+            Lq[ml+n] = Lf[n]
         end
     end
 end
@@ -82,16 +99,17 @@ end
 function
     resetmatrix!(
         X::Matrix{<:Real},
+        M::Integer,
+        N::Integer,
         vn2cn::Vector{Vector{T}} where {T<:Integer},
         value::Real
     )    
     
-    @fastmath @inbounds begin
-        for n in 1:N
-            nl = LinearIndices(X)[1,n]-1
-            for m in vn2cn[n]
-                X[nl+m] = value
-            end
+    n = 0
+    @inbounds for nl in 0:M:N*(M-1)
+        n += 1
+        for m in vn2cn[n]
+            X[nl+m] = value
         end
     end
 end

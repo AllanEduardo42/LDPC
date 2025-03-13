@@ -56,7 +56,7 @@ function
             all_max_res_alt[e] = listres1[1]     
         end
 
-        if e > 4256 || iter > 1
+        if e > num_edges || iter > 2
             sum_syndrome .= 0
             for i=1:listsizes[3]
                 if listres1[i] != 0

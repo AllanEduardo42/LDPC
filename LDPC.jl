@@ -22,6 +22,7 @@ include("IEEE80216e.jl")
 include("NR_LDPC_encode.jl")
 include("performance_sim.jl")
 include("find_girth.jl")
+include("auxiliary_functions.jl")
 
 ##################################### SAVE #####################################
 
@@ -66,13 +67,13 @@ MAXIRBP::Int = 30
 # DECAYS = [0.7, 0.8, 0.9, 1.0]
 DECAYS = [1.0]
 SNR = [1.2, 1.6, 1.8]
-TRIALS = 10 .^(0:length(SNR)-1)*5
+TRIALS = 10 .^(0:length(SNR)-1)*2^7
 
 # TEST
-MAXITER_TEST::Int = 2
+MAXITER_TEST::Int = 1
 SNR_TEST::Float64 = 1.4
 TRIALS_TEST::Int = 1
-DECAY_TEST::Float64 = 0.85
+DECAY_TEST::Float64 = 1.0
 
 ################################ 6) BP SCHEDULE ################################
 
@@ -142,38 +143,38 @@ Listsizes[3] = 16
 ########################### 7) MESSAGE AND CODEWORD ############################
 
 # Message (Payload) size
-A::Int = 1008
+AA::Int = 1008
 # Rate
-R::Float64 = 1/2
+RR::Float64 = 1/2
 # LDPC protocol: 1 = NR-LDPC; 2 = PEG; 3 = IEEE80216e;
 LDPC::Int = 3
     densities = 2:11
 
 ############################# PARITY-CHECK MATRIX #############################
 
-Msg = zeros(Bool,A)
+Msg = zeros(Bool,AA)
 
 if LDPC == 1
     Zf = 0
     rv = 0
-    Cword, H, E_H, nr_ldpc_data = NR_LDPC_encode(Msg,R,rv)
-    M::Int, N::Int = size(H)
-    girth = find_girth(H,100000)
+    Cword, HH, E_H, Nr_ldpc_data = NR_LDPC_encode(Msg,RR,rv)
+    MM::Int, NN::Int = size(HH)
+    girth = find_girth(HH,100000)
 else
-    nr_ldpc_data = NR_LDPC_DATA(0,0,0,0,0,0,0,0,0,0,"0",0,[0],0,[false])
-    L = round(Int,A/R)
+    Nr_ldpc_data = NR_LDPC_DATA(0,0,0,0,0,0,0,0,0,0,"0",0,[0],0,[false])
+    LL = round(Int,AA/RR)
     if LDPC == 2
-        N::Int = L
-        M::Int = L - A
+        NN::Int = LL
+        MM::Int = LL - AA
         # Vector of the variable node degrees
-        D = rand(Xoshiro(SEED_GRAPH),densities,N-M)
+        DD = rand(Xoshiro(SEED_GRAPH),densities,NN-MM)
         # Generate Parity-Check Matrix by the PEG algorithm
-        H, girth = PEG(D,M,N)
+        HH, girth = PEG(DD,MM,NN)
     elseif LDPC == 3
-        H,Zf,E_H = IEEE80216e(L,R)
-        M::Int,N::Int = size(H)
-        L = N
-        girth = find_girth(H,100000)
+        HH,Zf,E_H = IEEE80216e(LL,RR)
+        MM::Int,NN::Int = size(HH)
+        LL = NN
+        girth = find_girth(HH,100000)
     else
         throw(ArgumentError(
                     lazy"CHECK = $CHECK, but must be 1, 2 or 3"
@@ -181,25 +182,29 @@ else
     end
 end
 
-str = 
+# list of checks and variables nodes
+Vn2cn  = make_vn2cn_list(HH,NN)
+Cn2vn  = make_cn2vn_list(HH,MM)
+
+Str = 
 """############################### LDPC parameters ################################
 
-Parity Check Matrix: $M x $N"""
+Parity Check Matrix: $MM x $NN"""
 
-println(str)
+println(Str)
 if SAVE
-    println(file,str)
+    println(file,Str)
 end
 
-display(sparse(H))
+display(sparse(HH))
 
-str = """
+Str = """
 
 Graph girth = $girth
 """
-println(str)
+println(Str)
 if SAVE
-    println(file,str)
+    println(file,Str)
 end
 
 # Number of Threads

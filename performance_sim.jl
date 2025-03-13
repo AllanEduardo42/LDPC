@@ -86,13 +86,17 @@ function
 
     if TEST
         Lr, Lq, max_residues = simcore(
-            A,
+            AA,
             snr,
-            H,
+            HH,
+            MM,
+            NN,
+            Cn2vn,
+            Vn2cn,
             E_H,
             LDPC,
             Zf,
-            nr_ldpc_data,
+            Nr_ldpc_data,
             mode,
             bptype,
             trials,
@@ -117,13 +121,17 @@ function
         for k in 1:K
             stats = @timed Threads.@threads for i in 1:NTHREADS
                 sum_decoded[:,k,i], sum_ber[:,k,i] = simcore(
-                                                A,
+                                                AA,
                                                 snr[k],
-                                                H,
+                                                HH,
+                                                MM,
+                                                NN,
+                                                Cn2vn,
+                                                Vn2cn,
                                                 E_H,
                                                 LDPC,
                                                 Zf,
-                                                nr_ldpc_data,
+                                                Nr_ldpc_data,
                                                 mode,
                                                 bptype,
                                                 trials[k]÷NTHREADS,
@@ -149,13 +157,13 @@ function
         @. FER = 1 - FER
         BER = sum(sum_ber,dims=3)[:,:,1]
         for k = 1:K
-            BER[:,k] ./= (N*trials[k])
+            BER[:,k] ./= (NN*trials[k])
         end
 
         println()
 
         lowerfer = 1/maximum(trials)
-        lowerber = lowerfer/N
+        lowerber = lowerfer/NN
         replace!(x-> x < lowerfer ? lowerfer : x, FER)
         replace!(x-> x < lowerber ? lowerber : x, BER)
 

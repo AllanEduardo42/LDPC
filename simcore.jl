@@ -21,6 +21,10 @@ function
         A::Integer,
         snr::AbstractFloat,
         H::BitMatrix,
+        M::Integer,
+        N::Integer,
+        cn2vn::Vector{Vector{T}} where {T<:Integer},
+        vn2cn::Vector{Vector{T}} where {T<:Integer},
         E_H::Matrix{<:Integer},
         LDPC::Integer,
         Zf::Integer,
@@ -47,9 +51,7 @@ function
     end
     
 ################################## CONSTANTS ###################################
-
-    M,N = size(H)
-
+    
     # constant Zc of NR/5G
     Zc = nr_ldpc_data.Zc
 
@@ -59,10 +61,6 @@ function
     # transform snr in standard deviations
     variance = 1 ./ (exp10.(snr/10))
     stdev = sqrt.(variance)
-    
-    # list of checks and variables nodes
-    vn2cn  = make_vn2cn_list(H)
-    cn2vn  = make_cn2vn_list(H)
 
     # Set the random seeds
     rng_noise = Xoshiro(rgn_seed_noise)
@@ -227,31 +225,26 @@ function
 
         # 7) reset the simulation variables
         bitvector .= false
-        for n = 2*Zc+1:N
-            bitvector[n] = signbit(signal[n - 2*Zc])
-        end
-        calc_syndrome!(syndrome,bitvector,cn2vn)
         decoded .= false
-        resetmatrix!(Lr,vn2cn,0.0)
-        
+        resetmatrix!(Lr,M,N,vn2cn,0.0)        
         if mode == "List-RBP" || mode == "Mod-List-RBP"
             listres1 .= 0.0
             indices_res1 .= 0
             listres2 .= 0.0
             indices_res2 .= 0
-            resetmatrix!(inlist,vn2cn,false)
+            resetmatrix!(inlist,M,N,vn2cn,false)
         end
 
         # 8) init the llr priors
         calc_Lf!(view(Lf,2*Zc+1:N),signal,variance,bptype)
         
         # 9) init the Lq matrix
-        init_Lq!(Lq,Lf,vn2cn)
+        init_Lq!(Lq,Lf,cn2vn,M,N)
 
         # 10) precalculate the residues in RBP
         if mode == "RBP"
             calc_all_residues!(Lq,Lr,cn2vn,Lrn,signs,phi,Ms,Factors,addressinv,
-                residues)
+                residues,M,N)
         end
         
         # BP routine
@@ -302,10 +295,12 @@ function
                     test,
                     address,
                     addressinv,
-                    residues
+                    residues,
+                    M,
+                    N
                     )
                 # reset factors
-                resetmatrix!(Factors,vn2cn,1.0)
+                resetmatrix!(Factors,M,N,vn2cn,1.0)
             elseif mode == "Local-RBP"
                 if rbp_not_converged && max_residue[1] == 0.0
                     calc_all_residues_local!(Lq,Lr,cn2vn,Lrn,signs,phi,Ms,Factors,

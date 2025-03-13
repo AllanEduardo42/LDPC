@@ -27,7 +27,9 @@ function
         test::Bool,
         address::Matrix{<:Integer},
         addressinv::Matrix{<:Integer},
-        residues::Vector{<:AbstractFloat}
+        residues::Vector{<:AbstractFloat},
+        M::Integer,
+        N::Integer
     )
 
     @fastmath @inbounds for e in 1:num_edges
@@ -55,13 +57,13 @@ function
 
         # 4) set maximum residue to zero
         residues[max_edge] = 0.0
-
         # 5) update vn2cn messages Lq[vnmax,m] and bitvector[vnmax]
-        bitvector[vnmax] = update_Lq!(Lq,Lr,Lf[vnmax],vnmax,vn2cn,Lrn)
+        bitvector[vnmax] = update_Lq!(Lq,Lr,Lf[vnmax],vnmax,M*(vnmax-1),
+                                      vn2cn,Lrn)
 
         # 6) calculate residues
         calc_local_residues!(Lq,Lr,cn2vn,vn2cn,Lrn,signs,phi,Ms,Factors,addressinv,
-            residues,cnmax,vnmax)
+            residues,cnmax,vnmax,N)
     end
 end
 

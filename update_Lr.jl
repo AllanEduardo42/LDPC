@@ -12,6 +12,7 @@ function
         Lr::Matrix{<:AbstractFloat},
         Lq::Matrix{<:AbstractFloat},
         m::Integer,
+        ml::Integer,
         cn2vn::Vector{Vector{T}} where {T<:Integer},
         Lrn::Vector{<:AbstractFloat},
         ::Nothing,
@@ -21,7 +22,6 @@ function
     pLr = 1.0
     countzeros = 0
     n0 = 0
-    ml = LinearIndices(Lq)[1,m]-1
     @fastmath @inbounds for n in cn2vn[m]
         x = Lq[ml+n]
         if x == 0.0 # Lr[m,n] = 0 for n ≠ n0
