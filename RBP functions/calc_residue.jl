@@ -12,19 +12,25 @@ function
         ::Vector{<:AbstractFloat},
         Lq::Matrix{<:AbstractFloat},
         m::Integer,
-        n::Integer
+        n::Integer,
+        thres::AbstractFloat
     )
 
     @fastmath @inbounds begin
         li = LinearIndices(Ms)[m,n]
-        residue = Ms[li] - Lr[li]
-        Ld = Lr[li] + Lq'[li]
-        residue /= Ld
-        residue *= Factors[li]
-        if signbit(residue)
-            return -residue, li
+        new = Ms[li] + Lq'[li]        
+        if -thres ≤ new ≤ thres
+            return 0.0, li
         else
-            return residue, li
+            residue = Ms[li] - Lr[li]
+            Ld = Lr[li] + Lq'[li]
+            residue /= Ld
+            residue *= Factors[li]
+            if signbit(residue)
+                return -residue, li
+            else
+                return residue, li
+            end
         end
     end
 end

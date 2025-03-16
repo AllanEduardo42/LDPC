@@ -27,7 +27,8 @@ function
         test::Bool,
         address::Matrix{<:Integer},
         addressinv::Matrix{<:Integer},
-        residues::Vector{<:AbstractFloat}
+        residues::Vector{<:AbstractFloat},
+        thres::AbstractFloat
     )
 
     @fastmath @inbounds for e in 1:num_edges
@@ -61,7 +62,7 @@ function
 
         # 6) calculate residues
         calc_local_residues!(Lq,Lr,cn2vn,vn2cn,Lrn,signs,phi,Ms,Factors,addressinv,
-            residues,cnmax,vnmax)
+            residues,cnmax,vnmax,thres)
     end
 end
 

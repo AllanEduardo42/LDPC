@@ -32,6 +32,7 @@ function
         stop::Bool,
         decayfactor::AbstractFloat,
         listsizes::Vector{<:Integer},
+        thres::Vector{<:AbstractFloat},
         rgn_seed_noise::Integer,
         rng_seed_sample::Integer,
         rgn_seed_msg::Integer;
@@ -247,7 +248,7 @@ function
         # 10) precalculate the residues in RBP
         if mode == "RBP"
             calc_all_residues!(Lq,Lr,cn2vn,Lrn,signs,phi,Ms,Factors,addressinv,
-                residues)
+                residues,thres[1])
         end
         
         # BP routine
@@ -298,7 +299,8 @@ function
                     test,
                     address,
                     addressinv,
-                    residues
+                    residues,
+                    thres[iter]
                     )
                 # reset factors
                 resetmatrix!(Factors,vn2cn,1.0)
@@ -479,6 +481,9 @@ function
                 end
                 biterror .= (bitvector .≠ cword)
                 @inbounds ber[iter] = sum(biterror)
+            end
+            if iter > 30
+                thres = 0.0
             end
         end
 

@@ -42,8 +42,6 @@ end
 const INF = typemax(Int64)
 const INFFLOAT = 1e3
 const NINFFLOAT = -INFFLOAT
-const CLIP = 0.1*INFFLOAT
-const NCLIP = -CLIP
 const ALPHA = 0.875               # Min-Sum attenuation factor
 
 # Seeds
@@ -64,14 +62,19 @@ STOP::Bool = false # stop simulation at zero syndrome (if true, BER curves are
 MAXITER::Int = 50
 MAXIRBP::Int = 30
 DECAYS = [0.7, 0.8, 0.9, 1.0]
-# DECAYS = [0.9]
+# DECAYS = [1.0]
 SNR = [1.2, 1.6, 1.8, 2.0]
 TRIALS = 10 .^(0:length(SNR)-1)*2^10
+# fatias = collect(0.05:-0.01:0.01)
+# THRES = log.((0.5 .+ fatias)./(0.5 .- fatias))
+# THRES = [THRES; zeros(MAXIRBP - length(THRES))]
+# THRES = zeros(MAXITER)
+THRES = log(0.55/0.45)*[ones(5);zeros(MAXITER - 5)]
 
 # TEST
-MAXITER_TEST::Int = 2
+MAXITER_TEST::Int = 1
 SNR_TEST::Float64 = 2.0
-TRIALS_TEST::Int = 2
+TRIALS_TEST::Int = 1
 DECAY_TEST::Float64 = 0.85
 
 ################################ 6) BP SCHEDULE ################################
@@ -104,7 +107,7 @@ Bptypes[2] = "FAST"
 Maxiters[2] = MAXITER
 
 # RBP
-Active[3] = 0
+Active[3] = 1
 Bptypes[3] = "FAST"
 Maxiters[3] = MAXIRBP
 Decays[3] = DECAYS
@@ -116,7 +119,7 @@ Maxiters[4] = MAXIRBP
 Decays[4] = DECAYS
 
 # List-RBP
-Active[5] = 1
+Active[5] = 0
 Bptypes[5] = "FAST"
 Maxiters[5] = MAXIRBP
 Decays[5] = DECAYS

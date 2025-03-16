@@ -19,7 +19,8 @@ function calc_local_residues!(
     addressinv::Matrix{<:Integer},
     residues::Vector{<:AbstractFloat},
     cnmax::Integer,
-    vnmax::Integer
+    vnmax::Integer,
+    thres::AbstractFloat
 )
     for m in vn2cn[vnmax]
         if m ≠ cnmax    
@@ -28,7 +29,7 @@ function calc_local_residues!(
             # calculate the residues
             @fastmath @inbounds for n in cn2vn[m]
                 if n ≠ vnmax
-                    residue, li = calc_residue(Ms,Lr,Factors,Lrn,Lq,m,n)
+                    residue, li = calc_residue(Ms,Lr,Factors,Lrn,Lq,m,n,thres)
                     residues[addressinv[li]] = residue
                 end
             end

@@ -16,14 +16,15 @@ function calc_all_residues!(
     Ms::Matrix{<:AbstractFloat},
     Factors::Matrix{<:AbstractFloat},        
     addressinv::Matrix{<:Integer},
-    residues::Vector{<:AbstractFloat}
+    residues::Vector{<:AbstractFloat},
+    thres::AbstractFloat
 )
     for m in 1:M 
         # calculate the new check to node messages
         update_Lr!(Ms,Lq,m,cn2vn,Lrn,signs,phi)
         # calculate the residues
         @fastmath @inbounds for n in cn2vn[m]
-            residue, index = calc_residue(Ms,Lr,Factors,Lrn,Lq,m,n)
+            residue, index = calc_residue(Ms,Lr,Factors,Lrn,Lq,m,n,thres)
             residues[addressinv[index]] = residue
         end
     end

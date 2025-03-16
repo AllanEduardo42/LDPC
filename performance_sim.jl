@@ -100,6 +100,7 @@ function
             STOP,
             decay,
             Listsizes,
+            THRES,
             Rgn_noise_seeds[1],
             Rgn_samples_seeds[1],
             Rgn_message_seeds[1];
@@ -131,6 +132,7 @@ function
                                                 STOP,
                                                 decay,
                                                 Listsizes,
+                                                THRES,
                                                 Rgn_noise_seeds[i],
                                                 Rgn_samples_seeds[i],
                                                 Rgn_message_seeds[i])
