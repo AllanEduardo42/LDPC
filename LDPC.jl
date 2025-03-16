@@ -29,9 +29,9 @@ if length(ARGS) == 0
     SAVE = false
 elseif ARGS[1] == "true"
     SAVE = true
-    now_ = string(now())
-    mkdir("./Saved Data/"*now_)
-    file = open("./Saved Data/"*now_*"/output.txt", "w")
+    NOW = string(now())
+    mkdir("./Saved Data/"*NOW)
+    FILE = open("./Saved Data/"*NOW*"/output.txt", "w")
 else
     SAVE = false
 end
@@ -61,10 +61,10 @@ STOP::Bool = false # stop simulation at zero syndrome (if true, BER curves are
 
 MAXITER::Int = 50
 MAXIRBP::Int = 30
-DECAYS = [0.7, 0.8, 0.9, 1.0]
-# DECAYS = [1.0]
-SNR = [1.2, 1.6, 1.8, 2.0]
-TRIALS = 10 .^(0:length(SNR)-1)*2^10
+# FACTORS = [0.7, 0.8, 0.9, 1.0]
+FACTORS = [0.9]
+SNR = [1.2, 1.6, 1.8]
+TRIALS = 10 .^(0:length(SNR)-1)*2^5
 # fatias = collect(0.05:-0.01:0.01)
 # THRES = log.((0.5 .+ fatias)./(0.5 .- fatias))
 # THRES = [THRES; zeros(MAXIRBP - length(THRES))]
@@ -79,104 +79,104 @@ DECAY_TEST::Float64 = 0.85
 
 ################################ 6) BP SCHEDULE ################################
 
-Modes = ["Flooding","LBP","RBP","Local-RBP","List-RBP","Mod-List-RBP",
+MODES = ["Flooding","LBP","RBP","Local-RBP","List-RBP","Mod-List-RBP",
          "Random-List-RBP"]
-Num_modes = length(Modes)
-Active = zeros(Bool,Num_modes)
-Listsizes = zeros(Int,3)
+NUM_MODES = length(MODES)
+ACTIVE = zeros(Bool,NUM_MODES)
+LISTSIZES = zeros(Int,3)
 
 # BP type: "MKAY", "TANH", "FAST", "ALTN", "TABL", "MSUM"
-Bptypes = Vector{String}(undef,Num_modes)
+BPTYPES = Vector{String}(undef,NUM_MODES)
 
 # maximum number of BP iterations
-Maxiters = zeros(Int,Num_modes)
+MAXITERS = zeros(Int,NUM_MODES)
 
-Decays = Vector{Vector{<:AbstractFloat}}(undef,Num_modes)
-for i in 1:Num_modes
-    Decays[i] = [0.0]
+DECAYS = Vector{Vector{<:AbstractFloat}}(undef,NUM_MODES)
+for i in 1:NUM_MODES
+    DECAYS[i] = [0.0]
 end
 
 # Flooding
-Active[1] = 0
-Bptypes[1] = "FAST"
-Maxiters[1] = MAXITER
+ACTIVE[1] = 0
+BPTYPES[1] = "FAST"
+MAXITERS[1] = MAXITER
 
 # LBP
-Active[2] = 0
-Bptypes[2] = "FAST"
-Maxiters[2] = MAXITER
+ACTIVE[2] = 0
+BPTYPES[2] = "FAST"
+MAXITERS[2] = MAXITER
 
 # RBP
-Active[3] = 1
-Bptypes[3] = "FAST"
-Maxiters[3] = MAXIRBP
-Decays[3] = DECAYS
+ACTIVE[3] = 1
+BPTYPES[3] = "FAST"
+MAXITERS[3] = MAXIRBP
+DECAYS[3] = FACTORS
 
 # Local-RBP
-Active[4] = 0
-Bptypes[4] = "FAST"
-Maxiters[4] = MAXIRBP
-Decays[4] = DECAYS
+ACTIVE[4] = 0
+BPTYPES[4] = "FAST"
+MAXITERS[4] = MAXIRBP
+DECAYS[4] = FACTORS
 
 # List-RBP
-Active[5] = 0
-Bptypes[5] = "FAST"
-Maxiters[5] = MAXIRBP
-Decays[5] = DECAYS
+ACTIVE[5] = 0
+BPTYPES[5] = "FAST"
+MAXITERS[5] = MAXIRBP
+DECAYS[5] = FACTORS
 
 # Mod-List-RBP
-Active[6] = 0
-Bptypes[6] = "FAST"
-Maxiters[6] = MAXIRBP
-Decays[6] = DECAYS    
+ACTIVE[6] = 0
+BPTYPES[6] = "FAST"
+MAXITERS[6] = MAXIRBP
+DECAYS[6] = FACTORS    
 
 # Random-List-RBP
-Active[7] = 0
-Bptypes[7] = "FAST"
-Maxiters[7] = MAXIRBP
-Decays[7] = DECAYS
+ACTIVE[7] = 0
+BPTYPES[7] = "FAST"
+MAXITERS[7] = MAXIRBP
+DECAYS[7] = FACTORS
 
 # List-RBP sizes
-Listsizes[1] = 16
-Listsizes[2] = 2
-Listsizes[3] = 16
+LISTSIZES[1] = 16
+LISTSIZES[2] = 2
+LISTSIZES[3] = 16
 
 
 ########################### 7) MESSAGE AND CODEWORD ############################
 
 # Message (Payload) size
-A::Int = 1008
+AA::Int = 1008
 # Rate
-R::Float64 = 1/2
+RR::Float64 = 1/2
 # LDPC protocol: 1 = NR-LDPC; 2 = PEG; 3 = IEEE80216e;
 LDPC::Int = 3
-    densities = 2:11
+    DENSITIES = 2:11
 
 ############################# PARITY-CHECK MATRIX #############################
 
-Msg = zeros(Bool,A)
+MSG = zeros(Bool,AA)
 
 if LDPC == 1
-    Zf = 0
-    rv = 0
-    Cword, H, E_H, nr_ldpc_data = NR_LDPC_encode(Msg,R,rv)
-    M::Int, N::Int = size(H)
-    girth = find_girth(H,100000)
+    ZF = 0
+    RV = 0
+    CWORD, HH, E_H, NR_LDPC_DATA = NR_LDPC_encode(MSG,RR,RV)
+    MM, NN = size(HH)
+    GIRTH = find_girth(HH,100000)
 else
-    nr_ldpc_data = NR_LDPC_DATA(0,0,0,0,0,0,0,0,0,0,"0",0,[0],0,[false])
-    L = round(Int,A/R)
+    NR_LDPC_DATA = nr_ldpc_data(0,0,0,0,0,0,0,0,0,0,"0",0,[0],0,[false])
+    LL = round(Int,AA/RR)
     if LDPC == 2
-        N::Int = L
-        M::Int = L - A
+        NN = LL
+        MM = LL - AA
         # Vector of the variable node degrees
-        D = rand(Xoshiro(SEED_GRAPH),densities,N-M)
+        D = rand(Xoshiro(SEED_GRAPH),DENSITIES,NN-MM)
         # Generate Parity-Check Matrix by the PEG algorithm
-        H, girth = PEG(D,M,N)
+        HH, GIRTH = PEG(D,MM,NN)
     elseif LDPC == 3
-        H,Zf,E_H = IEEE80216e(L,R)
-        M::Int,N::Int = size(H)
-        L = N
-        girth = find_girth(H,100000)
+        HH,ZF,E_H = IEEE80216e(LL,RR)
+        MM::Int,NN::Int = size(HH)
+        LL = NN
+        GIRTH = find_girth(HH,100000)
     else
         throw(ArgumentError(
                     lazy"CHECK = $CHECK, but must be 1, 2 or 3"
@@ -184,25 +184,29 @@ else
     end
 end
 
-str = 
+# list of checks and variables nodes
+CN2VN  = make_cn2vn_list(HH)
+VN2CN  = make_vn2cn_list(HH)
+
+STR = 
 """############################### LDPC parameters ################################
 
-Parity Check Matrix: $M x $N"""
+Parity Check Matrix: $MM x $NN"""
 
-println(str)
+println(STR)
 if SAVE
-    println(file,str)
+    println(FILE,STR)
 end
 
-display(sparse(H))
+display(sparse(HH))
 
-str = """
+STR = """
 
-Graph girth = $girth
+Graph GIRTH = $GIRTH
 """
-println(str)
+println(STR)
 if SAVE
-    println(file,str)
+    println(FILE,STR)
 end
 
 # Number of Threads
@@ -214,58 +218,58 @@ end
 
 ####################### GENERATE NOISE AND SAMPLE SEEDS ########################
 
-Rgn_noise_seeds = zeros(Int,NTHREADS)
-Rgn_samples_seeds = zeros(Int,NTHREADS)
-Rgn_message_seeds = zeros(Int,NTHREADS)
-for i in eachindex(Rgn_noise_seeds)
-    Rgn_noise_seeds[i] = SEED_NOISE + i - 1
-    Rgn_samples_seeds[i] = SEED_SAMPL + i - 1
-    Rgn_message_seeds[i] = SEED_MESSA + 1 - 1
+RGN_NOISE_SEEDS = zeros(Int,NTHREADS)
+RGN_SAMPLE_SEEDS = zeros(Int,NTHREADS)
+RGN_MESSAGE_SEEDS = zeros(Int,NTHREADS)
+for i in eachindex(RGN_NOISE_SEEDS)
+    RGN_NOISE_SEEDS[i] = SEED_NOISE + i - 1
+    RGN_SAMPLE_SEEDS[i] = SEED_SAMPL + i - 1
+    RGN_MESSAGE_SEEDS[i] = SEED_MESSA + 1 - 1
 end
 
 ############################ PERFORMANCE SIMULATION ############################
 if TEST
     if TEST
-        LR = Dict()
-        LQ_ = Dict()
-        Max_residues = Dict()
-        for i in eachindex(Active)
-            if Active[i]
-                LR[Modes[i]], LQ_[Modes[i]], Max_residues[Modes[i]] = performance_sim(
+        LRM = Dict()
+        LQM = Dict()
+        MAX_RESIDUES = Dict()
+        for i in eachindex(ACTIVE)
+            if ACTIVE[i]
+                LRM[MODES[i]], LQM[MODES[i]], MAX_RESIDUES[MODES[i]] = performance_sim(
                                             SNR_TEST,
-                                            Modes[i],
+                                            MODES[i],
                                             TRIALS_TEST,
                                             MAXITER_TEST,
-                                            Bptypes[i],
+                                            BPTYPES[i],
                                             DECAY_TEST)
             end
         end
     end
 else
     if STOP
-        Fer_labels = Vector{String}()
-        Fermax = Vector{Vector{<:AbstractFloat}}()
+        FER_LABELS = Vector{String}()
+        FERMAX = Vector{Vector{<:AbstractFloat}}()
     end
     FER = Dict()
     BER = Dict()
-    for i in eachindex(Active)
-        if Active[i]
-            for decay in Decays[i]
+    for i in eachindex(ACTIVE)
+        if ACTIVE[i]
+            for decay in DECAYS[i]
                 if decay != 0.0
-                    mode = Modes[i]*" $decay"
+                    mode = MODES[i]*" $decay"
                 else
-                    mode = Modes[i]
+                    mode = MODES[i]
                 end
                 FER[mode], BER[mode] = performance_sim(
                                         SNR,
-                                        Modes[i],
+                                        MODES[i],
                                         TRIALS,
-                                        Maxiters[i],
-                                        Bptypes[i],
+                                        MAXITERS[i],
+                                        BPTYPES[i],
                                         decay)
                 if STOP
-                    push!(Fer_labels,mode*" ($(Bptypes[i]))")
-                    push!(Fermax,FER[mode][Maxiters[i],:])
+                    push!(FER_LABELS,mode*" ($(BPTYPES[i]))")
+                    push!(FERMAX,FER[mode][MAXITERS[i],:])
                 end
             end
         end
@@ -275,24 +279,24 @@ else
     if SAVE        
         if STOP
             aux = []
-            for i in eachindex(Fermax)
-                push!(aux,(Fer_labels[i],Fermax[i]))
+            for i in eachindex(FERMAX)
+                push!(aux,(FER_LABELS[i],FERMAX[i]))
             end
             FERS = Dict(aux)
-            CSV.write("./Saved Data/"*now_*"/FERMAX.csv", DataFrame(FERS), header=true)
+            CSV.write("./Saved Data/"*NOW*"/FERMAX.csv", DataFrame(FERS), header=true)
         else
-            for i in eachindex(Active)
-                if Active[i]
-                    for decay in Decays[i]
+            for i in eachindex(ACTIVE)
+                if ACTIVE[i]
+                    for decay in DECAYS[i]
                         if decay != 0.0
-                            mode = Modes[i]*" $decay"
+                            mode = MODES[i]*" $decay"
                         else
-                            mode = Modes[i]
+                            mode = MODES[i]
                         end
-                        open("./Saved Data/"*now_*"/FER_"*mode*".txt","w") do io
+                        open("./Saved Data/"*NOW*"/FER_"*mode*".txt","w") do io
                             writedlm(io,FER[mode])
                         end
-                        open("./Saved Data/"*now_*"/BER_"*mode*".txt","w") do io
+                        open("./Saved Data/"*NOW*"/BER_"*mode*".txt","w") do io
                             writedlm(io,BER[mode])
                         end
                     end
@@ -302,72 +306,72 @@ else
     else
 ################################### PLOTTING ###################################
         plotlyjs()
-        lim = log10(1/maximum(TRIALS))
+        LIM = log10(1/maximum(TRIALS))
     
         # FER x SNR
         if STOP && length(SNR) > 1
-            Fer_labels = permutedims(Fer_labels)
-            p = plot(
-                SNR,Fermax,
+            FER_LABELS = permutedims(FER_LABELS)
+            PLOT = plot(
+                SNR,FERMAX,
                 xlabel="SNR (dB)",
-                label=Fer_labels,
+                label=FER_LABELS,
                 lw=2,
                 title="FER MAXITER",
-                ylims=(lim,0)
+                ylims=(LIM,0)
             )
-            display(p)
+            display(PLOT)
         end
     
         if !STOP
     
             # FER x Iterations
-            labels = Vector{String}()
+            LABELS = Vector{String}()
             for snr in SNR
-                push!(labels,"SNR (dB) = $snr")
+                push!(LABELS,"SNR (dB) = $snr")
             end
-            labels = permutedims(labels)
-            for i in eachindex(Active)
-                if Active[i]
-                    for decay in Decays[i]
+            LABELS = permutedims(LABELS)
+            for i in eachindex(ACTIVE)
+                if ACTIVE[i]
+                    for decay in DECAYS[i]
                         if decay != 0.0
-                            mode = Modes[i]*" $decay"
+                            mode = MODES[i]*" $decay"
                         else
-                            mode = Modes[i]
+                            mode = MODES[i]
                         end
                         titlefer = "FER "*mode
-                        local p = plot(
-                            1:Maxiters[i],
+                        local PLOT = plot(
+                            1:MAXITERS[i],
                             FER[mode],
                             xlabel="Iteration",
-                            label=labels,
+                            label=LABELS,
                             lw=2,
                             title=titlefer,
-                            ylims=(lim,0)
+                            ylims=(LIM,0)
                         )
-                       display(p)
+                       display(PLOT)
                     end
                 end
             end
     
-            for i in eachindex(Active)
-                if Active[i]
-                    for decay in Decays[i]
+            for i in eachindex(ACTIVE)
+                if ACTIVE[i]
+                    for decay in DECAYS[i]
                         if decay != 0.0
-                            mode = Modes[i]*" $decay"
+                            mode = MODES[i]*" $decay"
                         else
-                            mode = Modes[i]
+                            mode = MODES[i]
                         end
                         titleber = "BER $mode"
-                        local p = plot(
-                            1:Maxiters[i],
+                        local PLOT = plot(
+                            1:MAXITERS[i],
                             BER[mode],
                             xlabel="Iteration",
-                            label=labels,
+                            label=LABELS,
                             lw=2,
                             title=titleber,
-                            ylims=(lim-2,0)
+                            ylims=(LIM-2,0)
                         )
-                        display(p)
+                        display(PLOT)
                     end
                 end
             end
@@ -376,6 +380,6 @@ else
 end
 println("The End!")
 if SAVE
-    println(file, "The End!")
-    close(file)
+    println(FILE, "The End!")
+    close(FILE)
 end

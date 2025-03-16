@@ -82,6 +82,8 @@ end
 function
     resetmatrix!(
         X::Matrix{<:Real},
+        M::Integer,
+        N::Integer,
         vn2cn::Vector{Vector{T}} where {T<:Integer},
         value::Real
     )    

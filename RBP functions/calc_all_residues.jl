@@ -17,7 +17,9 @@ function calc_all_residues!(
     Factors::Matrix{<:AbstractFloat},        
     addressinv::Matrix{<:Integer},
     residues::Vector{<:AbstractFloat},
-    thres::AbstractFloat
+    thres::AbstractFloat,
+    M::Integer,
+    N::Integer
 )
     for m in 1:M 
         # calculate the new check to node messages

@@ -71,7 +71,7 @@ function
         end
     end
     if mode == "List-RBP" || mode == "Mod-List-RBP" || mode == "Random-List-RBP"
-        str = "List 1 size: $(Listsizes[1])\nList 2 size: $(Listsizes[2])"
+        str = "List 1 size: $(LISTSIZES[1])\nList 2 size: $(LISTSIZES[2])"
         println(str)
         if SAVE
             println(file,str)
@@ -86,24 +86,28 @@ function
 
     if TEST
         Lr, Lq, max_residues = simcore(
-            A,
+            AA,
             snr,
-            H,
+            HH,
+            MM,
+            NN,
+            CN2VN,
+            VN2CN,
             E_H,
             LDPC,
-            Zf,
-            nr_ldpc_data,
+            ZF,
+            NR_LDPC_DATA,
             mode,
             bptype,
             trials,
             maxiter,
             STOP,
             decay,
-            Listsizes,
+            LISTSIZES,
             THRES,
-            Rgn_noise_seeds[1],
-            Rgn_samples_seeds[1],
-            Rgn_message_seeds[1];
+            RGN_NOISE_SEEDS[1],
+            RGN_SAMPLE_SEEDS[1],
+            RGN_MESSAGE_SEEDS[1];
             test=TEST,
             printtest = TEST ? PRIN : false)
         
@@ -118,24 +122,28 @@ function
         for k in 1:K
             stats = @timed Threads.@threads for i in 1:NTHREADS
                 sum_decoded[:,k,i], sum_ber[:,k,i] = simcore(
-                                                A,
+                                                AA,
                                                 snr[k],
-                                                H,
+                                                HH,
+                                                MM,
+                                                NN,
+                                                CN2VN,
+                                                VN2CN,
                                                 E_H,
                                                 LDPC,
-                                                Zf,
-                                                nr_ldpc_data,
+                                                ZF,
+                                                NR_LDPC_DATA,
                                                 mode,
                                                 bptype,
                                                 trials[k]÷NTHREADS,
                                                 maxiter,
                                                 STOP,
                                                 decay,
-                                                Listsizes,
+                                                LISTSIZES,
                                                 THRES,
-                                                Rgn_noise_seeds[i],
-                                                Rgn_samples_seeds[i],
-                                                Rgn_message_seeds[i])
+                                                RGN_NOISE_SEEDS[i],
+                                                RGN_SAMPLE_SEEDS[i],
+                                                RGN_MESSAGE_SEEDS[i])
             end
             str = """Elapsed $(round(stats.time;digits=1)) seconds ($(round(stats.gctime/stats.time*100;digits=2))% gc time, $(round(stats.compile_time/stats.time*100,digits=2))% compilation time)"""
             println(str)
@@ -151,13 +159,13 @@ function
         @. FER = 1 - FER
         BER = sum(sum_ber,dims=3)[:,:,1]
         for k = 1:K
-            BER[:,k] ./= (N*trials[k])
+            BER[:,k] ./= (NN*trials[k])
         end
 
         println()
 
         lowerfer = 1/maximum(trials)
-        lowerber = lowerfer/N
+        lowerber = lowerfer/NN
         replace!(x-> x < lowerfer ? lowerfer : x, FER)
         replace!(x-> x < lowerber ? lowerber : x, BER)
 

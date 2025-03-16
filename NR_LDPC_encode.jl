@@ -11,7 +11,7 @@ include("NR_LDPC_functions.jl")
 
 const R_LBRM = 2//3
 
-struct NR_LDPC_DATA
+struct nr_ldpc_data
     A::Integer
     B::Integer
     C::Integer

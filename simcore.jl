@@ -21,10 +21,14 @@ function
         A::Integer,
         snr::AbstractFloat,
         H::BitMatrix,
+        M::Integer,
+        N::Integer,
+        cn2vn::Vector{Vector{T}} where {T<:Integer},
+        vn2cn::Vector{Vector{T}} where {T<:Integer},
         E_H::Matrix{<:Integer},
         LDPC::Integer,
         Zf::Integer,
-        nr_ldpc_data::NR_LDPC_DATA,
+        Nr_ldpc_data::nr_ldpc_data,
         mode::String,
         bptype::String,
         trials::Integer,
@@ -49,10 +53,8 @@ function
     
 ################################## CONSTANTS ###################################
 
-    M,N = size(H)
-
     # constant Zc of NR/5G
-    Zc = nr_ldpc_data.Zc
+    Zc = Nr_ldpc_data.Zc
 
     # number of edges in the graph
     num_edges = sum(H)
@@ -60,10 +62,6 @@ function
     # transform snr in standard deviations
     variance = 1 ./ (exp10.(snr/10))
     stdev = sqrt.(variance)
-    
-    # list of checks and variables nodes
-    vn2cn  = make_vn2cn_list(H)
-    cn2vn  = make_cn2vn_list(H)
 
     # Set the random seeds
     rng_noise = Xoshiro(rgn_seed_noise)
@@ -186,7 +184,7 @@ function
 
         # 2) generate the cword
         if LDPC == 1
-            cword = NR_LDPC_encode(E_H, msg, nr_ldpc_data)
+            cword = NR_LDPC_encode(E_H, msg, Nr_ldpc_data)
         elseif LDPC == 3
             cword = IEEE80216e_parity_bits(msg,Zf,E_H)
         end
@@ -230,13 +228,13 @@ function
         bitvector .= false
         syndrome .= true
         decoded .= false
-        resetmatrix!(Lr,vn2cn,0.0)
+        resetmatrix!(Lr,M,N,vn2cn,0.0)
         if mode == "List-RBP" || mode == "Mod-List-RBP"
             listres1 .= 0.0
             indices_res1 .= 0
             listres2 .= 0.0
             indices_res2 .= 0
-            resetmatrix!(inlist,vn2cn,false)
+            resetmatrix!(inlist,M,N,vn2cn,false)
         end
 
         # 8) init the llr priors
@@ -248,7 +246,7 @@ function
         # 10) precalculate the residues in RBP
         if mode == "RBP"
             calc_all_residues!(Lq,Lr,cn2vn,Lrn,signs,phi,Ms,Factors,addressinv,
-                residues,thres[1])
+                residues,thres[1],M,N)
         end
         
         # BP routine
@@ -303,7 +301,7 @@ function
                     thres[iter]
                     )
                 # reset factors
-                resetmatrix!(Factors,vn2cn,1.0)
+                resetmatrix!(Factors,M,N,vn2cn,1.0)
             elseif mode == "Local-RBP"
                 if rbp_not_converged && max_residue[1] == 0.0
                     calc_all_residues_local!(Lq,Lr,cn2vn,Lrn,signs,phi,Ms,Factors,
@@ -336,7 +334,7 @@ function
                         max_indices
                     )
                     # reset factors
-                    resetmatrix!(Factors,vn2cn,1.0)
+                    resetmatrix!(Factors,M,N,vn2cn,1.0)
                 end              
             elseif mode == "List-RBP"
                 if rbp_not_converged && listres1[1] == 0.0
@@ -372,7 +370,7 @@ function
                         inlist
                     )
                     # reset factors
-                    resetmatrix!(Factors,vn2cn,1.0)
+                    resetmatrix!(Factors,M,N,vn2cn,1.0)
                 end       
             elseif mode == "Mod-List-RBP"
                 mod_list_RBP!(
@@ -403,7 +401,7 @@ function
                     syndrome
                 )
                 # reset factors
-                resetmatrix!(Factors,vn2cn,1.0)
+                resetmatrix!(Factors,M,N,vn2cn,1.0)
             elseif mode == "Random-List-RBP"
                 random_list_RBP!(
                     bitvector,
@@ -432,7 +430,7 @@ function
                     inlist
                 )
                 # reset factors
-                resetmatrix!(Factors,vn2cn,1.0)
+                resetmatrix!(Factors,M,N,vn2cn,1.0)
             end
     
             calc_syndrome!(syndrome,bitvector,cn2vn)
