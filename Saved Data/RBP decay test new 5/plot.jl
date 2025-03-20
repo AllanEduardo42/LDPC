@@ -8,11 +8,11 @@ FB = ["F","B"]
 maxiter = 30
 
 plotlyjs()
-directory = "./Saved Data/RBP decay test new/"
+directory = "./Saved Data/RBP decay test new 5/"
 lim = log10(1/maximum(1000*2^10))
 
 for j=1:1
-    title = FB[j]*"ER RBP New"
+    title = FB[j]*"ER RBP New 5"
     p = plot()
     for i in eachindex(decays)
         sdecay = string(decays[i])

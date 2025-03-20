@@ -33,8 +33,6 @@ function
 
     @fastmath @inbounds for e in 1:num_edges
 
-        # display("e = $e")
-
         # 1) Find largest residue  and coordenates
         max_edge, maxresidue = findmaxedge(residues)
         if max_edge == 0

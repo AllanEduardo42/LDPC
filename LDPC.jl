@@ -61,21 +61,32 @@ STOP::Bool = false # stop simulation at zero syndrome (if true, BER curves are
 
 MAXITER::Int = 50
 MAXIRBP::Int = 30
-# FACTORS = [0.7, 0.8, 0.9, 1.0]
-FACTORS = [0.9]
-SNR = [1.2, 1.6, 1.8]
-TRIALS = 10 .^(0:length(SNR)-1)*2^5
+FACTORS = [0.7, 0.8, 0.9, 1.0]
+# FACTORS = [0.9]
+SNR = [1.2, 1.6, 1.8, 2.0]
+TRIALS = 10 .^(0:length(SNR)-1)*2^10
+# new 1
+# THRES = log(0.55/0.45)*ones(MAXITER)
+# new 2
+# THRES = log(0.55/0.45)*[ones(5);zeros(MAXIRBP - 5)]
+# new 3
 # fatias = collect(0.05:-0.01:0.01)
+# new 4
+# fatias = collect(0.06:-0.02:0.02)
+# new 5
+# fatias = collect(0.1:-0.05:0.05)
 # THRES = log.((0.5 .+ fatias)./(0.5 .- fatias))
 # THRES = [THRES; zeros(MAXIRBP - length(THRES))]
+# new 6
+THRES = log(0.55/0.45)*[ones(1);zeros(MAXIRBP - 1)]
 # THRES = zeros(MAXITER)
-THRES = log(0.55/0.45)*[ones(5);zeros(MAXITER - 5)]
+
 
 # TEST
 MAXITER_TEST::Int = 1
 SNR_TEST::Float64 = 2.0
 TRIALS_TEST::Int = 1
-DECAY_TEST::Float64 = 0.85
+DECAY_TEST::Float64 = 1.0
 
 ################################ 6) BP SCHEDULE ################################
 

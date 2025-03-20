@@ -28,12 +28,12 @@ function
     end
     println(str)
     if SAVE
-        println(file,str)
+        println(FILE,str)
     end
     str = "Number of trials: $trials"
     println(str)
     if SAVE
-        println(file,str)
+        println(FILE,str)
     end
     str = "Message passing protocol: $mode (using "
     if bptype == "MKAY"
@@ -51,7 +51,7 @@ function
     end
     println(str)
     if SAVE
-        println(file,str)
+        println(FILE,str)
     end
     str=
     """Maximum number of iterations: $maxiter
@@ -60,26 +60,26 @@ function
     Stop at zero syndrome ? $STOP"""
     println(str)
     if SAVE
-        println(file,str)
+        println(FILE,str)
     end
     if mode == "RBP" || mode == "Local-RBP" || mode == "List-RBP" ||
        mode == "Mod-List-RBP" || mode == "Random-List-RBP"
         str = "RBP decaying factor: $decay"
         println(str)
         if SAVE
-            println(file,str)
+            println(FILE,str)
         end
     end
     if mode == "List-RBP" || mode == "Mod-List-RBP" || mode == "Random-List-RBP"
         str = "List 1 size: $(LISTSIZES[1])\nList 2 size: $(LISTSIZES[2])"
         println(str)
         if SAVE
-            println(file,str)
+            println(FILE,str)
         end
     end
     println()
     if SAVE
-        println(file,"")
+        println(FILE,"")
     end
 
     ################################ MULTITHREADING ################################
@@ -148,7 +148,7 @@ function
             str = """Elapsed $(round(stats.time;digits=1)) seconds ($(round(stats.gctime/stats.time*100;digits=2))% gc time, $(round(stats.compile_time/stats.time*100,digits=2))% compilation time)"""
             println(str)
             if SAVE
-                println(file,str)
+                println(FILE,str)
             end
         end
 
