@@ -61,26 +61,10 @@ STOP::Bool = false # stop simulation at zero syndrome (if true, BER curves are
 
 MAXITER::Int = 50
 MAXIRBP::Int = 30
-FACTORS = [0.7, 0.8, 0.9, 1.0]
-# FACTORS = [0.9]
-SNR = [1.2, 1.6, 1.8, 2.0]
-TRIALS = 10 .^(0:length(SNR)-1)*2^10
-# new 1
-# THRES = log(0.55/0.45)*ones(MAXITER)
-# new 2
-# THRES = log(0.55/0.45)*[ones(5);zeros(MAXIRBP - 5)]
-# new 3
-# fatias = collect(0.05:-0.01:0.01)
-# new 4
-# fatias = collect(0.06:-0.02:0.02)
-# new 5
-# fatias = collect(0.1:-0.05:0.05)
-# THRES = log.((0.5 .+ fatias)./(0.5 .- fatias))
-# THRES = [THRES; zeros(MAXIRBP - length(THRES))]
-# new 6
-THRES = log(0.55/0.45)*[ones(1);zeros(MAXIRBP - 1)]
-# THRES = zeros(MAXITER)
-
+# FACTORS = [0.7, 0.8, 0.9, 1.0]
+FACTORS = [1.0]
+SNR = [1.2, 1.6, 1.8]
+TRIALS = 10 .^(0:length(SNR)-1)*2^5
 
 # TEST
 MAXITER_TEST::Int = 1
@@ -91,7 +75,7 @@ DECAY_TEST::Float64 = 1.0
 ################################ 6) BP SCHEDULE ################################
 
 MODES = ["Flooding","LBP","RBP","Local-RBP","List-RBP","Mod-List-RBP",
-         "Random-List-RBP"]
+         "Random-List-RBP","RBP-genius"]
 NUM_MODES = length(MODES)
 ACTIVE = zeros(Bool,NUM_MODES)
 LISTSIZES = zeros(Int,3)
@@ -107,45 +91,59 @@ for i in 1:NUM_MODES
     DECAYS[i] = [0.0]
 end
 
+i = 1
 # Flooding
-ACTIVE[1] = 0
-BPTYPES[1] = "FAST"
-MAXITERS[1] = MAXITER
+ACTIVE[i] = 0
+BPTYPES[i] = "FAST"
+MAXITERS[i] = MAXITER
 
 # LBP
-ACTIVE[2] = 0
-BPTYPES[2] = "FAST"
-MAXITERS[2] = MAXITER
+i += 1
+ACTIVE[i] = 0
+BPTYPES[i] = "FAST"
+MAXITERS[i] = MAXITER
 
 # RBP
-ACTIVE[3] = 1
-BPTYPES[3] = "FAST"
-MAXITERS[3] = MAXIRBP
-DECAYS[3] = FACTORS
+i += 1
+ACTIVE[i] = 1
+BPTYPES[i] = "FAST"
+MAXITERS[i] = MAXITER
+DECAYS[i] = FACTORS
 
 # Local-RBP
-ACTIVE[4] = 0
-BPTYPES[4] = "FAST"
-MAXITERS[4] = MAXIRBP
-DECAYS[4] = FACTORS
+i += 1
+ACTIVE[i] = 0
+BPTYPES[i] = "FAST"
+MAXITERS[i] = MAXITER
+DECAYS[i] = FACTORS
 
 # List-RBP
-ACTIVE[5] = 0
-BPTYPES[5] = "FAST"
-MAXITERS[5] = MAXIRBP
-DECAYS[5] = FACTORS
+i += 1
+ACTIVE[i] = 0
+BPTYPES[i] = "FAST"
+MAXITERS[i] = MAXITER
+DECAYS[i] = FACTORS
 
 # Mod-List-RBP
-ACTIVE[6] = 0
-BPTYPES[6] = "FAST"
-MAXITERS[6] = MAXIRBP
-DECAYS[6] = FACTORS    
+i += 1
+ACTIVE[i] = 0
+BPTYPES[i] = "FAST"
+MAXITERS[i] = MAXITER
+DECAYS[i] = FACTORS
 
 # Random-List-RBP
-ACTIVE[7] = 0
-BPTYPES[7] = "FAST"
-MAXITERS[7] = MAXIRBP
-DECAYS[7] = FACTORS
+i += 1
+ACTIVE[i] = 0
+BPTYPES[i] = "FAST"
+MAXITERS[i] = MAXITER
+DECAYS[i] = FACTORS
+
+# RBP-genius
+i += 1
+ACTIVE[i] = 1
+BPTYPES[i] = "FAST"
+MAXITERS[i] = MAXITER
+DECAYS[i] = FACTORS
 
 # List-RBP sizes
 LISTSIZES[1] = 16

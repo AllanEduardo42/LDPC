@@ -104,7 +104,6 @@ function
             STOP,
             decay,
             LISTSIZES,
-            THRES,
             RGN_NOISE_SEEDS[1],
             RGN_SAMPLE_SEEDS[1],
             RGN_MESSAGE_SEEDS[1];
@@ -140,7 +139,6 @@ function
                                                 STOP,
                                                 decay,
                                                 LISTSIZES,
-                                                THRES,
                                                 RGN_NOISE_SEEDS[i],
                                                 RGN_SAMPLE_SEEDS[i],
                                                 RGN_MESSAGE_SEEDS[i])

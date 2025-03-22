@@ -10,6 +10,7 @@ include("calc_syndrome.jl")
 include("flooding.jl")
 include("LBP.jl")
 include("RBP.jl")
+include("RBP-genius.jl")
 include("Local_RBP.jl")
 include("List-RBP.jl")
 # include("Mod-List-RBP.jl")
@@ -36,7 +37,6 @@ function
         stop::Bool,
         decayfactor::AbstractFloat,
         listsizes::Vector{<:Integer},
-        thres::Vector{<:AbstractFloat},
         rgn_seed_noise::Integer,
         rng_seed_sample::Integer,
         rgn_seed_msg::Integer;
@@ -45,7 +45,7 @@ function
     )
 
     if mode == "RBP" || mode == "Local-RBP" || mode == "List-RBP" || 
-       mode == "Mod-List-RBP" || mode == "Random-List-RBP"
+       mode == "Mod-List-RBP" || mode == "Random-List-RBP" || mode == "RBP-genius"
         RBP = true
     else
         RBP = false
@@ -124,15 +124,13 @@ function
     phi = (bptype == "TABL") ? lookupTable() : nothing
 
     # Set other variables that depend on the mode
-
-    # supermode = RBP
     Ms = RBP ? H*0.0 : nothing
     Factors  = RBP ? 1.0*H  : nothing
     all_max_res = (test && RBP) ? zeros(maxiter*num_edges) : nothing
     all_max_res_alt = (test && RBP) ? zeros(num_edges) : nothing
 
     # mode = RBP
-    if mode == "RBP"
+    if mode == "RBP" || mode == "RBP-genius"
         residues = zeros(num_edges)
         address = zeros(Int,2,num_edges)
         addressinv = 0*H
@@ -244,9 +242,9 @@ function
         init_Lq!(Lq,Lf,vn2cn)
 
         # 10) precalculate the residues in RBP
-        if mode == "RBP"
+        if mode == "RBP" || mode == "RBP-genius"
             calc_all_residues!(Lq,Lr,cn2vn,Lrn,signs,phi,Ms,Factors,addressinv,
-                residues,thres[1],M,N)
+                residues,M)
         end
         
         # BP routine
@@ -297,8 +295,31 @@ function
                     test,
                     address,
                     addressinv,
-                    residues,
-                    thres[iter]
+                    residues
+                    )
+                # reset factors
+                resetmatrix!(Factors,M,N,vn2cn,1.0)
+            elseif mode == "RBP-genius"
+                RBP_genius!(
+                    bitvector,
+                    cword,
+                    Lq,
+                    Lr,
+                    Lf,
+                    cn2vn,
+                    vn2cn,
+                    Lrn,
+                    signs,
+                    phi,
+                    decayfactor,
+                    num_edges,
+                    Ms,
+                    Factors,
+                    all_max_res_alt,
+                    test,
+                    address,
+                    addressinv,
+                    residues
                     )
                 # reset factors
                 resetmatrix!(Factors,M,N,vn2cn,1.0)
