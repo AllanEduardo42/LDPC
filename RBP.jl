@@ -46,19 +46,20 @@ function
         end
 
         # 2) Decay the RBP factor corresponding to the maximum residue
-        lmax = decay!(cnmax,vnmax,Factors,decayfactor)
+        decay!(cnmax,vnmax,Factors,decayfactor)
 
         # 3) update check to node message Lr[cnmax,vnmax]
-        RBP_update_Lr!(lmax,Lr,Ms,cnmax,vnmax,cn2vn,Lq,Lrn,signs,phi)
+        Lr[cnmax,vnmax] = Ms[cnmax,vnmax]
+        # RBP_update_Lr!(lmax,Lr,Ms,cnmax,vnmax,cn2vn,Lq,Lrn,signs,phi)
 
         # 4) set maximum residue to zero
         residues[max_edge] = 0.0
 
         # 5) update vn2cn messages Lq[vnmax,m] and bitvector[vnmax]
-        bitvector[vnmax] = update_Lq!(Lq,Lr,Lf[vnmax],vnmax,vn2cn,Lrn)
+        bitvector[vnmax] = update_Lq!(Lq,Lr,Lf[vnmax],vnmax,vn2cn[vnmax],Lrn)
 
         # 6) calculate residues
-        calc_local_residues!(Lq,Lr,cn2vn,vn2cn,Lrn,signs,phi,Ms,Factors,addressinv,
+        calc_local_residues!(Lq,Lr,cn2vn,vn2cn[vnmax],Lrn,signs,phi,Ms,Factors,addressinv,
             residues,cnmax,vnmax)
     end
 end

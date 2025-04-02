@@ -14,16 +14,15 @@ function minsum!(
     Ms::Matrix{<:AbstractFloat},
     signs::Vector{Bool},
     m::Integer,
-    cn2vn::Vector{Vector{T}} where {T<:Integer}
+    vns::Vector{<:Integer}
     )
 
     s = false
     minL = INFFLOAT
     minL2 = INFFLOAT
-    max_idx = cn2vn[m][1]
-    ml = LinearIndices(Lq)[1,m]-1
-    @fastmath @inbounds for n in cn2vn[m]
-        β, signs[n], s = abs_sign!(Lq[ml+n],s)
+    max_idx = vns[1]
+    @fastmath @inbounds for n in vns
+        β, signs[n], s = abs_sign!(Lq[n,m],s)
         if β < minL
             max_idx = n
             minL, minL2 = β, minL
@@ -34,7 +33,7 @@ function minsum!(
     minL *= ALPHA
     minL2 *= ALPHA
 
-    @fastmath @inbounds for n in cn2vn[m]
+    @fastmath @inbounds for n in vns
         if signs[n] ⊻ s
             Ms[m,n] = -minL
         else

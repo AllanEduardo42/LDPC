@@ -150,7 +150,7 @@ function
     end
 
     # mode = Local-RBP
-    max_indices = (mode == "Local-RBP") ? zeros(Int,3) : nothing
+    maxcoords = (mode == "Local-RBP") ? zeros(Int,6) : nothing
     max_residue = (mode == "Local-RBP") ? zeros(3) : nothing
 
     # mode = List-RBP
@@ -158,14 +158,14 @@ function
         mode == "Random-List-RBP"
 
         listres1 = zeros(listsizes[1]+1)
-        indices_res1 = zeros(Int,listsizes[1]+1)
+        coords1 = zeros(Int,2,listsizes[1]+1)
         inlist = Matrix(false*H)
         if listsizes[2] == 1
             listres2 = zeros(listsizes[1]+1)
-            indices_res2 = zeros(Int,listsizes[1]+1)
+            coords2 = zeros(Int,2,listsizes[1]+1)
         else
             listres2 = zeros(listsizes[2]+1)
-            indices_res2 = zeros(Int,listsizes[2]+1)
+            coords2 = zeros(Int,2,listsizes[2]+1)
         end
     end
 
@@ -225,9 +225,9 @@ function
         resetmatrix!(Lr,M,N,vn2cn,0.0)
         if mode == "List-RBP" || mode == "Mod-List-RBP"
             listres1 .= 0.0
-            indices_res1 .= 0
+            coords1 .= 0
             listres2 .= 0.0
-            indices_res2 .= 0
+            coords2 .= 0
             resetmatrix!(inlist,M,N,vn2cn,false)
         end
 
@@ -331,9 +331,10 @@ function
             elseif mode == "Local-RBP"
                 if rbp_not_converged && max_residue[1] == 0.0
                     calc_all_residues_local!(Lq,Lr,cn2vn,Lrn,signs,phi,Ms,Factors,
-                        max_residue,max_indices)
+                        max_residue,maxcoords,M)
                     max_residue[3] = max_residue[2]
-                    max_indices[3] = max_indices[2]
+                    maxcoords[6] = maxcoords[4]
+                    maxcoords[5] = maxcoords[3]
                     if max_residue[1] == 0.0
                         rbp_not_converged = false
                     end
@@ -357,7 +358,7 @@ function
                         test,
                         rng_rbp,
                         max_residue,
-                        max_indices
+                        maxcoords
                     )
                     # reset factors
                     resetmatrix!(Factors,M,N,vn2cn,1.0)
@@ -365,7 +366,7 @@ function
             elseif mode == "List-RBP"
                 if rbp_not_converged && listres1[1] == 0.0
                     calc_all_residues_list!(Lq,Lr,cn2vn,Lrn,signs,phi,Ms,Factors,
-                        listsizes,listres1,indices_res1,inlist,M)
+                        listsizes,listres1,coords1,inlist,M)
                     if listres1[1] == 0.0
                         rbp_not_converged = false
                     end
@@ -390,9 +391,9 @@ function
                         rng_rbp,
                         listsizes,
                         listres1,
-                        indices_res1,
+                        coords1,
                         listres2,
-                        indices_res2,
+                        coords2,
                         inlist
                     )
                     # reset factors
@@ -418,10 +419,10 @@ function
                     rng_rbp,
                     listsizes,
                     listres1,
-                    indices_res1,
+                    coords1,
                     listn1,
                     listres2,
-                    indices_res2,
+                    coords2,
                     listn2,
                     inlist,
                     syndrome
@@ -448,10 +449,10 @@ function
                     rng_rbp,
                     listsizes,
                     listres1,
-                    indices_res1,
+                    coords1,
                     listn1,
                     listres2,
-                    indices_res2,
+                    coords2,
                     listn2,
                     inlist
                 )

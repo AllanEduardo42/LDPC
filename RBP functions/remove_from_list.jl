@@ -5,19 +5,21 @@
 
 function 
     remove_from_list!(
-        li::Integer,
+        cnmax::Integer,
+        vnmax::Integer,
         listsize::Integer,
         listres::Vector{<:AbstractFloat},
-        indices_res::Vector{<:Integer},
+        coords::Matrix{<:Integer},
         inlist::Matrix{Bool},
         pos::Integer
     )
 
-    @inbounds inlist[li] = false
+    @inbounds inlist[cnmax,vnmax] = false
 
     # update the list
     @inbounds for i in pos:listsize
         listres[i] = listres[i+1]
-        indices_res[i] = indices_res[i+1]
+        coords[1,i] = coords[1,i+1]
+        coords[2,i] = coords[2,i+1]
     end    
 end

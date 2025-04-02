@@ -27,7 +27,7 @@ function
         test::Bool,
         rng_rbp::AbstractRNG,
         max_residue::Vector{<:AbstractFloat},
-        max_indices::Vector{<:Integer}
+        maxcoords::Vector{<:Integer}
     )
 
     @fastmath @inbounds for e in 1:num_edges
@@ -44,37 +44,38 @@ function
         if max_residue[1] == 0.0
             cnmax = rand(rng_rbp,1:length(cn2vn))
             vnmax = rand(rng_rbp,cn2vn[cnmax])
-            lmax = LinearIndices(Factors)[cnmax,vnmax]
         else
-            lmax = max_indices[1]
-            ci = CartesianIndices(Factors)[lmax]
-            cnmax, vnmax = ci[1], ci[2]
+            cnmax = maxcoords[1]
+            vnmax = maxcoords[2]
         end        
 
         # 2) Decay the RBP factor corresponding to the maximum residue
-        Factors[lmax] *= decayfactor
+        Factors[cnmax,vnmax] *= decayfactor
 
         # 3) update check to node message Lr[cnmax,vnmax]
-        RBP_update_Lr!(lmax,Lr,Ms,cnmax,vnmax,cn2vn,Lq,Lrn,signs,phi)
+        # RBP_update_Lr!(lmax,Lr,Ms,cnmax,vnmax,cn2vn,Lq,Lrn,signs,phi)
+        Lr[cnmax,vnmax] = Ms[cnmax,vnmax]
         
         # 4) clear the max residue
         max_residue[1] = 0.0
         # max_residue[2] = 0.0
 
         # 5) update vn2cn messages Lq[vnmax,m] and bitvector[vnmax]
-        bitvector[vnmax] = update_Lq!(Lq,Lr,Lf[vnmax],vnmax,vn2cn,Lrn)
+        bitvector[vnmax] = update_Lq!(Lq,Lr,Lf[vnmax],vnmax,vn2cn[vnmax],Lrn)
 
         # 6) calculate residues
-       calc_local_residues_local!(Lq,Lr,cn2vn,vn2cn,Lrn,signs,phi,Ms,Factors,
-            max_residue,max_indices,cnmax,vnmax)
+       calc_local_residues_local!(Lq,Lr,cn2vn,vn2cn[vnmax],Lrn,signs,phi,Ms,Factors,
+            max_residue,maxcoords,cnmax,vnmax)
     
         # update list
         if max_residue[1] < max_residue[3]
             max_residue[1], max_residue[3] = max_residue[3], max_residue[1] 
-            max_indices[1], max_indices[3] = max_indices[3], max_indices[1]    
+            maxcoords[1], maxcoords[5] = maxcoords[5], maxcoords[1] 
+            maxcoords[2], maxcoords[6] = maxcoords[6], maxcoords[2]      
         else
             max_residue[3] = max_residue[2]
-            max_indices[3] = max_indices[2]
+            maxcoords[5] = maxcoords[3]
+            maxcoords[6] = maxcoords[4]
         end
     end
 end

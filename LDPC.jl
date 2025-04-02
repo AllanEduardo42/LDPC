@@ -63,14 +63,14 @@ MAXITER::Int = 50
 MAXIRBP::Int = 30
 # FACTORS = [0.7, 0.8, 0.9, 1.0]
 FACTORS = [0.9]
-SNR = [1.2]
-TRIALS = 10 .^(0:length(SNR)-1)*2^10
+SNR = [1.2, 1.6, 1.8]
+TRIALS = 10 .^(0:length(SNR)-1)*2^5
 
 # TEST
-MAXITER_TEST::Int = 2
+MAXITER_TEST::Int = 1
 SNR_TEST::Float64 = 2.0
 TRIALS_TEST::Int = 1
-DECAY_TEST::Float64 = 0.4
+DECAY_TEST::Float64 = 0.9
 
 ################################ 6) BP SCHEDULE ################################
 
@@ -105,7 +105,7 @@ MAXITERS[i] = MAXITER
 
 # RBP
 i += 1
-ACTIVE[i] = 1
+ACTIVE[i] = 0
 BPTYPES[i] = "FAST"
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
@@ -119,7 +119,7 @@ DECAYS[i] = FACTORS
 
 # List-RBP
 i += 1
-ACTIVE[i] = 0
+ACTIVE[i] = 1
 BPTYPES[i] = "FAST"
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS

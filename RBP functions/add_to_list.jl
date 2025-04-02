@@ -1,9 +1,10 @@
 function add_to_list!(
         inlist::Union{Matrix{Bool},Nothing},
         listres::Vector{<:AbstractFloat},
-        indices_res::Vector{<:Integer},
+        coords::Matrix{<:Integer},
         residue::AbstractFloat,
-        li::Integer,
+        m::Integer,
+        n::Integer,
         listsize::Integer
     )
 
@@ -28,37 +29,42 @@ function add_to_list!(
                 end
             end
 
-            update_inlist!(inlist,indices_res,li)
+            update_inlist!(inlist,coords,m,n)
 
             for j=listsize:-1:i+1
                 listres[j] = listres[j-1]
-                indices_res[j] = indices_res[j-1]
+                coords[1,j] = coords[1,j-1]
+                coords[2,j] = coords[2,j-1]
             end
         else
             i = 1
         end
 
-        indices_res[i] = li
+        coords[1,i] = m
+        coords[2,i] = n
         listres[i] = residue        
     end
 end
 
 function update_inlist!(
     inlist::Matrix{Bool},
-    indices_res::Vector{<:Integer},
-    li::Integer
+    coords::Matrix{<:Integer},
+    m::Integer,
+    n::Integer,
 )
-    last = indices_res[end-1]
-    if last ≠ 0
-        inlist[last] = false
+    mlast = coords[1,end-1]
+    nlast = coords[2,end-1]
+    if mlast ≠ 0
+        inlist[mlast,nlast] = false
     end
-    inlist[li] = true
+    inlist[m,n] = true
 
 end
 
 function update_inlist!(
     ::Nothing,
-    ::Vector{<:Integer},
+    ::Matrix{<:Integer},
+    ::Integer,
     ::Integer
 )
 

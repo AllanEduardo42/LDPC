@@ -15,16 +15,15 @@ function
         n::Integer
     )
 
-    @fastmath @inbounds begin
-        li = LinearIndices(Ms)[m,n]        
-        residue = Ms[li] - Lr[li]
-        old = Lr[li] + Lq'[li]
+    @fastmath @inbounds begin      
+        residue = Ms[m,n] - Lr[m,n]
+        old = Lr[m,n] + Lq[n,m]
         residue /= old
-        residue *= Factors[li]
+        residue *= Factors[m,n]
         if signbit(residue)
-            return -residue, li
+            return -residue
         else
-            return residue, li
+            return residue
         end
     end
 end
@@ -42,11 +41,10 @@ function
     )
 
     @fastmath @inbounds begin
-        li = LinearIndices(Ms)[m,n]
-        residue = Ms[li] - Lr[li]
-        # old = Lr[li] + Lq'[li]
-        # residue /= old
-        residue *= Factors[li]
+        residue = Ms[m,n] - Lr[m,n]
+        old = Lr[m,n] + Lq[n,m]
+        residue /= old
+        residue *= Factors[m,n]
         if isnan(residue)
             return 0.0
         else

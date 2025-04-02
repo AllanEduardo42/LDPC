@@ -8,38 +8,38 @@ include("add_to_list.jl")
 function
     update_list2!(
         listres1::Vector{<:AbstractFloat},
-        indices_res1::Vector{<:Integer},
+        coords1::Matrix{<:Integer},
         listres2::Vector{<:AbstractFloat},
-        indices_res2::Vector{<:Integer},
+        coords2::Matrix{<:Integer},
         listsizes::Vector{<:Integer},
         new_listsize2::Integer,
         inlist::Matrix{<:Integer},
-        li::Integer,
+        m::Integer,
+        n::Integer,
         residue::AbstractFloat    
     )
     
-    if inlist[li]  # if residue(m,n) is in the list
+    if inlist[m,n]  # if residue(m,n) is in the list
         # display("($m,$n) is on the list")
         if listsizes[2] == 1
             new_listsize2 += 1
         end
         pos = 0
         for i = 1:listsizes[1]
-            if indices_res1[i] == li
+            if coords1[1,i] == m && coords1[2,i] == n
                 pos = i
                 break
             end
         end
         if pos == 0
-            ci = CartesianIndex(inlist)[li]
-            throw(error("($(ci[1]),$(ci[2])) is registered as being on the list, but it's not."))
+            throw(error("($(coords1[1,i]),$(coords1[1,i])) is registered as being on the list, but it's not."))
         end
         # remove from list
-        inlist[li] = false
-        remove_from_list!(li,listsizes[1],listres1,indices_res1,inlist,pos)
+        inlist[m,n] = false
+        remove_from_list!(m,n,listsizes[1],listres1,coords1,inlist,pos)
     end                
     if residue != 0.0
-        add_to_list!(nothing,listres2,indices_res2,residue,li,new_listsize2)
+        add_to_list!(nothing,listres2,coords2,residue,m,n,new_listsize2)
     end
 
     return new_listsize2
@@ -47,9 +47,9 @@ end
 
 function update_list1!(
     listres1::Vector{<:AbstractFloat},
-    indices_res1::Vector{<:Integer},
+    coords1::Matrix{<:Integer},
     listres2::Vector{<:AbstractFloat},
-    indices_res2::Vector{<:Integer},
+    coords2::Matrix{<:Integer},
     listsizes::Vector{<:Integer},
     new_listsize2::Integer,
     inlist::Matrix{<:Integer},
@@ -58,15 +58,16 @@ function update_list1!(
 )
     if listsizes[2] ≠ 1
         for i = listsize1m1:-1:difflistsizes
-            li = indices_res1[i]
-            if li ≠ 0
-                inlist[li] = false
+            m = coords1[1,i]
+            n = coords1[2,i]
+            if m ≠ 0
+                inlist[m,n] = false
                 listres1[i] = 0.0
             end
         end
     end
     for i in 1:new_listsize2
-        add_to_list!(inlist,listres1,indices_res1,listres2[i],indices_res2[i],
+        add_to_list!(inlist,listres1,coords1,listres2[i],coords2[1,i],coords2[2,i],
             listsizes[1])
     end
 end

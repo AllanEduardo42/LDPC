@@ -10,7 +10,7 @@ function calc_local_residues!(
     Lq::Matrix{<:AbstractFloat},
     Lr::Matrix{<:AbstractFloat},
     cn2vn::Vector{Vector{T}} where {T<:Integer},
-    vn2cn::Vector{Vector{T}} where {T<:Integer},
+    cns::Vector{<:Integer},
     Lrn::Union{Vector{<:AbstractFloat},Nothing},
     signs::Union{Vector{Bool},Nothing},
     phi::Union{Vector{<:AbstractFloat},Nothing},
@@ -21,15 +21,15 @@ function calc_local_residues!(
     cnmax::Integer,
     vnmax::Integer
 )
-    @fastmath @inbounds for m in vn2cn[vnmax]
-        if m ≠ cnmax    
+    @fastmath @inbounds for m in cns
+        if m ≠ cnmax
+            vns = cn2vn[m]    
             # calculate the new check to node messages
-            update_Lr!(Ms,Lq,m,cn2vn,Lrn,signs,phi)
+            update_Lr!(Ms,Lq,m,vns,Lrn,signs,phi)
             # calculate the residues
-            for n in cn2vn[m]
+            for n in vns
                 if n ≠ vnmax
-                    residue, li = calc_residue(Ms,Lr,Factors,Lrn,Lq,m,n)
-                    residues[addressinv[li]] = residue
+                    residues[addressinv[m,n]] = calc_residue(Ms,Lr,Factors,Lrn,Lq,m,n)
                 end
             end
         end
@@ -40,7 +40,7 @@ function calc_local_residues_list!(
     Lq::Matrix{<:AbstractFloat},
     Lr::Matrix{<:AbstractFloat},
     cn2vn::Vector{Vector{T}} where {T<:Integer},
-    vn2cn::Vector{Vector{T}} where {T<:Integer},
+    cns::Vector{<:Integer},
     Lrn::Union{Vector{<:AbstractFloat},Nothing},
     signs::Union{Vector{Bool},Nothing},
     phi::Union{Vector{<:AbstractFloat},Nothing},
@@ -48,25 +48,26 @@ function calc_local_residues_list!(
     Factors::Matrix{<:AbstractFloat},        
     listsizes::Vector{<:Integer},
     listres1::Vector{<:AbstractFloat},
-    indices_res1::Vector{<:Integer},
+    coords1::Matrix{<:Integer},
     listres2::Union{Vector{<:AbstractFloat},Nothing},
-    indices_res2::Union{Vector{<:Integer},Nothing},
+    coords2::Union{Matrix{<:Integer},Nothing},
     inlist::Union{Matrix{<:Integer},Nothing},
     new_listsize2::Integer,
     cnmax::Integer,
     vnmax::Integer
 )
-    @fastmath @inbounds for m in vn2cn[vnmax]
-        if m ≠ cnmax    
+    @fastmath @inbounds for m in cns
+        if m ≠ cnmax
+            vns = cn2vn[m] 
             # calculate the new check to node messages
-            update_Lr!(Ms,Lq,m,cn2vn,Lrn,signs,phi)
+            update_Lr!(Ms,Lq,m,vns,Lrn,signs,phi)
             # calculate the residues
-            for n in cn2vn[m]
+            for n in vns
                 if n ≠ vnmax
-                    residue, li = calc_residue(Ms,Lr,Factors,Lrn,Lq,m,n)
-                    new_listsize2 = update_list2!(listres1,indices_res1,
-                                        listres2,indices_res2,listsizes,
-                                        new_listsize2,inlist,li,residue)
+                    residue = calc_residue(Ms,Lr,Factors,Lrn,Lq,m,n)
+                    new_listsize2 = update_list2!(listres1,coords1,
+                                        listres2,coords2,listsizes,
+                                        new_listsize2,inlist,m,n,residue)
                 end
             end
         end
@@ -79,33 +80,37 @@ function calc_local_residues_local!(
     Lq::Matrix{<:AbstractFloat},
     Lr::Matrix{<:AbstractFloat},
     cn2vn::Vector{Vector{T}} where {T<:Integer},
-    vn2cn::Vector{Vector{T}} where {T<:Integer},
+    cns::Vector{<:Integer},
     Lrn::Union{Vector{<:AbstractFloat},Nothing},
     signs::Union{Vector{Bool},Nothing},
     phi::Union{Vector{<:AbstractFloat},Nothing},
     Ms::Matrix{<:AbstractFloat},
     Factors::Matrix{<:AbstractFloat},
     max_residue::Vector{<:AbstractFloat},
-    max_indices::Vector{<:Integer},
+    maxcoords::Vector{<:Integer},
     cnmax::Integer,
     vnmax::Integer
 )
-    @fastmath @inbounds for m in vn2cn[vnmax]
+    @fastmath @inbounds for m in cns
         if m ≠ cnmax    
+            vns = cn2vn[m] 
             # calculate the new check to node messages
-            update_Lr!(Ms,Lq,m,cn2vn,Lrn,signs,phi)
+            update_Lr!(Ms,Lq,m,vns,Lrn,signs,phi)
             # calculate the residues
-            for n in cn2vn[m]
+            for n in vns
                 if n ≠ vnmax
-                    residue, li = calc_residue(Ms,Lr,Factors,Lrn,Lq,m,n)
+                    residue = calc_residue(Ms,Lr,Factors,Lrn,Lq,m,n)
                     if residue > max_residue[1]
                         max_residue[2] = max_residue[1]
                         max_residue[1] = residue
-                        max_indices[2] = max_indices[1]
-                        max_indices[1] = li
+                        maxcoords[3] = maxcoords[1]
+                        maxcoords[4] = maxcoords[2]
+                        maxcoords[1] = m
+                        maxcoords[2] = n
                     elseif residue > max_residue[2]
                         max_residue[2] = residue
-                        max_indices[2] = li
+                        maxcoords[3] = m
+                        maxcoords[4] = n
                     end   
                 end
             end

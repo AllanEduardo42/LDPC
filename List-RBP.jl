@@ -30,9 +30,9 @@ function
         rng_rbp::AbstractRNG,
         listsizes::Vector{<:Integer},
         listres1::Vector{<:AbstractFloat},
-        indices_res1::Vector{<:Integer},
+        coords1::Matrix{<:Integer},
         listres2::Union{Vector{<:AbstractFloat},Nothing},
-        indices_res2::Union{Vector{<:Integer},Nothing},
+        coords2::Union{Matrix{<:Integer},Nothing},
         inlist::Union{Matrix{<:Integer},Nothing}        
     )
 
@@ -42,7 +42,7 @@ function
     @fastmath @inbounds for e in 1:num_edges
 
         # display("e = $e")
-        # display([listres1 indices_res1])
+        # display([listres1 coords1])
 
         # if in test mode, store the values of the maximum residues
         if test
@@ -53,36 +53,35 @@ function
         if listres1[1] == 0.0
             cnmax = rand(rng_rbp,1:length(cn2vn))
             vnmax = rand(rng_rbp,cn2vn[cnmax])
-            lmax = LinearIndices(Factors)[cnmax,vnmax]
         else
-            lmax = indices_res1[1]
-            ci = CartesianIndices(Factors)[lmax]
-            cnmax, vnmax = ci[1], ci[2]
+            cnmax = coords1[1,1]
+            vnmax = coords1[2,1]
         end
 
         # 2) Decay the RBP factor corresponding to the maximum residue
         # lmax = decay!(cnmax,vnmax,Factors,decayfactor)
-        Factors[lmax] *= decayfactor
+        Factors[cnmax,vnmax] *= decayfactor
 
         # 3) update check to node message Lr[cnmax,vnmax]
-        RBP_update_Lr!(lmax,Lr,Ms,cnmax,vnmax,cn2vn,Lq,Lrn,signs,phi)
+        # RBP_update_Lr!(lmax,Lr,Ms,cnmax,vnmax,cn2vn,Lq,Lrn,signs,phi)
+        Lr[cnmax,vnmax] = Ms[cnmax,vnmax]
 
         # 4) Remove max residue from the list and update the list
-        remove_from_list!(lmax,listsizes[1],listres1,indices_res1,inlist,1)
+        remove_from_list!(cnmax,vnmax,listsizes[1],listres1,coords1,inlist,1)
 
         # 5) update vn2cn messages Lq[vnmax,m] and bitvector[vnmax]
-        bitvector[vnmax] = update_Lq!(Lq,Lr,Lf[vnmax],vnmax,vn2cn,Lrn)
+        bitvector[vnmax] = update_Lq!(Lq,Lr,Lf[vnmax],vnmax,vn2cn[vnmax],Lrn)
 
         # 6) calculate local residues
-        new_listsize2 = calc_local_residues_list!(Lq,Lr,cn2vn,vn2cn,Lrn,signs,phi,Ms,
-            Factors,listsizes,listres1,indices_res1,listres2,indices_res2,inlist,
-            listsizes[2],cnmax,vnmax)
+        new_listsize2 = calc_local_residues_list!(Lq,Lr,cn2vn,vn2cn[vnmax],Lrn,
+            signs,phi,Ms,Factors,listsizes,listres1,coords1,listres2,coords2,
+            inlist,listsizes[2],cnmax,vnmax)
         # update list 1 
-        update_list1!(listres1,indices_res1,listres2,indices_res2,listsizes,
-            new_listsize2,inlist,listsize1m1,difflistsizes)
+        update_list1!(listres1,coords1,listres2,coords2,listsizes,new_listsize2,
+            inlist,listsize1m1,difflistsizes)
 
         # clear list 2
         listres2 .*= 0.0
-        indices_res2 .*= 0    
+        coords2 .*= 0    
     end
 end

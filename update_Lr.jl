@@ -12,7 +12,7 @@ function
         Lr::Matrix{<:AbstractFloat},
         Lq::Matrix{<:AbstractFloat},
         m::Integer,
-        cn2vn::Vector{Vector{T}} where {T<:Integer},
+        vns::Vector{<:Integer},
         Lrn::Vector{<:AbstractFloat},
         ::Nothing,
         ::Nothing     
@@ -21,9 +21,8 @@ function
     pLr = 1.0
     countzeros = 0
     n0 = 0
-    ml = LinearIndices(Lq)[1,m]-1
-    @fastmath @inbounds for n in cn2vn[m]
-        x = Lq[ml+n]
+    @fastmath @inbounds for n in vns
+        x = Lq[n,m]
         if x == 0.0 # Lr[m,n] = 0 for n ≠ n0
             countzeros += 1
             n0 = n
@@ -37,7 +36,7 @@ function
         pLr *= Lrn[n]
     end
     if countzeros == 0
-        @fastmath @inbounds for n in cn2vn[m]
+        @fastmath @inbounds for n in vns
             x = pLr/Lrn[n]
             if abs(x) < 1 # controls divergent values of Lr
                 Lr[m,n] = 2*atanh(x)
@@ -48,7 +47,7 @@ function
             end
         end
     else
-        @fastmath @inbounds for n in cn2vn[m]
+        @fastmath @inbounds for n in vns
             Lr[m,n] = 0.0
         end
         if countzeros == 1 # Lr[m,n] = 0 for n ≠ n0
@@ -64,15 +63,15 @@ function
         Lr::Matrix{<:AbstractFloat},
         Lq::Matrix{<:AbstractFloat},
         m::Integer,
-        cn2vn::Vector{Vector{T}} where {T<:Integer},
+        vns::Vector{<:Integer},
         ::Nothing,
         ::Nothing,
         ::Nothing
     )
     
-    @inbounds for n in cn2vn[m]
+    @inbounds for n in vns
         pLr = 1.0
-        for n2 in cn2vn[m]
+        for n2 in vns
             if n2 ≠ n
                 pLr *= tanh(0.5*Lq[n2,m])
             end
@@ -110,7 +109,7 @@ function
         Lr::Matrix{<:AbstractFloat},
         Lq::Matrix{<:AbstractFloat},
         m::Integer,
-        cn2vn::Vector{Vector{T}} where {T<:Integer},
+        vns::Vector{<:Integer},
         Lrn::Vector{<:AbstractFloat},
         signs::Vector{Bool},
         phi::Union{Vector{<:AbstractFloat},Nothing}
@@ -119,11 +118,11 @@ function
     sLr = 0.0
     s = false
     ml = LinearIndices(Lq)[1,m]-1
-    for n in cn2vn[m]
+    for n in vns
         @inbounds Lrn[n], signs[n], s = phi_sign!(Lq[ml+n],s,phi)
         @fastmath @inbounds sLr += Lrn[n] 
     end
-    for n in cn2vn[m]
+    for n in vns
         @fastmath @inbounds x = abs(sLr - Lrn[n])
         if @fastmath x > 0 # (Inf restriction)
             @inbounds Lr[m,n] = (1 - 2*(signs[n] ⊻ s))*ϕ(x,phi)
@@ -139,13 +138,13 @@ function
         Lr::Matrix{<:AbstractFloat},
         Lq::Matrix{<:AbstractFloat},
         m::Integer,
-        cn2vn::Vector{Vector{T}} where {T<:Integer},
+        vns::Vector{<:Integer},
         ::Nothing,
         signs::Vector{Bool},
         ::Nothing       
     )
 
-    minsum!(Lq,Lr,signs,m,cn2vn)
+    minsum!(Lq,Lr,signs,m,vns)
 
 end
 
@@ -156,12 +155,12 @@ function
         r::Array{<:AbstractFloat,3},
         δq::Matrix{<:AbstractFloat},
         m::Integer,
-        cn2vn::Vector{Vector{T}} where {T<:Integer},     
+        vns::Vector{<:Integer}    
     )
     
-    for n in cn2vn[m]
+    for n in vns
         δr = 1
-        for n2 in cn2vn[m]
+        for n2 in vns
             if n2 ≠ n
                 @fastmath @inbounds δr *= δq[n2,m]
             end
