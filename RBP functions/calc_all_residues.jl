@@ -19,11 +19,11 @@ function calc_all_residues!(
     residues::Vector{<:AbstractFloat},
     M::Integer
 )
-    for m in 1:M 
+    @fastmath @inbounds for m in 1:M 
         # calculate the new check to node messages
         update_Lr!(Ms,Lq,m,cn2vn,Lrn,signs,phi)
         # calculate the residues
-        @fastmath @inbounds for n in cn2vn[m]
+        for n in cn2vn[m]
             residue, index = calc_residue(Ms,Lr,Factors,Lrn,Lq,m,n)
             residues[addressinv[index]] = residue
         end
@@ -42,9 +42,10 @@ function calc_all_residues_list!(
     listsizes::Vector{<:Integer},
     listres1::Vector{<:AbstractFloat},
     indices_res1::Vector{<:Integer},
-    inlist::Union{Matrix{<:Integer},Nothing}    
+    inlist::Union{Matrix{<:Integer},Nothing},
+    M::Integer   
 )
-    for m in 1:M 
+    @fastmath @inbounds for m in 1:M 
         # calculate the new check to node messages
         update_Lr!(Ms,Lq,m,cn2vn,Lrn,signs,phi)
         # calculate the residues
@@ -68,7 +69,7 @@ function calc_all_residues_local!(
     max_residue::Vector{<:AbstractFloat},
     max_indices::Vector{<:Integer}
 )
-    for m in 1:M
+    @fastmath @inbounds for m in 1:M
         # calculate the new check to node messages
         update_Lr!(Ms,Lq,m,cn2vn,Lrn,signs,phi)
         # calculate the residues

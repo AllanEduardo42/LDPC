@@ -21,12 +21,12 @@ function calc_local_residues!(
     cnmax::Integer,
     vnmax::Integer
 )
-    for m in vn2cn[vnmax]
+    @fastmath @inbounds for m in vn2cn[vnmax]
         if m ≠ cnmax    
             # calculate the new check to node messages
             update_Lr!(Ms,Lq,m,cn2vn,Lrn,signs,phi)
             # calculate the residues
-            @fastmath @inbounds for n in cn2vn[m]
+            for n in cn2vn[m]
                 if n ≠ vnmax
                     residue, li = calc_residue(Ms,Lr,Factors,Lrn,Lq,m,n)
                     residues[addressinv[li]] = residue
@@ -56,7 +56,7 @@ function calc_local_residues_list!(
     cnmax::Integer,
     vnmax::Integer
 )
-    for m in vn2cn[vnmax]
+    @fastmath @inbounds for m in vn2cn[vnmax]
         if m ≠ cnmax    
             # calculate the new check to node messages
             update_Lr!(Ms,Lq,m,cn2vn,Lrn,signs,phi)
@@ -90,7 +90,7 @@ function calc_local_residues_local!(
     cnmax::Integer,
     vnmax::Integer
 )
-    for m in vn2cn[vnmax]
+    @fastmath @inbounds for m in vn2cn[vnmax]
         if m ≠ cnmax    
             # calculate the new check to node messages
             update_Lr!(Ms,Lq,m,cn2vn,Lrn,signs,phi)

@@ -63,7 +63,7 @@ function
         println(FILE,str)
     end
     if mode == "RBP" || mode == "Local-RBP" || mode == "List-RBP" ||
-       mode == "Mod-List-RBP" || mode == "Random-List-RBP"
+       mode == "Mod-List-RBP" || mode == "Random-List-RBP" || mode == "NRBP"
         str = "RBP decaying factor: $decay"
         println(str)
         if SAVE

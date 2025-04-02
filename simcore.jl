@@ -10,11 +10,11 @@ include("calc_syndrome.jl")
 include("flooding.jl")
 include("LBP.jl")
 include("RBP.jl")
-include("RBP-genius.jl")
 include("Local_RBP.jl")
 include("List-RBP.jl")
 # include("Mod-List-RBP.jl")
 # include("Random-List-RBP.jl")
+include("NRBP.jl")
 include("./RBP functions/calc_all_residues.jl")
 
 function
@@ -45,7 +45,8 @@ function
     )
 
     if mode == "RBP" || mode == "Local-RBP" || mode == "List-RBP" || 
-       mode == "Mod-List-RBP" || mode == "Random-List-RBP" || mode == "RBP-genius"
+       mode == "Mod-List-RBP" || mode == "Random-List-RBP" || 
+       mode == "NRBP"
         RBP = true
     else
         RBP = false
@@ -125,12 +126,12 @@ function
 
     # Set other variables that depend on the mode
     Ms = RBP ? H*0.0 : nothing
-    Factors  = RBP ? 1.0*H  : nothing
+    Factors = RBP ? 1.0*H  : nothing
     all_max_res = (test && RBP) ? zeros(maxiter*num_edges) : nothing
     all_max_res_alt = (test && RBP) ? zeros(num_edges) : nothing
 
     # mode = RBP
-    if mode == "RBP" || mode == "RBP-genius"
+    if mode == "RBP"
         residues = zeros(num_edges)
         address = zeros(Int,2,num_edges)
         addressinv = 0*H
@@ -143,10 +144,9 @@ function
                 addressinv[m,n] = e
             end
         end
-    else
-        residues = nothing
-        address = nothing
-        addressinv = nothing
+    elseif mode == "NRBP"
+        residues = zeros(N)
+        Factors = ones(N)
     end
 
     # mode = Local-RBP
@@ -154,7 +154,9 @@ function
     max_residue = (mode == "Local-RBP") ? zeros(3) : nothing
 
     # mode = List-RBP
-    if mode == "List-RBP" || mode == "Mod-List-RBP" || mode == "Random-List-RBP"
+    if mode == "List-RBP" || mode == "Mod-List-RBP"||
+        mode == "Random-List-RBP"
+
         listres1 = zeros(listsizes[1]+1)
         indices_res1 = zeros(Int,listsizes[1]+1)
         inlist = Matrix(false*H)
@@ -165,12 +167,6 @@ function
             listres2 = zeros(listsizes[2]+1)
             indices_res2 = zeros(Int,listsizes[2]+1)
         end
-    else        
-        listres1 = nothing
-        indices_res1 = nothing
-        listres2 = nothing
-        indices_res2 = nothing
-        inlist = nothing
     end
 
 ################################## MAIN LOOP ###################################
@@ -242,9 +238,21 @@ function
         init_Lq!(Lq,Lf,vn2cn)
 
         # 10) precalculate the residues in RBP
-        if mode == "RBP" || mode == "RBP-genius"
+        if mode == "RBP"
             calc_all_residues!(Lq,Lr,cn2vn,Lrn,signs,phi,Ms,Factors,addressinv,
                 residues,M)
+        elseif mode == "NRBP"
+            for m in 1:M 
+                # calculate the new check to node messages
+                update_Lr!(Ms,Lq,m,cn2vn,Lrn,signs,phi)
+            end
+            for n in 1:N
+                for m in vn2cn[n]
+                    li = LinearIndices(Ms)[m,n]        
+                    residues[n] += Ms[li]
+                end
+                residues[n] = abs(residues[n]/Lf[n])
+            end
         end
         
         # BP routine
@@ -299,10 +307,9 @@ function
                     )
                 # reset factors
                 resetmatrix!(Factors,M,N,vn2cn,1.0)
-            elseif mode == "RBP-genius"
-                RBP_genius!(
+            elseif mode == "NRBP"
+                NRBP!(
                     bitvector,
-                    cword,
                     Lq,
                     Lr,
                     Lf,
@@ -317,12 +324,10 @@ function
                     Factors,
                     all_max_res_alt,
                     test,
-                    address,
-                    addressinv,
                     residues
                     )
                 # reset factors
-                resetmatrix!(Factors,M,N,vn2cn,1.0)
+                Factors .= 1.0
             elseif mode == "Local-RBP"
                 if rbp_not_converged && max_residue[1] == 0.0
                     calc_all_residues_local!(Lq,Lr,cn2vn,Lrn,signs,phi,Ms,Factors,
@@ -360,7 +365,7 @@ function
             elseif mode == "List-RBP"
                 if rbp_not_converged && listres1[1] == 0.0
                     calc_all_residues_list!(Lq,Lr,cn2vn,Lrn,signs,phi,Ms,Factors,
-                        listsizes,listres1,indices_res1,inlist)
+                        listsizes,listres1,indices_res1,inlist,M)
                     if listres1[1] == 0.0
                         rbp_not_converged = false
                     end

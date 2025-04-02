@@ -11,8 +11,9 @@ include("./RBP functions/remove_from_list.jl")
 include("./RBP functions//calc_local_residues.jl")
 
 function
-    list_RBP!(
+    list_RBP_genius!(
         bitvector::Vector{Bool},
+        cword::Vector{Bool},
         Lq::Matrix{<:AbstractFloat},
         Lr::Matrix{<:AbstractFloat},
         Lf::Vector{<:AbstractFloat},
@@ -48,30 +49,44 @@ function
         if test
             all_max_res_alt[e] = listres1[1]     
         end
-        
-        # 1) get the largest residues coordenates if not clipped
-        if listres1[1] == 0.0
-            cnmax = rand(rng_rbp,1:length(cn2vn))
-            vnmax = rand(rng_rbp,cn2vn[cnmax])
-            lmax = LinearIndices(Factors)[cnmax,vnmax]
-        else
-            lmax = indices_res1[1]
-            ci = CartesianIndices(Factors)[lmax]
-            cnmax, vnmax = ci[1], ci[2]
+
+        wrong = true
+        index = 1
+        lmax = 1
+        cnmax = 1
+        vnmax = 1
+        newbitvector = false
+        while wrong && index ≤ listsizes[1]
+            # 1) get the largest residues coordenates if not clipped
+            if listres1[1] == 0.0
+                cnmax = rand(rng_rbp,1:length(cn2vn))
+                vnmax = rand(rng_rbp,cn2vn[cnmax])
+                lmax = LinearIndices(Factors)[cnmax,vnmax]
+            else
+                lmax = indices_res1[1]
+                ci = CartesianIndices(Factors)[lmax]
+                cnmax, vnmax = ci[1], ci[2]
+            end
+            Lr_old = Lr[lmax]
+            Lr[lmax] = Ms[lmax]
+            newbitvector = update_Lq!(Lq,Lr,Lf[vnmax],vnmax,vn2cn,Lrn)
+
+            if newbitvector == cword[vnmax]
+                wrong = false
+            else
+                Lr[lmax] = Lr_old
+                index += 1
+            end
         end
 
         # 2) Decay the RBP factor corresponding to the maximum residue
-        # lmax = decay!(cnmax,vnmax,Factors,decayfactor)
         Factors[lmax] *= decayfactor
-
-        # 3) update check to node message Lr[cnmax,vnmax]
-        RBP_update_Lr!(lmax,Lr,Ms,cnmax,vnmax,cn2vn,Lq,Lrn,signs,phi)
 
         # 4) Remove max residue from the list and update the list
         remove_from_list!(lmax,listsizes[1],listres1,indices_res1,inlist,1)
 
         # 5) update vn2cn messages Lq[vnmax,m] and bitvector[vnmax]
-        bitvector[vnmax] = update_Lq!(Lq,Lr,Lf[vnmax],vnmax,vn2cn,Lrn)
+        bitvector[vnmax] = newbitvector
 
         # 6) calculate local residues
         new_listsize2 = calc_local_residues_list!(Lq,Lr,cn2vn,vn2cn,Lrn,signs,phi,Ms,

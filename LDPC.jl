@@ -62,20 +62,20 @@ STOP::Bool = false # stop simulation at zero syndrome (if true, BER curves are
 MAXITER::Int = 50
 MAXIRBP::Int = 30
 # FACTORS = [0.7, 0.8, 0.9, 1.0]
-FACTORS = [1.0]
-SNR = [1.2, 1.6, 1.8]
-TRIALS = 10 .^(0:length(SNR)-1)*2^5
+FACTORS = [0.9]
+SNR = [1.2]
+TRIALS = 10 .^(0:length(SNR)-1)*2^10
 
 # TEST
-MAXITER_TEST::Int = 1
+MAXITER_TEST::Int = 2
 SNR_TEST::Float64 = 2.0
 TRIALS_TEST::Int = 1
-DECAY_TEST::Float64 = 1.0
+DECAY_TEST::Float64 = 0.4
 
 ################################ 6) BP SCHEDULE ################################
 
 MODES = ["Flooding","LBP","RBP","Local-RBP","List-RBP","Mod-List-RBP",
-         "Random-List-RBP","RBP-genius"]
+         "Random-List-RBP","List-RBP-genius","NRBP"]
 NUM_MODES = length(MODES)
 ACTIVE = zeros(Bool,NUM_MODES)
 LISTSIZES = zeros(Int,3)
@@ -138,12 +138,19 @@ BPTYPES[i] = "FAST"
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
 
-# RBP-genius
+# List-RBP-genius
 i += 1
-ACTIVE[i] = 1
+ACTIVE[i] = 0
 BPTYPES[i] = "FAST"
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
+
+# Node-RBP
+i += 1
+ACTIVE[i] = 0
+BPTYPES[i] = "FAST"
+MAXITERS[i] = MAXITER
+DECAYS[i] = [1.0]
 
 # List-RBP sizes
 LISTSIZES[1] = 16
@@ -331,14 +338,10 @@ else
             display(PLOT)
         end
     
-        if !STOP
-    
+        if !STOP    
             # FER x Iterations
-            LABELS = Vector{String}()
-            for snr in SNR
-                push!(LABELS,"SNR (dB) = $snr")
-            end
-            LABELS = permutedims(LABELS)
+            PLOT = plot()
+            titlefer = "FER"
             for i in eachindex(ACTIVE)
                 if ACTIVE[i]
                     for decay in DECAYS[i]
@@ -347,8 +350,12 @@ else
                         else
                             mode = MODES[i]
                         end
-                        titlefer = "FER "*mode
-                        local PLOT = plot(
+                        LABELS = Vector{String}()
+                        for snr in SNR
+                            push!(LABELS,"$mode, SNR (dB) = $snr")
+                        end
+                        LABELS = permutedims(LABELS)
+                        local PLOT = plot!(
                             1:MAXITERS[i],
                             FER[mode],
                             xlabel="Iteration",
@@ -357,11 +364,12 @@ else
                             title=titlefer,
                             ylims=(LIM,0)
                         )
-                       display(PLOT)
                     end
                 end
             end
-    
+            display(PLOT)
+            PLOT = plot()
+            titleber = "BER"
             for i in eachindex(ACTIVE)
                 if ACTIVE[i]
                     for decay in DECAYS[i]
@@ -370,8 +378,12 @@ else
                         else
                             mode = MODES[i]
                         end
-                        titleber = "BER $mode"
-                        local PLOT = plot(
+                        LABELS = Vector{String}()
+                        for snr in SNR
+                            push!(LABELS,"$mode, SNR (dB) = $snr")
+                        end
+                        LABELS = permutedims(LABELS)
+                        local PLOT = plot!(
                             1:MAXITERS[i],
                             BER[mode],
                             xlabel="Iteration",
@@ -380,10 +392,10 @@ else
                             title=titleber,
                             ylims=(LIM-2,0)
                         )
-                        display(PLOT)
                     end
                 end
             end
+            display(PLOT)
         end
     end
 end
