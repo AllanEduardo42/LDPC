@@ -44,7 +44,7 @@ function
     
     @inbounds for n in eachindex(vn2cn)
         for m in vn2cn[n]
-            Lq[n,m] = Lf[n]
+            Lq[m,n] = Lf[n]
         end
     end
 end

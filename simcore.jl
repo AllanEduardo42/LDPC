@@ -9,6 +9,7 @@ include("calc_Lf.jl")
 include("calc_syndrome.jl")
 include("flooding.jl")
 include("LBP.jl")
+include("VLBP.jl")
 include("RBP.jl")
 include("Local_RBP.jl")
 include("List-RBP.jl")
@@ -103,7 +104,7 @@ function
     # Lq -> matrix of vn2cn messages (N x M)
     # Lr -> matrix of cn2vn messages (M x N)
     # if mode == "MKAY" the are matrices for bit = 0 and bit = 1
-    Lq = (bptype != "MKAY") ? zeros(N,M) : zeros(N,M,2)
+    Lq = (bptype != "MKAY") ? zeros(M,N) : zeros(M,N,2)
 
     Lr = (bptype != "MKAY") ? zeros(M,N) : zeros(M,N,2)
     
@@ -277,6 +278,15 @@ function
                     phi)  
             elseif mode == "LBP"
                 LBP!(
+                    bitvector,
+                    Lq,
+                    Lr,
+                    Lf,
+                    cn2vn,
+                    vn2cn,
+                    Lrn)
+            elseif mode == "VLBP"
+                VLBP!(
                     bitvector,
                     Lq,
                     Lr,

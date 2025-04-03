@@ -22,7 +22,7 @@ function minsum!(
     minL2 = INFFLOAT
     max_idx = vns[1]
     @fastmath @inbounds for n in vns
-        β, signs[n], s = abs_sign!(Lq[n,m],s)
+        β, signs[n], s = abs_sign!(Lq[m,n],s)
         if β < minL
             max_idx = n
             minL, minL2 = β, minL

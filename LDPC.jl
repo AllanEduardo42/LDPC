@@ -64,7 +64,7 @@ MAXIRBP::Int = 30
 # FACTORS = [0.7, 0.8, 0.9, 1.0]
 FACTORS = [0.9]
 SNR = [1.2, 1.6, 1.8]
-TRIALS = 10 .^(0:length(SNR)-1)*2^5
+TRIALS = 10 .^(0:length(SNR)-1)*2^7
 
 # TEST
 MAXITER_TEST::Int = 1
@@ -74,7 +74,7 @@ DECAY_TEST::Float64 = 0.9
 
 ################################ 6) BP SCHEDULE ################################
 
-MODES = ["Flooding","LBP","RBP","Local-RBP","List-RBP","Mod-List-RBP",
+MODES = ["Flooding","LBP","VLBP","RBP","Local-RBP","List-RBP","Mod-List-RBP",
          "Random-List-RBP","List-RBP-genius","NRBP"]
 NUM_MODES = length(MODES)
 ACTIVE = zeros(Bool,NUM_MODES)
@@ -99,6 +99,12 @@ MAXITERS[i] = MAXITER
 
 # LBP
 i += 1
+ACTIVE[i] = 1
+BPTYPES[i] = "FAST"
+MAXITERS[i] = MAXITER
+
+# VLBP
+i += 1
 ACTIVE[i] = 0
 BPTYPES[i] = "FAST"
 MAXITERS[i] = MAXITER
@@ -119,7 +125,7 @@ DECAYS[i] = FACTORS
 
 # List-RBP
 i += 1
-ACTIVE[i] = 1
+ACTIVE[i] = 0
 BPTYPES[i] = "FAST"
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS

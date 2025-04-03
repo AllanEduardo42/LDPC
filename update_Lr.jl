@@ -22,7 +22,7 @@ function
     countzeros = 0
     n0 = 0
     @fastmath @inbounds for n in vns
-        x = Lq[n,m]
+        x = Lq[m,n]
         if x == 0.0 # Lr[m,n] = 0 for n ≠ n0
             countzeros += 1
             n0 = n
@@ -73,7 +73,7 @@ function
         pLr = 1.0
         for n2 in vns
             if n2 ≠ n
-                pLr *= tanh(0.5*Lq[n2,m])
+                pLr *= tanh(0.5*Lq[m,n2])
             end
         end
         Lr[m,n] = 2*atanh(pLr)
@@ -117,9 +117,8 @@ function
 
     sLr = 0.0
     s = false
-    ml = LinearIndices(Lq)[1,m]-1
     for n in vns
-        @inbounds Lrn[n], signs[n], s = phi_sign!(Lq[ml+n],s,phi)
+        @inbounds Lrn[n], signs[n], s = phi_sign!(Lq[m,n],s,phi)
         @fastmath @inbounds sLr += Lrn[n] 
     end
     for n in vns
@@ -162,7 +161,7 @@ function
         δr = 1
         for n2 in vns
             if n2 ≠ n
-                @fastmath @inbounds δr *= δq[n2,m]
+                @fastmath @inbounds δr *= δq[m,n2]
             end
         end
         @fastmath @inbounds r[m,n,1] = 0.5*(1+δr)

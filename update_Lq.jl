@@ -18,7 +18,7 @@ function
 
     Ld = calc_Ld(n,cns,Lf,Lr)
     @fastmath @inbounds for m in cns
-        Lq[n,m] = Ld - Lr[m,n]
+        Lq[m,n] = Ld - Lr[m,n]
     end
 
     return signbit(Ld)
@@ -54,15 +54,15 @@ function
     
     m = 0
     @inbounds for outer m in vn2cn[n]
-        Lq[n,m] = Lf[n]
+        Lq[m,n] = Lf[n]
         for m2 in vn2cn[n]
             if m2 ≠ m
-                Lq[n,m] += Lr[m2,n]
+                Lq[m,n] += Lr[m2,n]
             end
         end
     end
 
-    @inbounds Ld = Lq[n,m] + Lr[m,n]
+    @inbounds Ld = Lq[m,n] + Lr[m,n]
     return signbit(Ld)
 end
 
@@ -87,8 +87,8 @@ function
             end
         end
         @fastmath a = sum(Ld)
-        @fastmath @inbounds q[n,m,1] = Ld[1]/a
-        @fastmath @inbounds q[n,m,2] = Ld[2]/a
+        @fastmath @inbounds q[m,n,1] = Ld[1]/a
+        @fastmath @inbounds q[m,n,2] = Ld[2]/a
         @fastmath @inbounds Ld[1] *= r[m,n,1]
         @fastmath @inbounds Ld[2] *= r[m,n,2]
     end

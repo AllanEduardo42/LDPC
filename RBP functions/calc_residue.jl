@@ -17,7 +17,7 @@ function
 
     @fastmath @inbounds begin      
         residue = Ms[m,n] - Lr[m,n]
-        old = Lr[m,n] + Lq[n,m]
+        old = Lr[m,n] + Lq[m,n]
         residue /= old
         residue *= Factors[m,n]
         if signbit(residue)

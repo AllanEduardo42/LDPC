@@ -8,7 +8,7 @@ include("update_Lr.jl")
 include("calc_syndrome.jl")
 
 function
-    LBP!(
+    VLBP!(
         bitvector::Vector{Bool},
         Lq::Matrix{<:AbstractFloat},
         Lr::Matrix{<:AbstractFloat},        
@@ -18,30 +18,45 @@ function
         Lrn::Vector{<:AbstractFloat}
     )
 
-    @fastmath @inbounds for m in eachindex(cn2vn)
-        # Lq updates 
-        vns = cn2vn[m]     
-        for n in vns # for every n in Neighborhood(m)
-            Ld = Lf[n]
-            for m2 in vn2cn[n]
-                Ld += Lr[m2,n]
-            end
-            Lq[m,n] = Ld - Lr[m,n]
-        end
+    @fastmath @inbounds for n in eachindex(vn2cn)
         # Lr updates
-        update_Lr!(Lr,Lq,m,vns,Lrn,nothing,nothing)
-        for n in vns
-            bitvector[n] = signbit(Lq[m,n] + Lr[m,n])
+        for m in vn2cn[n]
+            pLr = 1.0
+            countzeros = 0
+            n0 = 0
+            for n2 in cn2vn[m]
+                x = Lq[m,n2]
+                if x == 0.0 # Lr[m,n] = 0 for n ≠ n0
+                    countzeros += 1
+                    n0 = n2
+                    Lrn[n2] = 1.0 # s.t. Lr[m,n0] = 2*atanh(pLr)
+                    if countzeros > 1 # Lr[m,n] = 0 ∀n
+                        break
+                    end
+                else
+                    Lrn[n2] = tanh(0.5*x)
+                end
+                pLr *= Lrn[n2]
+            end
+            if countzeros == 0
+                x = pLr/Lrn[n]
+                if abs(x) < 1 # controls divergent values of Lr
+                    Lr[m,n] = 2*atanh(x)
+                elseif x > 0
+                    Lr[m,n] = INFFLOAT
+                else
+                    Lr[m,n] = NINFFLOAT
+                end
+            else
+                Lr[m,n] = 0.0
+                if countzeros == 1 # Lr[m,n] = 0 for n ≠ n0
+                    Lr[m,n0] = 2*atanh(pLr)
+                end
+            end
         end
+        # Lq updates       
+        bitvector[n] = update_Lq!(Lq,Lr,Lf[n],n,vn2cn[n],Lrn)        
     end
-
-    # @fastmath @inbounds for n in eachindex(vn2cn)
-    #     Ld = Lf[n]
-    #     for m in vn2cn[n]
-    #         Ld += Lr[m,n]
-    #     end
-    #     bitvector[n] = signbit(Ld)
-    # end
 end
 
 ### old instantaneous LBP
