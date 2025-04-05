@@ -22,10 +22,7 @@ function
         # Lq updates 
         vns = cn2vn[m]     
         for n in vns # for every n in Neighborhood(m)
-            Ld = Lf[n]
-            for m2 in vn2cn[n]
-                Ld += Lr[m2,n]
-            end
+            Ld = calc_Ld(n,vn2cn[n],Lf[n],Lr)
             Lq[m,n] = Ld - Lr[m,n]
         end
         # Lr updates

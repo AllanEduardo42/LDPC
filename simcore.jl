@@ -22,15 +22,16 @@ function
     simcore(
         A::Integer,
         snr::AbstractFloat,
-        H::BitMatrix,
+        H::Matrix{Bool},
+        G::Union{Nothing,Matrix{Bool}},
         M::Integer,
         N::Integer,
         cn2vn::Vector{Vector{T}} where {T<:Integer},
         vn2cn::Vector{Vector{T}} where {T<:Integer},
-        E_H::Matrix{<:Integer},
+        E_H::Union{Nothing,Matrix{<:Integer}},
         LDPC::Integer,
         Zf::Integer,
-        Nr_ldpc_data::nr_ldpc_data,
+        Nr_ldpc_data::Union{Nothing,nr_ldpc_data},
         mode::String,
         bptype::String,
         trials::Integer,
@@ -42,7 +43,9 @@ function
         rng_seed_sample::Integer,
         rgn_seed_msg::Integer;
         test=false,
-        printtest=false
+        printtest=false,
+        msgtest=nothing,
+        noisetest=nothing        
     )
 
     if mode == "RBP" || mode == "Local-RBP" || mode == "List-RBP" || 
@@ -56,7 +59,16 @@ function
 ################################## CONSTANTS ###################################
 
     # constant Zc of NR/5G
-    Zc = Nr_ldpc_data.Zc
+    if LDPC == 1
+        Zc = Nr_ldpc_data.Zc
+    else
+        Zc = 0
+    end
+
+    if LDPC == 3
+        E_M, E_N = size(E_H)
+        E_K = E_N - E_M
+    end
 
     # number of edges in the graph
     num_edges = sum(H)
@@ -89,7 +101,7 @@ function
     syndrome = Vector{Bool}(undef,M)
 
     # prior llr (if mode == "MKAY" just the prior probabilities)
-    Lf = (bptype != "MKAY") ? zeros(N) : zeros(N,2)
+    Lf = (bptype != "MKAY") ? zeros(N) : 0.5*ones(N,2)
 
     # noise
     # L = length(cword)
@@ -109,7 +121,7 @@ function
     Lr = (bptype != "MKAY") ? zeros(M,N) : zeros(M,N,2)
     
     # Set variables Lrn and signs depending on the BP type (used for dispatch)
-    if bptype == "FAST"
+    if bptype == "FAST" || bptype == "MKAY"
         Lrn = zeros(N)
         signs = nothing
     elseif bptype == "ALTN" || bptype == "TABL" 
@@ -175,13 +187,15 @@ function
     @inbounds for j in 1:trials
 
         # 1) generate the random message
-        rand!(rgn_msg,msg,Bool)
+        generate_message!(msg,rgn_msg,msgtest)
 
         # 2) generate the cword
         if LDPC == 1
-            cword = NR_LDPC_encode(E_H, msg, Nr_ldpc_data)
+            cword = NR_LDPC_encode(E_H,msg,Nr_ldpc_data)
+        elseif LDPC == 2
+            cword = gf2_mat_mult(G,msg)   
         elseif LDPC == 3
-            cword = IEEE80216e_parity_bits(msg,Zf,E_H)
+            cword = IEEE80216e_parity_bits(msg,Zf,E_H,E_M,E_N,E_K)
         end
 
         # 3) Modulation of the cword
@@ -193,7 +207,7 @@ function
         end
 
         # 5) sum the noise to the modulated cword to produce the received signal
-        received_signal!(signal,noise,stdev,u,rng_noise)
+        received_signal!(signal,noise,stdev,u,rng_noise,noisetest)
 
         # 6) print info in test mode
         if test && printtest
@@ -223,17 +237,25 @@ function
         bitvector .= false
         syndrome .= true
         decoded .= false
-        resetmatrix!(Lr,M,N,vn2cn,0.0)
+        resetmatrix!(Lr,vn2cn,0.0)
         if mode == "List-RBP" || mode == "Mod-List-RBP"
             listres1 .= 0.0
             coords1 .= 0
             listres2 .= 0.0
             coords2 .= 0
-            resetmatrix!(inlist,M,N,vn2cn,false)
+            resetmatrix!(inlist,vn2cn,false)
         end
 
         # 8) init the llr priors
-        calc_Lf!(view(Lf,2*Zc+1:N),signal,variance,bptype)
+        if bptype == "MKAY"
+            calc_Lf!(view(Lf,2*Zc+1:N,:),signal,variance)
+        else
+            calc_Lf!(view(Lf,2*Zc+1:N),signal,variance)
+            if bptype == "TABL"
+                # scale for table
+                Lf .*= SIZE_per_RANGE
+            end
+        end
         
         # 9) init the Lq matrix
         init_Lq!(Lq,Lf,vn2cn)
@@ -275,7 +297,7 @@ function
                     vn2cn,
                     Lrn,
                     signs,
-                    phi)  
+                    phi)
             elseif mode == "LBP"
                 LBP!(
                     bitvector,
@@ -316,7 +338,7 @@ function
                     residues
                     )
                 # reset factors
-                resetmatrix!(Factors,M,N,vn2cn,1.0)
+                resetmatrix!(Factors,vn2cn,1.0)
             elseif mode == "NRBP"
                 NRBP!(
                     bitvector,
@@ -371,7 +393,7 @@ function
                         maxcoords
                     )
                     # reset factors
-                    resetmatrix!(Factors,M,N,vn2cn,1.0)
+                    resetmatrix!(Factors,vn2cn,1.0)
                 end              
             elseif mode == "List-RBP"
                 if rbp_not_converged && listres1[1] == 0.0
@@ -407,7 +429,7 @@ function
                         inlist
                     )
                     # reset factors
-                    resetmatrix!(Factors,M,N,vn2cn,1.0)
+                    resetmatrix!(Factors,vn2cn,1.0)
                 end       
             elseif mode == "Mod-List-RBP"
                 mod_list_RBP!(
@@ -438,7 +460,7 @@ function
                     syndrome
                 )
                 # reset factors
-                resetmatrix!(Factors,M,N,vn2cn,1.0)
+                resetmatrix!(Factors,vn2cn,1.0)
             elseif mode == "Random-List-RBP"
                 random_list_RBP!(
                     bitvector,
@@ -467,7 +489,7 @@ function
                     inlist
                 )
                 # reset factors
-                resetmatrix!(Factors,M,N,vn2cn,1.0)
+                resetmatrix!(Factors,vn2cn,1.0)
             end
     
             calc_syndrome!(syndrome,bitvector,cn2vn)
@@ -529,10 +551,41 @@ function
     end
 
     if test
+        if bptype == "MKAY"
+            retr = zeros(M,N)
+            retq = zeros(M,N)
+            for m in eachindex(cn2vn)
+                for n in cn2vn[m]
+                    retr[m,n] = log.(Lr[m,n,1]) - log.(Lr[m,n,2])
+                    retq[m,n] = log.(Lq[m,n,1]) - log.(Lq[m,n,2])
+                end
+            end
+            return retr, retq, all_max_res
+        else
         return Lr, Lq, all_max_res
+        end
     else
         return sum_decoded, sum_ber
     end
 
 end
 
+function generate_message!(
+    msg::Vector{Bool},
+    rgn_msg::AbstractRNG,
+    ::Nothing
+)
+
+    rand!(rgn_msg,msg,Bool)
+
+end
+
+function generate_message!(
+    msg::Vector{Bool},
+    ::AbstractRNG,
+    msgtest::Vector{Bool}
+)
+
+    msg .= msgtest
+
+end

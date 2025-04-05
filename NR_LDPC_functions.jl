@@ -501,6 +501,6 @@ function
         end   
     end
 
-    return BitMatrix(H), E_H
+    return H, E_H
 
 end

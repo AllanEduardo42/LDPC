@@ -8,7 +8,7 @@ using Random
 """For each column j of matrix H, find the indices i where H[i,j] = 1, and 
 return a vector "vn2cn" where vn2cn[j] is a vector containing the
 indices i where H[i,j] = 1"""
-function make_vn2cn_list(H::BitMatrix)
+function make_vn2cn_list(H::Matrix{Bool})
 
     N = size(H,2)
     vn2cn = Vector{Vector{Int}}()
@@ -23,7 +23,7 @@ end
 """For each row i of matrix H, find the indices j where H[i,j] = 1, and 
 return a vector "cn2vn" where cn2vn[i] is a vector containing the
 indices j where H[i,j] = 1"""
-function make_cn2vn_list(H::BitMatrix)
+function make_cn2vn_list(H::Matrix{Bool})
 
     M = size(H,1)
     cn2vn = Vector{Vector{Int}}()
@@ -58,8 +58,8 @@ function
    
     @inbounds for n in eachindex(vn2cn)
         for m in vn2cn[n]
-            Lq[n,m,1] = Lf[n,1]
-            Lq[n,m,2] = Lf[n,2]
+            Lq[m,n,1] = Lf[n,1]
+            Lq[m,n,2] = Lf[n,2]
         end
     end
 
@@ -71,29 +71,60 @@ function
         noise::Vector{<:AbstractFloat},
         σ::AbstractFloat,
         u::Vector{<:AbstractFloat},
-        rng_noise::AbstractRNG)
+        rng_noise::AbstractRNG,
+        noisetest::Nothing
+    )
 
-    randn!(rng_noise,noise)
-    @fastmath noise .*= σ
-    @fastmath signal .= u .+ noise
+    @fastmath begin
+        randn!(rng_noise,noise)
+        noise .*= σ
+        signal .= u .+ noise
+    end
+
+end
+
+function
+    received_signal!(
+        signal::AbstractArray{<:AbstractFloat},
+        noise::Vector{<:AbstractFloat},
+        σ::AbstractFloat,
+        u::Vector{<:AbstractFloat},
+        rng_noise::AbstractRNG,
+        noisetest::Vector{<:AbstractFloat}
+    )
+
+    @fastmath begin
+        noisetest .*= σ
+        signal .= u .+ noisetest
+    end
 
 end
 
 function
     resetmatrix!(
         X::Matrix{<:Real},
-        M::Integer,
-        N::Integer,
         vn2cn::Vector{Vector{T}} where {T<:Integer},
         value::Real
     )    
     
-    @fastmath @inbounds begin
-        for n in 1:N
-            nl = LinearIndices(X)[1,n]-1
-            for m in vn2cn[n]
-                X[nl+m] = value
-            end
+    @inbounds for n in eachindex(vn2cn)
+        for m in vn2cn[n]
+            X[m,n] = value
+        end
+    end
+end
+
+function
+    resetmatrix!(
+        X::Array{<:Real,3},
+        vn2cn::Vector{Vector{T}} where {T<:Integer},
+        value::Real
+    )    
+    
+    @inbounds for n in eachindex(vn2cn)
+        for m in vn2cn[n]
+            X[m,n,1] = value
+            X[m,n,2] = value
         end
     end
 end

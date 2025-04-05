@@ -7,16 +7,13 @@ function
     calc_Lf!(
         Lf::AbstractVector{<:AbstractFloat},
         signal::Vector{<:AbstractFloat},
-        σ²::AbstractFloat,
-        bptype::String
+        σ²::AbstractFloat
     )
 
-    @fastmath @inbounds for i in eachindex(signal)
-        Lf[i] = -2*signal[i]/σ²
-    end
-    if bptype == "TABL"
-        # scale for table
-        Lf .*= SIZE_per_RANGE
+    @fastmath @inbounds begin
+        for i in eachindex(signal)
+            Lf[i] = -2*signal[i]/σ²
+        end
     end
 
 end
@@ -24,27 +21,28 @@ end
 # MKAY
 function
     calc_Lf!(
-        f::Matrix{<:AbstractFloat},
+        f::AbstractMatrix{<:AbstractFloat},
         signal::Vector{<:AbstractFloat},
         σ²::AbstractFloat
     )
 
-    @fastmath k = 1/sqrt(2*π*σ²)
+    @fastmath @inbounds begin
 
-    @inbounds @fastmath  for i in eachindex(signal)
-        f[i,1] = k*exp(-(signal[i]+1)^2/(2*σ²))
-        f[i,2] = k*exp(-(signal[i]-1)^2/(2*σ²))
+        k = 1/sqrt(2*π*σ²)
+
+        for i in eachindex(signal)
+            f[i,1] = k*exp(-(signal[i]+1)^2/(2*σ²))
+            f[i,2] = k*exp(-(signal[i]-1)^2/(2*σ²))
+        end
+
+        normalize!(f)
     end
-
-    normalize!(f)
 
 end
 
-function normalize!(f::Matrix{<:AbstractFloat})
-
-    N = size(f,1)
+function normalize!(f::AbstractMatrix{<:AbstractFloat})
     
-    @inbounds @fastmath for n in 1:N
+    @inbounds @fastmath for n in axes(f,1)
         α = f[n,1] + f[n,2]
         f[n,1] = f[n,1]/α
         f[n,2] = f[n,2]/α

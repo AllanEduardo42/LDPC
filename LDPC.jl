@@ -63,7 +63,7 @@ MAXITER::Int = 50
 MAXIRBP::Int = 30
 # FACTORS = [0.7, 0.8, 0.9, 1.0]
 FACTORS = [0.9]
-SNR = [1.2, 1.6, 1.8]
+SNR = [1.2, 1.6]
 TRIALS = 10 .^(0:length(SNR)-1)*2^7
 
 # TEST
@@ -93,13 +93,13 @@ end
 
 i = 1
 # Flooding
-ACTIVE[i] = 0
-BPTYPES[i] = "FAST"
+ACTIVE[i] = 1
+BPTYPES[i] = "MKAY"
 MAXITERS[i] = MAXITER
 
 # LBP
 i += 1
-ACTIVE[i] = 1
+ACTIVE[i] = 0
 BPTYPES[i] = "FAST"
 MAXITERS[i] = MAXITER
 
@@ -171,8 +171,8 @@ AA::Int = 1008
 # Rate
 RR::Float64 = 1/2
 # LDPC protocol: 1 = NR-LDPC; 2 = PEG; 3 = IEEE80216e;
-LDPC::Int = 3
-    DENSITIES = 2:11
+LDPC::Int = 1
+    DENSITIES = 2:12
 
 ############################# PARITY-CHECK MATRIX #############################
 
@@ -184,25 +184,28 @@ if LDPC == 1
     CWORD, HH, E_H, NR_LDPC_DATA = NR_LDPC_encode(MSG,RR,RV)
     MM, NN = size(HH)
     GIRTH = find_girth(HH,100000)
+    GG = nothing
 else
-    NR_LDPC_DATA = nr_ldpc_data(0,0,0,0,0,0,0,0,0,0,"0",0,[0],0,[false])
+    NR_LDPC_DATA = nothing
     LL = round(Int,AA/RR)
     if LDPC == 2
+        E_H = nothing
         NN = LL
         MM = LL - AA
         # Vector of the variable node degrees
-        D = rand(Xoshiro(SEED_GRAPH),DENSITIES,NN-MM)
+        DD = rand(Xoshiro(SEED_GRAPH),DENSITIES,NN)
         # Generate Parity-Check Matrix by the PEG algorithm
-        HH, GIRTH = PEG(D,MM,NN)
+        @time HH, GIRTH = PEG(DD,MM,NN)
+        GG = [gf2_mat_mult(gf2_inverse(HH[:,1:MM]),HH[:,MM+1:NN]); I(NN-MM)]
     elseif LDPC == 3
+        # N takes values in {576,672,768,864,960,1056,1152,1248,1344,1440,1536,
+        # 1632,1728,1824,1920,2016,2112,2208,2304}.    
+        # R takes values in {"1/2","2/3A","2/3B","3/4A","3/4B","5/6"}.
         HH,ZF,E_H = IEEE80216e(LL,RR)
-        MM::Int,NN::Int = size(HH)
+        MM,NN = size(HH)
         LL = NN
         GIRTH = find_girth(HH,100000)
-    else
-        throw(ArgumentError(
-                    lazy"CHECK = $CHECK, but must be 1, 2 or 3"
-                ))
+        GG = nothing
     end
 end
 

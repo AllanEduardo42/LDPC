@@ -18,40 +18,42 @@ function
         ::Nothing     
     )
 
-    pLr = 1.0
-    countzeros = 0
-    n0 = 0
-    @fastmath @inbounds for n in vns
-        x = Lq[m,n]
-        if x == 0.0 # Lr[m,n] = 0 for n ≠ n0
-            countzeros += 1
-            n0 = n
-            Lrn[n] = 1.0 # s.t. Lr[m,n0] = 2*atanh(pLr)
-            if countzeros > 1 # Lr[m,n] = 0 ∀n
-                break
+    @fastmath @inbounds begin
+        pLr = 1.0
+        countzeros = 0
+        n0 = 0
+        for n in vns
+            x = Lq[m,n]
+            if x == 0.0 # Lr[m,n] = 0 for n ≠ n0
+                countzeros += 1
+                n0 = n
+                Lrn[n] = 1.0 # s.t. Lr[m,n0] = 2*atanh(pLr)
+                if countzeros > 1 # Lr[m,n] = 0 ∀n
+                    break
+                end
+            else
+                Lrn[n] = tanh(0.5*x)
+            end
+            pLr *= Lrn[n]
+        end
+        if countzeros == 0
+            for n in vns
+                x = pLr/Lrn[n]
+                if abs(x) < 1 # controls divergent values of Lr
+                    Lr[m,n] = 2*atanh(x)
+                elseif x > 0
+                    Lr[m,n] = INFFLOAT
+                else
+                    Lr[m,n] = NINFFLOAT
+                end
             end
         else
-            Lrn[n] = tanh(0.5*x)
-        end
-        pLr *= Lrn[n]
-    end
-    if countzeros == 0
-        @fastmath @inbounds for n in vns
-            x = pLr/Lrn[n]
-            if abs(x) < 1 # controls divergent values of Lr
-                Lr[m,n] = 2*atanh(x)
-            elseif x > 0
-                Lr[m,n] = INFFLOAT
-            else
-                Lr[m,n] = NINFFLOAT
+            for n in vns
+                Lr[m,n] = 0.0
             end
-        end
-    else
-        @fastmath @inbounds for n in vns
-            Lr[m,n] = 0.0
-        end
-        if countzeros == 1 # Lr[m,n] = 0 for n ≠ n0
-            @fastmath @inbounds Lr[m,n0] = 2*atanh(pLr)
+            if countzeros == 1 # Lr[m,n] = 0 for n ≠ n0
+                Lr[m,n0] = 2*atanh(pLr)
+            end
         end
     end
 end
@@ -88,7 +90,7 @@ function ϕ(Lq::AbstractFloat, ::Nothing)
 end
 
 function ϕ(Lq::AbstractFloat, phi::Vector{<:AbstractFloat})    
-    phi[get_index(Lq)]
+    @inbounds phi[get_index(Lq)]
 end
 
 function
@@ -115,18 +117,20 @@ function
         phi::Union{Vector{<:AbstractFloat},Nothing}
     )
 
-    sLr = 0.0
-    s = false
-    for n in vns
-        @inbounds Lrn[n], signs[n], s = phi_sign!(Lq[m,n],s,phi)
-        @fastmath @inbounds sLr += Lrn[n] 
-    end
-    for n in vns
-        @fastmath @inbounds x = abs(sLr - Lrn[n])
-        if @fastmath x > 0 # (Inf restriction)
-            @inbounds Lr[m,n] = (1 - 2*(signs[n] ⊻ s))*ϕ(x,phi)
+    @fastmath @inbounds begin
+        sLr = 0.0
+        s = false
+        for n in vns
+            Lrn[n], signs[n], s = phi_sign!(Lq[m,n],s,phi)
+            sLr += Lrn[n] 
         end
-    end    
+        for n in vns
+            x = abs(sLr - Lrn[n])
+            if x > 0 # (Inf restriction)
+                Lr[m,n] = (1 - 2*(signs[n] ⊻ s))*ϕ(x,phi)
+            end
+        end
+    end   
 end
 
 ################################### MIN SUM ###################################
@@ -152,22 +156,59 @@ end
 function
     update_Lr!(
         r::Array{<:AbstractFloat,3},
-        δq::Matrix{<:AbstractFloat},
+        δq::Vector{<:AbstractFloat},
         m::Integer,
         vns::Vector{<:Integer}    
     )
     
-    for n in vns
-        δr = 1
+    @inbounds for n in vns
+        δr = 1.0
         for n2 in vns
             if n2 ≠ n
-                @fastmath @inbounds δr *= δq[m,n2]
+                δr *= δq[n2]
             end
         end
-        @fastmath @inbounds r[m,n,1] = 0.5*(1+δr)
-        @fastmath @inbounds r[m,n,2] = 0.5*(1-δr)
-    end
-   
-        
+        r[m,n,1] = 0.5*(1+δr)
+        r[m,n,2] = 0.5*(1-δr)
+    end 
 
 end
+
+# pre-historic method
+function
+    update_Lr!(
+        r::Array{<:AbstractFloat,3},
+        q::Array{<:AbstractFloat,3},
+        m::Integer,
+        vns::Vector{<:Integer}    
+    )
+
+    S = length(vns)-1
+    @inbounds for n in vns
+        r[m,n,1] = 0.0   
+        r[m,n,2] = 0.0          
+        for s = 0:2^S-1
+            dig = digits(s, base = 2, pad = S)
+            count = 0
+            rr = 1.0
+            if iseven(sum(dig))
+                for nn in vns
+                    if nn != n
+                        count += 1
+                        rr *= q[m,nn,dig[count]+1]
+                    end
+                end
+                r[m,n,1] += rr
+            else
+                for nn in vns
+                    if nn != n
+                        count += 1
+                        rr *= q[m,nn,dig[count]+1]
+                    end               
+                end
+                r[m,n,2] += rr
+            end
+        end
+    end
+end
+

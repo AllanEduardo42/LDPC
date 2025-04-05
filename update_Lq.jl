@@ -48,14 +48,14 @@ function
         Lr::Matrix{<:AbstractFloat},
         Lf::AbstractFloat,
         n::Integer,
-        vn2cn::Vector{Vector{T}} where {T<:Integer},
+        cns::Vector{<:Integer},
         ::Nothing
     )
     
     m = 0
-    @inbounds for outer m in vn2cn[n]
+    @inbounds for outer m in cns
         Lq[m,n] = Lf[n]
-        for m2 in vn2cn[n]
+        for m2 in cns
             if m2 ≠ m
                 Lq[m,n] += Lr[m2,n]
             end
@@ -74,25 +74,20 @@ function
         r::Array{<:AbstractFloat,3},
         f::Vector{<:AbstractFloat},
         n::Integer,
-        vn2cn::Vector{Vector{T}} where {T<:Integer}
+        cns::Vector{<:Integer}
     )
 
-    Ld = zeros(2)
-    @inbounds for m in vn2cn[n]
-        Ld .= f
-        @inbounds for m2 in vn2cn[n]
+    @inbounds for m in cns
+        Ld1 = f[1]
+        Ld2 = f[2]
+        for m2 in cns
             if m2 ≠ m
-                @fastmath @inbounds Ld[1] *= r[m2,n,1]
-                @fastmath @inbounds Ld[2] *= r[m2,n,2]
+                Ld1 *= r[m2,n,1]
+                Ld2 *= r[m2,n,2]
             end
         end
-        @fastmath a = sum(Ld)
-        @fastmath @inbounds q[m,n,1] = Ld[1]/a
-        @fastmath @inbounds q[m,n,2] = Ld[2]/a
-        @fastmath @inbounds Ld[1] *= r[m,n,1]
-        @fastmath @inbounds Ld[2] *= r[m,n,2]
+        a = Ld1 + Ld2
+        q[m,n,1] = Ld1/a
+        q[m,n,2] = Ld2/a
     end
-
-    return @fastmath @inbounds signbit(Ld[1]-Ld[2])
-
 end

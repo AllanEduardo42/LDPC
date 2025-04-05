@@ -17,33 +17,37 @@ function minsum!(
     vns::Vector{<:Integer}
     )
 
-    s = false
-    minL = INFFLOAT
-    minL2 = INFFLOAT
-    max_idx = vns[1]
-    @fastmath @inbounds for n in vns
-        β, signs[n], s = abs_sign!(Lq[m,n],s)
-        if β < minL
-            max_idx = n
-            minL, minL2 = β, minL
-        elseif β < minL2
-            minL2 = β
-        end
-    end
-    minL *= ALPHA
-    minL2 *= ALPHA
+    @fastmath @inbounds begin
 
-    @fastmath @inbounds for n in vns
-        if signs[n] ⊻ s
-            Ms[m,n] = -minL
-        else
-            Ms[m,n] = minL
+        s = false
+        minL = INFFLOAT
+        minL2 = INFFLOAT
+        max_idx = vns[1]
+        for n in vns
+            β, signs[n], s = abs_sign!(Lq[m,n],s)
+            if β < minL
+                max_idx = n
+                minL, minL2 = β, minL
+            elseif β < minL2
+                minL2 = β
+            end
         end
-    end
-    @fastmath @inbounds if signbit(Ms[m,max_idx])
-        Ms[m,max_idx] = -minL2
-    else
-        Ms[m,max_idx] = minL2
+        minL *= ALPHA
+        minL2 *= ALPHA
+
+        for n in vns
+            if signs[n] ⊻ s
+                Ms[m,n] = -minL
+            else
+                Ms[m,n] = minL
+            end
+        end
+        if signbit(Ms[m,max_idx])
+            Ms[m,max_idx] = -minL2
+        else
+            Ms[m,max_idx] = minL2
+        end
+
     end
 
 end

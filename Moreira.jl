@@ -5,64 +5,84 @@
 
 ##################################### TEST #####################################
 
-using LinearAlgebra
+include("simcore.jl")
+include("NR_LDPC_encode.jl")
 
-include("GF2_functions.jl")
-include("auxiliary_functions.jl")
-include("performance_simulation.jl")
+const INF = typemax(Int64)
+const INFFLOAT = 1e3
+const NINFFLOAT = -INFFLOAT
+const ALPHA = 0.875               # Min-Sum attenuation factor
 
-PRINTING::Bool = true
-SEED::Int = 1
-
-MAX::Int = 3
-NREALS::Int = 1
-
-SIZE::Int = 1024
-RANGE::Int = 20
-SIZE_per_RANGE::Float64 = SIZE/RANGE
-
-MODE::String = "MKAY"
-
-H = BitMatrix(
-     [0 1 0 1 0 1 1 1 0 0 0 1;
-      1 0 1 1 0 0 0 0 1 0 0 0;
-      0 1 0 0 1 0 1 0 0 0 0 1;
-      1 0 0 1 0 0 0 0 0 1 1 0;
-      0 0 1 0 1 1 0 0 0 1 0 0;
-      1 0 1 0 0 0 1 1 0 0 1 0;
-      0 1 0 0 0 1 0 1 1 1 0 0;
+HH = Matrix(Bool.(
+     [0 1 0 1 0 1 1 1 0 0 0 1
+      1 0 1 1 0 0 0 0 1 0 0 0
+      0 1 0 0 1 0 1 0 0 0 0 1
+      1 0 0 1 0 0 0 0 0 1 1 0
+      0 0 1 0 1 1 0 0 0 1 0 0
+      1 0 1 0 0 0 1 1 0 0 1 0
+      0 1 0 0 0 1 0 1 1 1 0 0
       0 0 0 0 1 0 0 0 1 0 1 1]
-    )
+      ))
+    
 
-M,N = size(H)
-K = N - M
+MM,NN = size(HH)
+
+CN2VN  = make_cn2vn_list(HH)
+VN2CN  = make_vn2cn_list(HH)
+
+GG = [gf2_mat_mult(gf2_inverse(HH[:,1:MM]),HH[:,MM+1:NN]); I(NN-MM)] 
 
 ### McKay Method
 
-A = H[:,1:M]
-B = H[:,M+1:N]
+MSGTEST = [true, false, false, false]
+CWORD = gf2_mat_mult(GG, MSGTEST) 
+U = Float64.(2*CWORD .- 1) 
 
-P = gf2_mat_mult(gf2_inverse(A),B)
+STDEV = 0.8
+SNR = 10*log10(1/STDEV^2)
 
-G = [P; I(K)]
-
-Message = Vector(Bool.([1, 0, 0, 0]))
-
-C = gf2_mat_mult(Matrix(G), Message)
-
-σ = [0.8]
-
-t = [1.3129, 2.6584, 0.7413, 2.1745, 0.5981, −0.8323, −0.3962, −1.7586,
+SIGNALTEST = [1.3129, 2.6584, 0.7413, 2.1745, 0.5981, −0.8323, −0.3962, −1.7586,
 1.4905, 0.4084, −0.9290, 1.0765]
 
-Lr, Lq = 
-    performance_simulation(C,σ,H,MODE,1,MAX;t_test=t,printing=PRINTING)
-;
-if MODE == "FTAB"
-    Lr /= SIZE_per_RANGE
-    Lq /= SIZE_per_RANGE
-end
+AA = length(MSGTEST)
 
-if MODE == "MKAY"
-    logR = log.(Lr[:,:,1]./Lr[:,:,2])
+PRINTTEST = true
+MAXITER = 3
+BPTYPE = "MKAY"
+
+MLR, MLQ, _ = simcore(AA,
+                    SNR,
+                    HH,
+                    GG,
+                    MM,
+                    NN,
+                    CN2VN,
+                    VN2CN,
+                    ones(Int,2,2),
+                    2,
+                    0,
+                    nothing,
+                    "Flooding",
+                    BPTYPE,
+                    1,
+                    MAXITER,
+                    false,
+                    0.0,
+                    [0],
+                    0,
+                    0,
+                    0;
+                    test=true,
+                    printtest=PRINTTEST,
+                    msgtest=MSGTEST,
+                    noisetest=(SIGNALTEST-U)/STDEV)
+
+if BPTYPE == "MKAY"
+    LLR = log.(MLR[:,:,1]) - log.(MLR[:,:,2])
+    LLQ = log.(MLQ[:,:,1]) - log.(MLQ[:,:,2])
+else
+    LLR = MLR
+    LLQ = MLQ
 end
+;
+

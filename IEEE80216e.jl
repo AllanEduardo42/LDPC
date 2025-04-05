@@ -3,13 +3,9 @@ using LinearAlgebra
 function
     IEEE80216e(
         N::Integer,
-        R::Float64,
+        R::Float64;
         mode = "A"
     )
-    # N takes values in {576,672,768,864,960,1056,1152,1248,1344,1440,1536,1632,
-    # 1728,1824,1920,2016,2112,2208,2304}.
-    
-    # R takes values in {"1/2","2/3A","2/3B","3/4A","3/4B","5/6"}.
 
     if R ≤ 1/2
         rate = "1/2"
@@ -125,7 +121,7 @@ function
         end
     end
 
-    return BitMatrix(H), zf, E_H
+    return H, zf, E_H
 end
 
 function 
@@ -133,19 +129,19 @@ function
         c::Vector{Bool},
         zf::Integer,
         E_H::Matrix{<:Integer},
+        E_M::Integer,
+        E_N::Integer,
+        E_K::Integer
     )
 
-    M,N = size(E_H)
-    K = N - M
+    cw = zeros(Bool,zf,E_N+1)
+    cw[1:zf*E_K] = c
 
-    cw = zeros(Bool,zf,N+1)
-    cw[1:zf*K] = c
-
-    a = zeros(Bool,zf,M)
+    a = zeros(Bool,zf,E_M)
     Sc = zeros(Bool,zf)
 
-    @inbounds for i = 1:M
-        for j = 1:K            
+    @inbounds for i = 1:E_M
+        for j = 1:E_K            
             if E_H[i,j] ≠ -1
                 a[:,i] .⊻= circshift(cw[:,j],-E_H[i,j])
             end
@@ -153,21 +149,21 @@ function
         Sc .⊻= a[:,i]
     end
 
-    @inbounds for i = 1:M
-        if E_H[i,K+1] ≠ -1
-            cw[:,K+1] .⊻= circshift(Sc,E_H[i,K+1])
+    @inbounds for i = 1:E_M
+        if E_H[i,E_K+1] ≠ -1
+            cw[:,E_K+1] .⊻= circshift(Sc,E_H[i,E_K+1])
         end
     end
     
-    z = zeros(Bool,zf,M)
-    @inbounds for i=1:M
-        if E_H[i,K+1] ≠ -1
-            z[:,i] = circshift(cw[:,K+1],-E_H[i,K+1])
+    z = zeros(Bool,zf,E_M)
+    @inbounds for i=1:E_M
+        if E_H[i,E_K+1] ≠ -1
+            z[:,i] = circshift(cw[:,E_K+1],-E_H[i,E_K+1])
         end
     end
 
-    @inbounds for i = M:-1:2
-        cw[:,K+i] = a[:,i] .⊻ z[:,i] .⊻ cw[:,K+i+1]
+    @inbounds for i = E_M:-1:2
+        cw[:,E_K+i] = a[:,i] .⊻ z[:,i] .⊻ cw[:,E_K+i+1]
     end   
 
     return cw[1:end-zf]

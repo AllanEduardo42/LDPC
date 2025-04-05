@@ -44,28 +44,40 @@ function
         f::Matrix{<:AbstractFloat},
         cn2vn::Vector{Vector{T}} where {T<:Integer},
         vn2cn::Vector{Vector{T}} where {T<:Integer},
-        Lrn::Nothing,
-        signs::Nothing,
-        phi::Nothing
+        δq::Vector{<:AbstractFloat},
+        ::Nothing,
+        ::Nothing
     )
 
-    # horizontal update 
-    @fastmath @inbounds δq = q[:,:,1]-q[:,:,2]  
+    @inbounds begin
 
-    for m in eachindex(cn2vn)
+        # horizontal update
 
-        update_Lr!(r,δq,m,cn2vn)
+        for m in eachindex(cn2vn)
 
-    end
+            vns = cn2vn[m]
+            # update_Lr!(r,q,m,vns)
+            for n in vns
+                δq[n] = q[m,n,1] - q[m,n,2]
+            end
+            update_Lr!(r,δq,m,vns)
 
-    # vertical update
-
-    Ld = zeros(2)
-    
-    for n in eachindex(vn2cn)
+        end
+        # vertical update
         
-        @inbounds Ld = f[n,:]
-        @inbounds bitvector[n] = update_Lq!(q,r,Ld,n,vn2cn)
+        for n in eachindex(vn2cn)    
+            cns = vn2cn[n]
+            update_Lq!(q,r,f[n,:],n,cns)
+        end
 
+        for n in eachindex(vn2cn) 
+            d0 = f[n,1]
+            d1 = f[n,2]
+            for m in vn2cn[n]
+                d0 *= r[m,n,1]
+                d1 *= r[m,n,2]
+            end
+            bitvector[n] = d1 > d0
+        end
     end
 end

@@ -240,9 +240,7 @@ function
         end
     end
 
-    nr_ldpc_data = NR_LDPC_DATA(A, B, C, G, K_prime, K, L_2, Zc, iLS, N, bg, N_cb, E_r, k0, g_CRC)
-
-    return g, H, E_H, nr_ldpc_data
+    return g, H, E_H, nr_ldpc_data(A, B, C, G, K_prime, K, L_2, Zc, iLS, N, bg, N_cb, E_r, k0, g_CRC)
 
 end
 

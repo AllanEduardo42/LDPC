@@ -4,20 +4,18 @@
 # PEG Algorithm
 
 function 
-    PEG(d::Vector{<:Integer},M::Integer,N::Integer)
+    PEG(
+        d::Vector{<:Integer},
+        M::Integer,
+        N::Integer
+    )
 
     sort!(d)
-    H = falses(M,N)
+    H = zeros(Bool,M,N)
     check_degrees = zeros(Int,M)
     girth = Inf
 
-    # for m=1:M
-    #     H[m,N-M+m] = 1
-    #     check_degrees[m] += 1
-    # end
-
-    # for n in 1:N-M
-    for n in 1:N
+    @inbounds for n in 1:N
         for k in 1:d[n]
             if k == 1
                 _,m = findmin(check_degrees)
@@ -25,9 +23,8 @@ function
                 check_degrees[m] += 1
             else
                 L0_checks = findall(isone,H[:,n])
-                level = 
-                    subtree!(H,M,n,0,check_degrees,L0_checks,[n],copy(L0_checks),
-                            copy(L0_checks))
+                level = subtree!(H,M,n,0,check_degrees,L0_checks,[n],
+                            copy(L0_checks),copy(L0_checks))
                 if level > 0
                     girth = min(girth, 2*(level+1))
                 end
@@ -41,7 +38,7 @@ end
 
 function 
     subtree!(
-        H::BitMatrix,
+        H::Matrix{Bool},
         M::Integer,
         root::Integer,
         level::Integer,
@@ -54,42 +51,45 @@ function
     # L0: previous level in the subtree
     # L1: current level in the subtree
 
-    STOPPED = false                     # flag: subtree stopped increasing
-    level += 1                          # absolute level in the subtree
-    L1_checks = Vector{Int}(undef,0)    # checks in the current level
-    L1_nodes = Vector{Int}(undef,0)     # nodes in the current level
+    @inbounds begin
 
-    for check in L0_checks
-        row = H[check,:]
-        row[parent_nodes] .= 0              # remove parent nodes
-        check_nodes = findall(isone,row)    # nodes linked to the current check
-        append_sort_unique!(L1_nodes,check_nodes)
-        for node in check_nodes
-            column = H[:,node]
-            column[check] = 0  
-            # include checks linked to the current node
-            append_sort_unique!(L1_checks,findall(isone,column))
+        STOPPED = false                     # flag: subtree stopped increasing
+        level += 1                          # absolute level in the subtree
+        L1_checks = Vector{Int}(undef,0)    # checks in the current level
+        L1_nodes = Vector{Int}(undef,0)     # nodes in the current level
+
+        for check in L0_checks
+            row = H[check,:]
+            row[parent_nodes] .= 0              # remove parent nodes
+            check_nodes = findall(isone,row)    # nodes linked to the current check
+            append_sort_unique!(L1_nodes,check_nodes)
+            for node in check_nodes
+                column = H[:,node]
+                column[check] = 0  
+                # include checks linked to the current node
+                append_sort_unique!(L1_checks,findall(isone,column))
+            end
         end
-    end
-    append_sort_unique!(L1_check_set,L1_checks)
-    len0 = length(L0_check_set)
-    len1 = length(L1_check_set)
-    if len1 == len0                     # subtee stopped increasing 
-        STOPPED = true
-        level = 0
-    end
-    if STOPPED || len1 == M             # stopped increasing or all checks reached
-        compl = collect(1:M)
-        deleteat!(compl, L0_check_set)  # take the complement set
-        _,m = findmin(check_degrees[compl])
-        idx = compl[m]
-        H[idx,root] = 1
-        check_degrees[idx] += 1
-    else
-        append_sort_unique!(L0_check_set,L1_checks)
-        level = 
-            subtree!(H,M,root,level,check_degrees,L1_checks,L1_nodes,L0_check_set,
-                L1_check_set)
+        append_sort_unique!(L1_check_set,L1_checks)
+        len0 = length(L0_check_set)
+        len1 = length(L1_check_set)
+        if len1 == len0                     # subtee stopped increasing 
+            STOPPED = true
+            level = 0
+        end
+        if STOPPED || len1 == M             # stopped increasing or all checks reached
+            compl = collect(1:M)
+            deleteat!(compl, L0_check_set)  # take the complement set
+            _,m = findmin(check_degrees[compl])
+            idx = compl[m]
+            H[idx,root] = 1
+            check_degrees[idx] += 1
+        else
+            append_sort_unique!(L0_check_set,L1_checks)
+            level = 
+                subtree!(H,M,root,level,check_degrees,L1_checks,L1_nodes,L0_check_set,
+                    L1_check_set)
+        end
     end
 
     return level
