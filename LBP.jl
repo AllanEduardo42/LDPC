@@ -15,7 +15,9 @@ function
         Lf::Vector{<:AbstractFloat},
         cn2vn::Vector{Vector{T}} where {T<:Integer},
         vn2cn::Vector{Vector{T}} where {T<:Integer},
-        Lrn::Vector{<:AbstractFloat}
+        Lrn::Vector{<:AbstractFloat},
+        signs::Union{Vector{Bool},Nothing},
+        phi::Union{Vector{<:AbstractFloat},Nothing}
     )
 
     @fastmath @inbounds for m in eachindex(cn2vn)
@@ -26,7 +28,7 @@ function
             Lq[m,n] = Ld - Lr[m,n]
         end
         # Lr updates
-        update_Lr!(Lr,Lq,m,vns,Lrn,nothing,nothing)
+        update_Lr!(Lr,Lq,m,vns,Lrn,signs,phi)
         for n in vns
             bitvector[n] = signbit(Lq[m,n] + Lr[m,n])
         end

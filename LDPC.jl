@@ -43,6 +43,9 @@ const INF = typemax(Int64)
 const INFFLOAT = 1e3
 const NINFFLOAT = -INFFLOAT
 const ALPHA = 0.875               # Min-Sum attenuation factor
+const TABLESIZE = 8192
+const TABLERANGE = 10
+const SIZE_PER_RANGE = TABLESIZE/TABLERANGE
 
 # Seeds
 SEED_NOISE::Int = 1428
@@ -63,7 +66,7 @@ MAXITER::Int = 50
 MAXIRBP::Int = 30
 # FACTORS = [0.7, 0.8, 0.9, 1.0]
 FACTORS = [0.9]
-SNR = [1.2, 1.6]
+SNR = [1.2, 1.6, 1.8]
 TRIALS = 10 .^(0:length(SNR)-1)*2^7
 
 # TEST
@@ -94,7 +97,7 @@ end
 i = 1
 # Flooding
 ACTIVE[i] = 1
-BPTYPES[i] = "MKAY"
+BPTYPES[i] = "FAST"
 MAXITERS[i] = MAXITER
 
 # LBP
@@ -163,16 +166,19 @@ LISTSIZES[1] = 16
 LISTSIZES[2] = 2
 LISTSIZES[3] = 16
 
+############################### 7) LOOKUP TABLE ################################
 
-########################### 7) MESSAGE AND CODEWORD ############################
+PHI = lookupTable()
+
+########################### 8) MESSAGE AND CODEWORD ############################
 
 # Message (Payload) size
 AA::Int = 1008
 # Rate
 RR::Float64 = 1/2
 # LDPC protocol: 1 = NR-LDPC; 2 = PEG; 3 = IEEE80216e;
-LDPC::Int = 1
-    DENSITIES = 2:12
+LDPC::Int = 2
+    DENSITIES = 1:8
 
 ############################# PARITY-CHECK MATRIX #############################
 
@@ -189,14 +195,20 @@ else
     NR_LDPC_DATA = nothing
     LL = round(Int,AA/RR)
     if LDPC == 2
+        ZF = 0
         E_H = nothing
         NN = LL
         MM = LL - AA
         # Vector of the variable node degrees
         DD = rand(Xoshiro(SEED_GRAPH),DENSITIES,NN)
         # Generate Parity-Check Matrix by the PEG algorithm
-        @time HH, GIRTH = PEG(DD,MM,NN)
-        GG = [gf2_mat_mult(gf2_inverse(HH[:,1:MM]),HH[:,MM+1:NN]); I(NN-MM)]
+        if AA == 1008 && RR == 1/2
+            HH = readdlm("./PEG_1008_2016.txt",'\t', Bool,'\n')
+            GIRTH = find_girth(HH,100000)
+        else
+            HH, GIRTH = PEG(DD,MM,NN)
+        end
+        GG = [I(NN-MM); gf2_mat_mult(gf2_inverse(HH[:,NN-MM+1:NN]), HH[:,1:MM])]
     elseif LDPC == 3
         # N takes values in {576,672,768,864,960,1056,1152,1248,1344,1440,1536,
         # 1632,1728,1824,1920,2016,2112,2208,2304}.    

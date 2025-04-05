@@ -135,7 +135,7 @@ function
         signs = nothing
     end
 
-    phi = (bptype == "TABL") ? lookupTable() : nothing
+    phi = (bptype == "TABL") ? PHI : nothing
 
     # Set other variables that depend on the mode
     Ms = RBP ? H*0.0 : nothing
@@ -253,7 +253,7 @@ function
             calc_Lf!(view(Lf,2*Zc+1:N),signal,variance)
             if bptype == "TABL"
                 # scale for table
-                Lf .*= SIZE_per_RANGE
+                Lf .*= SIZE_PER_RANGE
             end
         end
         
