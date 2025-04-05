@@ -96,7 +96,7 @@ end
 
 i = 1
 # Flooding
-ACTIVE[i] = 1
+ACTIVE[i] = 0
 BPTYPES[i] = "FAST"
 MAXITERS[i] = MAXITER
 
@@ -128,7 +128,7 @@ DECAYS[i] = FACTORS
 
 # List-RBP
 i += 1
-ACTIVE[i] = 0
+ACTIVE[i] = 1
 BPTYPES[i] = "FAST"
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
@@ -177,7 +177,7 @@ AA::Int = 1008
 # Rate
 RR::Float64 = 1/2
 # LDPC protocol: 1 = NR-LDPC; 2 = PEG; 3 = IEEE80216e;
-LDPC::Int = 2
+LDPC::Int = 1
     DENSITIES = 1:8
 
 ############################# PARITY-CHECK MATRIX #############################
@@ -269,10 +269,9 @@ if TEST
     if TEST
         LRM = Dict()
         LQM = Dict()
-        MAX_RESIDUES = Dict()
         for i in eachindex(ACTIVE)
             if ACTIVE[i]
-                LRM[MODES[i]], LQM[MODES[i]], MAX_RESIDUES[MODES[i]] = performance_sim(
+                LRM[MODES[i]], LQM[MODES[i]] = performance_sim(
                                             SNR_TEST,
                                             MODES[i],
                                             TRIALS_TEST,

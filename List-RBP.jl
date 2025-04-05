@@ -24,9 +24,7 @@ function
         decayfactor::AbstractFloat,
         num_edges::Integer,
         Ms::Matrix{<:AbstractFloat},
-        Factors::Matrix{<:AbstractFloat},        
-        all_max_res_alt::Union{Vector{<:AbstractFloat},Nothing},
-        test::Bool,
+        Factors::Matrix{<:AbstractFloat},
         rng_rbp::AbstractRNG,
         listsizes::Vector{<:Integer},
         listres1::Vector{<:AbstractFloat},
@@ -42,12 +40,6 @@ function
     @fastmath @inbounds for e in 1:num_edges
 
         # display("e = $e")
-        # display([listres1 coords1])
-
-        # if in test mode, store the values of the maximum residues
-        if test
-            all_max_res_alt[e] = listres1[1]     
-        end
         
         # 1) get the largest residues coordenates if not clipped
         if listres1[1] == 0.0

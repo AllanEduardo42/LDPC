@@ -18,6 +18,6 @@ function
         end
     end
 
-    return max_edge, maxresidue
+    return max_edge
 
 end

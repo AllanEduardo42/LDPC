@@ -22,9 +22,7 @@ function
         decayfactor::AbstractFloat,
         num_edges::Integer,
         Ms::Matrix{<:AbstractFloat},
-        Factors::Matrix{<:AbstractFloat},        
-        all_max_res_alt::Union{Vector{<:AbstractFloat},Nothing},
-        test::Bool,
+        Factors::Matrix{<:AbstractFloat},
         address::Matrix{<:Integer},
         addressinv::Matrix{<:Integer},
         residues::Vector{<:AbstractFloat}
@@ -32,17 +30,15 @@ function
 
     @fastmath @inbounds for e in 1:num_edges
 
+        # display("e = $e")
+
         # 1) Find largest residue  and coordenates
-        max_edge, maxresidue = findmaxedge(residues)
+        max_edge = findmaxedge(residues)
         if max_edge == 0
             break # i.e., RBP has converged
         else
             cnmax = address[1,max_edge]
             vnmax = address[2,max_edge]
-        end
-        # if in test mode, store the values of the maximum residues
-        if test
-            all_max_res_alt[e] = maxresidue
         end
 
         # 2) Decay the RBP factor corresponding to the maximum residue

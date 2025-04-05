@@ -101,7 +101,7 @@ function
     syndrome = Vector{Bool}(undef,M)
 
     # prior llr (if mode == "MKAY" just the prior probabilities)
-    Lf = (bptype != "MKAY") ? zeros(N) : 0.5*ones(N,2)
+    Lf = (bptype != "MKAY") ? 0.01*ones(N) : 0.5*ones(N,2)
 
     # noise
     # L = length(cword)
@@ -140,8 +140,6 @@ function
     # Set other variables that depend on the mode
     Ms = RBP ? H*0.0 : nothing
     Factors = RBP ? 1.0*H  : nothing
-    all_max_res = (test && RBP) ? zeros(maxiter*num_edges) : nothing
-    all_max_res_alt = (test && RBP) ? zeros(num_edges) : nothing
 
     # mode = RBP
     if mode == "RBP"
@@ -264,19 +262,21 @@ function
         if mode == "RBP"
             calc_all_residues!(Lq,Lr,cn2vn,Lrn,signs,phi,Ms,Factors,addressinv,
                 residues,M)
-        elseif mode == "NRBP"
-            for m in 1:M 
-                # calculate the new check to node messages
-                update_Lr!(Ms,Lq,m,cn2vn,Lrn,signs,phi)
-            end
-            for n in 1:N
-                for m in vn2cn[n]
-                    li = LinearIndices(Ms)[m,n]        
-                    residues[n] += Ms[li]
-                end
-                residues[n] = abs(residues[n]/Lf[n])
-            end
+        # elseif mode == "NRBP"
+        #     for m in 1:M 
+        #         # calculate the new check to node messages
+        #         update_Lr!(Ms,Lq,m,cn2vn,Lrn,signs,phi)
+        #     end
+        #     for n in 1:N
+        #         for m in vn2cn[n]
+        #             li = LinearIndices(Ms)[m,n]        
+        #             residues[n] += Ms[li]
+        #         end
+        #         residues[n] = abs(residues[n]/Lf[n])
+        #     end
         end
+
+        # display(sort(residues,rev=true))
         
         # BP routine
         rbp_not_converged = true
@@ -331,8 +331,6 @@ function
                     num_edges,
                     Ms,
                     Factors,
-                    all_max_res_alt,
-                    test,
                     address,
                     addressinv,
                     residues
@@ -354,8 +352,6 @@ function
                     num_edges,
                     Ms,
                     Factors,
-                    all_max_res_alt,
-                    test,
                     residues
                     )
                 # reset factors
@@ -386,8 +382,6 @@ function
                         num_edges,
                         Ms,
                         Factors,
-                        all_max_res_alt,
-                        test,
                         rng_rbp,
                         max_residue,
                         maxcoords
@@ -418,8 +412,6 @@ function
                         num_edges,
                         Ms,
                         Factors,
-                        all_max_res_alt,
-                        test,
                         rng_rbp,
                         listsizes,
                         listres1,
@@ -446,8 +438,6 @@ function
                     num_edges,
                     Ms,
                     Factors,
-                    all_max_res_alt,
-                    test,
                     rng_rbp,
                     listsizes,
                     listres1,
@@ -476,8 +466,6 @@ function
                     num_edges,
                     Ms,
                     Factors,
-                    all_max_res_alt,
-                    test,
                     rng_rbp,
                     listsizes,
                     listres1,
@@ -496,11 +484,8 @@ function
     
             if test && printtest
     
-                if RBP
-                    all_max_res[(1 + (iter-1)*num_edges):(iter*num_edges)] = all_max_res_alt
-                end
-                    biterror .= (bitvector .≠ cword)
-                    println("Bit error:")
+                biterror .= (bitvector .≠ cword)
+                println("Bit error:")
                 for j in eachindex(bitvector)
                     print(Int(biterror[j]))
                     if j%80 == 0
@@ -560,9 +545,9 @@ function
                     retq[m,n] = log.(Lq[m,n,1]) - log.(Lq[m,n,2])
                 end
             end
-            return retr, retq, all_max_res
+            return retr, retq
         else
-        return Lr, Lq, all_max_res
+            return Lr, Lq
         end
     else
         return sum_decoded, sum_ber

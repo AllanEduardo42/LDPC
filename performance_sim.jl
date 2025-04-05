@@ -85,7 +85,7 @@ function
     ################################ MULTITHREADING ################################
 
     if TEST
-        Lr, Lq, max_residues = simcore(
+        Lr, Lq = simcore(
             AA,
             snr,
             HH,
@@ -113,7 +113,7 @@ function
         
         println()
 
-        return Lr, Lq, max_residues
+        return Lr, Lq
 
     else
         K = length(snr)
