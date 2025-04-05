@@ -15,47 +15,51 @@ function calc_all_residues!(
     phi::Union{Vector{<:AbstractFloat},Nothing},
     Ms::Matrix{<:AbstractFloat},
     Factors::Matrix{<:AbstractFloat},        
-    addressinv::Matrix{<:Integer},
+    rbpmatrix::Matrix{<:Integer},
     residues::Vector{<:AbstractFloat},
-    M::Integer
+    coords::Matrix{<:Integer},
+    listsizes::Vector{<:Integer}
 )
-    @fastmath @inbounds for m in 1:M 
+    @fastmath @inbounds for m in eachindex(cn2vn)
         vns = cn2vn[m]
         # calculate the new check to node messages
         update_Lr!(Ms,Lq,m,vns,Lrn,signs,phi)
         # calculate the residues
         for n in vns
-            residues[addressinv[m,n]] = calc_residue(Ms,Lr,Factors,Lrn,Lq,m,n)
+            li = LinearIndices(Lr)[m,n]
+            residue = calc_residue(Ms,Lr,Factors,Lrn,Lq,li)
+            add_to_list!(rbpmatrix,residues,coords,residue,li,m,n,listsizes[1])
         end
     end
 end
 
-function calc_all_residues_list!(
-    Lq::Matrix{<:AbstractFloat},
-    Lr::Matrix{<:AbstractFloat},
-    cn2vn::Vector{Vector{T}} where {T<:Integer},
-    Lrn::Union{Vector{<:AbstractFloat},Nothing},
-    signs::Union{Vector{Bool},Nothing},
-    phi::Union{Vector{<:AbstractFloat},Nothing},
-    Ms::Matrix{<:AbstractFloat},
-    Factors::Matrix{<:AbstractFloat},        
-    listsizes::Vector{<:Integer},
-    listres1::Vector{<:AbstractFloat},
-    coords::Matrix{<:Integer},
-    inlist::Union{Matrix{<:Integer},Nothing},
-    M::Integer   
-)
-    @fastmath @inbounds for m in 1:M 
-        vns = cn2vn[m]
-        # calculate the new check to node messages
-        update_Lr!(Ms,Lq,m,vns,Lrn,signs,phi)
-        # calculate the residues
-        for n in vns
-            residue = calc_residue(Ms,Lr,Factors,Lrn,Lq,m,n)
-            add_to_list!(inlist,listres1,coords,residue,m,n,listsizes[1])
-        end
-    end
-end
+# function calc_all_residues_list!(
+#     Lq::Matrix{<:AbstractFloat},
+#     Lr::Matrix{<:AbstractFloat},
+#     cn2vn::Vector{Vector{T}} where {T<:Integer},
+#     Lrn::Union{Vector{<:AbstractFloat},Nothing},
+#     signs::Union{Vector{Bool},Nothing},
+#     phi::Union{Vector{<:AbstractFloat},Nothing},
+#     Ms::Matrix{<:AbstractFloat},
+#     Factors::Matrix{<:AbstractFloat},        
+#     listsizes::Vector{<:Integer},
+#     listres1::Vector{<:AbstractFloat},
+#     coords::Matrix{<:Integer},
+#     inlist::Union{Matrix{<:Integer},Nothing},
+#     M::Integer   
+# )
+#     @fastmath @inbounds for m in 1:M 
+#         vns = cn2vn[m]
+#         # calculate the new check to node messages
+#         update_Lr!(Ms,Lq,m,vns,Lrn,signs,phi)
+#         # calculate the residues
+#         for n in vns
+#             li = LinearIndices(Lr)[m,n]
+#             residue = calc_residue(Ms,Lr,Factors,Lrn,Lq,li)
+            
+#         end
+#     end
+# end
 
 function calc_all_residues_local!(
     Lq::Matrix{<:AbstractFloat},

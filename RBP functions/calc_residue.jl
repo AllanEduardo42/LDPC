@@ -11,15 +11,14 @@ function
         Factors::Matrix{<:AbstractFloat},
         ::Vector{<:AbstractFloat},
         Lq::Matrix{<:AbstractFloat},
-        m::Integer,
-        n::Integer
+        li::Integer
     )
 
     @fastmath @inbounds begin      
-        residue = Ms[m,n] - Lr[m,n]
-        old = Lr[m,n] + Lq[m,n]
+        residue = Ms[li] - Lr[li]
+        old = Lr[li] + Lq[li]
         residue /= old
-        residue *= Factors[m,n]
+        residue *= Factors[li]
         if signbit(residue)
             return -residue
         else

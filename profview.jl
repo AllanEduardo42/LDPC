@@ -5,7 +5,7 @@
 
 
 SNR_PROF = 1.2
-Mode_prof = "RBP"
+Mode_prof = "List-RBP"
 TRIALSPROF = 2^5
 Maxiter_prof = 2
 Bptypte_prof = "FAST"
@@ -13,20 +13,24 @@ Decay_prof = 0.9
 
 
 @profview simcore(
-    A,
+    AA,
     SNR_PROF,
-    H,
+    HH,
+    GG,
+    MM,NN,
+    CN2VN,
+    VN2CN,
     E_H,
     LDPC,
-    Zf,
-    nr_ldpc_data,
+    ZF,
+    NR_LDPC_DATA,
     Mode_prof,
     Bptypte_prof,
     TRIALSPROF,
     Maxiter_prof,
     STOP,
     Decay_prof,
-    Listsizes,
-    Rgn_noise_seeds[1],
-    Rgn_samples_seeds[1],
-    Rgn_message_seeds[1])
+    LISTSIZES,
+    RGN_NOISE_SEEDS[1],
+    RGN_SAMPLE_SEEDS[1],
+    RGN_MESSAGE_SEEDS[1])

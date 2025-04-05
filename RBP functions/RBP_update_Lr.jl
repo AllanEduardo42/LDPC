@@ -11,7 +11,7 @@ function
         Ms::Matrix{<:AbstractFloat},
         ::Integer,
         ::Integer,
-        ::Vector{Vector{T}} where {T<:Integer},
+        ::Vector{<:Integer},
         ::Matrix{<:AbstractFloat},        
         ::Union{Vector{<:AbstractFloat},Nothing},
         ::Nothing,
@@ -31,7 +31,7 @@ function
         Ms::Matrix{<:AbstractFloat},
         ::Integer,
         ::Integer,
-        ::Vector{Vector{T}} where {T<:Integer},
+        ::Vector{<:Integer},
         ::Matrix{<:AbstractFloat},        
         ::Vector{<:AbstractFloat},
         ::Vector{Bool},
@@ -51,7 +51,7 @@ function
         ::Matrix{<:AbstractFloat},
         cnmax::Integer,
         vnmax::Integer,
-        cn2vn::Vector{Vector{T}} where {T<:Integer},
+        vns::Vector{<:Integer},
         Lq::Matrix{<:AbstractFloat},     
         ::Nothing,
         ::Vector{Bool},
@@ -59,18 +59,20 @@ function
     )
 
     # update check to node message Lr[cnmax,vnmax]
-    pLr = 1.0
-    @fastmath @inbounds for n in cn2vn[cnmax]
-        if n != vnmax
-            pLr *= tanh(0.5*Lq[n,cnmax])
+    @fastmath @inbounds begin
+        pLr = 1.0
+        for n in vns
+            if n != vnmax
+                pLr *= tanh(0.5*Lq[n,cnmax])
+            end
+        end    
+        if abs(pLr) < 1 
+            Lr[lmax] = 2*atanh(pLr)
+        elseif pLr > 0
+            Lr[lmax] = INFFLOAT
+        else
+            Lr[lmax] = NINFFLOAT
         end
-    end    
-    if @fastmath abs(pLr) < 1 
-        @fastmath @inbounds Lr[lmax] = 2*atanh(pLr)
-    elseif pLr > 0
-        @fastmath @inbounds Lr[lmax] = INFFLOAT
-    else
-        @fastmath @inbounds Lr[lmax] = NINFFLOAT
     end
 
 end

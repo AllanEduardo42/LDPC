@@ -81,7 +81,7 @@ MODES = ["Flooding","LBP","VLBP","RBP","Local-RBP","List-RBP","Mod-List-RBP",
          "Random-List-RBP","List-RBP-genius","NRBP"]
 NUM_MODES = length(MODES)
 ACTIVE = zeros(Bool,NUM_MODES)
-LISTSIZES = zeros(Int,3)
+LISTSIZES = zeros(Int,4)
 
 # BP type: "MKAY", "TANH", "FAST", "ALTN", "TABL", "MSUM"
 BPTYPES = Vector{String}(undef,NUM_MODES)
@@ -164,7 +164,8 @@ DECAYS[i] = [1.0]
 # List-RBP sizes
 LISTSIZES[1] = 16
 LISTSIZES[2] = 2
-LISTSIZES[3] = 16
+LISTSIZES[3] = LISTSIZES[1] - 1
+LISTSIZES[4] = LISTSIZES[1] - LISTSIZES[2] + 1
 
 ############################### 7) LOOKUP TABLE ################################
 

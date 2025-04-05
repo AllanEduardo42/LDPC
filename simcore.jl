@@ -12,7 +12,6 @@ include("LBP.jl")
 include("VLBP.jl")
 include("RBP.jl")
 include("Local_RBP.jl")
-include("List-RBP.jl")
 # include("Mod-List-RBP.jl")
 # include("Random-List-RBP.jl")
 include("NRBP.jl")
@@ -144,15 +143,19 @@ function
     # mode = RBP
     if mode == "RBP"
         residues = zeros(num_edges)
-        address = zeros(Int,2,num_edges)
-        addressinv = 0*H
+        coords = zeros(Int,3,num_edges)
+        localresidues = nothing
+        localcoords = nothing
+        rbpmatrix = 0*H
         e = 0
         for m in axes(H,1)
             for n in cn2vn[m]
                 e += 1
-                address[1,e] = m
-                address[2,e] = n
-                addressinv[m,n] = e
+                coords[1,e] = m
+                coords[2,e] = n
+                li = LinearIndices(rbpmatrix)[m,n]
+                coords[3,e] = li
+                rbpmatrix[li] = e
             end
         end
     elseif mode == "NRBP"
@@ -168,15 +171,15 @@ function
     if mode == "List-RBP" || mode == "Mod-List-RBP"||
         mode == "Random-List-RBP"
 
-        listres1 = zeros(listsizes[1]+1)
-        coords1 = zeros(Int,2,listsizes[1]+1)
-        inlist = Matrix(false*H)
+        residues = zeros(listsizes[1]+1)
+        coords = zeros(Int,3,listsizes[1]+1)
+        rbpmatrix = Matrix(false*H)
         if listsizes[2] == 1
-            listres2 = zeros(listsizes[1]+1)
-            coords2 = zeros(Int,2,listsizes[1]+1)
+            localresidues = zeros(listsizes[1]+1)
+            localcoords = zeros(Int,3,listsizes[1]+1)
         else
-            listres2 = zeros(listsizes[2]+1)
-            coords2 = zeros(Int,2,listsizes[2]+1)
+            localresidues = zeros(listsizes[2]+1)
+            localcoords = zeros(Int,3,listsizes[2]+1)
         end
     end
 
@@ -237,11 +240,11 @@ function
         decoded .= false
         resetmatrix!(Lr,vn2cn,0.0)
         if mode == "List-RBP" || mode == "Mod-List-RBP"
-            listres1 .= 0.0
-            coords1 .= 0
-            listres2 .= 0.0
-            coords2 .= 0
-            resetmatrix!(inlist,vn2cn,false)
+            residues .= 0.0
+            coords .= 0
+            localresidues .= 0.0
+            localcoords .= 0
+            resetmatrix!(rbpmatrix,vn2cn,false)
         end
 
         # 8) init the llr priors
@@ -259,21 +262,21 @@ function
         init_Lq!(Lq,Lf,vn2cn)
 
         # 10) precalculate the residues in RBP
-        if mode == "RBP"
-            calc_all_residues!(Lq,Lr,cn2vn,Lrn,signs,phi,Ms,Factors,addressinv,
-                residues,M)
-        # elseif mode == "NRBP"
-        #     for m in 1:M 
-        #         # calculate the new check to node messages
-        #         update_Lr!(Ms,Lq,m,cn2vn,Lrn,signs,phi)
-        #     end
-        #     for n in 1:N
-        #         for m in vn2cn[n]
-        #             li = LinearIndices(Ms)[m,n]        
-        #             residues[n] += Ms[li]
-        #         end
-        #         residues[n] = abs(residues[n]/Lf[n])
-        #     end
+        if mode == "RBP" || mode == "List-RBP"
+            calc_all_residues!(Lq,Lr,cn2vn,Lrn,signs,phi,Ms,Factors,rbpmatrix,
+                residues,coords,listsizes)
+        elseif mode == "NRBP"
+            for m in 1:M 
+                # calculate the new check to node messages
+                update_Lr!(Ms,Lq,m,cn2vn,Lrn,signs,phi)
+            end
+            for n in 1:N
+                for m in vn2cn[n]
+                    li = LinearIndices(Ms)[m,n]        
+                    residues[n] += Ms[li]
+                end
+                residues[n] = abs(residues[n]/Lf[n])
+            end
         end
 
         # display(sort(residues,rev=true))
@@ -306,7 +309,9 @@ function
                     Lf,
                     cn2vn,
                     vn2cn,
-                    Lrn)
+                    Lrn,
+                    signs,
+                    phi)
             elseif mode == "VLBP"
                 VLBP!(
                     bitvector,
@@ -316,7 +321,7 @@ function
                     cn2vn,
                     vn2cn,
                     Lrn)
-            elseif mode == "RBP"
+            elseif mode == "RBP" || mode == "List-RBP"
                 RBP!(
                     bitvector,
                     Lq,
@@ -331,9 +336,12 @@ function
                     num_edges,
                     Ms,
                     Factors,
-                    address,
-                    addressinv,
-                    residues
+                    coords,
+                    rbpmatrix,
+                    residues,
+                    localresidues,
+                    localcoords,
+                    listsizes
                     )
                 # reset factors
                 resetmatrix!(Factors,vn2cn,1.0)
@@ -388,41 +396,7 @@ function
                     )
                     # reset factors
                     resetmatrix!(Factors,vn2cn,1.0)
-                end              
-            elseif mode == "List-RBP"
-                if rbp_not_converged && listres1[1] == 0.0
-                    calc_all_residues_list!(Lq,Lr,cn2vn,Lrn,signs,phi,Ms,Factors,
-                        listsizes,listres1,coords1,inlist,M)
-                    if listres1[1] == 0.0
-                        rbp_not_converged = false
-                    end
-                end
-                if rbp_not_converged
-                    list_RBP!(
-                        bitvector,
-                        Lq,
-                        Lr,
-                        Lf,
-                        cn2vn,
-                        vn2cn,
-                        Lrn,
-                        signs,
-                        phi,
-                        decayfactor,
-                        num_edges,
-                        Ms,
-                        Factors,
-                        rng_rbp,
-                        listsizes,
-                        listres1,
-                        coords1,
-                        listres2,
-                        coords2,
-                        inlist
-                    )
-                    # reset factors
-                    resetmatrix!(Factors,vn2cn,1.0)
-                end       
+                end      
             elseif mode == "Mod-List-RBP"
                 mod_list_RBP!(
                     bitvector,
@@ -440,13 +414,13 @@ function
                     Factors,
                     rng_rbp,
                     listsizes,
-                    listres1,
-                    coords1,
+                    residues,
+                    coords,
                     listn1,
-                    listres2,
-                    coords2,
+                    localresidues,
+                    localcoords,
                     listn2,
-                    inlist,
+                    rbpmatrix,
                     syndrome
                 )
                 # reset factors
@@ -468,13 +442,13 @@ function
                     Factors,
                     rng_rbp,
                     listsizes,
-                    listres1,
-                    coords1,
+                    residues,
+                    coords,
                     listn1,
-                    listres2,
-                    coords2,
+                    localresidues,
+                    localcoords,
                     listn2,
-                    inlist
+                    rbpmatrix
                 )
                 # reset factors
                 resetmatrix!(Factors,vn2cn,1.0)

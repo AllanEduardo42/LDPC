@@ -52,14 +52,14 @@ function
 
         # 2) Decay the RBP factor corresponding to the maximum residue
         # lmax = decay!(cnmax,vnmax,Factors,decayfactor)
-        Factors[cnmax,vnmax] *= decayfactor
+        lmax = LinearIndices(Factors)[cnmax,vnmax]
+        Factors[lmax] *= decayfactor
 
         # 3) update check to node message Lr[cnmax,vnmax]
-        # RBP_update_Lr!(lmax,Lr,Ms,cnmax,vnmax,cn2vn,Lq,Lrn,signs,phi)
-        Lr[cnmax,vnmax] = Ms[cnmax,vnmax]
+        Lr[lmax] = Ms[lmax]
 
         # 4) Remove max residue from the list and update the list
-        remove_from_list!(cnmax,vnmax,listsizes[1],listres1,coords1,inlist,1)
+        remove_from_list!(lmax,listsizes[1],listres1,coords1,inlist,1)
 
         # 5) update vn2cn messages Lq[vnmax,m] and bitvector[vnmax]
         bitvector[vnmax] = update_Lq!(Lq,Lr,Lf[vnmax],vnmax,vn2cn[vnmax],Lrn)
