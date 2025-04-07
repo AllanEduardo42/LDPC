@@ -5,7 +5,7 @@
 
 # List-RBP
 function 
-    remove_maxresidue!(
+    remove_residue!(
         lmax::Integer,
         listsize::Integer,
         residues::Vector{<:AbstractFloat},
@@ -27,7 +27,7 @@ end
 
 #RBP
 function 
-    remove_maxresidue!(
+    remove_residue!(
         ::Integer,
         ::Integer,
         residues::Vector{<:AbstractFloat},
@@ -36,5 +36,5 @@ function
         max_edge::Integer
     )
 
-    residues[max_edge] = 0.0  
+    residues[max_edge] = 0.0
 end

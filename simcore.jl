@@ -13,7 +13,6 @@ include("VLBP.jl")
 include("RBP.jl")
 include("Local_RBP.jl")
 # include("Mod-List-RBP.jl")
-# include("Random-List-RBP.jl")
 include("NRBP.jl")
 include("./RBP functions/calc_all_residues.jl")
 
@@ -28,7 +27,7 @@ function
         cn2vn::Vector{Vector{T}} where {T<:Integer},
         vn2cn::Vector{Vector{T}} where {T<:Integer},
         E_H::Union{Nothing,Matrix{<:Integer}},
-        LDPC::Integer,
+        protocol::String,
         Zf::Integer,
         Nr_ldpc_data::Union{Nothing,nr_ldpc_data},
         mode::String,
@@ -38,6 +37,7 @@ function
         stop::Bool,
         decayfactor::AbstractFloat,
         listsizes::Vector{<:Integer},
+        relative::Bool,
         rgn_seed_noise::Integer,
         rng_seed_sample::Integer,
         rgn_seed_msg::Integer;
@@ -48,8 +48,7 @@ function
     )
 
     if mode == "RBP" || mode == "Local-RBP" || mode == "List-RBP" || 
-       mode == "Mod-List-RBP" || mode == "Random-List-RBP" || 
-       mode == "NRBP"
+       mode == "Mod-List-RBP" || mode == "NRBP"
         RBP = true
     else
         RBP = false
@@ -58,13 +57,13 @@ function
 ################################## CONSTANTS ###################################
 
     # constant Zc of NR/5G
-    if LDPC == 1
+    if protocol == "NR5G"
         Zc = Nr_ldpc_data.Zc
     else
         Zc = 0
     end
 
-    if LDPC == 3
+    if protocol == "IEEE"
         E_M, E_N = size(E_H)
         E_K = E_N - E_M
     end
@@ -168,8 +167,7 @@ function
     max_residue = (mode == "Local-RBP") ? zeros(3) : nothing
 
     # mode = List-RBP
-    if mode == "List-RBP" || mode == "Mod-List-RBP"||
-        mode == "Random-List-RBP"
+    if mode == "List-RBP" || mode == "Mod-List-RBP"
 
         residues = zeros(listsizes[1]+1)
         coords = zeros(Int,3,listsizes[1]+1)
@@ -191,21 +189,16 @@ function
         generate_message!(msg,rgn_msg,msgtest)
 
         # 2) generate the cword
-        if LDPC == 1
+        if protocol == "NR5G"
             cword = NR_LDPC_encode(E_H,msg,Nr_ldpc_data)
-        elseif LDPC == 2
+        elseif protocol == "PEG"
             cword = gf2_mat_mult(G,msg)   
-        elseif LDPC == 3
+        elseif protocol == "IEEE"
             cword = IEEE80216e_parity_bits(msg,Zf,E_H,E_M,E_N,E_K)
         end
 
         # 3) Modulation of the cword
         u = Float64.(2*cword .- 1)
-
-        # 4) Include the punctured bits in the cword for biterror calculation
-        if Zc > 0
-            cword = [msg[1:2*Zc]; cword]
-        end
 
         # 5) sum the noise to the modulated cword to produce the received signal
         received_signal!(signal,noise,stdev,u,rng_noise,noisetest)
@@ -232,7 +225,12 @@ function
             end
             println()
             println()
-        end       
+        end 
+        
+        # 4) Include the punctured bits in the cword for biterror calculation
+        if Zc > 0
+            cword = [msg[1:2*Zc]; cword]
+        end
 
         # 7) reset the simulation variables
         bitvector .= false
@@ -264,7 +262,7 @@ function
         # 10) precalculate the residues in RBP
         if mode == "RBP" || mode == "List-RBP"
             calc_all_residues!(Lq,Lr,cn2vn,Lrn,signs,phi,Ms,Factors,rbpmatrix,
-                residues,coords,listsizes)
+                residues,coords,listsizes,relative)
         elseif mode == "NRBP"
             for m in 1:M 
                 # calculate the new check to node messages
@@ -341,7 +339,8 @@ function
                     residues,
                     localresidues,
                     localcoords,
-                    listsizes
+                    listsizes,
+                    relative
                     )
                 # reset factors
                 resetmatrix!(Factors,vn2cn,1.0)
@@ -422,33 +421,6 @@ function
                     listn2,
                     rbpmatrix,
                     syndrome
-                )
-                # reset factors
-                resetmatrix!(Factors,vn2cn,1.0)
-            elseif mode == "Random-List-RBP"
-                random_list_RBP!(
-                    bitvector,
-                    Lq,
-                    Lr,
-                    Lf,
-                    cn2vn,
-                    vn2cn,
-                    Lrn,
-                    signs,
-                    phi,
-                    decayfactor,
-                    num_edges,
-                    Ms,
-                    Factors,
-                    rng_rbp,
-                    listsizes,
-                    residues,
-                    coords,
-                    listn1,
-                    localresidues,
-                    localcoords,
-                    listn2,
-                    rbpmatrix
                 )
                 # reset factors
                 resetmatrix!(Factors,vn2cn,1.0)

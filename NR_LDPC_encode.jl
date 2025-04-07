@@ -71,7 +71,7 @@ function
 
     B = A + L_1
 
-    display("B = $B")
+    # display("B = $B")
 
     b = zeros(Bool,B)
 
@@ -85,7 +85,7 @@ function
     else
         bg = "1"
     end
-    display("bg = $bg")
+    # display("bg = $bg")
 
     ### 2) Code block segmentation and code block CRC attachment
     ### (TS38212 Clauses 7.2.3, 6.2.3 and 5.2.2)
@@ -130,13 +130,13 @@ function
         K = 10*Zc
     end
 
-    display("L_1 = $L_1")
-    display("L_2 = $L_2")
-    display("C = $C")
-    display("K_prime = $K_prime")
-    display("K = $K")
-    display("Zc = $Zc")
-    display("iLS = $iLS")
+    # display("L_1 = $L_1")
+    # display("L_2 = $L_2")
+    # display("C = $C")
+    # display("K_prime = $K_prime")
+    # display("K = $K")
+    # display("Zc = $Zc")
+    # display("iLS = $iLS")
 
     c = code_block_segmentation(b,C,K_prime,K,L_2)
 
@@ -147,7 +147,7 @@ function
     else
         N = 50*Zc
     end
-    display("N = $N")
+    # display("N = $N")
 
     if R == 0
         P = -1
@@ -155,34 +155,34 @@ function
         P = 100*Zc
     else
         G = round(Int,(A/R)/Q_m)*Q_m
-        display("G = $G")
+        # display("G = $G")
         P = N - G÷C - K + K_prime
-        display("P = $P")
+        # display("P = $P")
     end
 
     if P > 42*Zc && bg == "1"
         G = C*(N - 42*Zc - K + K_prime)
-        display("new G = $G")
+        # display("new G = $G")
         P = N - G÷C - K + K_prime
-        display("new P = $P")
+        # display("new P = $P")
         R = A/G
-        display("new R = $(round(R*1000)/1000)")
+        # display("new R = $(round(R*1000)/1000)")
     elseif P > 38*Zc && bg == "2"
         G = C*(N - 38*Zc - K + K_prime)
-        display("new G = $G")
+        # display("new G = $G")
         P = N - G÷C - K + K_prime
-        display("new P = $P")
+        # display("new P = $P")
         R = A/G
-        display("new R = $(round(R*1000)/1000)")
+        # display("new R = $(round(R*1000)/1000)")
     end
 
     if P < 0
         G = C*(N -  K + K_prime)
-        display("new G = $G")
+        # display("new G = $G")
         P = N - G÷C - K + K_prime
-        display("new P = $P")
+        # display("new P = $P")
         R = A/G
-        display("new R = $(round(R*1000)/1000)")
+        # display("new R = $(round(R*1000)/1000)")
     end
 
     d, H, E_H = channel_coding(c,C,K_prime,K,Zc,iLS,N,bg,E_H)

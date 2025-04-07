@@ -66,8 +66,9 @@ MAXITER::Int = 50
 MAXIRBP::Int = 30
 # FACTORS = [0.7, 0.8, 0.9, 1.0]
 FACTORS = [0.9]
-SNR = [1.2, 1.6, 1.8]
-TRIALS = 10 .^(0:length(SNR)-1)*2^7
+SNR = [1.2, 1.4]
+TRIALS = 10 .^(0:length(SNR)-1)*2^8
+RELATIVE::Bool = false
 
 # TEST
 MAXITER_TEST::Int = 1
@@ -78,7 +79,7 @@ DECAY_TEST::Float64 = 0.9
 ################################ 6) BP SCHEDULE ################################
 
 MODES = ["Flooding","LBP","VLBP","RBP","Local-RBP","List-RBP","Mod-List-RBP",
-         "Random-List-RBP","List-RBP-genius","NRBP"]
+         "List-RBP-genius","NRBP"]
 NUM_MODES = length(MODES)
 ACTIVE = zeros(Bool,NUM_MODES)
 LISTSIZES = zeros(Int,4)
@@ -114,7 +115,7 @@ MAXITERS[i] = MAXITER
 
 # RBP
 i += 1
-ACTIVE[i] = 0
+ACTIVE[i] = 1
 BPTYPES[i] = "FAST"
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
@@ -128,19 +129,12 @@ DECAYS[i] = FACTORS
 
 # List-RBP
 i += 1
-ACTIVE[i] = 1
-BPTYPES[i] = "FAST"
-MAXITERS[i] = MAXITER
-DECAYS[i] = FACTORS
-
-# Mod-List-RBP
-i += 1
 ACTIVE[i] = 0
 BPTYPES[i] = "FAST"
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
 
-# Random-List-RBP
+# Mod-List-RBP
 i += 1
 ACTIVE[i] = 0
 BPTYPES[i] = "FAST"
@@ -161,8 +155,8 @@ BPTYPES[i] = "FAST"
 MAXITERS[i] = MAXITER
 DECAYS[i] = [1.0]
 
-# List-RBP sizes
-LISTSIZES[1] = 16
+# List-RBP sizes (min values = 4 and 2)
+LISTSIZES[1] = 4
 LISTSIZES[2] = 2
 LISTSIZES[3] = LISTSIZES[1] - 1
 LISTSIZES[4] = LISTSIZES[1] - LISTSIZES[2] + 1
@@ -177,15 +171,15 @@ PHI = lookupTable()
 AA::Int = 1008
 # Rate
 RR::Float64 = 1/2
-# LDPC protocol: 1 = NR-LDPC; 2 = PEG; 3 = IEEE80216e;
-LDPC::Int = 1
+# LDPC protocol: NR5G = NR-LDPC (5G); PEG = PEG; IEEE = IEEE80216e;
+PROTOCOL::String = "NR5G"
     DENSITIES = 1:8
 
 ############################# PARITY-CHECK MATRIX #############################
 
 MSG = zeros(Bool,AA)
 
-if LDPC == 1
+if PROTOCOL == "NR5G"
     ZF = 0
     RV = 0
     CWORD, HH, E_H, NR_LDPC_DATA = NR_LDPC_encode(MSG,RR,RV)
@@ -195,7 +189,7 @@ if LDPC == 1
 else
     NR_LDPC_DATA = nothing
     LL = round(Int,AA/RR)
-    if LDPC == 2
+    if PROTOCOL == "PEG"
         ZF = 0
         E_H = nothing
         NN = LL
@@ -210,7 +204,7 @@ else
             HH, GIRTH = PEG(DD,MM,NN)
         end
         GG = [I(NN-MM); gf2_mat_mult(gf2_inverse(HH[:,NN-MM+1:NN]), HH[:,1:MM])]
-    elseif LDPC == 3
+    elseif PROTOCOL == "IEEE"
         # N takes values in {576,672,768,864,960,1056,1152,1248,1344,1440,1536,
         # 1632,1728,1824,1920,2016,2112,2208,2304}.    
         # R takes values in {"1/2","2/3A","2/3B","3/4A","3/4B","5/6"}.
@@ -228,9 +222,15 @@ VN2CN  = make_vn2cn_list(HH)
 
 STR = 
 """############################### LDPC parameters ################################
-
-Parity Check Matrix: $MM x $NN"""
-
+LDPC Protocol: """
+if PROTOCOL == "NR5G"
+    STR *= "NR-LDPC (5G)"
+elseif PROTOCOL == "PEG"
+    STR *= "PEG"
+elseif PROTOCOL == "IEEE"
+    STR *= "IEEE80216e"
+end
+STR *= "\nParity Check Matrix: $MM x $NN"
 println(STR)
 if SAVE
     println(FILE,STR)
@@ -240,7 +240,7 @@ display(sparse(HH))
 
 STR = """
 
-Graph GIRTH = $GIRTH
+Graph girth = $GIRTH
 """
 println(STR)
 if SAVE

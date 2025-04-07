@@ -5,7 +5,6 @@
 # factor
 
 include("./RBP functions/RBP_update_Lr.jl")
-include("./RBP functions/decay.jl")
 include("./RBP functions/calc_local_residues.jl")
 
 function
@@ -23,8 +22,6 @@ function
         num_edges::Integer,
         Ms::Matrix{<:AbstractFloat},
         Factors::Matrix{<:AbstractFloat},        
-        all_max_res_alt::Union{Vector{<:AbstractFloat},Nothing},
-        test::Bool,
         rng_rbp::AbstractRNG,
         max_residue::Vector{<:AbstractFloat},
         maxcoords::Vector{<:Integer}
@@ -34,11 +31,6 @@ function
 
         # display("e = $e")
         # display(max_residue)
-
-        # if in test mode, store the values of the maximum residues
-        if test
-            all_max_res_alt[e] = max_residue[1] 
-        end 
 
         # 1) get the largest residues coordenates
         if max_residue[1] == 0.0

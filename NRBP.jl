@@ -6,7 +6,6 @@
 include("./RBP functions/RBP_update_Lr.jl")
 include("./RBP functions/calc_local_residues.jl")
 include("./RBP functions/findmaxnode.jl")
-include("./RBP functions/decay.jl")
 
 function
     NRBP!(

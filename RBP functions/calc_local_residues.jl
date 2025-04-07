@@ -101,7 +101,8 @@ function calc_local_residues_local!(
             # calculate the residues
             for n in vns
                 if n ≠ vnmax
-                    residue = calc_residue(Ms,Lr,Factors,Lrn,Lq,m,n)
+                    li = LinearIndices(Lr)[m,n]
+                    residue = calc_residue(Ms,Lr,Factors,Lrn,Lq,li)
                     if residue > max_residue[1]
                         max_residue[2] = max_residue[1]
                         max_residue[1] = residue

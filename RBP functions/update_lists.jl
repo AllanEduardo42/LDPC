@@ -3,16 +3,17 @@
 # 2 Mar 2025
 # Update the list of residues for the List-RBP algorithm
 
-include("add_to_list.jl")
+include("add_residue.jl")
 
+# List-RBP
 function
-    update_list2!(
+    update_local_list!(
         residues::Vector{<:AbstractFloat},
         coords::Matrix{<:Integer},
         localresidues::Vector{<:AbstractFloat},
         localcoords::Matrix{<:Integer},
         listsizes::Vector{<:Integer},
-        rbpmatrix::Matrix{<:Integer},
+        inlist::Matrix{<:Integer},
         li::Integer,
         m::Integer,
         n::Integer,
@@ -20,7 +21,7 @@ function
     )
     
     @inbounds begin
-        if rbpmatrix[li]  # if residue(m,n) is in the list
+        if inlist[li]  # if residue(m,n) is in the list
             # display("($m,$n) is on the list")
             pos = 0
             for i = 1:listsizes[1]
@@ -29,61 +30,92 @@ function
                     break
                 end
             end
-            if pos == 0
-                throw(error("($(coords[1,i]),$(coords[1,i])) is registered as being on the list, but it's not."))
-            end
+            # if pos == 0
+            #     throw(error("($(coords[1,i]),$(coords[1,i])) is registered as being on the list, but it's not."))
+            # end
             # remove from list
-            rbpmatrix[li] = false
-            remove_maxresidue!(li,listsizes[1],residues,coords,rbpmatrix,pos)
+            inlist[li] = false
+            remove_residue!(li,listsizes[1],residues,coords,inlist,pos)
         end                
-        if residue != 0.0
-            add_to_list!(nothing,localresidues,localcoords,residue,li,m,n,listsizes[2])
-        end
+
+        add_residue!(nothing,localresidues,localcoords,residue,li,m,n,listsizes[2])
+
     end
 
 end
 
+# RBP
 function
-    update_list2!(
+    update_local_list!(
         residues::Vector{<:AbstractFloat},
         ::Matrix{<:Integer},
         ::Nothing,
         ::Nothing,
         ::Vector{<:Integer},
-        rbpmatrix::Matrix{<:Integer},
+        indices::Matrix{<:Integer},
         li::Integer,
         m::Integer,
         n::Integer,
         residue::AbstractFloat    
     )
 
-    @inbounds residues[rbpmatrix[li]] = residue
+    @inbounds residues[indices[li]] = residue
 
-    return 0
 end
 
-function update_list1!(
+#Local
+# function
+#     update_local_list!(
+#         residues::Vector{<:AbstractFloat},
+#         ::Matrix{<:Integer},
+#         ::Nothing,
+#         ::Nothing,
+#         ::Vector{<:Integer},
+#         rbpmatrix::Matrix{<:Integer},
+#         li::Integer,
+#         m::Integer,
+#         n::Integer,
+#         residue::AbstractFloat    
+#     )
+
+#     if residue > residues[1]
+#         max_residue[2] = max_residue[1]
+#         max_residue[1] = residue
+#         maxcoords[3] = maxcoords[1]
+#         maxcoords[4] = maxcoords[2]
+#         maxcoords[1] = m
+#         maxcoords[2] = n
+#     elseif residue > max_residue[2]
+#         max_residue[2] = residue
+#         maxcoords[3] = m
+#         maxcoords[4] = n
+#     end 
+# end
+
+function update_global_list!(
     residues::Vector{<:AbstractFloat},
     coords::Matrix{<:Integer},
     localresidues::Vector{<:AbstractFloat},
     localcoords::Matrix{<:Integer},
     listsizes::Vector{<:Integer},
-    rbpmatrix::Matrix{<:Integer}
+    inlist::Matrix{<:Integer}
 )
     
     @inbounds begin
-        for i = listsizes[3]:-1:listsizes[4]
+        for i = listsizes[4]:listsizes[3]
             li = coords[3,i]
             if li ≠ 0
-                rbpmatrix[li] = false
+                inlist[li] = false
                 residues[i] = 0.0
+            else
+                break
             end
         end
         for i in 1:listsizes[2]
             m = localcoords[1,i]
             n = localcoords[2,i]
             li = localcoords[3,i]
-            add_to_list!(rbpmatrix,residues,coords,localresidues[i],li,m,n,listsizes[1])
+            add_residue!(inlist,residues,coords,localresidues[i],li,m,n,listsizes[1])
         end
         # clear list 2
         localresidues .*= 0.0
@@ -91,7 +123,7 @@ function update_list1!(
     end
 end
 
-function update_list1!(
+function update_global_list!(
     ::Vector{<:AbstractFloat},
     ::Matrix{<:Integer},
     ::Nothing,

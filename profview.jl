@@ -7,7 +7,7 @@
 SNR_PROF = 1.2
 Mode_prof = "List-RBP"
 TRIALSPROF = 2^5
-Maxiter_prof = 2
+Maxiter_prof = 1
 Bptypte_prof = "FAST"
 Decay_prof = 0.9
 
@@ -17,7 +17,8 @@ Decay_prof = 0.9
     SNR_PROF,
     HH,
     GG,
-    MM,NN,
+    MM,
+    NN,
     CN2VN,
     VN2CN,
     E_H,

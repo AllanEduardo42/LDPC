@@ -1,5 +1,5 @@
-function add_to_list!(
-        rbpmatrix::Union{Matrix{Bool},Nothing},
+function add_residue!(
+        inlist::Union{Matrix{Bool},Nothing},
         residues::Vector{<:AbstractFloat},
         coords::Matrix{<:Integer},
         residue::AbstractFloat,
@@ -30,7 +30,7 @@ function add_to_list!(
                 end
             end
 
-            update_inlist!(rbpmatrix,coords,li)
+            update_inlist!(inlist,coords,li)
 
             for j=listsize:-1:i+1
                 residues[j] = residues[j-1]
@@ -49,8 +49,8 @@ function add_to_list!(
     end
 end
 
-function add_to_list!(
-    rbpmatrix::Matrix{<:Integer},
+function add_residue!(
+    inlist::Matrix{<:Integer},
     residues::Vector{<:AbstractFloat},
     ::Matrix{<:Integer},
     residue::AbstractFloat,
@@ -60,12 +60,12 @@ function add_to_list!(
     ::Integer
 )
 
-    @inbounds residues[rbpmatrix[li]] = residue
+    @inbounds residues[inlist[li]] = residue
 
 end
 
 function update_inlist!(
-    rbpmatrix::Matrix{Bool},
+    inlist::Matrix{Bool},
     coords::Matrix{<:Integer},
     li::Integer
 )
@@ -73,9 +73,9 @@ function update_inlist!(
     @inbounds begin
         last = coords[3,end-1]
         if last ≠ 0
-            rbpmatrix[last] = false
+            inlist[last] = false
         end
-        rbpmatrix[li] = true
+        inlist[li] = true
 
     end
 

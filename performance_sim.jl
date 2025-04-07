@@ -26,60 +26,38 @@ function
         """############################# Starting simulation ##############################
         """
     end
-    println(str)
-    if SAVE
-        println(FILE,str)
-    end
-    str = "Number of trials: $trials"
-    println(str)
-    if SAVE
-        println(FILE,str)
-    end
-    str = "Message passing protocol: $mode (using "
+    str *= """\nNumber of trials: $trials
+    Message passing protocol: $mode (using """
     if bptype == "MKAY"
-        str = str*"Mckay's SPA method)"
+        str *="Mckay's SPA method)"
     elseif bptype == "TANH"
-        str = str*"LLR-SPA calculated by tanh)"
+        str *="LLR-SPA calculated by tanh)"
     elseif bptype == "FAST"
-        str = str*"LLR-SPA calculated by fast tanh)"
+        str *="LLR-SPA calculated by fast tanh)"
     elseif bptype == "ALTN"
-        str = str*"LLR-SPA calculated by ϕ function)"
+        str *="LLR-SPA calculated by ϕ function)"
     elseif bptype == "TABL"
-        str = str*"LLR-SPA precalculated in look-up table)"
+        str *="LLR-SPA precalculated in look-up table)"
     elseif bptype == "MSUM"
-        str = str*"LLRs calculated by min-sum algorithm)"
+        str *="LLRs calculated by min-sum algorithm)"
     end
-    println(str)
-    if SAVE
-        println(FILE,str)
-    end
-    str=
-    """Maximum number of iterations: $maxiter
+    str *=
+    """\nMaximum number of iterations: $maxiter
     Number of threads (multithreading): $NTHREADS
     Simulated for SNR (dB): $snr
     Stop at zero syndrome ? $STOP"""
+    if mode == "RBP" || mode == "Local-RBP" || mode == "List-RBP" ||
+       mode == "Mod-List-RBP" || mode == "NRBP"
+        str *= "\nRBP decaying factor: $decay"
+        str *= "\nRelative residues: $RELATIVE"
+    end
+    if mode == "List-RBP" || mode == "Mod-List-RBP" || mode == "Random-List-RBP"
+        str *= "\nList 1 size: $(LISTSIZES[1])\nList 2 size: $(LISTSIZES[2])"
+    end
+    str *= "\n"
     println(str)
     if SAVE
         println(FILE,str)
-    end
-    if mode == "RBP" || mode == "Local-RBP" || mode == "List-RBP" ||
-       mode == "Mod-List-RBP" || mode == "Random-List-RBP" || mode == "NRBP"
-        str = "RBP decaying factor: $decay"
-        println(str)
-        if SAVE
-            println(FILE,str)
-        end
-    end
-    if mode == "List-RBP" || mode == "Mod-List-RBP" || mode == "Random-List-RBP"
-        str = "List 1 size: $(LISTSIZES[1])\nList 2 size: $(LISTSIZES[2])"
-        println(str)
-        if SAVE
-            println(FILE,str)
-        end
-    end
-    println()
-    if SAVE
-        println(FILE,"")
     end
 
     ################################ MULTITHREADING ################################
@@ -95,7 +73,7 @@ function
             CN2VN,
             VN2CN,
             E_H,
-            LDPC,
+            PROTOCOL,
             ZF,
             NR_LDPC_DATA,
             mode,
@@ -105,6 +83,7 @@ function
             STOP,
             decay,
             LISTSIZES,
+            RELATIVE,
             RGN_NOISE_SEEDS[1],
             RGN_SAMPLE_SEEDS[1],
             RGN_MESSAGE_SEEDS[1];
@@ -131,7 +110,7 @@ function
                                                 CN2VN,
                                                 VN2CN,
                                                 E_H,
-                                                LDPC,
+                                                PROTOCOL,
                                                 ZF,
                                                 NR_LDPC_DATA,
                                                 mode,
@@ -141,6 +120,7 @@ function
                                                 STOP,
                                                 decay,
                                                 LISTSIZES,
+                                                RELATIVE,
                                                 RGN_NOISE_SEEDS[i],
                                                 RGN_SAMPLE_SEEDS[i],
                                                 RGN_MESSAGE_SEEDS[i])

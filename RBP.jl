@@ -6,7 +6,7 @@
 include("./RBP functions/RBP_update_Lr.jl")
 include("./RBP functions/findmaxedge.jl")
 include("./RBP functions/update_lists.jl")
-include("./RBP functions/remove_maxresidue!.jl")
+include("./RBP functions/remove_residue!.jl")
 
 function
     RBP!(
@@ -26,9 +26,10 @@ function
         coords::Matrix{<:Integer},
         rbpmatrix::Matrix{<:Integer},
         residues::Vector{<:AbstractFloat},
-        localresidues::Union{Vector{<:AbstractFloat},Nothing},
-        localcoords::Union{Matrix{<:Integer},Nothing},
+        local_residues::Union{Vector{<:AbstractFloat},Nothing},
+        local_coords::Union{Matrix{<:Integer},Nothing},
         listsizes::Vector{<:Integer},
+        relative::Bool
     )
 
     @fastmath @inbounds for e in 1:num_edges
@@ -36,13 +37,13 @@ function
         # display("e = $e")
 
         # 1) Find largest residue  and coordenates
-        max_edge , max_residue = findmaxedge(residues, localresidues)
+        max_edge, max_residue = findmaxedge(residues,local_residues)
         if max_residue == 0.0
             if max_edge == 0
                 break # i.e., RBP has converged
             else
                 calc_all_residues!(Lq,Lr,cn2vn,Lrn,signs,phi,Ms,Factors,rbpmatrix,
-                residues,coords,listsizes)
+                residues,coords,listsizes,relative)
                 if residues[1] == 0.0
                     break
                 end
@@ -63,7 +64,7 @@ function
         RBP_update_Lr!(limax,Lr,Ms,cnmax,vnmax,cn2vn[cnmax],Lq,Lrn,signs,phi)
 
         # 4) set maximum residue to zero
-        remove_maxresidue!(limax,listsizes[1],residues,coords,rbpmatrix,max_edge)
+        remove_residue!(limax,listsizes[1],residues,coords,rbpmatrix,max_edge)
 
         # 5) update vn2cn messages Lq[vnmax,m] and bitvector[vnmax]
         bitvector[vnmax] = update_Lq!(Lq,Lr,Lf[vnmax],vnmax,vn2cn[vnmax],Lrn)
@@ -78,15 +79,15 @@ function
                 for n in vns
                     if n ≠ vnmax
                         li = LinearIndices(Lr)[m,n]
-                        residue = calc_residue(Ms,Lr,Factors,Lrn,Lq,li)
-                        update_list2!(residues,coords,localresidues,localcoords,
+                        residue = calc_residue(Ms,Lr,Factors,Lrn,Lq,li,relative)
+                        update_local_list!(residues,coords,local_residues,local_coords,
                             listsizes,rbpmatrix,li,m,n,residue)
                     end
                 end
             end
         end
         # update list 1 
-        update_list1!(residues,coords,localresidues,localcoords,listsizes,
+        update_global_list!(residues,coords,local_residues,local_coords,listsizes,
         rbpmatrix)
 
     end
