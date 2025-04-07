@@ -5,24 +5,22 @@
 
 
 SNR_PROF = 1.2
-Mode_prof = "List-RBP"
+Mode_prof = "Flooding"
 TRIALSPROF = 2^5
-Maxiter_prof = 1
-Bptypte_prof = "FAST"
+Maxiter_prof = 50
+Bptypte_prof = "TABL"
 Decay_prof = 0.9
 
 
-@profview simcore(
+@time @profview simcore(
     AA,
     SNR_PROF,
     HH,
     GG,
-    MM,
-    NN,
     CN2VN,
     VN2CN,
     E_H,
-    LDPC,
+    PROTOCOL,
     ZF,
     NR_LDPC_DATA,
     Mode_prof,
@@ -32,6 +30,6 @@ Decay_prof = 0.9
     STOP,
     Decay_prof,
     LISTSIZES,
+    RELATIVE,
     RGN_NOISE_SEEDS[1],
-    RGN_SAMPLE_SEEDS[1],
     RGN_MESSAGE_SEEDS[1])

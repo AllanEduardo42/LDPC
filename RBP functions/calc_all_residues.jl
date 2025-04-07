@@ -73,16 +73,16 @@ function calc_all_residues_local!(
     Factors::Matrix{<:AbstractFloat},        
     max_residue::Vector{<:AbstractFloat},
     maxcoords::Vector{<:Integer},
-    M::Integer
+    relative::Bool
 )
-    @fastmath @inbounds for m in 1:M
+    @fastmath @inbounds for m in eachindex(cn2vn)
         vns = cn2vn[m]
         # calculate the new check to node messages
         update_Lr!(Ms,Lq,m,vns,Lrn,signs,phi)
         # calculate the residues
         for n in vns
             li = LinearIndices(Lr)[m,n]
-            residue = calc_residue(Ms,Lr,Factors,Lrn,Lq,li)
+            residue = calc_residue(Ms,Lr,Factors,Lrn,Lq,li,relative)
             if residue > max_residue[1]
                 max_residue[2] = max_residue[1]
                 max_residue[1] = residue 

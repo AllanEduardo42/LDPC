@@ -128,3 +128,39 @@ function
         end
     end
 end
+
+function generate_message!(
+    msg::Vector{Bool},
+    rgn_msg::AbstractRNG,
+    ::Nothing
+)
+
+    rand!(rgn_msg,msg,Bool)
+
+end
+
+function generate_message!(
+    msg::Vector{Bool},
+    ::AbstractRNG,
+    msgtest::Vector{Bool}
+)
+
+    msg .= msgtest
+
+end
+
+function print_test(
+    text::String,
+    array::Vector{Bool}
+
+)    
+    println()
+    println("$text (L = $(length(array))):")
+    for i in eachindex(array)
+        print(Int(array[i]))
+        if i%80 == 0
+            println()
+        end
+    end
+    println()
+end 

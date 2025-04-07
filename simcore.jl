@@ -9,10 +9,7 @@ include("calc_Lf.jl")
 include("calc_syndrome.jl")
 include("flooding.jl")
 include("LBP.jl")
-include("VLBP.jl")
 include("RBP.jl")
-include("Local_RBP.jl")
-# include("Mod-List-RBP.jl")
 include("NRBP.jl")
 include("./RBP functions/calc_all_residues.jl")
 
@@ -22,8 +19,6 @@ function
         snr::AbstractFloat,
         H::Matrix{Bool},
         G::Union{Nothing,Matrix{Bool}},
-        M::Integer,
-        N::Integer,
         cn2vn::Vector{Vector{T}} where {T<:Integer},
         vn2cn::Vector{Vector{T}} where {T<:Integer},
         E_H::Union{Nothing,Matrix{<:Integer}},
@@ -39,7 +34,6 @@ function
         listsizes::Vector{<:Integer},
         relative::Bool,
         rgn_seed_noise::Integer,
-        rng_seed_sample::Integer,
         rgn_seed_msg::Integer;
         test=false,
         printtest=false,
@@ -47,8 +41,7 @@ function
         noisetest=nothing        
     )
 
-    if mode == "RBP" || mode == "Local-RBP" || mode == "List-RBP" || 
-       mode == "Mod-List-RBP" || mode == "NRBP"
+    if mode == "RBP" || mode == "List-RBP" || mode == "NRBP"
         RBP = true
     else
         RBP = false
@@ -56,13 +49,17 @@ function
     
 ################################## CONSTANTS ###################################
 
+    # Parity-Check Matrix dimensions
+    M,N = size(H)
+    
     # constant Zc of NR/5G
     if protocol == "NR5G"
-        Zc = Nr_ldpc_data.Zc
+        twoZc = 2*Nr_ldpc_data.Zc
     else
-        Zc = 0
+        twoZc = 0
     end
 
+    # constants for IEEE80216e
     if protocol == "IEEE"
         E_M, E_N = size(E_H)
         E_K = E_N - E_M
@@ -78,11 +75,12 @@ function
     # Set the random seeds
     rng_noise = Xoshiro(rgn_seed_noise)
     rgn_msg = Xoshiro(rgn_seed_msg)
-    rng_rbp = RBP ? Xoshiro(rng_seed_sample) : nothing  
 
 ################################# PREALLOCATIONS ###############################
 
     msg = Vector{Bool}(undef,A)
+
+    complete_cword = Vector{Bool}(undef,N)
 
     # frame error rate
     sum_decoded = zeros(Int,maxiter)
@@ -99,14 +97,14 @@ function
     syndrome = Vector{Bool}(undef,M)
 
     # prior llr (if mode == "MKAY" just the prior probabilities)
-    Lf = (bptype != "MKAY") ? 0.01*ones(N) : 0.5*ones(N,2)
+    Lf = (bptype != "MKAY") ? 0.01*ones(N) : 0.01*ones(N,2)
 
     # noise
     # L = length(cword)
-    noise = Vector{Float64}(undef,N-2*Zc)
+    noise = Vector{Float64}(undef,N-twoZc)
 
     # received signal
-    signal = zeros(N-2*Zc)
+    signal = zeros(N-twoZc)
 
     # bit-error
     biterror = Vector{Bool}(undef,N) 
@@ -139,7 +137,7 @@ function
     Ms = RBP ? H*0.0 : nothing
     Factors = RBP ? 1.0*H  : nothing
 
-    # mode = RBP
+    # RBP modes
     if mode == "RBP"
         residues = zeros(num_edges)
         coords = zeros(Int,3,num_edges)
@@ -157,18 +155,7 @@ function
                 rbpmatrix[li] = e
             end
         end
-    elseif mode == "NRBP"
-        residues = zeros(N)
-        Factors = ones(N)
-    end
-
-    # mode = Local-RBP
-    maxcoords = (mode == "Local-RBP") ? zeros(Int,6) : nothing
-    max_residue = (mode == "Local-RBP") ? zeros(3) : nothing
-
-    # mode = List-RBP
-    if mode == "List-RBP" || mode == "Mod-List-RBP"
-
+    elseif mode == "List-RBP"
         residues = zeros(listsizes[1]+1)
         coords = zeros(Int,3,listsizes[1]+1)
         rbpmatrix = Matrix(false*H)
@@ -179,6 +166,9 @@ function
             localresidues = zeros(listsizes[2]+1)
             localcoords = zeros(Int,3,listsizes[2]+1)
         end
+    elseif mode == "NRBP"
+        residues = zeros(N)
+        Factors = ones(N)
     end
 
 ################################## MAIN LOOP ###################################
@@ -200,44 +190,28 @@ function
         # 3) Modulation of the cword
         u = Float64.(2*cword .- 1)
 
-        # 5) sum the noise to the modulated cword to produce the received signal
+        # 4) sum the noise to the modulated cword to produce the received signal
         received_signal!(signal,noise,stdev,u,rng_noise,noisetest)
 
-        # 6) print info in test mode
+        # 5) print info in test mode
         if test && printtest
             println("Trial #$j:")
-            println()
-            println("msg (L = $(length(msg))):")
-            for i in eachindex(msg)
-                print(Int(msg[i]))
-                if i%80 == 0
-                    println()
-                end
-            end
-            println()
-            println()
-            println("cword (L = $(length(cword))):")
-            for i in eachindex(cword)
-                print(Int(cword[i]))
-                if i%80 == 0
-                    println()
-                end
-            end
-            println()
-            println()
-        end 
+            print_test("msg",msg)
+            print_test("cword",cword)
+        end
         
-        # 4) Include the punctured bits in the cword for biterror calculation
-        if Zc > 0
-            cword = [msg[1:2*Zc]; cword]
+        # 6) Include the punctured bits in the cword for biterror calculation
+        if twoZc > 0
+            complete_cword[1:twoZc] = msg[1:twoZc]
+            complete_cword[twoZc+1:end] = cword
         end
 
-        # 7) reset the simulation variables
+        # 7) reset simulation variables
         bitvector .= false
         syndrome .= true
         decoded .= false
         resetmatrix!(Lr,vn2cn,0.0)
-        if mode == "List-RBP" || mode == "Mod-List-RBP"
+        if mode == "List-RBP"
             residues .= 0.0
             coords .= 0
             localresidues .= 0.0
@@ -245,21 +219,17 @@ function
             resetmatrix!(rbpmatrix,vn2cn,false)
         end
 
-        # 8) init the llr priors
-        if bptype == "MKAY"
-            calc_Lf!(view(Lf,2*Zc+1:N,:),signal,variance)
-        else
-            calc_Lf!(view(Lf,2*Zc+1:N),signal,variance)
-            if bptype == "TABL"
-                # scale for table
-                Lf .*= SIZE_PER_RANGE
-            end
+        # 8) init the LLR priors
+        calc_Lf!(Lf,twoZc,signal,variance)
+        if bptype == "TABL"
+            # scale for table
+            Lf[twoZc+1:end] .*= SIZE_PER_RANGE
         end
         
         # 9) init the Lq matrix
         init_Lq!(Lq,Lf,vn2cn)
 
-        # 10) precalculate the residues in RBP
+        # 10) precalculate the residues for RBP
         if mode == "RBP" || mode == "List-RBP"
             calc_all_residues!(Lq,Lr,cn2vn,Lrn,signs,phi,Ms,Factors,rbpmatrix,
                 residues,coords,listsizes,relative)
@@ -273,11 +243,11 @@ function
                     li = LinearIndices(Ms)[m,n]        
                     residues[n] += Ms[li]
                 end
-                residues[n] = abs(residues[n]/Lf[n])
+                if relative
+                    residues[n] = abs(residues[n]/Lf[n])
+                end
             end
         end
-
-        # display(sort(residues,rev=true))
         
         # BP routine
         rbp_not_converged = true
@@ -310,17 +280,8 @@ function
                     Lrn,
                     signs,
                     phi)
-            elseif mode == "VLBP"
-                VLBP!(
-                    bitvector,
-                    Lq,
-                    Lr,
-                    Lf,
-                    cn2vn,
-                    vn2cn,
-                    Lrn)
-            elseif mode == "RBP" || mode == "List-RBP"
-                RBP!(
+            elseif (mode == "RBP" || mode == "List-RBP") && rbp_not_converged
+                rbp_not_converged = RBP!(
                     bitvector,
                     Lq,
                     Lr,
@@ -340,12 +301,13 @@ function
                     localresidues,
                     localcoords,
                     listsizes,
-                    relative
+                    relative,
+                    rbp_not_converged
                     )
                 # reset factors
                 resetmatrix!(Factors,vn2cn,1.0)
             elseif mode == "NRBP"
-                NRBP!(
+                rbp_not_converged = NRBP!(
                     bitvector,
                     Lq,
                     Lr,
@@ -359,69 +321,10 @@ function
                     num_edges,
                     Ms,
                     Factors,
-                    residues
-                    )
-                # reset factors
-                Factors .= 1.0
-            elseif mode == "Local-RBP"
-                if rbp_not_converged && max_residue[1] == 0.0
-                    calc_all_residues_local!(Lq,Lr,cn2vn,Lrn,signs,phi,Ms,Factors,
-                        max_residue,maxcoords,M)
-                    max_residue[3] = max_residue[2]
-                    maxcoords[6] = maxcoords[4]
-                    maxcoords[5] = maxcoords[3]
-                    if max_residue[1] == 0.0
-                        rbp_not_converged = false
-                    end
-                end
-                if rbp_not_converged
-                    local_RBP!(
-                        bitvector,
-                        Lq,
-                        Lr,
-                        Lf,
-                        cn2vn,
-                        vn2cn,
-                        Lrn,
-                        signs,
-                        phi,
-                        decayfactor,
-                        num_edges,
-                        Ms,
-                        Factors,
-                        rng_rbp,
-                        max_residue,
-                        maxcoords
-                    )
-                    # reset factors
-                    resetmatrix!(Factors,vn2cn,1.0)
-                end      
-            elseif mode == "Mod-List-RBP"
-                mod_list_RBP!(
-                    bitvector,
-                    Lq,
-                    Lr,
-                    Lf,
-                    cn2vn,
-                    vn2cn,
-                    Lrn,
-                    signs,
-                    phi,
-                    decayfactor,
-                    num_edges,
-                    Ms,
-                    Factors,
-                    rng_rbp,
-                    listsizes,
                     residues,
-                    coords,
-                    listn1,
-                    localresidues,
-                    localcoords,
-                    listn2,
-                    rbpmatrix,
-                    syndrome
-                )
+                    relative,
+                    rbp_not_converged
+                    )
                 # reset factors
                 resetmatrix!(Factors,vn2cn,1.0)
             end
@@ -429,35 +332,15 @@ function
             calc_syndrome!(syndrome,bitvector,cn2vn)
     
             if test && printtest
-    
-                biterror .= (bitvector .≠ cword)
-                println("Bit error:")
-                for j in eachindex(bitvector)
-                    print(Int(biterror[j]))
-                    if j%80 == 0
-                        println()
-                    end
-                end
-                println() 
-                println("Bit error rate: $(sum(biterror))/$N")     
-                println() 
-                println("Syndrome: ")
-                for j in eachindex(syndrome)
-                    print(Int(syndrome[j]))
-                    if j%80 == 0
-                        println()
-                    end
-                end     
-                println()
-                println("Syndrome rate: $(sum(syndrome))/$M")     
-                println() 
-                if iszero(syndrome) && stop
-                    break
-                end
-                println()     
+                biterror .= (bitvector .≠ complete_cword)
+                print_test("bitvector",bitvector)   
+                println("Bit error rate: $(sum(biterror))/$N")
+                print_test("Syndrome",syndrome)  
+                println("Syndrome rate: $(sum(syndrome))/$M")
+                println()                 
             else
                 if iszero(syndrome)
-                    if bitvector == cword
+                    if bitvector == complete_cword
                         @inbounds decoded[iter] = true
                     end
                     if stop
@@ -467,11 +350,8 @@ function
                         break
                     end
                 end
-                biterror .= (bitvector .≠ cword)
+                biterror .= (bitvector .≠ complete_cword)
                 @inbounds ber[iter] = sum(biterror)
-            end
-            if iter > 30
-                thres = 0.0
             end
         end
 
@@ -498,25 +378,5 @@ function
     else
         return sum_decoded, sum_ber
     end
-
-end
-
-function generate_message!(
-    msg::Vector{Bool},
-    rgn_msg::AbstractRNG,
-    ::Nothing
-)
-
-    rand!(rgn_msg,msg,Bool)
-
-end
-
-function generate_message!(
-    msg::Vector{Bool},
-    ::AbstractRNG,
-    msgtest::Vector{Bool}
-)
-
-    msg .= msgtest
 
 end

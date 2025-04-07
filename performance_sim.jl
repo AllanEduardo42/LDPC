@@ -46,12 +46,11 @@ function
     Number of threads (multithreading): $NTHREADS
     Simulated for SNR (dB): $snr
     Stop at zero syndrome ? $STOP"""
-    if mode == "RBP" || mode == "Local-RBP" || mode == "List-RBP" ||
-       mode == "Mod-List-RBP" || mode == "NRBP"
+    if mode == "RBP" || mode == "List-RBP" || mode == "NRBP"
         str *= "\nRBP decaying factor: $decay"
         str *= "\nRelative residues: $RELATIVE"
     end
-    if mode == "List-RBP" || mode == "Mod-List-RBP" || mode == "Random-List-RBP"
+    if mode == "List-RBP"
         str *= "\nList 1 size: $(LISTSIZES[1])\nList 2 size: $(LISTSIZES[2])"
     end
     str *= "\n"
@@ -68,8 +67,6 @@ function
             snr,
             HH,
             GG,
-            MM,
-            NN,
             CN2VN,
             VN2CN,
             E_H,
@@ -85,7 +82,6 @@ function
             LISTSIZES,
             RELATIVE,
             RGN_NOISE_SEEDS[1],
-            RGN_SAMPLE_SEEDS[1],
             RGN_MESSAGE_SEEDS[1];
             test=TEST,
             printtest = TEST ? PRIN : false)
@@ -105,8 +101,6 @@ function
                                                 snr[k],
                                                 HH,
                                                 GG,
-                                                MM,
-                                                NN,
                                                 CN2VN,
                                                 VN2CN,
                                                 E_H,
@@ -122,7 +116,6 @@ function
                                                 LISTSIZES,
                                                 RELATIVE,
                                                 RGN_NOISE_SEEDS[i],
-                                                RGN_SAMPLE_SEEDS[i],
                                                 RGN_MESSAGE_SEEDS[i])
             end
             str = """Elapsed $(round(stats.time;digits=1)) seconds ($(round(stats.gctime/stats.time*100;digits=2))% gc time, $(round(stats.compile_time/stats.time*100,digits=2))% compilation time)"""

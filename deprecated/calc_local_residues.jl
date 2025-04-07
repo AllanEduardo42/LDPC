@@ -91,7 +91,8 @@ function calc_local_residues_local!(
     max_residue::Vector{<:AbstractFloat},
     maxcoords::Vector{<:Integer},
     cnmax::Integer,
-    vnmax::Integer
+    vnmax::Integer,
+    relative::Bool
 )
     @fastmath @inbounds for m in cns
         if m ≠ cnmax    
@@ -102,7 +103,7 @@ function calc_local_residues_local!(
             for n in vns
                 if n ≠ vnmax
                     li = LinearIndices(Lr)[m,n]
-                    residue = calc_residue(Ms,Lr,Factors,Lrn,Lq,li)
+                    residue = calc_residue(Ms,Lr,Factors,Lrn,Lq,li,relative)
                     if residue > max_residue[1]
                         max_residue[2] = max_residue[1]
                         max_residue[1] = residue

@@ -29,7 +29,8 @@ function
         local_residues::Union{Vector{<:AbstractFloat},Nothing},
         local_coords::Union{Matrix{<:Integer},Nothing},
         listsizes::Vector{<:Integer},
-        relative::Bool
+        relative::Bool,
+        rbp_not_converged::Bool
     )
 
     @fastmath @inbounds for e in 1:num_edges
@@ -40,11 +41,13 @@ function
         max_edge, max_residue = findmaxedge(residues,local_residues)
         if max_residue == 0.0
             if max_edge == 0
+                rbp_not_converged = true
                 break # i.e., RBP has converged
             else
                 calc_all_residues!(Lq,Lr,cn2vn,Lrn,signs,phi,Ms,Factors,rbpmatrix,
                 residues,coords,listsizes,relative)
                 if residues[1] == 0.0
+                    rbp_not_converged = true
                     break
                 end
                 cnmax = coords[1,1]
@@ -88,8 +91,10 @@ function
         end
         # update list 1 
         update_global_list!(residues,coords,local_residues,local_coords,listsizes,
-        rbpmatrix)
+            rbpmatrix)
 
     end
+
+    return rbp_not_converged
 end
 

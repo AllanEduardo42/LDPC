@@ -18,6 +18,6 @@ function
         end
     end
 
-    return vnmax, maxresidue
+    return vnmax
 
 end

@@ -14,16 +14,11 @@ function lookupTable()
     return phi
 end
 
-function get_index(
-    arg::AbstractFloat
-    )
+function get_index(arg::AbstractFloat)
     
-    z = trunc(Int,arg)
-    if z >= TABLESIZE
-        i = TABLESIZE
+    if arg > TABLESIZE
+        return TABLESIZE
     else
-        i = z + 1
+        return trunc(Int,arg) + 1
     end
-    
-    return i
 end

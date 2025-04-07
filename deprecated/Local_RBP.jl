@@ -24,7 +24,8 @@ function
         Factors::Matrix{<:AbstractFloat},        
         rng_rbp::AbstractRNG,
         max_residue::Vector{<:AbstractFloat},
-        maxcoords::Vector{<:Integer}
+        maxcoords::Vector{<:Integer},
+        relative::Bool
     )
 
     @fastmath @inbounds for e in 1:num_edges
@@ -57,7 +58,7 @@ function
 
         # 6) calculate residues
        calc_local_residues_local!(Lq,Lr,cn2vn,vn2cn[vnmax],Lrn,signs,phi,Ms,Factors,
-            max_residue,maxcoords,cnmax,vnmax)
+            max_residue,maxcoords,cnmax,vnmax,relative)
     
         # update list
         if max_residue[1] < max_residue[3]

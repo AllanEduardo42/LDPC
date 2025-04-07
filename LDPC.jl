@@ -68,7 +68,7 @@ MAXIRBP::Int = 30
 FACTORS = [0.9]
 SNR = [1.2, 1.4]
 TRIALS = 10 .^(0:length(SNR)-1)*2^8
-RELATIVE::Bool = false
+RELATIVE::Bool = true
 
 # TEST
 MAXITER_TEST::Int = 1
@@ -78,8 +78,7 @@ DECAY_TEST::Float64 = 0.9
 
 ################################ 6) BP SCHEDULE ################################
 
-MODES = ["Flooding","LBP","VLBP","RBP","Local-RBP","List-RBP","Mod-List-RBP",
-         "List-RBP-genius","NRBP"]
+MODES = ["Flooding","LBP","RBP","List-RBP","List-RBP-genius","NRBP"]
 NUM_MODES = length(MODES)
 ACTIVE = zeros(Bool,NUM_MODES)
 LISTSIZES = zeros(Int,4)
@@ -107,12 +106,6 @@ ACTIVE[i] = 0
 BPTYPES[i] = "FAST"
 MAXITERS[i] = MAXITER
 
-# VLBP
-i += 1
-ACTIVE[i] = 0
-BPTYPES[i] = "FAST"
-MAXITERS[i] = MAXITER
-
 # RBP
 i += 1
 ACTIVE[i] = 1
@@ -120,21 +113,7 @@ BPTYPES[i] = "FAST"
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
 
-# Local-RBP
-i += 1
-ACTIVE[i] = 0
-BPTYPES[i] = "FAST"
-MAXITERS[i] = MAXITER
-DECAYS[i] = FACTORS
-
 # List-RBP
-i += 1
-ACTIVE[i] = 0
-BPTYPES[i] = "FAST"
-MAXITERS[i] = MAXITER
-DECAYS[i] = FACTORS
-
-# Mod-List-RBP
 i += 1
 ACTIVE[i] = 0
 BPTYPES[i] = "FAST"
@@ -156,7 +135,7 @@ MAXITERS[i] = MAXITER
 DECAYS[i] = [1.0]
 
 # List-RBP sizes (min values = 4 and 2)
-LISTSIZES[1] = 4
+LISTSIZES[1] = 16
 LISTSIZES[2] = 2
 LISTSIZES[3] = LISTSIZES[1] - 1
 LISTSIZES[4] = LISTSIZES[1] - LISTSIZES[2] + 1

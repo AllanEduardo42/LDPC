@@ -4,7 +4,7 @@
 # RBP Sum-Product Algorithm with residual decaying factor
 
 include("./RBP functions/RBP_update_Lr.jl")
-include("./RBP functions/calc_local_residues.jl")
+include("./RBP functions/calc_residue.jl")
 include("./RBP functions/findmaxnode.jl")
 
 function
@@ -21,10 +21,10 @@ function
         decayfactor::AbstractFloat,
         num_edges::Integer,
         Ms::Matrix{<:AbstractFloat},
-        Factors::Vector{<:AbstractFloat},        
-        all_max_res_alt::Union{Vector{<:AbstractFloat},Nothing},
-        test::Bool,
-        residues::Vector{<:AbstractFloat}
+        Factors::Vector{<:AbstractFloat},
+        residues::Vector{<:AbstractFloat},
+        relative::Bool,
+        rbp_not_converged::Bool
     )
 
     @fastmath @inbounds for e = 1:num_edges
@@ -33,16 +33,18 @@ function
 
         # display(sort(residues,rev=true))
 
-        vnmax, maxresidue = findmaxnode(residues)
+        vnmax = findmaxnode(residues)
         if vnmax == 0
+            rbp_not_converged = false
             break # i.e., RBP has converged
         end
+
         residues[vnmax] = 0.0
+
         Factors[vnmax] *= decayfactor
 
-        ln = LinearIndices(Ms)[1,vnmax]-1
         for m in vn2cn[vnmax]
-            Lr[ln+m] = Ms[ln+m]
+            Lr[m,vnmax] = Ms[m,vnmax]
         end        
 
         bitvector[vnmax] = update_Lq!(Lq,Lr,Lf[vnmax],vnmax,vn2cn,Lrn)
@@ -52,12 +54,13 @@ function
             update_Lr!(Ms,Lq,m,cn2vn,Lrn,signs,phi)
             for n in cn2vn[m]
                 if n ≠ vnmax
-                    li = LinearIndices(Ms)[m,n]      
-                    old = Lr[li] + Lq'[li]  
-                    residues[n] = abs((Ms[li] - Lr[li])/old)*Factors[n]
+                    li = LinearIndices(Ms)[m,n]
+                    residues[n] = calc_residue(Ms,Lr,Factors,Lrn,Lq,li,relative)   
                 end
             end
         end
     end
+
+    return rbp_not_converged
 end
 
