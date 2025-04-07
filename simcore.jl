@@ -10,7 +10,7 @@ include("calc_syndrome.jl")
 include("flooding.jl")
 include("LBP.jl")
 include("RBP.jl")
-include("NRBP.jl")
+include("VN_RBP.jl")
 include("./RBP functions/calc_all_residues.jl")
 
 function
@@ -41,7 +41,7 @@ function
         noisetest=nothing        
     )
 
-    if mode == "RBP" || mode == "List-RBP" || mode == "NRBP"
+    if mode == "RBP" || mode == "List-RBP" || mode == "VN-RBP"
         RBP = true
     else
         RBP = false
@@ -166,7 +166,7 @@ function
             localresidues = zeros(listsizes[2]+1)
             localcoords = zeros(Int,3,listsizes[2]+1)
         end
-    elseif mode == "NRBP"
+    elseif mode == "VN-RBP"
         residues = zeros(N)
         Factors = ones(N)
     end
@@ -207,7 +207,7 @@ function
         end
 
         # 7) reset simulation variables
-        bitvector .= false
+        bitvector .= true
         syndrome .= true
         decoded .= false
         resetmatrix!(Lr,vn2cn,0.0)
@@ -233,19 +233,21 @@ function
         if mode == "RBP" || mode == "List-RBP"
             calc_all_residues!(Lq,Lr,cn2vn,Lrn,signs,phi,Ms,Factors,rbpmatrix,
                 residues,coords,listsizes,relative)
-        elseif mode == "NRBP"
+        elseif mode == "VN-RBP"
             for m in 1:M 
                 # calculate the new check to node messages
-                update_Lr!(Ms,Lq,m,cn2vn,Lrn,signs,phi)
+                update_Lr!(Ms,Lq,m,cn2vn[m],Lrn,signs,phi)
             end
             for n in 1:N
+                residue = 0.0
                 for m in vn2cn[n]
                     li = LinearIndices(Ms)[m,n]        
-                    residues[n] += Ms[li]
+                    residue += Ms[li]
                 end
-                if relative
-                    residues[n] = abs(residues[n]/Lf[n])
+                if relative     
+                    residue /= Lf[n]
                 end
+                residues[n] = abs(residue)
             end
         end
         
@@ -306,8 +308,8 @@ function
                     )
                 # reset factors
                 resetmatrix!(Factors,vn2cn,1.0)
-            elseif mode == "NRBP"
-                rbp_not_converged = NRBP!(
+            elseif mode == "VN-RBP"
+                rbp_not_converged = VN_RBP!(
                     bitvector,
                     Lq,
                     Lr,
@@ -326,14 +328,14 @@ function
                     rbp_not_converged
                     )
                 # reset factors
-                resetmatrix!(Factors,vn2cn,1.0)
+                Factors .= 1.0
             end
     
             calc_syndrome!(syndrome,bitvector,cn2vn)
     
             if test && printtest
                 biterror .= (bitvector .≠ complete_cword)
-                print_test("bitvector",bitvector)   
+                print_test("biterror",biterror)   
                 println("Bit error rate: $(sum(biterror))/$N")
                 print_test("Syndrome",syndrome)  
                 println("Syndrome rate: $(sum(syndrome))/$M")

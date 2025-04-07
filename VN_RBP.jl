@@ -4,11 +4,10 @@
 # RBP Sum-Product Algorithm with residual decaying factor
 
 include("./RBP functions/RBP_update_Lr.jl")
-include("./RBP functions/calc_residue.jl")
 include("./RBP functions/findmaxnode.jl")
 
 function
-    NRBP!(
+    VN_RBP!(
         bitvector::Vector{Bool},
         Lq::Matrix{<:AbstractFloat},
         Lr::Matrix{<:AbstractFloat},
@@ -35,32 +34,38 @@ function
 
         vnmax = findmaxnode(residues)
         if vnmax == 0
-            rbp_not_converged = false
+            rbp_not_converged  = false
             break # i.e., RBP has converged
         end
-
         residues[vnmax] = 0.0
-
         Factors[vnmax] *= decayfactor
 
+        ln = LinearIndices(Ms)[1,vnmax]-1
         for m in vn2cn[vnmax]
-            Lr[m,vnmax] = Ms[m,vnmax]
+            Lr[ln+m] = Ms[ln+m]
         end        
 
-        bitvector[vnmax] = update_Lq!(Lq,Lr,Lf[vnmax],vnmax,vn2cn,Lrn)
+        bitvector[vnmax] = update_Lq!(Lq,Lr,Lf[vnmax],vnmax,vn2cn[vnmax],Lrn)
 
         for m in vn2cn[vnmax] 
             # calculate the new check to node messages
-            update_Lr!(Ms,Lq,m,cn2vn,Lrn,signs,phi)
-            for n in cn2vn[m]
+            vns = cn2vn[m]
+            update_Lr!(Ms,Lq,m,vns,Lrn,signs,phi)
+            for n in vns
                 if n ≠ vnmax
                     li = LinearIndices(Ms)[m,n]
-                    residues[n] = calc_residue(Ms,Lr,Factors,Lrn,Lq,li,relative)   
+                    residue = Ms[li] - Lr[li]
+                    if relative   
+                        old = Lr[li] + Lq[li]  
+                        residue /= old
+                    end
+                    residues[n] = abs(residue)*Factors[n]
                 end
             end
         end
     end
 
     return rbp_not_converged
+
 end
 
