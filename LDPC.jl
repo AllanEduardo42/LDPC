@@ -62,12 +62,12 @@ STOP::Bool = false # stop simulation at zero syndrome (if true, BER curves are
 
 ################################## 5) NUMBERS ##################################
 
-MAXITER::Int = 50
-MAXIRBP::Int = 30
-# FACTORS = [0.7, 0.8, 0.9, 1.0]
-FACTORS = [0.9]
+MAXITER::Int = 20
+FACTORS = [0.7, 0.8, 0.9, 1.0]
+# FACTORS = [0.9]
 SNR = [1.2, 1.4, 1.6, 1.8]
-TRIALS = 10 .^(0:length(SNR)-1)*2^10
+# SNR = [1.2, 1.4, 1.6, 1.8]
+TRIALS = 10 .^(0:length(SNR)-1)*2^9
 RELATIVE::Bool = false
 
 # TEST
@@ -78,7 +78,7 @@ DECAY_TEST::Float64 = 0.9
 
 ################################ 6) BP SCHEDULE ################################
 
-MODES = ["Flooding","LBP","RBP","List-RBP","List-RBP-genius","VN-RBP"]
+MODES = ["Flooding","LBP","RBP","List-RBP","VN-RBP","Genius-RBP"]
 NUM_MODES = length(MODES)
 ACTIVE = zeros(Bool,NUM_MODES)
 LISTSIZES = zeros(Int,4)
@@ -108,7 +108,7 @@ MAXITERS[i] = MAXITER
 
 # RBP
 i += 1
-ACTIVE[i] = 0
+ACTIVE[i] = 1
 BPTYPES[i] = "FAST"
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
@@ -120,19 +120,20 @@ BPTYPES[i] = "FAST"
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
 
-# List-RBP-genius
+# Node-RBP
 i += 1
 ACTIVE[i] = 0
 BPTYPES[i] = "FAST"
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
 
-# Node-RBP
+# Genius-RBP
 i += 1
-ACTIVE[i] = 1
+ACTIVE[i] = 0
 BPTYPES[i] = "FAST"
 MAXITERS[i] = MAXITER
-DECAYS[i] = [1.0]
+DECAYS[i] = FACTORS
+
 
 # List-RBP sizes (min values = 4 and 2)
 LISTSIZES[1] = 16

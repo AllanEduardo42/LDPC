@@ -1,7 +1,7 @@
 ################################################################################
 # Allan Eduardo Feitosa
-# 07 Apr 2025
-# RBP and List-RBP Algorithm with residual decaying factor
+# 08 Apr 2025
+# Genius RBP Algorithm with residual decaying factor
 
 include("./RBP functions/RBP_update_Lr.jl")
 include("./RBP functions/findmaxedge.jl")
@@ -9,8 +9,9 @@ include("./RBP functions/update_lists.jl")
 include("./RBP functions/remove_residue!.jl")
 
 function
-    RBP!(
+    genius_RBP!(
         bitvector::Vector{Bool},
+        cword::Vector{Bool},
         Lq::Matrix{<:AbstractFloat},
         Lr::Matrix{<:AbstractFloat},
         Lf::Vector{<:AbstractFloat},
@@ -41,13 +42,13 @@ function
         max_edge, max_residue = findmaxedge(residues,local_residues)
         if max_residue == 0.0
             if max_edge == 0
-                rbp_not_converged = false
+                rbp_not_converged = true
                 break # i.e., RBP has converged
             else
                 calc_all_residues!(Lq,Lr,cn2vn,Lrn,signs,phi,Ms,Factors,rbpmatrix,
                 residues,coords,listsizes,relative)
                 if residues[1] == 0.0
-                    rbp_not_converged = false
+                    rbp_not_converged = true
                     break
                 end
                 cnmax = coords[1,1]
@@ -71,6 +72,8 @@ function
 
         # 5) update vn2cn messages Lq[vnmax,m] and bitvector[vnmax]
         bitvector[vnmax] = update_Lq!(Lq,Lr,Lf[vnmax],vnmax,vn2cn[vnmax],Lrn)
+
+        TOTALBITERROR[e] = sum(bitvector .≠ cword)
 
         # 6) calculate residues
         for m in vn2cn[vnmax]

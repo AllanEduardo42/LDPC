@@ -10,6 +10,7 @@ include("calc_syndrome.jl")
 include("flooding.jl")
 include("LBP.jl")
 include("RBP.jl")
+include("Genius-RBP.jl")
 include("VN_RBP.jl")
 include("./RBP functions/calc_all_residues.jl")
 
@@ -41,7 +42,7 @@ function
         noisetest=nothing        
     )
 
-    if mode == "RBP" || mode == "List-RBP" || mode == "VN-RBP"
+    if mode == "RBP" || mode == "List-RBP" || mode == "VN-RBP" || mode == "Genius-RBP"
         RBP = true
     else
         RBP = false
@@ -97,7 +98,12 @@ function
     syndrome = Vector{Bool}(undef,M)
 
     # prior llr (if mode == "MKAY" just the prior probabilities)
-    Lf = (bptype != "MKAY") ? 0.01*ones(N) : 0.01*ones(N,2)
+    if protocol == "NR5G"
+        a = 10/INFFLOAT
+    else
+        a = 0.0
+    end
+    Lf = (bptype != "MKAY") ? a*ones(N) : a*ones(N,2)
 
     # noise
     # L = length(cword)
@@ -138,7 +144,7 @@ function
     Factors = RBP ? 1.0*H  : nothing
 
     # RBP modes
-    if mode == "RBP"
+    if mode == "RBP" || mode == "Genius-RBP"
         residues = zeros(num_edges)
         coords = zeros(Int,3,num_edges)
         localresidues = nothing
@@ -154,6 +160,9 @@ function
                 coords[3,e] = li
                 rbpmatrix[li] = e
             end
+        end
+        if mode == "Genius-RBP"
+            global TOTALBITERROR = zeros(Int,num_edges)
         end
     elseif mode == "List-RBP"
         residues = zeros(listsizes[1]+1)
@@ -204,10 +213,11 @@ function
         if twoZc > 0
             complete_cword[1:twoZc] = msg[1:twoZc]
             complete_cword[twoZc+1:end] = cword
+        else
+            complete_cword .= cword
         end
 
         # 7) reset simulation variables
-        bitvector .= true
         syndrome .= true
         decoded .= false
         resetmatrix!(Lr,vn2cn,0.0)
@@ -225,12 +235,15 @@ function
             # scale for table
             Lf[twoZc+1:end] .*= SIZE_PER_RANGE
         end
+        for i in eachindex(bitvector)
+            bitvector[i] = signbit(Lf[i])
+        end
         
         # 9) init the Lq matrix
         init_Lq!(Lq,Lf,vn2cn)
 
         # 10) precalculate the residues for RBP
-        if mode == "RBP" || mode == "List-RBP"
+        if mode == "RBP" || mode == "List-RBP" || mode == "Genius-RBP"
             calc_all_residues!(Lq,Lr,cn2vn,Lrn,signs,phi,Ms,Factors,rbpmatrix,
                 residues,coords,listsizes,relative)
         elseif mode == "VN-RBP"
@@ -285,6 +298,33 @@ function
             elseif (mode == "RBP" || mode == "List-RBP") && rbp_not_converged
                 rbp_not_converged = RBP!(
                     bitvector,
+                    Lq,
+                    Lr,
+                    Lf,
+                    cn2vn,
+                    vn2cn,
+                    Lrn,
+                    signs,
+                    phi,
+                    decayfactor,
+                    num_edges,
+                    Ms,
+                    Factors,
+                    coords,
+                    rbpmatrix,
+                    residues,
+                    localresidues,
+                    localcoords,
+                    listsizes,
+                    relative,
+                    rbp_not_converged
+                    )
+                # reset factors
+                resetmatrix!(Factors,vn2cn,1.0)
+            elseif mode == "Genius-RBP" && rbp_not_converged
+                rbp_not_converged = genius_RBP!(
+                    bitvector,
+                    complete_cword,
                     Lq,
                     Lr,
                     Lf,

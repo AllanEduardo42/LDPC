@@ -1,0 +1,67 @@
+############################### LDPC parameters ################################
+LDPC Protocol: IEEE80216e
+Parity Check Matrix: 1008 x 2016
+
+Graph girth = 6
+
+############################# Starting simulation ##############################
+
+Number of trials: [1024, 10240, 102400, 1024000]
+Message passing protocol: VN-RBP (using LLR-SPA calculated by fast tanh)
+Maximum number of iterations: 50
+Number of threads (multithreading): 32
+Simulated for SNR (dB): [1.2, 1.6, 1.8, 2.0]
+Stop at zero syndrome ? false
+RBP decaying factor: 0.7
+Relative residues: false
+
+Elapsed 12.8 seconds (2.12% gc time, 886.71% compilation time)
+Elapsed 29.9 seconds (0.64% gc time, 0.0% compilation time)
+Elapsed 253.2 seconds (0.31% gc time, 0.0% compilation time)
+Elapsed 2360.1 seconds (0.22% gc time, 0.0% compilation time)
+############################# Starting simulation ##############################
+
+Number of trials: [1024, 10240, 102400, 1024000]
+Message passing protocol: VN-RBP (using LLR-SPA calculated by fast tanh)
+Maximum number of iterations: 50
+Number of threads (multithreading): 32
+Simulated for SNR (dB): [1.2, 1.6, 1.8, 2.0]
+Stop at zero syndrome ? false
+RBP decaying factor: 0.8
+Relative residues: false
+
+Elapsed 9.8 seconds (2.13% gc time, 0.0% compilation time)
+Elapsed 30.9 seconds (0.83% gc time, 0.0% compilation time)
+Elapsed 255.2 seconds (0.29% gc time, 0.0% compilation time)
+Elapsed 2427.5 seconds (0.21% gc time, 0.0% compilation time)
+############################# Starting simulation ##############################
+
+Number of trials: [1024, 10240, 102400, 1024000]
+Message passing protocol: VN-RBP (using LLR-SPA calculated by fast tanh)
+Maximum number of iterations: 50
+Number of threads (multithreading): 32
+Simulated for SNR (dB): [1.2, 1.6, 1.8, 2.0]
+Stop at zero syndrome ? false
+RBP decaying factor: 0.9
+Relative residues: false
+
+Elapsed 9.2 seconds (2.42% gc time, 0.0% compilation time)
+Elapsed 31.1 seconds (0.63% gc time, 0.0% compilation time)
+Elapsed 269.6 seconds (0.26% gc time, 0.0% compilation time)
+Elapsed 2568.9 seconds (0.2% gc time, 0.0% compilation time)
+############################# Starting simulation ##############################
+
+Number of trials: [1024, 10240, 102400, 1024000]
+Message passing protocol: VN-RBP (using LLR-SPA calculated by fast tanh)
+Maximum number of iterations: 50
+Number of threads (multithreading): 32
+Simulated for SNR (dB): [1.2, 1.6, 1.8, 2.0]
+Stop at zero syndrome ? false
+RBP decaying factor: 1.0
+Relative residues: false
+
+Elapsed 10.2 seconds (1.39% gc time, 0.0% compilation time)
+Elapsed 35.8 seconds (0.72% gc time, 0.0% compilation time)
+Elapsed 311.1 seconds (0.21% gc time, 0.0% compilation time)
+Elapsed 2927.2 seconds (0.18% gc time, 0.0% compilation time)
+The End!

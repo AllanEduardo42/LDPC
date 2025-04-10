@@ -2,13 +2,13 @@ using DelimitedFiles
 using Plots
 
 SNR = [1.2, 1.6, 1.8, 2.0]
-decays = [0.7, 0.8, 0.9, 1.0]
-lines = [:dashdot, :dot, :dash, :solid]
+decays = [0.9]
+lines = [:solid]
 FB = ["F","B"]
-maxiter = 30
+maxiter = 50
 
 plotlyjs()
-directory = "./Saved Data/RBP decay test/"
+directory = "./Saved Data/RBP test/"
 lim = log10(1/maximum(1000*2^10))
 
 for j=1:1
@@ -31,7 +31,7 @@ for j=1:1
             ls=lines[i],
             title=title,
             ylims=(lim,0),
-            xlim=(0,30),
+            xlim=(0,50),
             color=[1 2 3 4],
             legend_title = "(decay, SNR)",
             legend_title_font_pointsize = 8,
