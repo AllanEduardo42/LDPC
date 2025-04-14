@@ -1,7 +1,7 @@
 ################################################################################
 # Allan Eduardo Feitosa
 # 3 out 2024
-# First layer of the routine to estimate the LPDC performance (FER BER x SNR)
+# First layer of the routine to estimate the LPDC performance (Fer Ber x SNR)
 
 include("simcore.jl")
 
@@ -92,8 +92,8 @@ function
 
     else
         K = length(snr)
-        sum_decoded = zeros(maxiter,K,NTHREADS)
-        sum_ber = zeros(maxiter,K,NTHREADS)
+        sum_decoded = zeros(Int,maxiter,K,NTHREADS)
+        sum_ber = zeros(Int,maxiter,K,NTHREADS)
         for k in 1:K
             stats = @timed Threads.@threads for i in 1:NTHREADS
                 sum_decoded[:,k,i], sum_ber[:,k,i] = simcore(
@@ -125,24 +125,28 @@ function
             end
         end
 
-        FER = sum(sum_decoded,dims=3)[:,:,1]
+        Fer = zeros(maxiter,K)
+        Fer .= sum(sum_decoded,dims=3)
         for k = 1:K
-            FER[:,k] ./= trials[k]
+            Fer[:,k] ./= trials[k]
         end
-        @. FER = 1 - FER
-        BER = sum(sum_ber,dims=3)[:,:,1]
+        @. Fer = 1 - Fer
+        Ber = zeros(maxiter,K)
+        Ber .= sum(sum_ber,dims=3)
         for k = 1:K
-            BER[:,k] ./= (NN*trials[k])
+            Ber[:,k] ./= (NN*trials[k])
         end
 
         println()
 
         lowerfer = 1/maximum(trials)
         lowerber = lowerfer/NN
-        replace!(x-> x < lowerfer ? lowerfer : x, FER)
-        replace!(x-> x < lowerber ? lowerber : x, BER)
+        replace!(x-> x < lowerfer ? lowerfer : x, Fer)
+        replace!(x-> x < lowerber ? lowerber : x, Ber)
 
-        return log10.(FER), log10.(BER)
+        return log10.(Fer), log10.(Ber)
+
+        return sum_decoded, sum_ber
         
     end
 

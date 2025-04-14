@@ -1,22 +1,23 @@
 using DelimitedFiles
 using Plots
 
-SNR = [1.2, 1.6, 1.8, 2.0]
-decays = [0.9]
-lines = [:solid]
+SNR = [1.2, 1,4, 1.6, 1.8]
+decays = [0.7, 0.8, 0.9, 1.0]
+lines = [:dashdot, :dot, :dash, :solid]
 FB = ["F","B"]
-maxiter = 50
+maxiter = 10
 
 plotlyjs()
-directory = "./Saved Data/RBP test/"
-lim = log10(1/maximum(1000*2^10))
+directory = "./Saved Data/RBP NR5G relative/"
+lim = log10(1/maximum(1000*2^10))+1
 
-for j=1:1
-    title = FB[j]*"ER RBP"
+for j=1:2
+    title = FB[j]*"ER RBP Relative"
     p = plot()
     for i in eachindex(decays)
         sdecay = string(decays[i])
         x = readdlm(directory*FB[j]*"ER_RBP "*sdecay*".txt",'\t',Float64,'\n')
+        x = x[1:maxiter,:]
         labels = Vector{String}()
         for snr in SNR
             push!(labels,sdecay*", $(snr)dB")
@@ -31,7 +32,7 @@ for j=1:1
             ls=lines[i],
             title=title,
             ylims=(lim,0),
-            xlim=(0,50),
+            xlim=(1,maxiter),
             color=[1 2 3 4],
             legend_title = "(decay, SNR)",
             legend_title_font_pointsize = 8,

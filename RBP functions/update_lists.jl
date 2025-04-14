@@ -63,35 +63,6 @@ function
 
 end
 
-#Local
-# function
-#     update_local_list!(
-#         residues::Vector{<:AbstractFloat},
-#         ::Matrix{<:Integer},
-#         ::Nothing,
-#         ::Nothing,
-#         ::Vector{<:Integer},
-#         rbpmatrix::Matrix{<:Integer},
-#         li::Integer,
-#         m::Integer,
-#         n::Integer,
-#         residue::AbstractFloat    
-#     )
-
-#     if residue > residues[1]
-#         max_residue[2] = max_residue[1]
-#         max_residue[1] = residue
-#         maxcoords[3] = maxcoords[1]
-#         maxcoords[4] = maxcoords[2]
-#         maxcoords[1] = m
-#         maxcoords[2] = n
-#     elseif residue > max_residue[2]
-#         max_residue[2] = residue
-#         maxcoords[3] = m
-#         maxcoords[4] = n
-#     end 
-# end
-
 function update_global_list!(
     residues::Vector{<:AbstractFloat},
     coords::Matrix{<:Integer},
@@ -102,7 +73,14 @@ function update_global_list!(
 )
     
     @inbounds begin
-        for i = listsizes[4]:listsizes[3]
+        pos = listsizes[1]-1
+        for i=listsizes[2]:-1:1
+            if localcoords[3,i] != 0
+                pos = listsizes[1] - i + 1
+                break
+            end
+        end
+        for i = pos:listsizes[1]-1
             li = coords[3,i]
             if li ≠ 0
                 inlist[li] = false

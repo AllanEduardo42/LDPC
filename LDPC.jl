@@ -50,7 +50,6 @@ const SIZE_PER_RANGE = TABLESIZE/TABLERANGE
 # Seeds
 SEED_NOISE::Int = 1428
 SEED_GRAPH::Int = 5714
-SEED_SAMPL::Int = 2857
 SEED_MESSA::Int = 1000
 
 ############################### 4) CONTROL FLAGS ###############################
@@ -62,17 +61,18 @@ STOP::Bool = false # stop simulation at zero syndrome (if true, BER curves are
 
 ################################## 5) NUMBERS ##################################
 
-MAXITER::Int = 20
+MAXITER::Int = 10
 FACTORS = [0.7, 0.8, 0.9, 1.0]
+# FACTORS = collect(0.0:0.1:0.6)
 # FACTORS = [0.9]
 SNR = [1.2, 1.4, 1.6, 1.8]
-# SNR = [1.2, 1.4, 1.6, 1.8]
+# SNR = [1.2, 1.4, 1.6]
 TRIALS = 10 .^(0:length(SNR)-1)*2^9
 RELATIVE::Bool = false
 
 # TEST
 MAXITER_TEST::Int = 1
-SNR_TEST::Float64 = 2.0
+SNR_TEST::Float64 = 1.2
 TRIALS_TEST::Int = 1
 DECAY_TEST::Float64 = 0.9
 
@@ -108,14 +108,14 @@ MAXITERS[i] = MAXITER
 
 # RBP
 i += 1
-ACTIVE[i] = 1
+ACTIVE[i] = 0
 BPTYPES[i] = "FAST"
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
 
 # List-RBP
 i += 1
-ACTIVE[i] = 0
+ACTIVE[i] = 1
 BPTYPES[i] = "FAST"
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
@@ -136,10 +136,8 @@ DECAYS[i] = FACTORS
 
 
 # List-RBP sizes (min values = 4 and 2)
-LISTSIZES[1] = 16
+LISTSIZES[1] = 64
 LISTSIZES[2] = 2
-LISTSIZES[3] = LISTSIZES[1] - 1
-LISTSIZES[4] = LISTSIZES[1] - LISTSIZES[2] + 1
 
 ############################### 7) LOOKUP TABLE ################################
 
@@ -237,11 +235,9 @@ end
 ####################### GENERATE NOISE AND SAMPLE SEEDS ########################
 
 RGN_NOISE_SEEDS = zeros(Int,NTHREADS)
-RGN_SAMPLE_SEEDS = zeros(Int,NTHREADS)
 RGN_MESSAGE_SEEDS = zeros(Int,NTHREADS)
 for i in eachindex(RGN_NOISE_SEEDS)
     RGN_NOISE_SEEDS[i] = SEED_NOISE + i - 1
-    RGN_SAMPLE_SEEDS[i] = SEED_SAMPL + i - 1
     RGN_MESSAGE_SEEDS[i] = SEED_MESSA + 1 - 1
 end
 
@@ -323,7 +319,8 @@ else
     else
 ################################### PLOTTING ###################################
         plotlyjs()
-        LIM = log10(1/maximum(TRIALS))
+        LIMFER = log10(1/maximum(TRIALS))
+        LIMBER = log10(1/(maximum(TRIALS)*NN))
     
         # FER x SNR
         if STOP && length(SNR) > 1
@@ -334,7 +331,7 @@ else
                 label=FER_LABELS,
                 lw=2,
                 title="FER MAXITER",
-                ylims=(LIM,0)
+                ylims=(floor(LIMFER),0)
             )
             display(PLOT)
         end
@@ -351,23 +348,29 @@ else
                         else
                             mode = MODES[i]
                         end
-                        LABELS = Vector{String}()
+                        labels = Vector{String}()
                         for snr in SNR
-                            push!(LABELS,"$mode, SNR (dB) = $snr")
+                            push!(labels,"$mode, SNR (dB) = $snr")
                         end
-                        LABELS = permutedims(LABELS)
-                        local PLOT = plot!(
+                        labels = permutedims(labels)
+                        global PLOT = plot!(
                             1:MAXITERS[i],
                             FER[mode],
                             xlabel="Iteration",
-                            label=LABELS,
+                            label=labels,
                             lw=2,
                             title=titlefer,
-                            ylims=(LIM,0)
+                            ylims=(floor(LIMFER),0)
                         )
                     end
                 end
             end
+            PLOT = plot!(1:MAXITERS[i],
+                  ones(Int,10)*LIMFER,
+                  label = "minimum",
+                  lw=2,
+                  color=:black,
+                  ls=:dash)
             display(PLOT)
             PLOT = plot()
             titleber = "BER"
@@ -379,23 +382,29 @@ else
                         else
                             mode = MODES[i]
                         end
-                        LABELS = Vector{String}()
+                        labels = Vector{String}()
                         for snr in SNR
-                            push!(LABELS,"$mode, SNR (dB) = $snr")
+                            push!(labels,"$mode, SNR (dB) = $snr")
                         end
-                        LABELS = permutedims(LABELS)
-                        local PLOT = plot!(
+                        labels = permutedims(labels)
+                        global PLOT = plot!(
                             1:MAXITERS[i],
                             BER[mode],
                             xlabel="Iteration",
-                            label=LABELS,
+                            label=labels,
                             lw=2,
                             title=titleber,
-                            ylims=(LIM-2,0)
+                            ylims=(floor(LIMBER),0)
                         )
                     end
                 end
             end
+            PLOT = plot!(1:MAXITERS[i],
+                  ones(Int,10)*LIMBER,
+                  label = "minimum",
+                  lw=2,
+                  color=:black,
+                  ls=:dash)
             display(PLOT)
         end
     end

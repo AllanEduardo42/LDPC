@@ -1,0 +1,75 @@
+############################### LDPC parameters ################################
+LDPC Protocol: NR-LDPC (5G)
+Parity Check Matrix: 1200 x 2224
+
+Graph girth = 6
+
+############################# Starting simulation ##############################
+
+Number of trials: [512, 5120, 51200, 512000]
+Message passing protocol: List-RBP (using LLR-SPA calculated by fast tanh)
+Maximum number of iterations: 10
+Number of threads (multithreading): 32
+Simulated for SNR (dB): [1.2, 1.4, 1.6, 1.8]
+Stop at zero syndrome ? false
+RBP decaying factor: 0.7
+Relative residues: false
+List 1 size: 128
+List 2 size: 2
+
+Elapsed 8.8 seconds (2.75% gc time, 1428.82% compilation time)
+Elapsed 39.7 seconds (0.44% gc time, 0.0% compilation time)
+Elapsed 361.1 seconds (0.18% gc time, 0.0% compilation time)
+Elapsed 3361.5 seconds (0.14% gc time, 0.0% compilation time)
+############################# Starting simulation ##############################
+
+Number of trials: [512, 5120, 51200, 512000]
+Message passing protocol: List-RBP (using LLR-SPA calculated by fast tanh)
+Maximum number of iterations: 10
+Number of threads (multithreading): 32
+Simulated for SNR (dB): [1.2, 1.4, 1.6, 1.8]
+Stop at zero syndrome ? false
+RBP decaying factor: 0.8
+Relative residues: false
+List 1 size: 128
+List 2 size: 2
+
+Elapsed 4.7 seconds (3.82% gc time, 0.0% compilation time)
+Elapsed 38.5 seconds (0.99% gc time, 0.0% compilation time)
+Elapsed 340.6 seconds (0.16% gc time, 0.0% compilation time)
+Elapsed 3272.1 seconds (0.14% gc time, 0.0% compilation time)
+############################# Starting simulation ##############################
+
+Number of trials: [512, 5120, 51200, 512000]
+Message passing protocol: List-RBP (using LLR-SPA calculated by fast tanh)
+Maximum number of iterations: 10
+Number of threads (multithreading): 32
+Simulated for SNR (dB): [1.2, 1.4, 1.6, 1.8]
+Stop at zero syndrome ? false
+RBP decaying factor: 0.9
+Relative residues: false
+List 1 size: 128
+List 2 size: 2
+
+Elapsed 4.5 seconds (2.68% gc time, 0.0% compilation time)
+Elapsed 39.0 seconds (0.79% gc time, 0.0% compilation time)
+Elapsed 343.3 seconds (0.16% gc time, 0.0% compilation time)
+Elapsed 3286.2 seconds (0.14% gc time, 0.0% compilation time)
+############################# Starting simulation ##############################
+
+Number of trials: [512, 5120, 51200, 512000]
+Message passing protocol: List-RBP (using LLR-SPA calculated by fast tanh)
+Maximum number of iterations: 10
+Number of threads (multithreading): 32
+Simulated for SNR (dB): [1.2, 1.4, 1.6, 1.8]
+Stop at zero syndrome ? false
+RBP decaying factor: 1.0
+Relative residues: false
+List 1 size: 128
+List 2 size: 2
+
+Elapsed 4.8 seconds (2.19% gc time, 0.0% compilation time)
+Elapsed 38.4 seconds (0.9% gc time, 0.0% compilation time)
+Elapsed 352.3 seconds (0.15% gc time, 0.0% compilation time)
+Elapsed 3328.5 seconds (0.13% gc time, 0.0% compilation time)
+The End!

@@ -5,10 +5,10 @@
 
 
 SNR_PROF = 1.2
-Mode_prof = "Flooding"
+Mode_prof = "RBP"
 TRIALSPROF = 2^5
 Maxiter_prof = 50
-Bptypte_prof = "TABL"
+Bptypte_prof = "FAST"
 Decay_prof = 0.9
 
 

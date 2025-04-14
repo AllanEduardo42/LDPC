@@ -74,7 +74,7 @@ function
     stdev = sqrt.(variance)
 
     # Set the random seeds
-    rng_noise = Xoshiro(rgn_seed_noise)
+    rgn_noise = Xoshiro(rgn_seed_noise)
     rgn_msg = Xoshiro(rgn_seed_msg)
 
 ################################# PREALLOCATIONS ###############################
@@ -200,7 +200,7 @@ function
         u = Float64.(2*cword .- 1)
 
         # 4) sum the noise to the modulated cword to produce the received signal
-        received_signal!(signal,noise,stdev,u,rng_noise,noisetest)
+        received_signal!(signal,noise,stdev,u,rgn_noise,noisetest)
 
         # 5) print info in test mode
         if test && printtest
@@ -372,9 +372,10 @@ function
             end
     
             calc_syndrome!(syndrome,bitvector,cn2vn)
+
+            biterror .= (bitvector .≠ complete_cword)
     
             if test && printtest
-                biterror .= (bitvector .≠ complete_cword)
                 print_test("biterror",biterror)   
                 println("Bit error rate: $(sum(biterror))/$N")
                 print_test("Syndrome",syndrome)  
@@ -383,17 +384,16 @@ function
             else
                 if iszero(syndrome)
                     if bitvector == complete_cword
-                        @inbounds decoded[iter] = true
+                        decoded[iter] = true
                     end
                     if stop
                         if iter < maxiter
-                            @inbounds decoded[iter+1:end] .= decoded[iter]
+                            decoded[iter+1:end] .= decoded[iter]
                         end
                         break
                     end
-                end
-                biterror .= (bitvector .≠ complete_cword)
-                @inbounds ber[iter] = sum(biterror)
+                end               
+                ber[iter] = sum(biterror) 
             end
         end
 
