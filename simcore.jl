@@ -98,7 +98,7 @@ function
     syndrome = Vector{Bool}(undef,M)
 
     # prior llr (if mode == "MKAY" just the prior probabilities)
-    if protocol == "NR5G"
+    if protocol == "NR5G" && relative
         a = 10/INFFLOAT
     else
         a = 0.0
@@ -254,7 +254,7 @@ function
             for n in 1:N
                 residue = 0.0
                 for m in vn2cn[n]
-                    li = LinearIndices(Ms)[m,n]        
+                    li = LinearIndices(Ms)[m,n]
                     residue += Ms[li]
                 end
                 if relative     

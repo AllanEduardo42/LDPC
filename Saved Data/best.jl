@@ -85,7 +85,7 @@ for i in eachindex(directory2)
         ls=lines[i],
         title=title,
         ylims=(lim,-2),
-        xlims=(1,15),
+        xlims=(1,10),
         # color=[1 2 3 4],
         legend_title = "Algorithm : Decay factor",
         legend_title_font_pointsize = 9,

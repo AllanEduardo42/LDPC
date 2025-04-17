@@ -1,7 +1,7 @@
 using DelimitedFiles
 using Plots
 
-decays = [0.7, 0.8, 0.9, 1.0]
+decays = [0.7, 0.8, 0.9, 1.0, 0.2]
 
 plots = [true,
         true,
@@ -12,7 +12,9 @@ plots = [true,
         false,
         false,
         true,
-        false
+        false,
+        true,
+        true
         ]
 
 lines = [:solid,
@@ -25,6 +27,8 @@ lines = [:solid,
          :dashdot,
          :dot,
          :solid,
+         :solid,
+         :dashdot
          ]
 
 maxiter = 10
@@ -38,7 +42,9 @@ index = [3,
          3,
          2,
          3,
-         1
+         1,
+         2,
+         5
          ]
 
 plotlyjs()
@@ -52,7 +58,9 @@ directory2 = ["RBP NR5G",
               "List-RBP NR5G 128 4",
               "List-RBP NR5G 128 4 relative",
               "List-RBP NR5G 128 2",
-              "List-RBP NR5G 128 2 relative"
+              "List-RBP NR5G 128 2 relative",
+              "VN-RBP NR5G (all decays)",
+              "VN-RBP NR5G relative (all decays)"
               ]
 file = ["FER_RBP",
         "FER_RBP",
@@ -64,6 +72,8 @@ file = ["FER_RBP",
         "FER_List-RBP",
         "FER_List-RBP",
         "FER_List-RBP",
+        "FER_VN-RBP",
+        "FER_VN-RBP"
         ]
 
 lim = log10(1/maximum(1000*2^10))
@@ -77,7 +87,9 @@ labels = ["RBP : ",
           "List (128,4) : ",
           "List rel (128,4) : ",
           "List (128,2) : ",
-          "List rel (128,2) : "
+          "List rel (128,2) : ",
+          "VN-RBP : ",
+          "VN-RBP rel : "
           ]
 
 

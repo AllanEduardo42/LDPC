@@ -6,6 +6,8 @@
 include("./RBP functions/RBP_update_Lr.jl")
 include("./RBP functions/findmaxnode.jl")
 
+
+
 function
     VN_RBP!(
         bitvector::Vector{Bool},
@@ -18,7 +20,7 @@ function
         signs::Union{Vector{Bool},Nothing},
         phi::Union{Vector{<:AbstractFloat},Nothing},
         decayfactor::AbstractFloat,
-        num_edges::Integer,
+        num_nodes::Integer,
         Ms::Matrix{<:AbstractFloat},
         Factors::Vector{<:AbstractFloat},
         residues::Vector{<:AbstractFloat},
@@ -26,11 +28,9 @@ function
         rbp_not_converged::Bool
     )
 
-    @fastmath @inbounds for e = 1:num_edges
+    @fastmath @inbounds for e = 1:num_nodes
 
         # display("e = $e")
-
-        # display(sort(residues,rev=true))
 
         vnmax = findmaxnode(residues)
         if vnmax == 0
@@ -40,14 +40,14 @@ function
         residues[vnmax] = 0.0
         Factors[vnmax] *= decayfactor
 
-        ln = LinearIndices(Ms)[1,vnmax]-1
         for m in vn2cn[vnmax]
-            Lr[ln+m] = Ms[ln+m]
+            li = LinearIndices(Ms)[m,vnmax]
+            Lr[li] = Ms[li]
         end        
 
         bitvector[vnmax] = update_Lq!(Lq,Lr,Lf[vnmax],vnmax,vn2cn[vnmax],Lrn)
 
-        for m in vn2cn[vnmax] 
+        for m in vn2cn[vnmax]
             # calculate the new check to node messages
             vns = cn2vn[m]
             update_Lr!(Ms,Lq,m,vns,Lrn,signs,phi)

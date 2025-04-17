@@ -2,23 +2,22 @@ using DelimitedFiles
 using Plots
 
 SNR = [1.2, 1,4, 1.6, 1.8]
+# decays = collect(0.1:0.1:1.0)
 decays = [0.7, 0.8, 0.9, 1.0]
-# decays = collect(0.0:0.1:1.0)
-
 lines = [:dash,:solid,:dashdot,:dot,:dash,:solid,:dashdot,:dot,:dash,:solid,:dashdot,:dot]
 FB = ["F","B"]
 maxiter = 10
 
 plotlyjs()
-directory = "./Saved Data/List-RBP NR5G 128 8 relative (all decays)/"
+directory = "./Saved Data/VN-RBP NR5G (all decays)/"
 lim = log10(1/maximum(1000*2^10))+1
 
 for j=1:2
-    title = FB[j]*"ER List-RBP (128,8) Relative"
+    title = FB[j]*"ER VN-RBP NR5G"
     p = plot()
     for i in eachindex(decays)
         sdecay = string(decays[i])
-        x = readdlm(directory*FB[j]*"ER_List-RBP "*sdecay*".txt",'\t',Float64,'\n')
+        x = readdlm(directory*FB[j]*"ER_VN-RBP "*sdecay*".txt",'\t',Float64,'\n')
         x = x[1:maxiter,:]
         labels = Vector{String}()
         for snr in SNR

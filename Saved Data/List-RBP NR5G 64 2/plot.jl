@@ -3,18 +3,16 @@ using Plots
 
 SNR = [1.2, 1,4, 1.6, 1.8]
 decays = [0.7, 0.8, 0.9, 1.0]
-# decays = collect(0.0:0.1:1.0)
-
-lines = [:dash,:solid,:dashdot,:dot,:dash,:solid,:dashdot,:dot,:dash,:solid,:dashdot,:dot]
+lines = [:dash,:solid,:dashdot,:dot]
 FB = ["F","B"]
 maxiter = 10
 
 plotlyjs()
-directory = "./Saved Data/List-RBP NR5G 128 8 relative (all decays)/"
+directory = "./Saved Data/List-RBP NR5G 64 2/"
 lim = log10(1/maximum(1000*2^10))+1
 
 for j=1:2
-    title = FB[j]*"ER List-RBP (128,8) Relative"
+    title = FB[j]*"ER List-RBP (64,2)"
     p = plot()
     for i in eachindex(decays)
         sdecay = string(decays[i])

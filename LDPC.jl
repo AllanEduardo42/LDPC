@@ -62,11 +62,11 @@ STOP::Bool = false # stop simulation at zero syndrome (if true, BER curves are
 ################################## 5) NUMBERS ##################################
 
 MAXITER::Int = 10
-FACTORS = [0.7, 0.8, 0.9, 1.0]
-# FACTORS = collect(0.0:0.1:0.6)
-# FACTORS = [0.9]
+# FACTORS = [0.7, 0.8, 0.9, 1.0]
+FACTORS = collect(0.1:0.1:1.0)
+# FACTORS = [0.8]
 SNR = [1.2, 1.4, 1.6, 1.8]
-# SNR = [1.2, 1.4, 1.6]
+# SNR = [1.2]
 TRIALS = 10 .^(0:length(SNR)-1)*2^9
 RELATIVE::Bool = false
 
@@ -74,7 +74,7 @@ RELATIVE::Bool = false
 MAXITER_TEST::Int = 1
 SNR_TEST::Float64 = 1.2
 TRIALS_TEST::Int = 1
-DECAY_TEST::Float64 = 0.9
+DECAY_TEST::Float64 = 0.8
 
 ################################ 6) BP SCHEDULE ################################
 
@@ -115,14 +115,14 @@ DECAYS[i] = FACTORS
 
 # List-RBP
 i += 1
-ACTIVE[i] = 1
+ACTIVE[i] = 0
 BPTYPES[i] = "FAST"
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
 
 # Node-RBP
 i += 1
-ACTIVE[i] = 0
+ACTIVE[i] = 1
 BPTYPES[i] = "FAST"
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
