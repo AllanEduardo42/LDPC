@@ -1,66 +1,66 @@
 using DelimitedFiles
 using Plots
 
-decays = [0.7, 0.8, 0.9, 1.0, 0.2]
+decays = [0.7, 0.8, 0.9, 1.0]
 
 plots = [true,
         true,
+        true,
+        false,
+        false,
+        false,
         false,
         false,
         false,
         true,
-        false,
-        false,
         true,
-        false,
         true,
-        true
         ]
 
 lines = [:solid,
          :solid,
-         :dot,
-         :dot,
          :dash,
          :dash,
-         :dashdot,
-         :dashdot,
+         :dash,
+         :dash,
+         :dash,
+         :dash,
+         :dash,
+         :dash,
          :dot,
-         :solid,
-         :solid,
-         :dashdot
+         :dot
          ]
 
 maxiter = 10
 
-index = [3,
+index = [2,
+         3,
+         4,
+         2,
+         3,
          3,
          3,
          2,
-         3,
          2,
-         3,
          2,
-         3,
-         1,
          2,
-         5
+         4
          ]
 
 plotlyjs()
 directory1 = "./Saved Data/"
-directory2 = ["RBP NR5G",
-              "RBP NR5G relative",
-              "List-RBP NR5G 128 16",
-              "List-RBP NR5G 128 16 relative",
-              "List-RBP NR5G 128 8",
-              "List-RBP NR5G 128 8 relative (all decays)",
-              "List-RBP NR5G 128 4",
-              "List-RBP NR5G 128 4 relative",
-              "List-RBP NR5G 128 2",
-              "List-RBP NR5G 128 2 relative",
-              "VN-RBP NR5G (all decays)",
-              "VN-RBP NR5G relative (all decays)"
+directory2 = ["RBP IEEE (all decays)",
+              "RBP IEEE relative (all decays)",
+              "List-RBP IEEE 128 2 (all decays)",
+              "List-RBP IEEE 128 2 (all decays) relative",
+              "List-RBP IEEE 128 4 (all decays)",
+              "List-RBP IEEE 128 4 (all decays) relative",
+              "List-RBP IEEE 128 8 (all decays)",
+              "List-RBP IEEE 128 8 (all decays) relative",
+              "List-RBP IEEE 128 16 (all decays)",
+              "List-RBP IEEE 128 16 (all decays) relative",
+              "VN-RBP IEEE (all decays)",
+              "VN-RBP IEEE (all decays) relative"
               ]
 file = ["FER_RBP",
         "FER_RBP",
@@ -78,22 +78,22 @@ file = ["FER_RBP",
 
 lim = log10(1/maximum(512000))
 
-labels = ["RBP : ", 
-          "RBP rel : ",
-          "List (128,16) : ",
-          "List rel (128,16) : ",
-          "List (128,8) : ",
-          "List rel (128,8) : ",
-          "List (128,4) : ",
-          "List rel (128,4) : ",
-          "List (128,2) : ",
-          "List rel (128,2) : ",
+labels = ["RBP : ",
+          "RBP rel: ", 
+          "List RBP (128,2) : ",
+          "List RBP (128,2) rel :",
+          "List RBP (128,4) : ",
+          "List RBP (128,4) rel :",
+          "List RBP (128,8) : ",
+          "List RBP (128,8) rel : ",
+          "List RBP (128,16) : ",
+          "List RBP (128,16) rel : ",
           "VN-RBP : ",
           "VN-RBP rel : "
           ]
 
 
-title = "NR5G FER (SNR = 1.8 dB)"
+title = "IEEE FER (SNR = 1.8 dB)"
 p = plot()
 for i in eachindex(plots)
     if plots[i]
@@ -109,7 +109,7 @@ for i in eachindex(plots)
             ls=lines[i],
             title=title,
             ylims=(lim,0),
-            # xlims=(1,maxiter),
+            # xlims=(1,10),
             # color=[1 2 3 4],
             legend_title = "Algorithm : Decay factor",
             legend_title_font_pointsize = 9,

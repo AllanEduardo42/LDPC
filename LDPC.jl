@@ -68,7 +68,7 @@ FACTORS = collect(0.1:0.1:1.0)
 SNR = [1.2, 1.4, 1.6, 1.8]
 # SNR = [1.2]
 TRIALS = 10 .^(0:length(SNR)-1)*2^9
-RELATIVE::Bool = false
+RELATIVE::Bool = true
 
 # TEST
 MAXITER_TEST::Int = 1
@@ -115,14 +115,14 @@ DECAYS[i] = FACTORS
 
 # List-RBP
 i += 1
-ACTIVE[i] = 0
+ACTIVE[i] = 1
 BPTYPES[i] = "FAST"
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
 
-# Node-RBP
+# Variable Node RBP
 i += 1
-ACTIVE[i] = 1
+ACTIVE[i] = 0
 BPTYPES[i] = "FAST"
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
@@ -136,8 +136,8 @@ DECAYS[i] = FACTORS
 
 
 # List-RBP sizes (min values = 4 and 2)
-LISTSIZES[1] = 64
-LISTSIZES[2] = 2
+LISTSIZES[1] = 128
+LISTSIZES[2] = 16
 
 ############################### 7) LOOKUP TABLE ################################
 
@@ -150,7 +150,7 @@ AA::Int = 1008
 # Rate
 RR::Float64 = 1/2
 # LDPC protocol: NR5G = NR-LDPC (5G); PEG = PEG; IEEE = IEEE80216e;
-PROTOCOL::String = "NR5G"
+PROTOCOL::String = "IEEE"
     DENSITIES = 1:8
 
 ############################# PARITY-CHECK MATRIX #############################
