@@ -46,7 +46,8 @@ function
     Number of threads (multithreading): $NTHREADS
     Simulated for SNR (dB): $snr
     Stop at zero syndrome ? $STOP"""
-    if mode == "RBP" || mode == "List-RBP" || mode == "VN-RBP" || mode == "Genius-RBP"
+    if mode == "RBP" || mode == "List-RBP" || mode == "VN-RBP" ||
+       mode == "Genius-RBP" || mode == "NS-RBP"
         str *= "\nRBP decaying factor: $decay"
         str *= "\nRelative residues: $RELATIVE"
     end

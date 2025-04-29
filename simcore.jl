@@ -12,6 +12,8 @@ include("LBP.jl")
 include("RBP.jl")
 include("Genius-RBP.jl")
 include("VN_RBP.jl")
+include("NS.jl")
+include("NS_2.jl")
 include("./RBP functions/calc_all_residues.jl")
 
 function
@@ -42,7 +44,8 @@ function
         noisetest=nothing        
     )
 
-    if mode == "RBP" || mode == "List-RBP" || mode == "VN-RBP" || mode == "Genius-RBP"
+    if mode == "RBP" || mode == "List-RBP" || mode == "VN-RBP" || 
+       mode == "Genius-RBP" || mode == "NS-RBP"
         RBP = true
     else
         RBP = false
@@ -164,6 +167,9 @@ function
         if mode == "Genius-RBP"
             global TOTALBITERROR = zeros(Int,num_edges)
         end
+    elseif mode == "NS-RBP"
+        residues = zeros(M)
+        Factors = ones(M)
     elseif mode == "List-RBP"
         residues = zeros(listsizes[1]+1)
         coords = zeros(Int,3,listsizes[1]+1)
@@ -246,6 +252,21 @@ function
         if mode == "RBP" || mode == "List-RBP" || mode == "Genius-RBP"
             calc_all_residues!(Lq,Lr,cn2vn,Lrn,signs,phi,Ms,Factors,rbpmatrix,
                 residues,coords,listsizes,relative)
+        elseif mode == "NS-RBP"
+            for m in 1:M 
+                # calculate the new check to node messages
+                update_Lr!(Ms,Lq,m,cn2vn[m],Lrn,signs,phi)
+            end
+            for m in 1:M
+                maxresidue = 0.0
+                for n in cn2vn[m]
+                    residue = abs(Ms[m,n])
+                    if residue > maxresidue
+                        maxresidue = residue
+                    end
+                end
+                residues[m] = maxresidue
+            end
         elseif mode == "VN-RBP"
             for m in 1:M 
                 # calculate the new check to node messages
@@ -367,6 +388,28 @@ function
                     relative,
                     rbp_not_converged
                     )
+                # reset factors
+                Factors .= 1.0
+
+            elseif mode == "NS-RBP"
+                rbp_not_converged = NS_2!(
+                    bitvector,
+                    Lq,
+                    Lr,
+                    Lf,
+                    cn2vn,
+                    vn2cn,
+                    Lrn,
+                    signs,
+                    phi,
+                    decayfactor,
+                    num_edges,
+                    Ms,
+                    Factors,
+                    residues,
+                    relative,
+                    rbp_not_converged
+                )
                 # reset factors
                 Factors .= 1.0
             end

@@ -14,20 +14,22 @@ plots = [true,
         true,
         false,
         true,
+        true,
         true
         ]
 
 lines = [:solid,
          :solid,
-         :dot,
-         :dot,
          :dash,
          :dash,
-         :dashdot,
-         :dashdot,
+         :dash,
+         :dash,
+         :dash,
+         :dash,
+         :dash,
+         :dash,
          :dot,
-         :solid,
-         :solid,
+         :dot,
          :dashdot
          ]
 
@@ -44,7 +46,8 @@ index = [3,
          3,
          1,
          2,
-         5
+         5,
+         3
          ]
 
 plotlyjs()
@@ -60,7 +63,8 @@ directory2 = ["RBP NR5G",
               "List-RBP NR5G 128 2",
               "List-RBP NR5G 128 2 relative",
               "VN-RBP NR5G (all decays)",
-              "VN-RBP NR5G relative (all decays)"
+              "VN-RBP NR5G relative (all decays)",
+              "NS NR5G (all decays)"
               ]
 file = ["FER_RBP",
         "FER_RBP",
@@ -73,7 +77,8 @@ file = ["FER_RBP",
         "FER_List-RBP",
         "FER_List-RBP",
         "FER_VN-RBP",
-        "FER_VN-RBP"
+        "FER_VN-RBP",
+        "FER_NS-RBP"
         ]
 
 lim = log10(1/maximum(512000))
@@ -89,7 +94,8 @@ labels = ["RBP : ",
           "List (128,2) : ",
           "List rel (128,2) : ",
           "VN-RBP : ",
-          "VN-RBP rel : "
+          "VN-RBP rel : ",
+          "NS : "
           ]
 
 

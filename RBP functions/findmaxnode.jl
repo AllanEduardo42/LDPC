@@ -8,16 +8,16 @@ function
         residues::Vector{<:AbstractFloat}        
     )
 
-    vnmax = 0
+    nmax = 0
     maxresidue = 0.0
     @fastmath @inbounds for e in eachindex(residues)
         residue = residues[e]
         if residue > maxresidue
             maxresidue = residue
-            vnmax = e
+            nmax = e
         end
     end
 
-    return vnmax
+    return nmax
 
 end

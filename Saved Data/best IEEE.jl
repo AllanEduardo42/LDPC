@@ -15,6 +15,7 @@ plots = [true,
         true,
         true,
         true,
+        true,
         ]
 
 lines = [:solid,
@@ -28,7 +29,8 @@ lines = [:solid,
          :dash,
          :dash,
          :dot,
-         :dot
+         :dot,
+         :dashdot
          ]
 
 maxiter = 10
@@ -44,7 +46,8 @@ index = [2,
          2,
          2,
          2,
-         4
+         4,
+         3
          ]
 
 plotlyjs()
@@ -60,7 +63,8 @@ directory2 = ["RBP IEEE (all decays)",
               "List-RBP IEEE 128 16 (all decays)",
               "List-RBP IEEE 128 16 (all decays) relative",
               "VN-RBP IEEE (all decays)",
-              "VN-RBP IEEE (all decays) relative"
+              "VN-RBP IEEE (all decays) relative",
+              "NS IEEE"
               ]
 file = ["FER_RBP",
         "FER_RBP",
@@ -73,7 +77,8 @@ file = ["FER_RBP",
         "FER_List-RBP",
         "FER_List-RBP",
         "FER_VN-RBP",
-        "FER_VN-RBP"
+        "FER_VN-RBP",
+        "FER_NS-RBP"
         ]
 
 lim = log10(1/maximum(512000))
@@ -89,7 +94,8 @@ labels = ["RBP : ",
           "List RBP (128,16) : ",
           "List RBP (128,16) rel : ",
           "VN-RBP : ",
-          "VN-RBP rel : "
+          "VN-RBP rel : ",
+          "NS : "
           ]
 
 
