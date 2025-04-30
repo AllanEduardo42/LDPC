@@ -95,11 +95,11 @@ labels = ["RBP : ",
           "List rel (128,2) : ",
           "VN-RBP : ",
           "VN-RBP rel : ",
-          "NS : "
+          "NW : "
           ]
 
 
-title = "NR5G FER (SNR = 1.8 dB)"
+title = "NR5G FER (Eb/N0 = 1.8 dB)"
 p = plot()
 for i in eachindex(plots)
     if plots[i]

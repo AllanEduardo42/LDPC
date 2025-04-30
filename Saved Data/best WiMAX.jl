@@ -47,24 +47,24 @@ index = [2,
          2,
          2,
          4,
-         3
+         4
          ]
 
 plotlyjs()
 directory1 = "./Saved Data/"
-directory2 = ["RBP IEEE (all decays)",
-              "RBP IEEE relative (all decays)",
-              "List-RBP IEEE 128 2 (all decays)",
-              "List-RBP IEEE 128 2 (all decays) relative",
-              "List-RBP IEEE 128 4 (all decays)",
-              "List-RBP IEEE 128 4 (all decays) relative",
-              "List-RBP IEEE 128 8 (all decays)",
-              "List-RBP IEEE 128 8 (all decays) relative",
-              "List-RBP IEEE 128 16 (all decays)",
-              "List-RBP IEEE 128 16 (all decays) relative",
-              "VN-RBP IEEE (all decays)",
-              "VN-RBP IEEE (all decays) relative",
-              "NS IEEE"
+directory2 = ["RBP WiMAX (all decays)",
+              "RBP WiMAX relative (all decays)",
+              "List-RBP WiMAX 128 2 (all decays)",
+              "List-RBP WiMAX 128 2 (all decays) relative",
+              "List-RBP WiMAX 128 4 (all decays)",
+              "List-RBP WiMAX 128 4 (all decays) relative",
+              "List-RBP WiMAX 128 8 (all decays)",
+              "List-RBP WiMAX 128 8 (all decays) relative",
+              "List-RBP WiMAX 128 16 (all decays)",
+              "List-RBP WiMAX 128 16 (all decays) relative",
+              "VN-RBP WiMAX (all decays)",
+              "VN-RBP WiMAX (all decays) relative",
+              "NS WiMAX"
               ]
 file = ["FER_RBP",
         "FER_RBP",
@@ -95,11 +95,11 @@ labels = ["RBP : ",
           "List RBP (128,16) rel : ",
           "VN-RBP : ",
           "VN-RBP rel : ",
-          "NS : "
+          "NW : "
           ]
 
 
-title = "IEEE FER (SNR = 1.8 dB)"
+title = "WiMAX FER (Eb/N0 = 1.8 dB)"
 p = plot()
 for i in eachindex(plots)
     if plots[i]

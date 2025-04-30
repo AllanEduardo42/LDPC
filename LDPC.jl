@@ -54,7 +54,7 @@ SEED_MESSA::Int = 1000
 
 ############################### 4) CONTROL FLAGS ###############################
 
-TEST::Bool = true
+TEST::Bool = false
 PRIN::Bool = true
 STOP::Bool = false # stop simulation at zero syndrome (if true, BER curves are
 # not printed)
@@ -62,17 +62,17 @@ STOP::Bool = false # stop simulation at zero syndrome (if true, BER curves are
 ################################## 5) NUMBERS ##################################
 
 MAXITER::Int = 10
-FACTORS = [0.7, 0.8, 0.9, 1.0]
+# FACTORS = [0.7, 0.8, 0.9, 1.0]
 # FACTORS = collect(0.1:0.1:1.0)
-# FACTORS = [1.0]
-SNR = [1.2, 1.4, 1.6, 1.8]
-# SNR = [1.2]
-TRIALS = 10 .^(0:length(SNR)-1)*2^9
+FACTORS = [1.0]
+# ENR = [1.2, 1.4, 1.6, 1.8]
+ENR = [3.5]
+TRIALS = 10 .^(0:length(ENR)-1)*2^15
 RELATIVE::Bool = false
 
 # TEST
-MAXITER_TEST::Int = 1
-SNR_TEST::Float64 = 0.8
+MAXITER_TEST::Int = 10
+SNR_TEST::Float64 = 3.75
 TRIALS_TEST::Int = 1
 DECAY_TEST::Float64 = 1.0
 
@@ -96,7 +96,7 @@ end
 
 i = 1
 # Flooding
-ACTIVE[i] = 0
+ACTIVE[i] = 1
 BPTYPES[i] = "FAST"
 MAXITERS[i] = MAXITER
 
@@ -108,7 +108,7 @@ MAXITERS[i] = MAXITER
 
 # RBP
 i += 1
-ACTIVE[i] = 0
+ACTIVE[i] = 1
 BPTYPES[i] = "FAST"
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
@@ -136,7 +136,7 @@ DECAYS[i] = FACTORS
 
 # NS-RBP
 i += 1
-ACTIVE[i] = 1
+ACTIVE[i] = 0
 BPTYPES[i] = "FAST"
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
@@ -152,11 +152,11 @@ PHI = lookupTable()
 ########################### 8) MESSAGE AND CODEWORD ############################
 
 # Message (Payload) size
-AA::Int = 1008
+AA::Int = 864
 # Rate
-RR::Float64 = 1/2
-# LDPC protocol: NR5G = NR-LDPC (5G); PEG = PEG; IEEE = IEEE80216e;
-PROTOCOL::String = "IEEE"
+RR::Float64 = 3/4
+# LDPC protocol: NR5G = NR-LDPC (5G); PEG = PEG; WiMAX = IEEE80216e;
+PROTOCOL::String = "WiMAX"
     DENSITIES = 1:8
 
 ############################# PARITY-CHECK MATRIX #############################
@@ -187,12 +187,13 @@ else
         else
             HH, GIRTH = PEG(DD,MM,NN)
         end
-        GG = [I(NN-MM); gf2_mat_mult(gf2_inverse(HH[:,NN-MM+1:NN]), HH[:,1:MM])]
-    elseif PROTOCOL == "IEEE"
+        KK = NN-MM
+        GG = [I(KK); gf2_mat_mult(gf2_inverse(HH[:,KK+1:NN]), HH[:,1:KK])]
+    elseif PROTOCOL == "WiMAX"
         # N takes values in {576,672,768,864,960,1056,1152,1248,1344,1440,1536,
         # 1632,1728,1824,1920,2016,2112,2208,2304}.    
         # R takes values in {"1/2","2/3A","2/3B","3/4A","3/4B","5/6"}.
-        HH,ZF,E_H = IEEE80216e(LL,RR)
+        HH,ZF,E_H = IEEE80216e(LL,RR,"A")
         MM,NN = size(HH)
         LL = NN
         GIRTH = find_girth(HH,100000)
@@ -211,8 +212,8 @@ if PROTOCOL == "NR5G"
     STR *= "NR-LDPC (5G)"
 elseif PROTOCOL == "PEG"
     STR *= "PEG"
-elseif PROTOCOL == "IEEE"
-    STR *= "IEEE80216e"
+elseif PROTOCOL == "WiMAX"
+    STR *= "IEEE80216e (WiMAX)"
 end
 STR *= "\nParity Check Matrix: $MM x $NN"
 println(STR)
@@ -280,7 +281,7 @@ else
                     mode = MODES[i]
                 end
                 FER[mode], BER[mode] = performance_sim(
-                                        SNR,
+                                        ENR,
                                         MODES[i],
                                         TRIALS,
                                         MAXITERS[i],
@@ -325,93 +326,73 @@ else
     else
 ################################### PLOTTING ###################################
         plotlyjs()
-        LIMFER = log10(1/maximum(TRIALS))
-        LIMBER = log10(1/(maximum(TRIALS)*NN))
+        # gr()
+        LIMFER = 1/maximum(TRIALS)
+        LIMBER = 1/(maximum(TRIALS)*NN)
     
-        # FER x SNR
-        if STOP && length(SNR) > 1
+        # FER x ENR
+        if STOP && length(ENR) > 1
             FER_LABELS = permutedims(FER_LABELS)
             PLOT = plot(
-                SNR,FERMAX,
-                xlabel="SNR (dB)",
+                ENR,FERMAX,
+                xlabel="ENR (dB)",
                 label=FER_LABELS,
                 lw=2,
                 title="FER MAXITER",
-                ylims=(floor(LIMFER),0)
+                ylims=(LIMFER,0)
             )
             display(PLOT)
         end
     
-        if !STOP    
+        if !STOP  
+            FB = ["F","B"]  
             # FER x Iterations
-            PLOT = plot()
-            titlefer = "FER"
-            for i in eachindex(ACTIVE)
-                if ACTIVE[i]
-                    for decay in DECAYS[i]
-                        if decay != 0.0
-                            mode = MODES[i]*" $decay"
-                        else
-                            mode = MODES[i]
+            for j=1:2
+                p = plot()
+                title = FB[j]*"ER"
+                for i in eachindex(ACTIVE)
+                    if ACTIVE[i]
+                        for decay in DECAYS[i]
+                            if decay != 0.0
+                                mode = MODES[i]*" $decay"
+                            else
+                                mode = MODES[i]
+                            end
+                            labels = Vector{String}()
+                            for enr in ENR
+                                push!(labels,"$mode, Eb/N0 = $(enr)dB")
+                            end
+                            labels = permutedims(labels)
+                            if FB[j] == "F"
+                                y = log10.(FER[mode])
+                                lim = log10(LIMFER)
+                            else
+                                y = log10.(BER[mode])
+                                lim = log10(LIMBER)
+                            end
+                            x = 1:MAXITERS[i]
+                            p = plot!(
+                                x,
+                                y,
+                                # yscale=:log10,
+                                xlabel="Iteration",
+                                # minorgrid=true,
+                                label=labels,
+                                lw=2,
+                                title=title,
+                                ylims=(lim,0)
+                            )
                         end
-                        labels = Vector{String}()
-                        for snr in SNR
-                            push!(labels,"$mode, SNR (dB) = $snr")
-                        end
-                        labels = permutedims(labels)
-                        global PLOT = plot!(
-                            1:MAXITERS[i],
-                            FER[mode],
-                            xlabel="Iteration",
-                            label=labels,
-                            lw=2,
-                            title=titlefer,
-                            ylims=(floor(LIMFER),0)
-                        )
                     end
                 end
+                display(p)
             end
-            PLOT = plot!(1:MAXITERS[i],
-                  ones(Int,10)*LIMFER,
-                  label = "minimum",
-                  lw=2,
-                  color=:black,
-                  ls=:dash)
-            display(PLOT)
-            PLOT = plot()
-            titleber = "BER"
-            for i in eachindex(ACTIVE)
-                if ACTIVE[i]
-                    for decay in DECAYS[i]
-                        if decay != 0.0
-                            mode = MODES[i]*" $decay"
-                        else
-                            mode = MODES[i]
-                        end
-                        labels = Vector{String}()
-                        for snr in SNR
-                            push!(labels,"$mode, SNR (dB) = $snr")
-                        end
-                        labels = permutedims(labels)
-                        global PLOT = plot!(
-                            1:MAXITERS[i],
-                            BER[mode],
-                            xlabel="Iteration",
-                            label=labels,
-                            lw=2,
-                            title=titleber,
-                            ylims=(floor(LIMBER),0)
-                        )
-                    end
-                end
-            end
-            PLOT = plot!(1:MAXITERS[i],
-                  ones(Int,10)*LIMBER,
-                  label = "minimum",
-                  lw=2,
-                  color=:black,
-                  ls=:dash)
-            display(PLOT)
+            # PLOT = plot!(1:MAXITERS[i],
+            #       ones(Int,MAXITER)*LIMFER,
+            #       label = "minimum",
+            #       lw=2,
+            #       color=:black,
+            #       ls=:dash)
         end
     end
 end

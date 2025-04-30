@@ -7,7 +7,7 @@ include("simcore.jl")
 
 function 
     performance_sim(
-        snr::Union{Vector{<:AbstractFloat},AbstractFloat},
+        enr::Union{Vector{<:AbstractFloat},AbstractFloat},
         mode::String,
         trials::Union{Vector{<:Integer},Integer},
         maxiter::Integer,
@@ -44,7 +44,7 @@ function
     str *=
     """\nMaximum number of iterations: $maxiter
     Number of threads (multithreading): $NTHREADS
-    Simulated for SNR (dB): $snr
+    Simulated for SNR (dB): $enr
     Stop at zero syndrome ? $STOP"""
     if mode == "RBP" || mode == "List-RBP" || mode == "VN-RBP" ||
        mode == "Genius-RBP" || mode == "NS-RBP"
@@ -65,7 +65,8 @@ function
     if TEST
         Lr, Lq = simcore(
             AA,
-            snr,
+            RR,
+            enr,
             HH,
             GG,
             CN2VN,
@@ -92,14 +93,15 @@ function
         return Lr, Lq
 
     else
-        K = length(snr)
+        K = length(enr)
         sum_decoded = zeros(Int,maxiter,K,NTHREADS)
         sum_ber = zeros(Int,maxiter,K,NTHREADS)
         for k in 1:K
             stats = @timed Threads.@threads for i in 1:NTHREADS
                 sum_decoded[:,k,i], sum_ber[:,k,i] = simcore(
                                                 AA,
-                                                snr[k],
+                                                RR,
+                                                enr[k],
                                                 HH,
                                                 GG,
                                                 CN2VN,
@@ -145,7 +147,8 @@ function
         replace!(x-> x < lowerfer ? lowerfer : x, Fer)
         replace!(x-> x < lowerber ? lowerber : x, Ber)
 
-        return log10.(Fer), log10.(Ber)
+        # return log10.(Fer), log10.(Ber)
+        return Fer, Ber
 
         return sum_decoded, sum_ber
         

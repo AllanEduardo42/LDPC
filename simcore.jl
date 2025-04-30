@@ -13,13 +13,13 @@ include("RBP.jl")
 include("Genius-RBP.jl")
 include("VN_RBP.jl")
 include("NS.jl")
-include("NS_2.jl")
 include("./RBP functions/calc_all_residues.jl")
 
 function
     simcore(
         A::Integer,
-        snr::AbstractFloat,
+        R::AbstractFloat,
+        enr::AbstractFloat,
         H::Matrix{Bool},
         G::Union{Nothing,Matrix{Bool}},
         cn2vn::Vector{Vector{T}} where {T<:Integer},
@@ -64,7 +64,7 @@ function
     end
 
     # constants for IEEE80216e
-    if protocol == "IEEE"
+    if protocol == "WiMAX"
         E_M, E_N = size(E_H)
         E_K = E_N - E_M
     end
@@ -72,8 +72,8 @@ function
     # number of edges in the graph
     num_edges = sum(H)
 
-    # transform snr in standard deviations
-    variance = 1 ./ (exp10.(snr/10))
+    # transform enr in standard deviations
+    variance = exp10.(-enr/10) / (2*R)
     stdev = sqrt.(variance)
 
     # Set the random seeds
@@ -198,7 +198,7 @@ function
             cword = NR_LDPC_encode(E_H,msg,Nr_ldpc_data)
         elseif protocol == "PEG"
             cword = gf2_mat_mult(G,msg)   
-        elseif protocol == "IEEE"
+        elseif protocol == "WiMAX"
             cword = IEEE80216e_parity_bits(msg,Zf,E_H,E_M,E_N,E_K)
         end
 
@@ -244,6 +244,7 @@ function
         for i in eachindex(bitvector)
             bitvector[i] = signbit(Lf[i])
         end
+        # bitvector .= false
         
         # 9) init the Lq matrix
         init_Lq!(Lq,Lf,vn2cn)
@@ -392,7 +393,7 @@ function
                 Factors .= 1.0
 
             elseif mode == "NS-RBP"
-                rbp_not_converged = NS_2!(
+                rbp_not_converged = NS!(
                     bitvector,
                     Lq,
                     Lr,
