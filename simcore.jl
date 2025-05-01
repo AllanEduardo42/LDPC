@@ -420,7 +420,7 @@ function
             biterror .= (bitvector .≠ complete_cword)
     
             if test && printtest
-                print_test("biterror",biterror)   
+                print_test("Bit error",biterror)   
                 println("Bit error rate: $(sum(biterror))/$N")
                 print_test("Syndrome",syndrome)  
                 println("Syndrome rate: $(sum(syndrome))/$M")

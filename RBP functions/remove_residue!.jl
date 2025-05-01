@@ -10,11 +10,11 @@ function
         listsize::Integer,
         residues::Vector{<:AbstractFloat},
         coords::Matrix{<:Integer},
-        rbpmatrix::Matrix{Bool},
+        inlist::Matrix{Bool},
         pos::Integer
     )
 
-    @inbounds rbpmatrix[lmax] = false
+    @inbounds inlist[lmax] = false
 
     # update the list
     @inbounds for i in pos:listsize

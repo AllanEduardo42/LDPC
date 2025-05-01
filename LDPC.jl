@@ -67,12 +67,12 @@ MAXITER::Int = 10
 FACTORS = [1.0]
 # ENR = [1.2, 1.4, 1.6, 1.8]
 ENR = [3.5]
-TRIALS = 10 .^(0:length(ENR)-1)*2^15
+TRIALS = 10 .^(0:length(ENR)-1)*2^10
 RELATIVE::Bool = false
 
 # TEST
-MAXITER_TEST::Int = 10
-SNR_TEST::Float64 = 3.75
+MAXITER_TEST::Int = 1
+SNR_TEST::Float64 = 2.75
 TRIALS_TEST::Int = 1
 DECAY_TEST::Float64 = 1.0
 
@@ -96,7 +96,7 @@ end
 
 i = 1
 # Flooding
-ACTIVE[i] = 1
+ACTIVE[i] = 0
 BPTYPES[i] = "FAST"
 MAXITERS[i] = MAXITER
 

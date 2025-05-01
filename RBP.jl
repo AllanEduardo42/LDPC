@@ -70,10 +70,11 @@ function
         remove_residue!(limax,listsizes[1],residues,coords,rbpmatrix,max_edge)
 
         # 5) update vn2cn messages Lq[vnmax,m] and bitvector[vnmax]
-        bitvector[vnmax] = update_Lq!(Lq,Lr,Lf[vnmax],vnmax,vn2cn[vnmax],Lrn)
+        cns = vn2cn[vnmax]
+        bitvector[vnmax] = update_Lq!(Lq,Lr,Lf[vnmax],vnmax,cns,Lrn)
 
         # 6) calculate residues
-        for m in vn2cn[vnmax]
+        for m in cns
             if m ≠ cnmax
                 vns = cn2vn[m]    
                 # calculate the new check to node messages
@@ -89,7 +90,7 @@ function
                 end
             end
         end
-        # update list 1 
+        # If List-RBP: update list 1 
         update_global_list!(residues,coords,local_residues,local_coords,listsizes,
             rbpmatrix)
 

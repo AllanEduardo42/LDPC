@@ -18,7 +18,8 @@ function
 
     Ld = calc_Ld(n,cns,Lf,Lr)
     @fastmath @inbounds for m in cns
-        Lq[m,n] = Ld - Lr[m,n]
+        li = LinearIndices(Lq)[m,n]
+        Lq[li] = Ld - Lr[li]
     end
 
     return signbit(Ld)
@@ -28,15 +29,15 @@ function
     calc_Ld(
         n::Integer,
         cns::Vector{<:Integer},
-        Lf::AbstractFloat,
+        Ld::AbstractFloat,
         Lr::Matrix{<:AbstractFloat}
     )
 
     @fastmath @inbounds for m in cns
-        Lf += Lr[m,n]
+        Ld += Lr[m,n]
     end
     
-    return Lf
+    return Ld
 
 end
 

@@ -1,3 +1,9 @@
+################################################################################
+# Allan Eduardo Feitosa
+# 2 Mar 2025
+# Add the residue
+
+# List-RBP
 function add_residue!(
         inlist::Union{Matrix{Bool},Nothing},
         residues::Vector{<:AbstractFloat},
@@ -49,6 +55,7 @@ function add_residue!(
     end
 end
 
+# RBP
 function add_residue!(
     inlist::Matrix{<:Integer},
     residues::Vector{<:AbstractFloat},
@@ -64,6 +71,7 @@ function add_residue!(
 
 end
 
+# auxiliary function
 function update_inlist!(
     inlist::Matrix{Bool},
     coords::Matrix{<:Integer},

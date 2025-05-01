@@ -63,6 +63,7 @@ function
 
 end
 
+#List-RBP
 function update_global_list!(
     residues::Vector{<:AbstractFloat},
     coords::Matrix{<:Integer},
@@ -101,6 +102,7 @@ function update_global_list!(
     end
 end
 
+# RBP
 function update_global_list!(
     ::Vector{<:AbstractFloat},
     ::Matrix{<:Integer},
