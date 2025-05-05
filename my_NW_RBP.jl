@@ -9,7 +9,7 @@ include("./RBP functions/update_lists.jl")
 include("./RBP functions/remove_residue!.jl")
 
 function
-    NS!(
+    NW_RBP!(
         bitvector::Vector{Bool},
         Lq::Matrix{<:AbstractFloat},
         Lr::Matrix{<:AbstractFloat},

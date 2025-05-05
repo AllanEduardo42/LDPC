@@ -54,31 +54,31 @@ SEED_MESSA::Int = 1000
 
 ############################### 4) CONTROL FLAGS ###############################
 
-TEST::Bool = false
+TEST::Bool = true
 PRIN::Bool = true
 STOP::Bool = false # stop simulation at zero syndrome (if true, BER curves are
 # not printed)
 
 ################################## 5) NUMBERS ##################################
 
-MAXITER::Int = 10
+MAXITER::Int = 4
 # FACTORS = [0.7, 0.8, 0.9, 1.0]
 # FACTORS = collect(0.1:0.1:1.0)
 FACTORS = [1.0]
-# ENR = [1.2, 1.4, 1.6, 1.8]
-ENR = [3.5]
-TRIALS = 10 .^(0:length(ENR)-1)*2^10
+# EbN0 = [1.2, 1.4, 1.6, 1.8]
+EbN0 = [2.5]
+TRIALS = 10 .^(0:length(EbN0)-1)*2^15
 RELATIVE::Bool = false
 
 # TEST
-MAXITER_TEST::Int = 1
-SNR_TEST::Float64 = 2.75
+MAXITER_TEST::Int = 10
+EbN0_TEST::Float64 = 1.3
 TRIALS_TEST::Int = 1
 DECAY_TEST::Float64 = 1.0
 
 ################################ 6) BP SCHEDULE ################################
 
-MODES = ["Flooding","LBP","RBP","List-RBP","VN-RBP","Genius-RBP","NS-RBP"]
+MODES = ["Flooding","LBP","RBP","List-RBP","VN-RBP","Genius-RBP","NW-RBP"]
 NUM_MODES = length(MODES)
 ACTIVE = zeros(Bool,NUM_MODES)
 LISTSIZES = zeros(Int,4)
@@ -109,7 +109,7 @@ MAXITERS[i] = MAXITER
 # RBP
 i += 1
 ACTIVE[i] = 1
-BPTYPES[i] = "FAST"
+BPTYPES[i] = "TANH"
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
 
@@ -134,10 +134,10 @@ BPTYPES[i] = "FAST"
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
 
-# NS-RBP
+# NW-RBP
 i += 1
 ACTIVE[i] = 0
-BPTYPES[i] = "FAST"
+BPTYPES[i] = "TANH"
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
 
@@ -150,11 +150,10 @@ LISTSIZES[2] = 16
 PHI = lookupTable()
 
 ########################### 8) MESSAGE AND CODEWORD ############################
-
-# Message (Payload) size
-AA::Int = 864
 # Rate
-RR::Float64 = 3/4
+RR::Float64 = 1/2
+# Message (Payload) size
+AA::Int = 576*RR
 # LDPC protocol: NR5G = NR-LDPC (5G); PEG = PEG; WiMAX = IEEE80216e;
 PROTOCOL::String = "WiMAX"
     DENSITIES = 1:8
@@ -256,7 +255,7 @@ if TEST
         for i in eachindex(ACTIVE)
             if ACTIVE[i]
                 LRM[MODES[i]], LQM[MODES[i]] = performance_sim(
-                                            SNR_TEST,
+                                            EbN0_TEST,
                                             MODES[i],
                                             TRIALS_TEST,
                                             MAXITER_TEST,
@@ -281,7 +280,7 @@ else
                     mode = MODES[i]
                 end
                 FER[mode], BER[mode] = performance_sim(
-                                        ENR,
+                                        EbN0,
                                         MODES[i],
                                         TRIALS,
                                         MAXITERS[i],
@@ -330,12 +329,12 @@ else
         LIMFER = 1/maximum(TRIALS)
         LIMBER = 1/(maximum(TRIALS)*NN)
     
-        # FER x ENR
-        if STOP && length(ENR) > 1
+        # FER x EbN0
+        if STOP && length(EbN0) > 1
             FER_LABELS = permutedims(FER_LABELS)
             PLOT = plot(
-                ENR,FERMAX,
-                xlabel="ENR (dB)",
+                EbN0,FERMAX,
+                xlabel="EbN0 (dB)",
                 label=FER_LABELS,
                 lw=2,
                 title="FER MAXITER",
@@ -349,7 +348,7 @@ else
             # FER x Iterations
             for j=1:2
                 p = plot()
-                title = FB[j]*"ER"
+                title = FB[j]*"ER (rate = $RR)"
                 for i in eachindex(ACTIVE)
                     if ACTIVE[i]
                         for decay in DECAYS[i]
@@ -359,7 +358,7 @@ else
                                 mode = MODES[i]
                             end
                             labels = Vector{String}()
-                            for enr in ENR
+                            for enr in EbN0
                                 push!(labels,"$mode, Eb/N0 = $(enr)dB")
                             end
                             labels = permutedims(labels)

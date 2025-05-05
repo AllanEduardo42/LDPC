@@ -7,30 +7,29 @@ include("./RBP functions/RBP_update_Lr.jl")
 include("./RBP functions/findmaxedge.jl")
 include("./RBP functions/update_lists.jl")
 include("./RBP functions/remove_residue!.jl")
-include("./RBP functions/calc_residue.jl")
 
 function
-    RBP!(
+    RBP_raw!(
         bitvector::Vector{Bool},
         Lq::Matrix{<:AbstractFloat},
         Lr::Matrix{<:AbstractFloat},
         Lf::Vector{<:AbstractFloat},
         cn2vn::Vector{Vector{T}} where {T<:Integer},
         vn2cn::Vector{Vector{T}} where {T<:Integer},
-        Lrn::Union{Vector{<:AbstractFloat},Nothing},
-        signs::Union{Vector{Bool},Nothing},
-        phi::Union{Vector{<:AbstractFloat},Nothing},
+        ::Union{Vector{<:AbstractFloat},Nothing},
+        ::Union{Vector{Bool},Nothing},
+        ::Union{Vector{<:AbstractFloat},Nothing},
         decayfactor::AbstractFloat,
         num_edges::Integer,
         Ms::Matrix{<:AbstractFloat},
         Factors::Matrix{<:AbstractFloat},
         coords::Matrix{<:Integer},
-        rbpmatrix::Matrix{<:Integer},
+        indices::Matrix{<:Integer},
         residues::Vector{<:AbstractFloat},
         local_residues::Union{Vector{<:AbstractFloat},Nothing},
-        local_coords::Union{Matrix{<:Integer},Nothing},
-        listsizes::Vector{<:Integer},
-        relative::Bool,
+        ::Union{Matrix{<:Integer},Nothing},
+        ::Vector{<:Integer},
+        ::Bool,
         bp_not_converged::Bool
     )
 
@@ -43,17 +42,7 @@ function
         if max_residue == 0.0
             if max_edge == 0
                 bp_not_converged = false
-                break # i.e., BP has converged
-            elseif max_edge == -1 # if list-RBP
-                calc_all_residues!(Lq,Lr,cn2vn,Lrn,signs,phi,Ms,Factors,rbpmatrix,
-                residues,coords,listsizes,relative)
-                if residues[1] == 0.0
-                    bp_not_converged = false
-                    break
-                end
-                cnmax = coords[1,1]
-                vnmax = coords[2,1]
-                limax = coords[3,1]
+                break # i.e., RBP has converged
             end
         else
             cnmax = coords[1,max_edge]
@@ -63,40 +52,60 @@ function
 
         # 2) Decay the RBP factor corresponding to the maximum residue
         Factors[limax] *= decayfactor
-
         # 3) update check to node message Lr[cnmax,vnmax]
-        RBP_update_Lr!(limax,Lr,Ms,cnmax,vnmax,cn2vn[cnmax],Lq,Lrn,signs,phi)
-
+        pLr = 1.0
+        for n2 in cn2vn[cnmax]  
+            if n2 ≠ vnmax
+                pLr *= tanh(0.5*Lq[cnmax,n2])
+            end
+        end
+        Lr[cnmax,vnmax] = 2*atanh(pLr)
         # 4) set maximum residue to zero
-        remove_residue!(limax,listsizes[1],residues,coords,rbpmatrix,max_edge)
+        residues[max_edge] = 0.0
 
         # 5) update vn2cn messages Lq[vnmax,m] and bitvector[vnmax]
         cns = vn2cn[vnmax]
-        bitvector[vnmax] = update_Lq!(Lq,Lr,Lf[vnmax],vnmax,cns,Lrn)
+        Ld = calc_Ld(vnmax,cns,Lf[vnmax],Lr)
+        bitvector[vnmax] = signbit(Ld)
 
         # 6) calculate residues
         for m in cns
             if m ≠ cnmax
+                Lq[m,vnmax] = Ld - Lr[m,vnmax]
                 vns = cn2vn[m]    
-                # calculate the new check to node messages
-                update_Lr!(Ms,Lq,m,vns,Lrn,signs,phi)
                 # calculate the residues
                 for n in vns
                     if n ≠ vnmax
-                        li = LinearIndices(Lr)[m,n]
-                        residue = calc_residue(Ms,Lr,Factors,Lrn,Lq,li,relative)
-                        update_local_list!(residues,coords,local_residues,local_coords,
-                            listsizes,rbpmatrix,li,m,n,residue)
+                        pLr = 1.0
+                        for n2 in vns
+                            if n2 ≠ n
+                                pLr *= tanh(0.5*Lq[m,n2])
+                            end
+                        end
+                        residues[indices[m,n]] = calc_residue(pLr,Lr,Factors,m,n)
                     end
                 end
             end
         end
-        # if List-RBP: update list 1 
-        update_global_list!(residues,coords,local_residues,local_coords,listsizes,
-            rbpmatrix)
-
     end
 
     return bp_not_converged
 end
 
+function calc_residue(
+    pLr::AbstractFloat,
+    Lr::Matrix{<:AbstractFloat},
+    Factors::Matrix{<:AbstractFloat},
+    m::Integer,
+    n::Integer
+)
+
+    @inbounds begin
+        x = 2*atanh(pLr) - Lr[m,n]
+        if isnan(x)
+            return 0.0
+        else
+            @fastmath return abs(x)*Factors[m,n]
+        end
+    end
+end

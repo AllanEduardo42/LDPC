@@ -12,14 +12,14 @@ include("LBP.jl")
 include("RBP.jl")
 include("Genius-RBP.jl")
 include("VN_RBP.jl")
-include("NS.jl")
+include("NW_RBP.jl")
 include("./RBP functions/calc_all_residues.jl")
 
 function
     simcore(
         A::Integer,
         R::AbstractFloat,
-        enr::AbstractFloat,
+        ebn0::AbstractFloat,
         H::Matrix{Bool},
         G::Union{Nothing,Matrix{Bool}},
         cn2vn::Vector{Vector{T}} where {T<:Integer},
@@ -45,7 +45,7 @@ function
     )
 
     if mode == "RBP" || mode == "List-RBP" || mode == "VN-RBP" || 
-       mode == "Genius-RBP" || mode == "NS-RBP"
+       mode == "Genius-RBP" || mode == "NW-RBP"
         RBP = true
     else
         RBP = false
@@ -72,8 +72,8 @@ function
     # number of edges in the graph
     num_edges = sum(H)
 
-    # transform enr in standard deviations
-    variance = exp10.(-enr/10) / (2*R)
+    # transform EbN0 in standard deviations
+    variance = exp10.(-ebn0/10) / (2*R)
     stdev = sqrt.(variance)
 
     # Set the random seeds
@@ -147,7 +147,7 @@ function
     Factors = RBP ? 1.0*H  : nothing
 
     # RBP modes
-    if mode == "RBP" || mode == "Genius-RBP"
+    if mode == "RBP" || mode == "Genius-RBP" || mode == "NW-RBP"
         residues = zeros(num_edges)
         coords = zeros(Int,3,num_edges)
         localresidues = nothing
@@ -167,9 +167,9 @@ function
         if mode == "Genius-RBP"
             global TOTALBITERROR = zeros(Int,num_edges)
         end
-    elseif mode == "NS-RBP"
-        residues = zeros(M)
-        Factors = ones(M)
+    # elseif mode == "NW-RBP"
+    #     residues = zeros(M)
+    #     Factors = ones(M)
     elseif mode == "List-RBP"
         residues = zeros(listsizes[1]+1)
         coords = zeros(Int,3,listsizes[1]+1)
@@ -250,24 +250,24 @@ function
         init_Lq!(Lq,Lf,vn2cn)
 
         # 10) precalculate the residues for RBP
-        if mode == "RBP" || mode == "List-RBP" || mode == "Genius-RBP"
+        if mode == "RBP" || mode == "List-RBP" || mode == "Genius-RBP" || mode == "NW-RBP"
             calc_all_residues!(Lq,Lr,cn2vn,Lrn,signs,phi,Ms,Factors,rbpmatrix,
                 residues,coords,listsizes,relative)
-        elseif mode == "NS-RBP"
-            for m in 1:M 
-                # calculate the new check to node messages
-                update_Lr!(Ms,Lq,m,cn2vn[m],Lrn,signs,phi)
-            end
-            for m in 1:M
-                maxresidue = 0.0
-                for n in cn2vn[m]
-                    residue = abs(Ms[m,n])
-                    if residue > maxresidue
-                        maxresidue = residue
-                    end
-                end
-                residues[m] = maxresidue
-            end
+        # elseif mode == "NW-RBP"
+        #     for m in 1:M 
+        #         # calculate the new check to node messages
+        #         update_Lr!(Ms,Lq,m,cn2vn[m],Lrn,signs,phi)
+        #     end
+        #     for m in 1:M
+        #         maxresidue = 0.0
+        #         for n in cn2vn[m]
+        #             residue = abs(Ms[m,n])
+        #             if residue > maxresidue
+        #                 maxresidue = residue
+        #             end
+        #         end
+        #         residues[m] = maxresidue
+        #     end
         elseif mode == "VN-RBP"
             for m in 1:M 
                 # calculate the new check to node messages
@@ -287,9 +287,11 @@ function
         end
         
         # BP routine
-        rbp_not_converged = true
+        bp_not_converged = true
 
-        for iter in 1:maxiter
+        iter = 0
+        while iter < maxiter && bp_not_converged
+            iter += 1
 
             if test && printtest  
                 println("### Iteration #$iter ###")
@@ -317,8 +319,8 @@ function
                     Lrn,
                     signs,
                     phi)
-            elseif (mode == "RBP" || mode == "List-RBP") && rbp_not_converged
-                rbp_not_converged = RBP!(
+            elseif (mode == "RBP" || mode == "List-RBP")
+                bp_not_converged = RBP!(
                     bitvector,
                     Lq,
                     Lr,
@@ -339,12 +341,12 @@ function
                     localcoords,
                     listsizes,
                     relative,
-                    rbp_not_converged
+                    bp_not_converged
                     )
                 # reset factors
                 resetmatrix!(Factors,vn2cn,1.0)
-            elseif mode == "Genius-RBP" && rbp_not_converged
-                rbp_not_converged = genius_RBP!(
+            elseif mode == "Genius-RBP"
+                bp_not_converged = genius_RBP!(
                     bitvector,
                     complete_cword,
                     Lq,
@@ -366,12 +368,12 @@ function
                     localcoords,
                     listsizes,
                     relative,
-                    rbp_not_converged
+                    bp_not_converged
                     )
                 # reset factors
                 resetmatrix!(Factors,vn2cn,1.0)
             elseif mode == "VN-RBP"
-                rbp_not_converged = VN_RBP!(
+                bp_not_converged = VN_RBP!(
                     bitvector,
                     Lq,
                     Lr,
@@ -387,13 +389,13 @@ function
                     Factors,
                     residues,
                     relative,
-                    rbp_not_converged
+                    bp_not_converged
                     )
                 # reset factors
                 Factors .= 1.0
 
-            elseif mode == "NS-RBP"
-                rbp_not_converged = NS!(
+            elseif mode == "NW-RBP"
+                bp_not_converged = NW_RBP!(
                     bitvector,
                     Lq,
                     Lr,
@@ -407,9 +409,11 @@ function
                     num_edges,
                     Ms,
                     Factors,
+                    coords,
+                    rbpmatrix,
                     residues,
-                    relative,
-                    rbp_not_converged
+                    localresidues,
+                    bp_not_converged
                 )
                 # reset factors
                 Factors .= 1.0
@@ -424,7 +428,10 @@ function
                 println("Bit error rate: $(sum(biterror))/$N")
                 print_test("Syndrome",syndrome)  
                 println("Syndrome rate: $(sum(syndrome))/$M")
-                println()                 
+                println() 
+                if !rbp_not_converged
+                    println("#### BP has converged at iteration $iter ####")
+                end        
             else
                 if iszero(syndrome)
                     if bitvector == complete_cword

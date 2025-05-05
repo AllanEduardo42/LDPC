@@ -7,7 +7,7 @@ include("simcore.jl")
 
 function 
     performance_sim(
-        enr::Union{Vector{<:AbstractFloat},AbstractFloat},
+        ebn0::Union{Vector{<:AbstractFloat},AbstractFloat},
         mode::String,
         trials::Union{Vector{<:Integer},Integer},
         maxiter::Integer,
@@ -44,10 +44,10 @@ function
     str *=
     """\nMaximum number of iterations: $maxiter
     Number of threads (multithreading): $NTHREADS
-    Simulated for SNR (dB): $enr
+    Simulated for SNR (dB): $ebn0
     Stop at zero syndrome ? $STOP"""
     if mode == "RBP" || mode == "List-RBP" || mode == "VN-RBP" ||
-       mode == "Genius-RBP" || mode == "NS-RBP"
+       mode == "Genius-RBP" || mode == "NW-RBP"
         str *= "\nRBP decaying factor: $decay"
         str *= "\nRelative residues: $RELATIVE"
     end
@@ -66,7 +66,7 @@ function
         Lr, Lq = simcore(
             AA,
             RR,
-            enr,
+            ebn0,
             HH,
             GG,
             CN2VN,
@@ -93,7 +93,7 @@ function
         return Lr, Lq
 
     else
-        K = length(enr)
+        K = length(ebn0)
         sum_decoded = zeros(Int,maxiter,K,NTHREADS)
         sum_ber = zeros(Int,maxiter,K,NTHREADS)
         for k in 1:K
@@ -101,7 +101,7 @@ function
                 sum_decoded[:,k,i], sum_ber[:,k,i] = simcore(
                                                 AA,
                                                 RR,
-                                                enr[k],
+                                                ebn0[k],
                                                 HH,
                                                 GG,
                                                 CN2VN,

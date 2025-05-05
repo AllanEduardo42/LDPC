@@ -36,5 +36,5 @@ function
         max_edge::Integer
     )
 
-    residues[max_edge] = 0.0
+    @inbounds residues[max_edge] = 0.0
 end

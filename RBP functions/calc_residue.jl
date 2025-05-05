@@ -38,22 +38,26 @@ function
         Factors::Matrix{<:AbstractFloat},
         ::Nothing,
         Lq::Matrix{<:AbstractFloat},
-        m::Integer,
-        n::Integer
+        li::Integer,
+        relative::Bool
     )
 
-    @fastmath @inbounds begin
-        residue = Ms[m,n] - Lr[m,n]
-        old = Lr[m,n] + Lq[n,m]
-        residue /= old
-        residue *= Factors[m,n]
+    @inbounds begin
+        residue = Ms[li] - Lr[li]
         if isnan(residue)
             return 0.0
         else
-            if signbit(residue)
-                return -residue, li
-            else
-                return residue, li
+            @fastmath begin 
+                if relative
+                old = Lr[li] + Lq[li]
+                residue /= old
+                end
+                residue *= Factors[li]
+                if signbit(residue)
+                    return -residue
+                else
+                    return residue
+                end
             end
         end
     end
