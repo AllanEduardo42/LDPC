@@ -25,8 +25,6 @@ function
         bp_not_converged::Bool
     )
 
-    count = 0
-
     @fastmath @inbounds for e in 1:num_edges
 
         # display("e = $e")
@@ -52,7 +50,6 @@ function
             update_Lr!(Ms,Lq,ci,Nci,Lrj,signs,phi)
             for vj in Nci
                 if vj ≠ vjmax
-                    count += 1
                     li = LinearIndices(Ms)[ci,vj]
                     residue = Ms[li] - Lr[li]
                     residues[vj] = abs(residue)*Factors[vj]
@@ -60,8 +57,6 @@ function
             end
         end
     end
-
-    display(count)
 
     return bp_not_converged
 

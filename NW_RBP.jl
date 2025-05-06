@@ -25,8 +25,6 @@ function
         bp_not_converged::Bool
     )
 
-    count = 0
-
     @fastmath @inbounds for m in 1:M
 
         # display("m = $m")
@@ -62,7 +60,6 @@ function
                     maxresidue = 0.0
                     for vk in Nci
                         # if vk ≠ vj
-                            count += 1
                             li = LinearIndices(Lr)[ci,vk]
                             residue = calc_residue(Ms[li],Lr[li],Factors[ci])
                             if residue > maxresidue
@@ -75,8 +72,6 @@ function
             end
         end
     end
-
-    display(count)
 
     return bp_not_converged
 end

@@ -34,8 +34,6 @@ function
         bp_not_converged::Bool
     )
 
-    count = 0
-
     @fastmath @inbounds for e in 1:num_edges
 
         # display("e = $e")
@@ -85,7 +83,6 @@ function
                 # calculate the residues
                 for vj in Nci
                     if vj ≠ vjmax
-                        count += 1
                         li = LinearIndices(Lr)[ci,vj]
                         residue = calc_residue(li,Lq,Ms[li],Lr[li],Factors,
                                                                  relative,Lrj)
@@ -99,8 +96,6 @@ function
         update_global_list!(residues,coords,local_residues,local_coords,listsizes,
             rbpmatrix)
     end
-
-    display(count)
 
     return bp_not_converged
 end
