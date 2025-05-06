@@ -137,7 +137,7 @@ DECAYS[i] = FACTORS
 # NW-RBP
 i += 1
 ACTIVE[i] = 0
-BPTYPES[i] = "TANH"
+BPTYPES[i] = "FAST"
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
 
@@ -155,7 +155,7 @@ RR::Float64 = 1/2
 # Message (Payload) size
 AA::Int = 576*RR
 # LDPC protocol: NR5G = NR-LDPC (5G); PEG = PEG; WiMAX = IEEE80216e;
-PROTOCOL::String = "WiMAX"
+PROTOCOL::String = "NR5G"
     DENSITIES = 1:8
 
 ############################# PARITY-CHECK MATRIX #############################
@@ -348,7 +348,7 @@ else
             # FER x Iterations
             for j=1:2
                 p = plot()
-                title = FB[j]*"ER (rate = $RR)"
+                title = FB[j]*"ER $PROTOCOL (rate = $RR)"
                 for i in eachindex(ACTIVE)
                     if ACTIVE[i]
                         for decay in DECAYS[i]

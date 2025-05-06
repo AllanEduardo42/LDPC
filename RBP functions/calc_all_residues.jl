@@ -28,7 +28,7 @@ function calc_all_residues!(
         # calculate the residues
         for vj in Nci
             li = LinearIndices(Lr)[ci,vj]
-            residue = calc_residue(Ms,Lr,Factors,Lrj,Lq,li,relative)
+            residue = calc_residue(li,Lq,Ms[li],0.0,Factors,relative,Lrj)
             add_residue!(rbpmatrix,residues,coords,residue,li,ci,vj,listsizes[1])
         end
     end

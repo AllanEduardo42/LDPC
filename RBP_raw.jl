@@ -1,27 +1,25 @@
 ################################################################################
 # Allan Eduardo Feitosa
-# 07 Apr 2025
-# RBP and List-RBP Algorithm with residual decaying factor
+# 06 Mai 2025
+# RBP Algorithm with residual decaying factor (RAW)
 
-include("./RBP functions/RBP_update_Lr.jl")
 include("./RBP functions/findmaxedge.jl")
-include("./RBP functions/update_lists.jl")
-include("./RBP functions/remove_residue!.jl")
+include("./RBP functions/calc_residue.jl")
 
 function
-    RBP_raw!(
+    RBP!(
         bitvector::Vector{Bool},
         Lq::Matrix{<:AbstractFloat},
         Lr::Matrix{<:AbstractFloat},
         Lf::Vector{<:AbstractFloat},
         Nc::Vector{Vector{T}} where {T<:Integer},
         Nv::Vector{Vector{T}} where {T<:Integer},
-        ::Union{Vector{<:AbstractFloat},Nothing},
-        ::Union{Vector{Bool},Nothing},
-        ::Union{Vector{<:AbstractFloat},Nothing},
+        ::Nothing,
+        ::Nothing,
+        ::Nothing,
         decayfactor::AbstractFloat,
         num_edges::Integer,
-        ::Matrix{<:AbstractFloat},
+        Ms::Matrix{<:AbstractFloat},
         Factors::Matrix{<:AbstractFloat},
         coords::Matrix{<:Integer},
         edges::Matrix{<:Integer},
@@ -29,7 +27,7 @@ function
         ::Nothing,
         ::Nothing,
         ::Vector{<:Integer},
-        ::Bool,
+        relative::Bool,
         bp_not_converged::Bool
     )
 
@@ -45,13 +43,13 @@ function
         else
             cimax = coords[1,max_edge]
             vjmax = coords[2,max_edge]
+            limax = coords[3,max_edge]
         end
 
         # 2) Decay the RBP factor corresponding to the maximum residue
-        Factors[cimax,vjmax] *= decayfactor
+        Factors[limax] *= decayfactor
         # 3) update check to node message Lr[cnmax,vnmax]
-        Ncimax = Nc[cimax]
-        Lr[cimax,vjmax] = calc_Lr(Ncimax,cimax,vjmax,Lq)
+        Lr[limax] = Ms[limax]
         # 4) set maximum residue to zero
         residues[max_edge] = 0.0
 
@@ -60,11 +58,16 @@ function
             if ci ≠ cimax
                 # 5) update Nv messages Lq[ci,vnmax]
                 Lq[ci,vjmax] = calc_Lq(Nvjmax,ci,vjmax,Lr,Lf)
-                Nci = Nc[ci]    
                 # 6) calculate residues
+                Nci = Nc[ci]
                 for vj in Nci
                     if vj ≠ vjmax
-                        residues[edges[ci,vj]] = calc_residue(Nci,ci,vj,Lr,Lq,Factors)
+                        li = LinearIndices(Lr)[ci,vj]
+                        oldLr = Lr[li]
+                        newLr = calc_Lr(Nci,ci,vj,Lq)
+                        Ms[li] = newLr
+                        residues[edges[li]] = calc_residue(li,Lq,newLr,oldLr,
+                            Factors,relative,nothing)
                     end
                 end
             end
@@ -74,27 +77,9 @@ function
     # 7) update bitvector
     for vj in eachindex(Nv)
         ci = Nv[vj][1]
-        bitvector[vj] = signbit(Lr[ci,vj] + Lq[ci,vj])
+        li = LinearIndices(Lr)[ci,vj]
+        bitvector[vj] = signbit(Lr[li] + Lq[li])
     end
 
     return bp_not_converged
-end
-
-function calc_residue(
-    Nci::Vector{<:Integer},
-    ci::Integer,
-    vj::Integer,
-    Lr::Matrix{<:AbstractFloat},
-    Lq::Matrix{<:AbstractFloat},
-    Factors::Matrix{<:AbstractFloat},
-)
-
-    @inbounds begin
-        residue = calc_Lr(Nci,ci,vj,Lq) - Lr[ci,vj] # fastmath deactivated
-        if isnan(residue)
-            return 0.0
-        else
-            @fastmath return abs(residue)*Factors[ci,vj]
-        end
-    end
 end

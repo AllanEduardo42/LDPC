@@ -12,7 +12,9 @@ include("LBP.jl")
 include("RBP.jl")
 include("Genius-RBP.jl")
 include("VN_RBP.jl")
+include("VN_RBP_raw.jl")
 include("NW_RBP.jl")
+include("NW_RBP_raw.jl")
 include("RBP_raw.jl")
 include("./RBP functions/calc_all_residues.jl")
 include("update_Lq.jl")
@@ -191,7 +193,7 @@ function
 
 ################################## MAIN LOOP ###################################
 
-    @inbounds for j in 1:trials
+    @inbounds for trial in 1:trials
 
         # 1) generate the random message
         generate_message!(msg,rgn_msg,msgtest)
@@ -213,7 +215,7 @@ function
 
         # 5) print info in test mode
         if test && printtest
-            println("Trial #$j:")
+            println("Trial #$trial:")
             print_test("msg",msg)
             print_test("cword",cword)
         end
@@ -247,7 +249,6 @@ function
         for i in eachindex(bitvector)
             bitvector[i] = signbit(Lf[i])
         end
-        # bitvector .= false
         
         # 9) init the Lq matrix
         init_Lq!(Lq,Lf,Nv)
@@ -257,24 +258,20 @@ function
             calc_all_residues!(Lq,Lr,Nc,Lrn,signs,phi,Ms,Factors,rbpmatrix,
                 residues,coords,listsizes,relative)
         elseif mode == "NW-RBP"
-            for m in 1:M 
+            for ci in 1:M
                 # calculate the new check to node messages
-                # update_Lr!(Ms,Lq,m,Nc[m],Lrn,signs,phi)
-                vns = Nc[m]
+                Nci = Nc[ci]
                 maxresidue = 0.0
-                for n in vns
-                    pLr = 1.0
-                    for n2 in vns
-                        if n2 ≠ n
-                            pLr *= tanh(0.5*Lq[m,n2])
-                        end
-                    end
-                    residue = abs(2*atanh(pLr))
+                for vj in Nci
+                    li = LinearIndices(Lr)[ci,vj]
+                    newLr = calc_Lr(Nci,ci,vj,Lq)
+                    Ms[li] = newLr
+                    residue = calc_residue(newLr,0.0,Factors[ci])
                     if residue > maxresidue
                         maxresidue = residue
                     end
                 end
-                residues[m] = maxresidue
+                residues[ci] = maxresidue
             end
         elseif mode == "VN-RBP"
             for m in 1:M 
@@ -396,7 +393,6 @@ function
                     Ms,
                     Factors,
                     residues,
-                    relative,
                     bp_not_converged
                     )
                 # reset factors
