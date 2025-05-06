@@ -4,7 +4,7 @@
 # RBP and List-RBP Algorithm with residual decaying factor
 
 include("./RBP functions/RBP_update_Lr.jl")
-include("./RBP functions/findmaxedge.jl")
+include("./RBP functions/findmaxnode.jl")
 include("./RBP functions/update_lists.jl")
 include("./RBP functions/remove_residue!.jl")
 

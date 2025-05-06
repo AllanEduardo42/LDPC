@@ -14,14 +14,14 @@ function
         Lq::Matrix{<:AbstractFloat},
         Lr::Matrix{<:AbstractFloat},
         Lf::Vector{<:AbstractFloat},
-        cn2vn::Vector{Vector{T}} where {T<:Integer},
-        vn2cn::Vector{Vector{T}} where {T<:Integer},
+        Nc::Vector{Vector{T}} where {T<:Integer},
+        Nn::Vector{Vector{T}} where {T<:Integer},
         ::Union{Vector{<:AbstractFloat},Nothing},
         ::Union{Vector{Bool},Nothing},
         ::Union{Vector{<:AbstractFloat},Nothing},
         decayfactor::AbstractFloat,
         num_edges::Integer,
-        Ms::Matrix{<:AbstractFloat},
+        ::Matrix{<:AbstractFloat},
         Factors::Matrix{<:AbstractFloat},
         coords::Matrix{<:Integer},
         indices::Matrix{<:Integer},
@@ -38,74 +38,101 @@ function
         # display("e = $e")
 
         # 1) Find largest residue  and coordenates
-        max_edge, max_residue = findmaxedge(residues,local_residues)
-        if max_residue == 0.0
-            if max_edge == 0
-                bp_not_converged = false
-                break # i.e., RBP has converged
-            end
+        max_edge, _ = findmaxedge(residues,local_residues)
+        if max_edge == 0
+            bp_not_converged = false
+            break # i.e., RBP has converged
         else
-            cnmax = coords[1,max_edge]
-            vnmax = coords[2,max_edge]
-            limax = coords[3,max_edge]
+            ci = coords[1,max_edge]
+            vj = coords[2,max_edge]
         end
 
         # 2) Decay the RBP factor corresponding to the maximum residue
-        Factors[limax] *= decayfactor
+        # Factors[limax] *= decayfactor
         # 3) update check to node message Lr[cnmax,vnmax]
-        pLr = 1.0
-        for n2 in cn2vn[cnmax]  
-            if n2 ≠ vnmax
-                pLr *= tanh(0.5*Lq[cnmax,n2])
-            end
-        end
-        Lr[cnmax,vnmax] = 2*atanh(pLr)
+        Nci = Nc[ci]
+        Lr[ci,vj] = calc_Lr(Nci,ci,vj,Lq)
         # 4) set maximum residue to zero
         residues[max_edge] = 0.0
 
-        # 5) update vn2cn messages Lq[vnmax,m] and bitvector[vnmax]
-        cns = vn2cn[vnmax]
-        Ld = calc_Ld(vnmax,cns,Lf[vnmax],Lr)
-        bitvector[vnmax] = signbit(Ld)
-
-        # 6) calculate residues
-        for m in cns
-            if m ≠ cnmax
-                Lq[m,vnmax] = Ld - Lr[m,vnmax]
-                vns = cn2vn[m]    
-                # calculate the residues
-                for n in vns
-                    if n ≠ vnmax
-                        pLr = 1.0
-                        for n2 in vns
-                            if n2 ≠ n
-                                pLr *= tanh(0.5*Lq[m,n2])
-                            end
-                        end
-                        residues[indices[m,n]] = calc_residue(pLr,Lr,Factors,m,n)
+        Nvj = Nn[vj]
+        for ca in Nvj
+            if ca ≠ ci
+                # 5) update Nn messages Lq[ca,vnmax]
+                Lq[ca,vj] = calc_Lq(Nvj,ca,vj,Lr,Lf)
+                Nca = Nc[ca]    
+                # 6) calculate residues
+                for vb in Nca
+                    if vb ≠ vj
+                        residues[indices[ca,vb]] = calc_residue(Nca,ca,vb,Lr,Lq,Factors)
                     end
                 end
             end
         end
     end
 
+    # 7) update bitvector
+    for vb in eachindex(Nn)
+        ca = Nn[vb][1]
+        bitvector[vb] = signbit(Lr[ca,vb] + Lq[ca,vb])
+    end
+
     return bp_not_converged
 end
 
-function calc_residue(
-    pLr::AbstractFloat,
+function calc_Lr(
+    Nci::Vector{<:Integer},
+    ci::Integer,
+    vj::Integer,    
+    Lq::Matrix{<:AbstractFloat}
+)
+
+    @fastmath @inbounds begin
+        pLr = 1.0
+        for vb in Nci
+            if vb ≠ vj
+                pLr *= tanh(0.5*Lq[ci,vb])
+            end
+        end
+        return 2*atanh(pLr)
+    end
+end
+
+function calc_Lq(
+    Nvj::Vector{<:Integer},
+    ci::Integer,
+    vj::Integer,
     Lr::Matrix{<:AbstractFloat},
+    Lf::Vector{<:AbstractFloat}
+)
+
+    @fastmath @inbounds begin
+        Lq = Lf[vj]
+        for ca in Nvj
+            if ca ≠ ci
+                Lq += Lr[ca,vj]
+            end
+        end
+        return Lq
+    end
+end
+
+function calc_residue(
+    Nni::Vector{<:Integer},
+    ni::Integer,
+    nj::Integer,
+    Lr::Matrix{<:AbstractFloat},
+    Lq::Matrix{<:AbstractFloat},
     Factors::Matrix{<:AbstractFloat},
-    m::Integer,
-    n::Integer
 )
 
     @inbounds begin
-        x = 2*atanh(pLr) - Lr[m,n]
-        if isnan(x)
+        residue = calc_Lr(Nni,ni,nj,Lq) - Lr[ni,nj]
+        if isnan(residue)
             return 0.0
         else
-            @fastmath return abs(x)*Factors[m,n]
+            # @fastmath return abs(x)*Factors[ca,vb]
+            @fastmath return abs(residue)
         end
     end
 end

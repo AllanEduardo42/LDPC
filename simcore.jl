@@ -13,6 +13,7 @@ include("RBP.jl")
 include("Genius-RBP.jl")
 include("VN_RBP.jl")
 include("NW_RBP.jl")
+include("RBP_raw.jl")
 include("./RBP functions/calc_all_residues.jl")
 
 function
@@ -147,7 +148,7 @@ function
     Factors = RBP ? 1.0*H  : nothing
 
     # RBP modes
-    if mode == "RBP" || mode == "Genius-RBP" || mode == "NW-RBP"
+    if mode == "RBP" || mode == "Genius-RBP"
         residues = zeros(num_edges)
         coords = zeros(Int,3,num_edges)
         localresidues = nothing
@@ -167,9 +168,9 @@ function
         if mode == "Genius-RBP"
             global TOTALBITERROR = zeros(Int,num_edges)
         end
-    # elseif mode == "NW-RBP"
-    #     residues = zeros(M)
-    #     Factors = ones(M)
+    elseif mode == "NW-RBP"
+        residues = zeros(M)
+        Factors = ones(M)
     elseif mode == "List-RBP"
         residues = zeros(listsizes[1]+1)
         coords = zeros(Int,3,listsizes[1]+1)
@@ -250,24 +251,29 @@ function
         init_Lq!(Lq,Lf,vn2cn)
 
         # 10) precalculate the residues for RBP
-        if mode == "RBP" || mode == "List-RBP" || mode == "Genius-RBP" || mode == "NW-RBP"
+        if mode == "RBP" || mode == "List-RBP" || mode == "Genius-RBP"
             calc_all_residues!(Lq,Lr,cn2vn,Lrn,signs,phi,Ms,Factors,rbpmatrix,
                 residues,coords,listsizes,relative)
-        # elseif mode == "NW-RBP"
-        #     for m in 1:M 
-        #         # calculate the new check to node messages
-        #         update_Lr!(Ms,Lq,m,cn2vn[m],Lrn,signs,phi)
-        #     end
-        #     for m in 1:M
-        #         maxresidue = 0.0
-        #         for n in cn2vn[m]
-        #             residue = abs(Ms[m,n])
-        #             if residue > maxresidue
-        #                 maxresidue = residue
-        #             end
-        #         end
-        #         residues[m] = maxresidue
-        #     end
+        elseif mode == "NW-RBP"
+            for m in 1:M 
+                # calculate the new check to node messages
+                # update_Lr!(Ms,Lq,m,cn2vn[m],Lrn,signs,phi)
+                vns = cn2vn[m]
+                maxresidue = 0.0
+                for n in vns
+                    pLr = 1.0
+                    for n2 in vns
+                        if n2 ≠ n
+                            pLr *= tanh(0.5*Lq[m,n2])
+                        end
+                    end
+                    residue = abs(2*atanh(pLr))
+                    if residue > maxresidue
+                        maxresidue = residue
+                    end
+                end
+                residues[m] = maxresidue
+            end
         elseif mode == "VN-RBP"
             for m in 1:M 
                 # calculate the new check to node messages
@@ -409,10 +415,7 @@ function
                     num_edges,
                     Ms,
                     Factors,
-                    coords,
-                    rbpmatrix,
                     residues,
-                    localresidues,
                     bp_not_converged
                 )
                 # reset factors
@@ -429,7 +432,7 @@ function
                 print_test("Syndrome",syndrome)  
                 println("Syndrome rate: $(sum(syndrome))/$M")
                 println() 
-                if !rbp_not_converged
+                if !bp_not_converged
                     println("#### BP has converged at iteration $iter ####")
                 end        
             else
@@ -446,6 +449,11 @@ function
                 end               
                 ber[iter] = sum(biterror) 
             end
+        end
+
+        if !bp_not_converged
+            decoded[iter+1:end] .= decoded[iter]
+            ber[iter+1:end] .= ber[iter]
         end
 
         # bit error rate

@@ -54,14 +54,14 @@ SEED_MESSA::Int = 1000
 
 ############################### 4) CONTROL FLAGS ###############################
 
-TEST::Bool = true
+TEST::Bool = false
 PRIN::Bool = true
 STOP::Bool = false # stop simulation at zero syndrome (if true, BER curves are
 # not printed)
 
 ################################## 5) NUMBERS ##################################
 
-MAXITER::Int = 4
+MAXITER::Int = 20
 # FACTORS = [0.7, 0.8, 0.9, 1.0]
 # FACTORS = collect(0.1:0.1:1.0)
 FACTORS = [1.0]
@@ -71,8 +71,8 @@ TRIALS = 10 .^(0:length(EbN0)-1)*2^15
 RELATIVE::Bool = false
 
 # TEST
-MAXITER_TEST::Int = 10
-EbN0_TEST::Float64 = 1.3
+MAXITER_TEST::Int = 1
+EbN0_TEST::Float64 = 1.2
 TRIALS_TEST::Int = 1
 DECAY_TEST::Float64 = 1.0
 
@@ -109,7 +109,7 @@ MAXITERS[i] = MAXITER
 # RBP
 i += 1
 ACTIVE[i] = 1
-BPTYPES[i] = "TANH"
+BPTYPES[i] = "FAST"
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
 
@@ -122,7 +122,7 @@ DECAYS[i] = FACTORS
 
 # Variable Node RBP
 i += 1
-ACTIVE[i] = 0
+ACTIVE[i] = 1
 BPTYPES[i] = "FAST"
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
@@ -136,7 +136,7 @@ DECAYS[i] = FACTORS
 
 # NW-RBP
 i += 1
-ACTIVE[i] = 0
+ACTIVE[i] = 1
 BPTYPES[i] = "TANH"
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
@@ -155,7 +155,7 @@ RR::Float64 = 1/2
 # Message (Payload) size
 AA::Int = 576*RR
 # LDPC protocol: NR5G = NR-LDPC (5G); PEG = PEG; WiMAX = IEEE80216e;
-PROTOCOL::String = "WiMAX"
+PROTOCOL::String = "NR5G"
     DENSITIES = 1:8
 
 ############################# PARITY-CHECK MATRIX #############################

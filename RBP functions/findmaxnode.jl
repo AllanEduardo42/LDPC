@@ -10,7 +10,7 @@ function
 
     nmax = 0
     maxresidue = 0.0
-    @fastmath @inbounds for e in eachindex(residues)
+    @inbounds for e in eachindex(residues)
         residue = residues[e]
         if residue > maxresidue
             maxresidue = residue

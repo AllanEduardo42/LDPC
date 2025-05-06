@@ -94,7 +94,6 @@ function
         # if List-RBP: update list 1 
         update_global_list!(residues,coords,local_residues,local_coords,listsizes,
             rbpmatrix)
-
     end
 
     return bp_not_converged
