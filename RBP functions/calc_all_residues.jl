@@ -9,8 +9,8 @@ include("add_residue.jl")
 function calc_all_residues!(
     Lq::Matrix{<:AbstractFloat},
     Lr::Matrix{<:AbstractFloat},
-    cn2vn::Vector{Vector{T}} where {T<:Integer},
-    Lrn::Union{Vector{<:AbstractFloat},Nothing},
+    Nc::Vector{Vector{T}} where {T<:Integer},
+    Lrj::Union{Vector{<:AbstractFloat},Nothing},
     signs::Union{Vector{Bool},Nothing},
     phi::Union{Vector{<:AbstractFloat},Nothing},
     Ms::Matrix{<:AbstractFloat},
@@ -21,15 +21,15 @@ function calc_all_residues!(
     listsizes::Vector{<:Integer},
     relative::Bool
 )
-    @fastmath @inbounds for m in eachindex(cn2vn)
-        vns = cn2vn[m]
+    @fastmath @inbounds for ci in eachindex(Nc)
+        Nci = Nc[ci]
         # calculate the new check to node messages
-        update_Lr!(Ms,Lq,m,vns,Lrn,signs,phi)
+        update_Lr!(Ms,Lq,ci,Nci,Lrj,signs,phi)
         # calculate the residues
-        for n in vns
-            li = LinearIndices(Lr)[m,n]
-            residue = calc_residue(Ms,Lr,Factors,Lrn,Lq,li,relative)
-            add_residue!(rbpmatrix,residues,coords,residue,li,m,n,listsizes[1])
+        for vj in Nci
+            li = LinearIndices(Lr)[ci,vj]
+            residue = calc_residue(Ms,Lr,Factors,Lrj,Lq,li,relative)
+            add_residue!(rbpmatrix,residues,coords,residue,li,ci,vj,listsizes[1])
         end
     end
 end

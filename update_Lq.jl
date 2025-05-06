@@ -10,15 +10,15 @@ function
     update_Lq!(
         Lq::Matrix{<:AbstractFloat},
         Lr::Matrix{<:AbstractFloat},
-        Lf::AbstractFloat,
-        n::Integer,
-        cns::Vector{<:Integer},
+        Lf::Vector{<:AbstractFloat},
+        vj::Integer,
+        Nvj::Vector{<:Integer},
         ::Vector{<:AbstractFloat}
     )
 
-    Ld = calc_Ld(n,cns,Lf,Lr)
-    @fastmath @inbounds for m in cns
-        li = LinearIndices(Lq)[m,n]
+    Ld = calc_Ld(vj,Nvj,Lf,Lr)
+    @fastmath @inbounds for ci in Nvj
+        li = LinearIndices(Lq)[ci,vj]
         Lq[li] = Ld - Lr[li]
     end
 
@@ -27,14 +27,17 @@ end
 
 function 
     calc_Ld(
-        n::Integer,
-        cns::Vector{<:Integer},
-        Ld::AbstractFloat,
+        vj::Integer,
+        Nvj::Vector{<:Integer},
+        Lf::Vector{<:AbstractFloat},
         Lr::Matrix{<:AbstractFloat}
     )
 
-    @fastmath @inbounds for m in cns
-        Ld += Lr[m,n]
+    @fastmath @inbounds begin
+        Ld = Lf[vj]
+        for ci in Nvj
+            Ld += Lr[ci,vj]
+        end
     end
     
     return Ld
@@ -47,24 +50,40 @@ function
     update_Lq!(
         Lq::Matrix{<:AbstractFloat},
         Lr::Matrix{<:AbstractFloat},
-        Lf::AbstractFloat,
-        n::Integer,
-        cns::Vector{<:Integer},
+        Lf::Vector{<:AbstractFloat},
+        vj::Integer,
+        Nvj::Vector{<:Integer},
         ::Nothing
     )
     
-    m = 0
-    @inbounds for outer m in cns
-        Lq[m,n] = Lf[n]
-        for m2 in cns
-            if m2 ≠ m
-                Lq[m,n] += Lr[m2,n]
+    ci = 0
+    @fastmath @inbounds begin 
+        for outer ci in Nvj
+            Lq[ci,vj] = calc_Lq(Nvj,ci,vj,Lr,Lf)
+        end
+        # get the last ci of the loop iteration to calc Ld
+        Ld = Lq[ci,vj] + Lr[ci,vj]
+    end
+    return signbit(Ld)
+end
+
+function calc_Lq(
+    Nvj::Vector{<:Integer},
+    ci::Integer,
+    vj::Integer,
+    Lr::Matrix{<:AbstractFloat},
+    Lf::Vector{<:AbstractFloat}
+)
+
+    @fastmath @inbounds begin
+        Lq = Lf[vj]
+        for ca in Nvj
+            if ca ≠ ci
+                Lq += Lr[ca,vj]
             end
         end
+        return Lq
     end
-
-    @inbounds Ld = Lq[m,n] + Lr[m,n]
-    return signbit(Ld)
 end
 
 ########################### SPA USING MKAY's METHOD ############################
@@ -74,21 +93,21 @@ function
         q::Array{<:AbstractFloat,3},
         r::Array{<:AbstractFloat,3},
         f::Vector{<:AbstractFloat},
-        n::Integer,
-        cns::Vector{<:Integer}
+        vj::Integer,
+        Nvj::Vector{<:Integer}
     )
 
-    @inbounds for m in cns
+    @inbounds for ci in Nvj
         Ld1 = f[1]
         Ld2 = f[2]
-        for m2 in cns
-            if m2 ≠ m
-                Ld1 *= r[m2,n,1]
-                Ld2 *= r[m2,n,2]
+        for ca in Nvj
+            if ca ≠ ci
+                Ld1 *= r[ca,vj,1]
+                Ld2 *= r[ca,vj,2]
             end
         end
         a = Ld1 + Ld2
-        q[m,n,1] = Ld1/a
-        q[m,n,2] = Ld2/a
+        q[ci,vj,1] = Ld1/a
+        q[ci,vj,2] = Ld2/a
     end
 end

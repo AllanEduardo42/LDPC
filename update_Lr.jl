@@ -11,9 +11,9 @@ function
     update_Lr!(
         Lr::Matrix{<:AbstractFloat},
         Lq::Matrix{<:AbstractFloat},
-        m::Integer,
-        vns::Vector{<:Integer},
-        Lrn::Vector{<:AbstractFloat},
+        ci::Integer,
+        Nci::Vector{<:Integer},
+        Lrj::Vector{<:AbstractFloat},
         ::Nothing,
         ::Nothing     
     )
@@ -21,38 +21,38 @@ function
     @fastmath @inbounds begin
         pLr = 1.0
         countzeros = 0
-        n0 = 0
-        for n in vns
-            x = Lq[m,n]
-            if x == 0.0 # Lr[m,n] = 0 for n ≠ n0
+        vj0 = 0
+        for vj in Nci
+            x = Lq[ci,vj]
+            if x == 0.0 # Lr[ci,vj] = 0 for vj ≠ vj0
                 countzeros += 1
-                n0 = n
-                Lrn[n] = 1.0 # s.t. Lr[m,n0] = 2*atanh(pLr)
-                if countzeros > 1 # Lr[m,n] = 0 ∀n
+                vj0 = vj
+                Lrj[vj] = 1.0 # s.t. Lr[ci,vj0] = 2*atanh(pLr)
+                if countzeros > 1 # Lr[ci,vj] = 0 ∀n
                     break
                 end
             else
-                Lrn[n] = tanh(0.5*x)
+                Lrj[vj] = tanh(0.5*x)
             end
-            pLr *= Lrn[n]
+            pLr *= Lrj[vj]
         end
         if countzeros == 0
-            for n in vns
-                x = pLr/Lrn[n]
+            for vj in Nci
+                x = pLr/Lrj[vj]
                 if abs(x) < 1 # controls divergent values of Lr
-                    Lr[m,n] = 2*atanh(x)
+                    Lr[ci,vj] = 2*atanh(x)
                 elseif x > 0
-                    Lr[m,n] = INFFLOAT
+                    Lr[ci,vj] = INFFLOAT
                 else
-                    Lr[m,n] = NINFFLOAT
+                    Lr[ci,vj] = NINFFLOAT
                 end
             end
         else
-            for n in vns
-                Lr[m,n] = 0.0
+            for vj in Nci
+                Lr[ci,vj] = 0.0
             end
-            if countzeros == 1 # Lr[m,n] = 0 for n ≠ n0
-                Lr[m,n0] = 2*atanh(pLr)
+            if countzeros == 1 # Lr[ci,vj] = 0 for vj ≠ vj0
+                Lr[ci,vj0] = 2*atanh(pLr)
             end
         end
     end
@@ -64,21 +64,33 @@ function
     update_Lr!(
         Lr::Matrix{<:AbstractFloat},
         Lq::Matrix{<:AbstractFloat},
-        m::Integer,
-        vns::Vector{<:Integer},
+        ci::Integer,
+        Nci::Vector{<:Integer},
         ::Nothing,
         ::Nothing,
         ::Nothing
     )
     
-    @inbounds for n in vns
+    @inbounds for vj in Nci
+        Lr[ci,vj] = calc_Lr(Nci,ci,vj,Lq)
+    end
+end
+
+function calc_Lr(
+    Nci::Vector{<:Integer},
+    ci::Integer,
+    vj::Integer,    
+    Lq::Matrix{<:AbstractFloat}
+)
+
+    @fastmath @inbounds begin
         pLr = 1.0
-        for n2 in vns
-            if n2 ≠ n
-                pLr *= tanh(0.5*Lq[m,n2])
+        for vb in Nci
+            if vb ≠ vj
+                pLr *= tanh(0.5*Lq[ci,vb])
             end
         end
-        Lr[m,n] = 2*atanh(pLr)
+        return 2*atanh(pLr)
     end
 end
 
@@ -110,9 +122,9 @@ function
     update_Lr!(
         Lr::Matrix{<:AbstractFloat},
         Lq::Matrix{<:AbstractFloat},
-        m::Integer,
-        vns::Vector{<:Integer},
-        Lrn::Vector{<:AbstractFloat},
+        ci::Integer,
+        Nci::Vector{<:Integer},
+        Lrj::Vector{<:AbstractFloat},
         signs::Vector{Bool},
         phi::Union{Vector{<:AbstractFloat},Nothing}
     )
@@ -120,14 +132,14 @@ function
     @fastmath @inbounds begin
         sLr = 0.0
         s = false
-        for n in vns
-            Lrn[n], signs[n], s = phi_sign!(Lq[m,n],s,phi)
-            sLr += Lrn[n] 
+        for vj in Nci
+            Lrj[vj], signs[vj], s = phi_sign!(Lq[ci,vj],s,phi)
+            sLr += Lrj[vj] 
         end
-        for n in vns
-            x = abs(sLr - Lrn[n])
+        for vj in Nci
+            x = abs(sLr - Lrj[vj])
             if x > 0 # (Inf restriction)
-                Lr[m,n] = (1 - 2*(signs[n] ⊻ s))*ϕ(x,phi)
+                Lr[ci,vj] = (1 - 2*(signs[vj] ⊻ s))*ϕ(x,phi)
             end
         end
     end   
@@ -140,14 +152,14 @@ function
     update_Lr!(
         Lr::Matrix{<:AbstractFloat},
         Lq::Matrix{<:AbstractFloat},
-        m::Integer,
-        vns::Vector{<:Integer},
+        ci::Integer,
+        Nci::Vector{<:Integer},
         ::Nothing,
         signs::Vector{Bool},
         ::Nothing       
     )
 
-    minsum!(Lq,Lr,signs,m,vns)
+    minsum!(Lq,Lr,signs,ci,Nci)
 
 end
 
@@ -157,19 +169,19 @@ function
     update_Lr!(
         r::Array{<:AbstractFloat,3},
         δq::Vector{<:AbstractFloat},
-        m::Integer,
-        vns::Vector{<:Integer}    
+        ci::Integer,
+        Nci::Vector{<:Integer}    
     )
     
-    @inbounds for n in vns
+    @inbounds for vj in Nci
         δr = 1.0
-        for n2 in vns
-            if n2 ≠ n
-                δr *= δq[n2]
+        for vb in Nci
+            if vb ≠ vj
+                δr *= δq[vb]
             end
         end
-        r[m,n,1] = 0.5*(1+δr)
-        r[m,n,2] = 0.5*(1-δr)
+        r[ci,vj,1] = 0.5*(1+δr)
+        r[ci,vj,2] = 0.5*(1-δr)
     end 
 
 end
@@ -179,34 +191,34 @@ function
     update_Lr!(
         r::Array{<:AbstractFloat,3},
         q::Array{<:AbstractFloat,3},
-        m::Integer,
-        vns::Vector{<:Integer}    
+        ci::Integer,
+        Nci::Vector{<:Integer}    
     )
 
-    S = length(vns)-1
-    @inbounds for n in vns
-        r[m,n,1] = 0.0   
-        r[m,n,2] = 0.0          
+    S = length(Nci)-1
+    @inbounds for vj in Nci
+        r[ci,vj,1] = 0.0   
+        r[ci,vj,2] = 0.0          
         for s = 0:2^S-1
             dig = digits(s, base = 2, pad = S)
             count = 0
             rr = 1.0
             if iseven(sum(dig))
-                for nn in vns
-                    if nn != n
+                for nn in Nci
+                    if nn != vj
                         count += 1
-                        rr *= q[m,nn,dig[count]+1]
+                        rr *= q[ci,nn,dig[count]+1]
                     end
                 end
-                r[m,n,1] += rr
+                r[ci,vj,1] += rr
             else
-                for nn in vns
-                    if nn != n
+                for nn in Nci
+                    if nn != vj
                         count += 1
-                        rr *= q[m,nn,dig[count]+1]
+                        rr *= q[ci,nn,dig[count]+1]
                     end               
                 end
-                r[m,n,2] += rr
+                r[ci,vj,2] += rr
             end
         end
     end

@@ -14,9 +14,9 @@ function
         Lq::Matrix{<:AbstractFloat},
         Lr::Matrix{<:AbstractFloat},
         Lf::Vector{<:AbstractFloat},
-        cn2vn::Vector{Vector{T}} where {T<:Integer},
-        vn2cn::Vector{Vector{T}} where {T<:Integer},
-        Lrn::Union{Vector{<:AbstractFloat},Nothing},
+        Nc::Vector{Vector{T}} where {T<:Integer},
+        Nv::Vector{Vector{T}} where {T<:Integer},
+        Lrj::Union{Vector{<:AbstractFloat},Nothing},
         signs::Union{Vector{Bool},Nothing},
         phi::Union{Vector{<:AbstractFloat},Nothing},
         decayfactor::AbstractFloat,
@@ -32,34 +32,34 @@ function
 
         # display("e = $e")
 
-        vnmax = findmaxnode(residues)
-        if vnmax == 0
+        vjmax = findmaxnode(residues)
+        if vjmax == 0
             rbp_not_converged  = false
             break # i.e., RBP has converged
         end
-        residues[vnmax] = 0.0
-        Factors[vnmax] *= decayfactor
+        residues[vjmax] = 0.0
+        Factors[vjmax] *= decayfactor
 
-        for m in vn2cn[vnmax]
-            li = LinearIndices(Ms)[m,vnmax]
+        for ci in Nv[vjmax]
+            li = LinearIndices(Ms)[ci,vjmax]
             Lr[li] = Ms[li]
         end        
 
-        bitvector[vnmax] = update_Lq!(Lq,Lr,Lf[vnmax],vnmax,vn2cn[vnmax],Lrn)
+        bitvector[vjmax] = update_Lq!(Lq,Lr,Lf,vjmax,Nv[vjmax],Lrj)
 
-        for m in vn2cn[vnmax]
+        for ci in Nv[vjmax]
             # calculate the new check to node messages
-            vns = cn2vn[m]
-            update_Lr!(Ms,Lq,m,vns,Lrn,signs,phi)
-            for n in vns
-                if n ≠ vnmax
-                    li = LinearIndices(Ms)[m,n]
+            Nci = Nc[ci]
+            update_Lr!(Ms,Lq,ci,Nci,Lrj,signs,phi)
+            for vj in Nci
+                if vj ≠ vjmax
+                    li = LinearIndices(Ms)[ci,vj]
                     residue = Ms[li] - Lr[li]
                     if relative   
                         old = Lr[li] + Lq[li]  
                         residue /= old
                     end
-                    residues[n] = abs(residue)*Factors[n]
+                    residues[vj] = abs(residue)*Factors[vj]
                 end
             end
         end

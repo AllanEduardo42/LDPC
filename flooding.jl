@@ -12,24 +12,24 @@ function
         Lq::Matrix{<:AbstractFloat},
         Lr::Matrix{<:AbstractFloat},
         Lf::Vector{<:AbstractFloat},
-        cn2vn::Vector{Vector{T}} where {T<:Integer},
-        vn2cn::Vector{Vector{T}} where {T<:Integer},
-        Lrn::Union{Vector{<:AbstractFloat},Nothing},
+        Nc::Vector{Vector{T}} where {T<:Integer},
+        Nv::Vector{Vector{T}} where {T<:Integer},
+        Lrj::Union{Vector{<:AbstractFloat},Nothing},
         signs::Union{Vector{Bool},Nothing},
         phi::Union{Vector{<:AbstractFloat},Nothing}
     )
 
     # Lr update
-    @inbounds for m in eachindex(cn2vn)
+    @inbounds for ci in eachindex(Nc)
 
-        update_Lr!(Lr,Lq,m,cn2vn[m],Lrn,signs,phi)
+        update_Lr!(Lr,Lq,ci,Nc[ci],Lrj,signs,phi)
 
     end
 
     # Lq update
-    @inbounds for n in eachindex(vn2cn)
+    @inbounds for vj in eachindex(Nv)
 
-        bitvector[n] = update_Lq!(Lq,Lr,Lf[n],n,vn2cn[n],Lrn)
+        bitvector[vj] = update_Lq!(Lq,Lr,Lf,vj,Nv[vj],Lrj)
         
     end
 end
@@ -42,8 +42,8 @@ function
         q::Array{<:AbstractFloat,3},
         r::Array{<:AbstractFloat,3},
         f::Matrix{<:AbstractFloat},
-        cn2vn::Vector{Vector{T}} where {T<:Integer},
-        vn2cn::Vector{Vector{T}} where {T<:Integer},
+        Nc::Vector{Vector{T}} where {T<:Integer},
+        Nv::Vector{Vector{T}} where {T<:Integer},
         δq::Vector{<:AbstractFloat},
         ::Nothing,
         ::Nothing
@@ -53,31 +53,31 @@ function
 
         # horizontal update
 
-        for m in eachindex(cn2vn)
+        for ci in eachindex(Nc)
 
-            vns = cn2vn[m]
-            # update_Lr!(r,q,m,vns)
-            for n in vns
-                δq[n] = q[m,n,1] - q[m,n,2]
+            vns = Nc[ci]
+            # update_Lr!(r,q,ci,vns)
+            for vj in vns
+                δq[vj] = q[ci,vj,1] - q[ci,vj,2]
             end
-            update_Lr!(r,δq,m,vns)
+            update_Lr!(r,δq,ci,vns)
 
         end
+        
         # vertical update
         
-        for n in eachindex(vn2cn)    
-            cns = vn2cn[n]
-            update_Lq!(q,r,f[n,:],n,cns)
+        for vj in eachindex(Nv)    
+            update_Lq!(q,r,f[vj,:],vj,Nv[vj])
         end
 
-        for n in eachindex(vn2cn) 
-            d0 = f[n,1]
-            d1 = f[n,2]
-            for m in vn2cn[n]
-                d0 *= r[m,n,1]
-                d1 *= r[m,n,2]
+        for vj in eachindex(Nv) 
+            d0 = f[vj,1]
+            d1 = f[vj,2]
+            for ci in Nv[vj]
+                d0 *= r[ci,vj,1]
+                d1 *= r[ci,vj,2]
             end
-            bitvector[n] = d1 > d0
+            bitvector[vj] = d1 > d0
         end
     end
 end

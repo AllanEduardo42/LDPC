@@ -15,9 +15,9 @@ function
         Lq::Matrix{<:AbstractFloat},
         Lr::Matrix{<:AbstractFloat},
         Lf::Vector{<:AbstractFloat},
-        cn2vn::Vector{Vector{T}} where {T<:Integer},
-        vn2cn::Vector{Vector{T}} where {T<:Integer},
-        Lrn::Union{Vector{<:AbstractFloat},Nothing},
+        Nc::Vector{Vector{T}} where {T<:Integer},
+        Nv::Vector{Vector{T}} where {T<:Integer},
+        Lrj::Union{Vector{<:AbstractFloat},Nothing},
         signs::Union{Vector{Bool},Nothing},
         phi::Union{Vector{<:AbstractFloat},Nothing},
         decayfactor::AbstractFloat,
@@ -45,48 +45,48 @@ function
                 bp_not_converged = false
                 break # i.e., BP has converged
             elseif max_edge == -1 # if list-RBP
-                calc_all_residues!(Lq,Lr,cn2vn,Lrn,signs,phi,Ms,Factors,rbpmatrix,
+                calc_all_residues!(Lq,Lr,Nc,Lrj,signs,phi,Ms,Factors,rbpmatrix,
                 residues,coords,listsizes,relative)
                 if residues[1] == 0.0
                     bp_not_converged = false
                     break
                 end
-                cnmax = coords[1,1]
-                vnmax = coords[2,1]
+                cimax = coords[1,1]
+                vjmax = coords[2,1]
                 limax = coords[3,1]
             end
         else
-            cnmax = coords[1,max_edge]
-            vnmax = coords[2,max_edge]
+            cimax = coords[1,max_edge]
+            vjmax = coords[2,max_edge]
             limax = coords[3,max_edge]
         end
 
         # 2) Decay the RBP factor corresponding to the maximum residue
         Factors[limax] *= decayfactor
 
-        # 3) update check to node message Lr[cnmax,vnmax]
-        RBP_update_Lr!(limax,Lr,Ms,cnmax,vnmax,cn2vn[cnmax],Lq,Lrn,signs,phi)
+        # 3) update check to node message Lr[cimax,vjmax]
+        RBP_update_Lr!(limax,Lr,Ms,cimax,vjmax,Nc[cimax],Lq,Lrj,signs,phi)
 
         # 4) set maximum residue to zero
         remove_residue!(limax,listsizes[1],residues,coords,rbpmatrix,max_edge)
 
-        # 5) update vn2cn messages Lq[vnmax,m] and bitvector[vnmax]
-        cns = vn2cn[vnmax]
-        bitvector[vnmax] = update_Lq!(Lq,Lr,Lf[vnmax],vnmax,cns,Lrn)
+        # 5) update Nv messages Lq[vjmax,ci] and bitvector[vjmax]
+        Nvjmax = Nv[vjmax]
+        bitvector[vjmax] = update_Lq!(Lq,Lr,Lf,vjmax,Nvjmax,Lrj)
 
         # 6) calculate residues
-        for m in cns
-            if m ≠ cnmax
-                vns = cn2vn[m]    
+        for ci in Nvjmax
+            if ci ≠ cimax
+                Nci = Nc[ci]    
                 # calculate the new check to node messages
-                update_Lr!(Ms,Lq,m,vns,Lrn,signs,phi)
+                update_Lr!(Ms,Lq,ci,Nci,Lrj,signs,phi)
                 # calculate the residues
-                for n in vns
-                    if n ≠ vnmax
-                        li = LinearIndices(Lr)[m,n]
-                        residue = calc_residue(Ms,Lr,Factors,Lrn,Lq,li,relative)
-                        update_local_list!(residues,coords,local_residues,local_coords,
-                            listsizes,rbpmatrix,li,m,n,residue)
+                for vj in Nci
+                    if vj ≠ vjmax
+                        li = LinearIndices(Lr)[ci,vj]
+                        residue = calc_residue(Ms,Lr,Factors,Lrj,Lq,li,relative)
+                        update_local_list!(residues,coords,local_residues,
+                            local_coords,listsizes,rbpmatrix,li,ci,vj,residue)
                     end
                 end
             end

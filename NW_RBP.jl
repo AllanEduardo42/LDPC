@@ -20,44 +20,42 @@ function
         ::Union{Vector{Bool},Nothing},
         ::Union{Vector{<:AbstractFloat},Nothing},
         decayfactor::AbstractFloat,
-        num_edges::Integer,
+        M::Integer,
         ::Matrix{<:AbstractFloat},
         Factors::Vector{<:AbstractFloat},
         alpha::Vector{<:AbstractFloat},
         bp_not_converged::Bool
     )
 
-    e = 0
-    @fastmath @inbounds while e < num_edges
+    @fastmath @inbounds for m = 1:M
 
         # display("e = $e")
 
         # 1) Find largest residue  and coordenates
-        ci = findmaxnode(alpha)
+        cimax = findmaxnode(alpha)
         # display(findmax(alpha))
-        if ci == 0
+        if cimax == 0
             bp_not_converged = false
             break # i.e., RBP has converged
         end
 
         # 4) set maximum residue to zero
-        alpha[ci] = 0.0
+        alpha[cimax] = 0.0
 
         # 2) Decay the RBP factor corresponding to the maximum residue
-        # Factors[ci] *= decayfactor
+        # Factors[cimax] *= decayfactor
         # 3) update check to node message Lr[cnmax,vnmax]
-        Nci = Nc[ci]
-        for vk in Nci
-            e += 1
-            Lr[ci,vk] = calc_Lr(Nci,ci,vk,Lq)
-            Nvk = Nn[vk]
-            for ca in Nvk
-                if ca ≠ ci
-                    # 5) update Nn messages Lq[ca,vnmax]
-                    Lq[ca,vk] = calc_Lq(Nvk,ca,vk,Lr,Lf)   
+        Ncimax = Nc[cimax]
+        for vj in Ncimax
+            Lr[cimax,vj] = calc_Lr(Ncimax,cimax,vj,Lq)
+            Nvj = Nn[vj]
+            for ci in Nvj
+                if ci ≠ cimax
+                    # 5) update Nn messages Lq[ci,vnmax]
+                    Lq[ci,vj] = calc_Lq(Nvj,ci,vj,Lr,Lf)   
                     # 6) calculate alpha
-                    Nca = Nc[ca]
-                    alpha[ca] = calc_alpha(Nca,ca,Lr,Lq,Factors)
+                    Nci = Nc[ci]
+                    alpha[ci] = calc_alpha(Nci,ci,Lr,Lq,Factors)
                 end
             end
         end
@@ -65,65 +63,28 @@ function
 
     # 7) update bitvector
     for vb in eachindex(Nn)
-        ca = Nn[vb][1]
-        bitvector[vb] = signbit(Lr[ca,vb] + Lq[ca,vb])
+        ci = Nn[vb][1]
+        bitvector[vb] = signbit(Lr[ci,vb] + Lq[ci,vb])
     end
 
     return bp_not_converged
 end
 
-function calc_Lr(
+function calc_residue(
     Nci::Vector{<:Integer},
     ci::Integer,
-    vk::Integer,    
-    Lq::Matrix{<:AbstractFloat}
-)
-
-    @fastmath @inbounds begin
-        pLr = 1.0
-        for vb in Nci
-            if vb ≠ vk
-                pLr *= tanh(0.5*Lq[ci,vb])
-            end
-        end
-        return 2*atanh(pLr)
-    end
-end
-
-function calc_Lq(
-    Nvk::Vector{<:Integer},
-    ci::Integer,
-    vk::Integer,
-    Lr::Matrix{<:AbstractFloat},
-    Lf::Vector{<:AbstractFloat}
-)
-
-    @fastmath @inbounds begin
-        Lq = Lf[vk]
-        for ca in Nvk
-            if ca ≠ ci
-                Lq += Lr[ca,vk]
-            end
-        end
-        return Lq
-    end
-end
-
-function calc_residue(
-    Nni::Vector{<:Integer},
-    ni::Integer,
-    nj::Integer,
+    vj::Integer,
     Lr::Matrix{<:AbstractFloat},
     Lq::Matrix{<:AbstractFloat},
     Factors::Vector{<:AbstractFloat},
 )
 
     @inbounds begin
-        residue = calc_Lr(Nni,ni,nj,Lq) - Lr[ni,nj]
+        residue = calc_Lr(Nci,ci,vj,Lq) - Lr[ci,vj]
         if isnan(residue)
             return 0.0
         else
-            # @fastmath return abs(x)*Factors[ni]
+            # @fastmath return abs(x)*Factors[ci]
             @fastmath return abs(residue)
         end
     end

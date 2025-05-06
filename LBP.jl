@@ -13,34 +13,26 @@ function
         Lq::Matrix{<:AbstractFloat},
         Lr::Matrix{<:AbstractFloat},        
         Lf::Vector{<:AbstractFloat},
-        cn2vn::Vector{Vector{T}} where {T<:Integer},
-        vn2cn::Vector{Vector{T}} where {T<:Integer},
-        Lrn::Vector{<:AbstractFloat},
+        Nc::Vector{Vector{T}} where {T<:Integer},
+        Nv::Vector{Vector{T}} where {T<:Integer},
+        Lrj::Vector{<:AbstractFloat},
         signs::Union{Vector{Bool},Nothing},
         phi::Union{Vector{<:AbstractFloat},Nothing}
     )
 
-    @fastmath @inbounds for m in eachindex(cn2vn)
+    @fastmath @inbounds for ci in eachindex(Nc)
         # Lq updates 
-        vns = cn2vn[m]     
-        for n in vns # for every n in Neighborhood(m)
-            Ld = calc_Ld(n,vn2cn[n],Lf[n],Lr)
-            Lq[m,n] = Ld - Lr[m,n]
+        Nci = Nc[ci]     
+        for vj in Nci # for every vj in Neighborhood(ci)
+            Ld = calc_Ld(vj,Nv[vj],Lf,Lr)
+            Lq[ci,vj] = Ld - Lr[ci,vj]
         end
         # Lr updates
-        update_Lr!(Lr,Lq,m,vns,Lrn,signs,phi)
-        for n in vns
-            bitvector[n] = signbit(Lq[m,n] + Lr[m,n])
+        update_Lr!(Lr,Lq,ci,Nci,Lrj,signs,phi)
+        for vj in Nci
+            bitvector[vj] = signbit(Lq[ci,vj] + Lr[ci,vj])
         end
     end
-
-    # @fastmath @inbounds for n in eachindex(vn2cn)
-    #     Ld = Lf[n]
-    #     for m in vn2cn[n]
-    #         Ld += Lr[m,n]
-    #     end
-    #     bitvector[n] = signbit(Ld)
-    # end
 end
 
 ### old instantaneous LBP
@@ -51,45 +43,45 @@ end
 #         Lr::Matrix{<:AbstractFloat},
 #         Lf::Vector{<:AbstractFloat},
 #         Ldn::Vector{<:AbstractFloat},
-#         cn2vn::Vector{Vector{T}} where {T<:Integer},
-#         vn2cn::Vector{Vector{T}} where {T<:Integer},
-#         Lrn::Vector{<:AbstractFloat},
+#         Nc::Vector{Vector{T}} where {T<:Integer},
+#         Nv::Vector{Vector{T}} where {T<:Integer},
+#         Lrj::Vector{<:AbstractFloat},
 #         syndrome::Vector{Bool},
 #         visited_vns::Vector{Bool},
 #         i::Integer
 #     )
 
 #     visited_vns .= false
-#     for m in eachindex(cn2vn)
+#     for ci in eachindex(Nc)
 #         # Lq updates       
-#         @fastmath @inbounds for n in cn2vn[m] # for every n in Neighborhood(m)
-#             if visited_vns[n]
-#                 Lq[n,m] = Ldn[n] - Lr[m,n]
+#         @fastmath @inbounds for vj in Nc[ci] # for every vj in Neighborhood(ci)
+#             if visited_vns[vj]
+#                 Lq[vj,ci] = Ldn[vj] - Lr[ci,vj]
 #             else
-#             Ldn[n], bitvector[n] = update_Lq!(Lq,Lr,Lf[n],n,vn2cn,Lrn)
-#                 visited_vns[n] = true
+#             Ldn[vj], bitvector[vj] = update_Lq!(Lq,Lr,Lf[vj],vj,Nv,Lrj)
+#                 visited_vns[vj] = true
 #             end
 #         end
 #         # Lr updates
 #         pLr = 1.0
-#         @fastmath @inbounds for n in cn2vn[m]
-#             Lrn[n] = tanh(0.5*Lq[n,m])
-#             pLr *= Lrn[n]
+#         @fastmath @inbounds for vj in Nc[ci]
+#             Lrj[vj] = tanh(0.5*Lq[vj,ci])
+#             pLr *= Lrj[vj]
 #         end
-#         @fastmath @inbounds for n in cn2vn[m]
-#             Ldn[n] -= Lr[m,n]
-#             x = pLr/Lrn[n]
+#         @fastmath @inbounds for vj in Nc[ci]
+#             Ldn[vj] -= Lr[ci,vj]
+#             x = pLr/Lrj[vj]
 #             if abs(x) < 1 # controls divergent values of Lr                
-#                 Lr[m,n] = 2*atanh(x)                
+#                 Lr[ci,vj] = 2*atanh(x)                
 #             else
-#                 Lr[m,n] = x*INFFLOAT
+#                 Lr[ci,vj] = x*INFFLOAT
 #             end
-#             Ldn[n] += Lr[m,n]
-#             bitvector[n] = signbit(Ldn[n])
+#             Ldn[vj] += Lr[ci,vj]
+#             bitvector[vj] = signbit(Ldn[vj])
 #         end
 #         # calc syndrome
 #         # if i > 1
-#         #     @inbounds syndrome[m] = _calc_syndrome(bitvector,cn2vn[m])
+#         #     @inbounds syndrome[ci] = _calc_syndrome(bitvector,Nc[ci])
 #         #     if iszero(syndrome)
 #         #         break
 #         #     end

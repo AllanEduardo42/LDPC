@@ -15,6 +15,8 @@ include("VN_RBP.jl")
 include("NW_RBP.jl")
 include("RBP_raw.jl")
 include("./RBP functions/calc_all_residues.jl")
+include("update_Lq.jl")
+include("update_Lr.jl")
 
 function
     simcore(
@@ -23,8 +25,8 @@ function
         ebn0::AbstractFloat,
         H::Matrix{Bool},
         G::Union{Nothing,Matrix{Bool}},
-        cn2vn::Vector{Vector{T}} where {T<:Integer},
-        vn2cn::Vector{Vector{T}} where {T<:Integer},
+        Nc::Vector{Vector{T}} where {T<:Integer},
+        Nv::Vector{Vector{T}} where {T<:Integer},
         E_H::Union{Nothing,Matrix{<:Integer}},
         protocol::String,
         Zf::Integer,
@@ -119,8 +121,8 @@ function
     # bit-error
     biterror = Vector{Bool}(undef,N) 
 
-    # Lq -> matrix of vn2cn messages (N x M)
-    # Lr -> matrix of cn2vn messages (M x N)
+    # Lq -> matrix of Nv messages (N x M)
+    # Lr -> matrix of Nc messages (M x N)
     # if mode == "MKAY" the are matrices for bit = 0 and bit = 1
     Lq = (bptype != "MKAY") ? zeros(M,N) : zeros(M,N,2)
 
@@ -156,7 +158,7 @@ function
         rbpmatrix = 0*H
         e = 0
         for m in axes(H,1)
-            for n in cn2vn[m]
+            for n in Nc[m]
                 e += 1
                 coords[1,e] = m
                 coords[2,e] = n
@@ -227,13 +229,13 @@ function
         # 7) reset simulation variables
         syndrome .= true
         decoded .= false
-        resetmatrix!(Lr,vn2cn,0.0)
+        resetmatrix!(Lr,Nv,0.0)
         if mode == "List-RBP"
             residues .= 0.0
             coords .= 0
             localresidues .= 0.0
             localcoords .= 0
-            resetmatrix!(rbpmatrix,vn2cn,false)
+            resetmatrix!(rbpmatrix,Nv,false)
         end
 
         # 8) init the LLR priors
@@ -248,17 +250,17 @@ function
         # bitvector .= false
         
         # 9) init the Lq matrix
-        init_Lq!(Lq,Lf,vn2cn)
+        init_Lq!(Lq,Lf,Nv)
 
         # 10) precalculate the residues for RBP
         if mode == "RBP" || mode == "List-RBP" || mode == "Genius-RBP"
-            calc_all_residues!(Lq,Lr,cn2vn,Lrn,signs,phi,Ms,Factors,rbpmatrix,
+            calc_all_residues!(Lq,Lr,Nc,Lrn,signs,phi,Ms,Factors,rbpmatrix,
                 residues,coords,listsizes,relative)
         elseif mode == "NW-RBP"
             for m in 1:M 
                 # calculate the new check to node messages
-                # update_Lr!(Ms,Lq,m,cn2vn[m],Lrn,signs,phi)
-                vns = cn2vn[m]
+                # update_Lr!(Ms,Lq,m,Nc[m],Lrn,signs,phi)
+                vns = Nc[m]
                 maxresidue = 0.0
                 for n in vns
                     pLr = 1.0
@@ -277,11 +279,11 @@ function
         elseif mode == "VN-RBP"
             for m in 1:M 
                 # calculate the new check to node messages
-                update_Lr!(Ms,Lq,m,cn2vn[m],Lrn,signs,phi)
+                update_Lr!(Ms,Lq,m,Nc[m],Lrn,signs,phi)
             end
             for n in 1:N
                 residue = 0.0
-                for m in vn2cn[n]
+                for m in Nv[n]
                     li = LinearIndices(Ms)[m,n]
                     residue += Ms[li]
                 end
@@ -309,8 +311,8 @@ function
                     Lq,
                     Lr,
                     Lf,
-                    cn2vn,
-                    vn2cn,
+                    Nc,
+                    Nv,
                     Lrn,
                     signs,
                     phi)
@@ -320,8 +322,8 @@ function
                     Lq,
                     Lr,
                     Lf,
-                    cn2vn,
-                    vn2cn,
+                    Nc,
+                    Nv,
                     Lrn,
                     signs,
                     phi)
@@ -331,8 +333,8 @@ function
                     Lq,
                     Lr,
                     Lf,
-                    cn2vn,
-                    vn2cn,
+                    Nc,
+                    Nv,
                     Lrn,
                     signs,
                     phi,
@@ -350,7 +352,7 @@ function
                     bp_not_converged
                     )
                 # reset factors
-                resetmatrix!(Factors,vn2cn,1.0)
+                resetmatrix!(Factors,Nv,1.0)
             elseif mode == "Genius-RBP"
                 bp_not_converged = genius_RBP!(
                     bitvector,
@@ -358,8 +360,8 @@ function
                     Lq,
                     Lr,
                     Lf,
-                    cn2vn,
-                    vn2cn,
+                    Nc,
+                    Nv,
                     Lrn,
                     signs,
                     phi,
@@ -377,15 +379,15 @@ function
                     bp_not_converged
                     )
                 # reset factors
-                resetmatrix!(Factors,vn2cn,1.0)
+                resetmatrix!(Factors,Nv,1.0)
             elseif mode == "VN-RBP"
                 bp_not_converged = VN_RBP!(
                     bitvector,
                     Lq,
                     Lr,
                     Lf,
-                    cn2vn,
-                    vn2cn,
+                    Nc,
+                    Nv,
                     Lrn,
                     signs,
                     phi,
@@ -406,13 +408,13 @@ function
                     Lq,
                     Lr,
                     Lf,
-                    cn2vn,
-                    vn2cn,
+                    Nc,
+                    Nv,
                     Lrn,
                     signs,
                     phi,
                     decayfactor,
-                    num_edges,
+                    M,
                     Ms,
                     Factors,
                     residues,
@@ -422,7 +424,7 @@ function
                 Factors .= 1.0
             end
     
-            calc_syndrome!(syndrome,bitvector,cn2vn)
+            calc_syndrome!(syndrome,bitvector,Nc)
 
             biterror .= (bitvector .≠ complete_cword)
     
@@ -466,8 +468,8 @@ function
         if bptype == "MKAY"
             retr = zeros(M,N)
             retq = zeros(M,N)
-            for m in eachindex(cn2vn)
-                for n in cn2vn[m]
+            for m in eachindex(Nc)
+                for n in Nc[m]
                     retr[m,n] = log.(Lr[m,n,1]) - log.(Lr[m,n,2])
                     retq[m,n] = log.(Lq[m,n,1]) - log.(Lq[m,n,2])
                 end

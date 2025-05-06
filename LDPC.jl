@@ -54,7 +54,7 @@ SEED_MESSA::Int = 1000
 
 ############################### 4) CONTROL FLAGS ###############################
 
-TEST::Bool = false
+TEST::Bool = true
 PRIN::Bool = true
 STOP::Bool = false # stop simulation at zero syndrome (if true, BER curves are
 # not printed)
@@ -72,7 +72,7 @@ RELATIVE::Bool = false
 
 # TEST
 MAXITER_TEST::Int = 1
-EbN0_TEST::Float64 = 1.2
+EbN0_TEST::Float64 = 1.3
 TRIALS_TEST::Int = 1
 DECAY_TEST::Float64 = 1.0
 
@@ -108,7 +108,7 @@ MAXITERS[i] = MAXITER
 
 # RBP
 i += 1
-ACTIVE[i] = 1
+ACTIVE[i] = 0
 BPTYPES[i] = "FAST"
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
@@ -136,7 +136,7 @@ DECAYS[i] = FACTORS
 
 # NW-RBP
 i += 1
-ACTIVE[i] = 1
+ACTIVE[i] = 0
 BPTYPES[i] = "TANH"
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
@@ -155,7 +155,7 @@ RR::Float64 = 1/2
 # Message (Payload) size
 AA::Int = 576*RR
 # LDPC protocol: NR5G = NR-LDPC (5G); PEG = PEG; WiMAX = IEEE80216e;
-PROTOCOL::String = "NR5G"
+PROTOCOL::String = "WiMAX"
     DENSITIES = 1:8
 
 ############################# PARITY-CHECK MATRIX #############################
@@ -201,8 +201,8 @@ else
 end
 
 # list of checks and variables nodes
-CN2VN  = make_cn2vn_list(HH)
-VN2CN  = make_vn2cn_list(HH)
+NC  = make_cn2vn_list(HH)
+NV  = make_vn2cn_list(HH)
 
 STR = 
 """############################### LDPC parameters ################################
