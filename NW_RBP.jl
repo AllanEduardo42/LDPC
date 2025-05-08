@@ -19,13 +19,16 @@ function
         phi::Union{Vector{<:AbstractFloat},Nothing},
         decayfactor::AbstractFloat,
         M::Integer,
-        Ms::Matrix{<:AbstractFloat},
+        newLr::Matrix{<:AbstractFloat},
         Factors::Vector{<:AbstractFloat},
         alpha::Vector{<:AbstractFloat},
         bp_not_converged::Bool
     )
 
+    # count = 0
+
     @fastmath @inbounds for m in 1:M
+    # @fastmath @inbounds while count < 200000
 
         # display("m = $m")
 
@@ -46,22 +49,29 @@ function
         for vj in Nc[cimax]
             # 4) update check to node messages Lr[cimax,vnmax]
             li = LinearIndices(Lr)[cimax,vj]
-            Lr[li] = Ms[li]
+            Lr[li] = newLr[li]
             # 5) update Nv messages Lq[vj,ci] and bitvector[vj]
             Nvj = Nv[vj]
-            bitvector[vj] = update_Lq!(Lq,Lr,Lf,vj,Nvj,Lrj)
+            Ld = calc_Ld(vj,Nvj,Lf,Lr)
+            bitvector[vj] = signbit(Ld)
             # 6) calculate residues
             for ci in Nvj
                 if ci ≠ cimax
+                    # 6) update Nv messages Lq[ci,vj]
+                    li = LinearIndices(Lq)[ci,vj]
+                    Lq[li] = Ld - Lr[li]
                     Nci = Nc[ci]    
                     # calculate the new check to node messages
-                    update_Lr!(Ms,Lq,ci,Nci,Lrj,signs,phi)
+                    pLr, countzeros, vj0 = calc_pLr(Lq,ci,Nci,Lrj) 
                     # calculate alpha
                     maxresidue = 0.0
                     for vk in Nci
                         # if vk ≠ vj
+                        # count += 1
                             li = LinearIndices(Lr)[ci,vk]
-                            residue = calc_residue(Ms[li],Lr[li],Factors[ci])
+                            newlr = fast_Lr(Lrj,pLr,countzeros,vj0,vk)
+                            newLr[li]= newlr
+                            residue = calc_residue(newlr,Lr[li],Factors[ci])
                             if residue > maxresidue
                                 maxresidue = residue
                             end
@@ -72,6 +82,8 @@ function
             end
         end
     end
+
+    # display(count)
 
     return bp_not_converged
 end

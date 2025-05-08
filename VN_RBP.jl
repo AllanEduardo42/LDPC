@@ -19,13 +19,16 @@ function
         phi::Union{Vector{<:AbstractFloat},Nothing},
         decayfactor::AbstractFloat,
         num_edges::Integer,
-        Ms::Matrix{<:AbstractFloat},
+        newLr::Matrix{<:AbstractFloat},
         Factors::Vector{<:AbstractFloat},
         residues::Vector{<:AbstractFloat},
         bp_not_converged::Bool
     )
 
+    # count = 0
+
     @fastmath @inbounds for e in 1:num_edges
+    # @fastmath @inbounds while count < 200000
 
         # display("e = $e")
 
@@ -38,25 +41,35 @@ function
         residues[vjmax] = 0.0
 
         for ci in Nv[vjmax]
-            li = LinearIndices(Ms)[ci,vjmax]
-            Lr[li] = Ms[li]
-        end        
-
-        bitvector[vjmax] = update_Lq!(Lq,Lr,Lf,vjmax,Nv[vjmax],Lrj)
+            li = LinearIndices(newLr)[ci,vjmax]
+            Lr[li] = newLr[li]
+        end   
+        
+        Nvjmax = Nv[vjmax]
+        Ld = calc_Ld(vjmax,Nvjmax,Lf,Lr)
+        bitvector[vjmax] = signbit(Ld)
 
         for ci in Nv[vjmax]
+            # update Nv messages Lq[ci,vjmax]
+            li = LinearIndices(Lq)[ci,vjmax]
+            Lq[li] = Ld - Lr[li]
             # calculate the new check to node messages
             Nci = Nc[ci]
-            update_Lr!(Ms,Lq,ci,Nci,Lrj,signs,phi)
+            pLr, countzeros, vj0 = calc_pLr(Lq,ci,Nci,Lrj) 
             for vj in Nci
                 if vj ≠ vjmax
-                    li = LinearIndices(Ms)[ci,vj]
-                    residue = Ms[li] - Lr[li]
+                    # count += 1
+                    li = LinearIndices(newLr)[ci,vj]
+                    newlr = fast_Lr(Lrj,pLr,countzeros,vj0,vj)
+                    newLr[li]= newlr   
+                    residue = newlr- Lr[li]
                     residues[vj] = abs(residue)*Factors[vj]
                 end
             end
         end
     end
+
+    # display(count)
 
     return bp_not_converged
 

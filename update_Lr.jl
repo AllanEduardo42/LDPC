@@ -19,42 +19,65 @@ function
     )
 
     @fastmath @inbounds begin
-        pLr = 1.0
-        countzeros = 0
-        vj0 = 0
+
+        pLr, countzeros, vj0 = calc_pLr(Lq,ci,Nci,Lrj)
         for vj in Nci
-            x = Lq[ci,vj]
-            if x == 0.0 # Lr[ci,vj] = 0 for vj ≠ vj0
-                countzeros += 1
-                vj0 = vj
-                Lrj[vj] = 1.0 # s.t. Lr[ci,vj0] = 2*atanh(pLr)
-                if countzeros > 1 # Lr[ci,vj] = 0 ∀n
-                    break
-                end
-            else
-                Lrj[vj] = tanh(0.5*x)
-            end
-            pLr *= Lrj[vj]
+            Lr[ci,vj] = fast_Lr(Lrj,pLr,countzeros,vj0,vj)
         end
-        if countzeros == 0
-            for vj in Nci
-                x = pLr/Lrj[vj]
-                if abs(x) < 1 # controls divergent values of Lr
-                    Lr[ci,vj] = 2*atanh(x)
-                elseif x > 0
-                    Lr[ci,vj] = INFFLOAT
-                else
-                    Lr[ci,vj] = NINFFLOAT
-                end
+    end
+end
+
+function calc_pLr(
+    Lq::Matrix{<:AbstractFloat},
+    ci::Integer,
+    Nci::Vector{<:Integer},
+    Lrj::Vector{<:AbstractFloat}
+)
+
+    pLr = 1.0
+    countzeros = 0
+    vj0 = 0
+    for vj in Nci
+        lq = Lq[ci,vj]
+        if lq == 0.0 # Lr[ci,vj] = 0 for vj ≠ vj0
+            countzeros += 1
+            vj0 = vj
+            Lrj[vj] = 1.0 # s.t. Lr[ci,vj0] = 2*atanh(pLr)
+            if countzeros > 1 # Lr[ci,vj] = 0 ∀n
+                break
             end
         else
-            for vj in Nci
-                Lr[ci,vj] = 0.0
-            end
-            if countzeros == 1 # Lr[ci,vj] = 0 for vj ≠ vj0
-                Lr[ci,vj0] = 2*atanh(pLr)
-            end
+            Lrj[vj] = tanh(0.5*lq)
         end
+        pLr *= Lrj[vj]
+    end
+
+    return pLr, countzeros, vj0
+end
+
+function fast_Lr(
+    Lrj::Vector{<:AbstractFloat},
+    pLr::AbstractFloat,
+    countzeros::Integer,
+    vj0::Integer,
+    vj::Integer
+)
+
+    if countzeros == 0
+        x = pLr/Lrj[vj]
+        if abs(x) < 1 # controls divergent values of Lr
+            return 2*atanh(x)
+        elseif x > 0
+            return INFFLOAT
+        else
+            return NINFFLOAT
+        end
+    else
+        if countzeros == 1 && vj == vj0
+            return 2*atanh(pLr)
+        else
+            return 0.0
+        end 
     end
 end
 

@@ -6,40 +6,38 @@
 # FAST
 function 
     calc_residue(
-        li::Integer,
-        Lq::Matrix{<:AbstractFloat},
-        newLr::AbstractFloat,
-        oldLr::AbstractFloat,
-        Factors::Matrix{<:AbstractFloat},
+        newlr::AbstractFloat,
+        oldlr::AbstractFloat,
+        factor::AbstractFloat,
         relative::Bool,
+        lq::AbstractFloat,
         ::Vector{<:AbstractFloat}
     )
 
 
     @fastmath @inbounds begin      
-        residue = newLr - oldLr
-        return _calc_residue(residue,li,Lq,oldLr,Factors,relative)
+        residue = newlr - oldlr
+        return _calc_residue(residue,oldlr,factor,relative,lq)
     end
 end
 
 #TANH
 function
     calc_residue(
-        li::Integer,
-        Lq::Matrix{<:AbstractFloat},
-        newLr::AbstractFloat,
-        oldLr::AbstractFloat,
-        Factors::Matrix{<:AbstractFloat},
+        newlr::AbstractFloat,
+        oldlr::AbstractFloat,
+        factor::AbstractFloat,
         relative::Bool,
+        lq::AbstractFloat,
         ::Nothing
     )
 
     @inbounds begin
-        residue = newLr - oldLr
+        residue = newlr - oldlr
         if isnan(residue)
             return 0.0
         else
-            return _calc_residue(residue,li,Lq,oldLr,Factors,relative)
+            return _calc_residue(residue,oldlr,factor,relative,lq)
         end
     end
 end
@@ -47,35 +45,36 @@ end
 # core
 function _calc_residue(
     residue::AbstractFloat,
-    li::Integer,
-    Lq::Matrix{<:AbstractFloat},
-    oldLr::AbstractFloat,
-    Factors::Matrix{<:AbstractFloat},
-    relative::Bool
+    oldlr::AbstractFloat,
+    factor::AbstractFloat,
+    relative::Bool,
+    lq::AbstractFloat,
 )
 
-    if relative
-        old = oldLr + Lq[li]
-        residue /= old
-    end
-    residue *= Factors[li]
-    if signbit(residue)
-        return -residue
-    else
-        return residue
+    @fastmath @inbounds begin
+        if relative
+            rLd = oldlr + lq
+            residue /= rLd
+        end
+        residue *= factor
+        if signbit(residue)
+            return -residue
+        else
+            return residue
+        end
     end
 
 end
 
 # NW-RBP and VN-RBP
 function calc_residue(
-    newLr::AbstractFloat,
-    oldLr::AbstractFloat,
+    newlr::AbstractFloat,
+    oldlr::AbstractFloat,
     factor::AbstractFloat
 )
 
     @inbounds begin
-        residue = newLr - oldLr
+        residue = newlr - oldlr
         if isnan(residue)
             return 0.0
         else

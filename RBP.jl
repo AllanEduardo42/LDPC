@@ -22,7 +22,7 @@ function
         phi::Union{Vector{<:AbstractFloat},Nothing},
         decayfactor::AbstractFloat,
         num_edges::Integer,
-        Ms::Matrix{<:AbstractFloat},
+        newLr::Matrix{<:AbstractFloat},
         Factors::Matrix{<:AbstractFloat},
         coords::Matrix{<:Integer},
         rbpmatrix::Matrix{<:Integer},
@@ -34,7 +34,10 @@ function
         bp_not_converged::Bool
     )
 
+    # count = 0 
+
     @fastmath @inbounds for e in 1:num_edges
+    # @fastmath @inbounds while count < 200000
 
         # display("e = $e")
 
@@ -45,7 +48,7 @@ function
                 bp_not_converged = false
                 break # i.e., BP has converged
             elseif max_edge == -1 # if list-RBP
-                calc_all_residues!(Lq,Lr,Nc,Lrj,signs,phi,Ms,Factors,rbpmatrix,
+                calc_all_residues!(Lq,Lr,Nc,Lrj,signs,phi,newLr,Factors,rbpmatrix,
                 residues,coords,listsizes,relative)
                 if residues[1] == 0.0
                     bp_not_converged = false
@@ -65,27 +68,32 @@ function
         Factors[limax] *= decayfactor
 
         # 3) update check to node message Lr[cimax,vjmax]
-        RBP_update_Lr!(limax,Lr,Ms,cimax,vjmax,Nc[cimax],Lq,Lrj,signs,phi)
+        RBP_update_Lr!(limax,Lr,newLr,cimax,vjmax,Nc[cimax],Lq,Lrj,signs,phi)
 
         # 4) set maximum residue to zero
         remove_residue!(limax,listsizes[1],residues,coords,rbpmatrix,max_edge)
 
-        # 5) update Nv messages Lq[vjmax,ci] and bitvector[vjmax]
+        # 5) Calculate Ld of vjmax and bitvector[vjmax]
         Nvjmax = Nv[vjmax]
-        bitvector[vjmax] = update_Lq!(Lq,Lr,Lf,vjmax,Nvjmax,Lrj)
+        Ld = calc_Ld(vjmax,Nvjmax,Lf,Lr)
+        bitvector[vjmax] = signbit(Ld)
 
-        # 6) calculate residues
         for ci in Nvjmax
             if ci ≠ cimax
+                # 6) update Nv messages Lq[ci,vjmax]
+                li = LinearIndices(Lq)[ci,vjmax]
+                Lq[li] = Ld - Lr[li]
+                # 7) calculate residues
                 Nci = Nc[ci]    
-                # calculate the new check to node messages
-                update_Lr!(Ms,Lq,ci,Nci,Lrj,signs,phi)
-                # calculate the residues
+                pLr, countzeros, vj0 = calc_pLr(Lq,ci,Nci,Lrj) 
                 for vj in Nci
                     if vj ≠ vjmax
                         li = LinearIndices(Lr)[ci,vj]
-                        residue = calc_residue(li,Lq,Ms[li],Lr[li],Factors,
-                                                                 relative,Lrj)
+                        # count += 1
+                        newlr = fast_Lr(Lrj,pLr,countzeros,vj0,vj)
+                        newLr[li]= newlr                                                    
+                        residue = calc_residue(newlr,Lr[li],Factors[li],
+                                                        relative,Lq[li],Lrj)
                         update_local_list!(residues,coords,local_residues,
                             local_coords,listsizes,rbpmatrix,li,ci,vj,residue)
                     end
@@ -96,6 +104,8 @@ function
         update_global_list!(residues,coords,local_residues,local_coords,listsizes,
             rbpmatrix)
     end
+
+    # display(count)
 
     return bp_not_converged
 end

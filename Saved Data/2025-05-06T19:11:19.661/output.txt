@@ -6,12 +6,17 @@ Graph girth = 6
 
 ############################# Starting simulation ##############################
 
-Number of trials: [512000]
+Number of trials: [512, 5120, 51200, 512000]
 Message passing protocol: VN-RBP (using LLR-SPA calculated by fast tanh)
-Maximum number of iterations: 20
+Maximum number of iterations: 10
 Number of threads (multithreading): 32
-Simulated for SNR (dB): [1.8]
+Simulated for SNR (dB): [1.2, 1.4, 1.6, 1.8]
 Stop at zero syndrome ? false
 RBP decaying factor: 0.8
 Relative residues: false
 
+Elapsed 6.9 seconds (5.08% gc time, 2021.91% compilation time)
+Elapsed 17.5 seconds (1.08% gc time, 0.0% compilation time)
+Elapsed 153.3 seconds (0.45% gc time, 0.0% compilation time)
+Elapsed 1407.3 seconds (0.36% gc time, 0.0% compilation time)
+The End!

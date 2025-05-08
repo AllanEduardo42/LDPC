@@ -148,7 +148,7 @@ function
     phi = (bptype == "TABL") ? PHI : nothing
 
     # Set other variables that depend on the mode
-    Ms = RBP ? H*0.0 : nothing
+    newLr = RBP ? H*0.0 : nothing
     Factors = RBP ? 1.0*H  : nothing
 
     # RBP modes
@@ -255,7 +255,7 @@ function
 
         # 10) precalculate the residues for RBP
         if mode == "RBP" || mode == "List-RBP" || mode == "Genius-RBP"
-            calc_all_residues!(Lq,Lr,Nc,Lrn,signs,phi,Ms,Factors,rbpmatrix,
+            calc_all_residues!(Lq,Lr,Nc,Lrn,signs,phi,newLr,Factors,rbpmatrix,
                 residues,coords,listsizes,relative)
         elseif mode == "NW-RBP"
             for ci in 1:M
@@ -264,9 +264,10 @@ function
                 maxresidue = 0.0
                 for vj in Nci
                     li = LinearIndices(Lr)[ci,vj]
-                    newLr = calc_Lr(Nci,ci,vj,Lq)
-                    Ms[li] = newLr
-                    residue = calc_residue(newLr,0.0,Factors[ci])
+                    newlr = calc_Lr(Nci,ci,vj,Lq)
+                    newLr[li] = newlr
+                    Lr[li] = newlr
+                    residue = calc_residue(newlr,0.0,Factors[ci])
                     if residue > maxresidue
                         maxresidue = residue
                     end
@@ -276,13 +277,13 @@ function
         elseif mode == "VN-RBP"
             for m in 1:M 
                 # calculate the new check to node messages
-                update_Lr!(Ms,Lq,m,Nc[m],Lrn,signs,phi)
+                update_Lr!(newLr,Lq,m,Nc[m],Lrn,signs,phi)
             end
             for n in 1:N
                 residue = 0.0
                 for m in Nv[n]
-                    li = LinearIndices(Ms)[m,n]
-                    residue += Ms[li]
+                    li = LinearIndices(newLr)[m,n]
+                    residue += newLr[li]
                 end
                 if relative     
                     residue /= Lf[n]
@@ -337,7 +338,7 @@ function
                     phi,
                     decayfactor,
                     num_edges,
-                    Ms,
+                    newLr,
                     Factors,
                     coords,
                     rbpmatrix,
@@ -364,7 +365,7 @@ function
                     phi,
                     decayfactor,
                     num_edges,
-                    Ms,
+                    newLr,
                     Factors,
                     coords,
                     rbpmatrix,
@@ -390,7 +391,7 @@ function
                     phi,
                     decayfactor,
                     num_edges,
-                    Ms,
+                    newLr,
                     Factors,
                     residues,
                     bp_not_converged
@@ -411,7 +412,7 @@ function
                     phi,
                     decayfactor,
                     M,
-                    Ms,
+                    newLr,
                     Factors,
                     residues,
                     bp_not_converged

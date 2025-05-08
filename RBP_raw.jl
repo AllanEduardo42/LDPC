@@ -19,7 +19,7 @@ function
         ::Nothing,
         decayfactor::AbstractFloat,
         num_edges::Integer,
-        Ms::Matrix{<:AbstractFloat},
+        newLr::Matrix{<:AbstractFloat},
         Factors::Matrix{<:AbstractFloat},
         coords::Matrix{<:Integer},
         edges::Matrix{<:Integer},
@@ -49,7 +49,7 @@ function
         # 2) Decay the RBP factor corresponding to the maximum residue
         Factors[limax] *= decayfactor
         # 3) update check to node message Lr[cnmax,vnmax]
-        Lr[limax] = Ms[limax]
+        Lr[limax] = newLr[limax]
         # 4) set maximum residue to zero
         residues[max_edge] = 0.0
 
@@ -63,11 +63,11 @@ function
                 for vj in Nci
                     if vj ≠ vjmax
                         li = LinearIndices(Lr)[ci,vj]
+                        newlr = calc_Lr(Nci,ci,vj,Lq)
                         oldLr = Lr[li]
-                        newLr = calc_Lr(Nci,ci,vj,Lq)
-                        Ms[li] = newLr
-                        residues[edges[li]] = calc_residue(li,Lq,newLr,oldLr,
-                            Factors,relative,nothing)
+                        newLr[li] = newlr
+                        residues[edges[li]] = calc_residue(newlr,oldLr,
+                            Factors[li],relative,Lq[li],nothing)
                     end
                 end
             end
