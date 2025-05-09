@@ -14,9 +14,7 @@ function
         Lf::Vector{<:AbstractFloat},
         Nc::Vector{Vector{T}} where {T<:Integer},
         Nv::Vector{Vector{T}} where {T<:Integer},
-        Lrj::Union{Vector{<:AbstractFloat},Nothing},
-        signs::Union{Vector{Bool},Nothing},
-        phi::Union{Vector{<:AbstractFloat},Nothing},
+        Lrj::Vector{<:AbstractFloat},
         decayfactor::AbstractFloat,
         num_edges::Integer,
         newLr::Matrix{<:AbstractFloat},
@@ -73,5 +71,67 @@ function
 
     return bp_not_converged
 
+end
+
+function
+    VN_RBP!(
+        bitvector::Vector{Bool},
+        Lq::Matrix{<:AbstractFloat},
+        Lr::Matrix{<:AbstractFloat},
+        Lf::Vector{<:AbstractFloat},
+        Nc::Vector{Vector{T}} where {T<:Integer},
+        Nv::Vector{Vector{T}} where {T<:Integer},
+        ::Nothing,
+        decayfactor::AbstractFloat,
+        num_edges::Integer,
+        newLr::Matrix{<:AbstractFloat},
+        Factors::Vector{<:AbstractFloat},
+        residues::Vector{<:AbstractFloat},
+        bp_not_converged::Bool
+    )
+
+    @fastmath @inbounds for e in 1:num_edges
+
+        # display("e = $e")
+
+        vjmax = findmaxnode(residues)
+        if vjmax == 0
+            bp_not_converged = false
+            break # i.e., BP has converged
+        end
+        Factors[vjmax] *= decayfactor
+        residues[vjmax] = 0.0
+
+        for ci in Nv[vjmax]
+            li = LinearIndices(Lr)[ci,vjmax]
+            Lr[li] = newLr[li]
+        end 
+
+        Nvjmax = Nv[vjmax]
+        for ci in Nvjmax
+            # 5) update Nv messages Lq[ci,vnmax]
+            Lq[ci,vjmax] = calc_Lq(Nvjmax,ci,vjmax,Lr,Lf)
+            # 6) calculate residues
+            Nci = Nc[ci]
+            for vj in Nci
+                if vj ≠ vjmax
+                    li = LinearIndices(Lr)[ci,vj]
+                    oldLr = Lr[li]
+                    newlr = calc_Lr(Nci,ci,vj,Lq)
+                    newLr[li] = newlr
+                    residues[vj] = calc_residue(newlr,oldLr,Factors[vj])
+                end
+            end
+        end
+    end
+
+    # 7) update bitvector
+    for vj in eachindex(Nv)
+        ci = Nv[vj][1]
+        li = LinearIndices(Lr)[ci,vj]
+        bitvector[vj] = signbit(Lr[li] + Lq[li])
+    end
+
+    return bp_not_converged
 end
 
