@@ -54,7 +54,7 @@ SEED_MESSA::Int = 1000
 
 ############################### 4) CONTROL FLAGS ###############################
 
-TEST::Bool = true
+TEST::Bool = false
 PRIN::Bool = true
 STOP::Bool = false # stop simulation at zero syndrome (if true, BER curves are
 # not printed)
@@ -67,7 +67,7 @@ MAXITER::Int = 20
 FACTORS = [1.0]
 # EbN0 = [1.2, 1.4, 1.6, 1.8]
 EbN0 = [1.5]
-TRIALS = 10 .^(0:length(EbN0)-1)*2^14
+TRIALS = 10 .^(0:length(EbN0)-1)*2^10
 RELATIVE::Bool = false
 
 # TEST
@@ -108,7 +108,7 @@ MAXITERS[i] = MAXITER
 
 # RBP
 i += 1
-ACTIVE[i] = 0
+ACTIVE[i] = 1
 BPTYPES[i] = "FAST"
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
@@ -136,7 +136,7 @@ DECAYS[i] = FACTORS
 
 # NW-RBP
 i += 1
-ACTIVE[i] = 1
+ACTIVE[i] = 0
 BPTYPES[i] = "FAST"
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
