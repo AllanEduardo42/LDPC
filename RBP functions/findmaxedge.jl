@@ -31,6 +31,6 @@ function
         ::Vector{<:AbstractFloat}   
     )
 
-    @inbounds return -1, residues[1]
+    @inbounds return 1, residues[1]
 
 end

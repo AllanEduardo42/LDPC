@@ -23,8 +23,6 @@ function
         bp_not_converged::Bool
     )
 
-    # count = 0
-
     @fastmath @inbounds for m in 1:M
     # @fastmath @inbounds while count < 200000
 
@@ -65,7 +63,6 @@ function
                     maxresidue = 0.0
                     for vk in Nci
                         # if vk ≠ vj
-                        # count += 1
                             li = LinearIndices(Lr)[ci,vk]
                             newlr = fast_Lr(Lrj,pLr,countzeros,vj0,vk)
                             newLr[li]= newlr
@@ -80,8 +77,6 @@ function
             end
         end
     end
-
-    # display(count)
 
     return bp_not_converged
 end

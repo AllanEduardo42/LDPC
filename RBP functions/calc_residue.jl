@@ -11,7 +11,7 @@ function
         factor::AbstractFloat,
         relative::Bool,
         lq::AbstractFloat,
-        ::Vector{<:AbstractFloat}
+        ::Union{Vector{<:AbstractFloat},Nothing}
     )
 
 
@@ -28,8 +28,7 @@ function
         oldlr::AbstractFloat,
         factor::AbstractFloat,
         relative::Bool,
-        lq::AbstractFloat,
-        ::Nothing
+        lq::AbstractFloat
     )
 
     @inbounds begin

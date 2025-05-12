@@ -42,7 +42,7 @@ end
 const INF = typemax(Int64)
 const INFFLOAT = 1e3
 const NINFFLOAT = -INFFLOAT
-const ALPHA = 0.875               # Min-Sum attenuation factor
+const ALPHA = 0.7              # Min-Sum attenuation factor
 const TABLESIZE = 8192
 const TABLERANGE = 10
 const SIZE_PER_RANGE = TABLESIZE/TABLERANGE
@@ -54,7 +54,7 @@ SEED_MESSA::Int = 1000
 
 ############################### 4) CONTROL FLAGS ###############################
 
-TEST::Bool = false
+TEST::Bool = true
 PRIN::Bool = true
 STOP::Bool = false # stop simulation at zero syndrome (if true, BER curves are
 # not printed)
@@ -78,12 +78,12 @@ DECAY_TEST::Float64 = 1.0
 
 ################################ 6) BP SCHEDULE ################################
 
-MODES = ["Flooding","LBP","RBP","List-RBP","VN-RBP","Genius-RBP","NW-RBP"]
+MODES = ["Flooding","LBP","RBP","List-RBP","Genius-RBP","NW-RBP","VN-RBP"]
 NUM_MODES = length(MODES)
 ACTIVE = zeros(Bool,NUM_MODES)
 LISTSIZES = zeros(Int,4)
 
-# BP type: "MKAY", "TANH", "FAST", "ALTN", "TABL", "MSUM"
+# BP type: "MKAY", "TANH", "FAST", "TABL", "MSUM"
 BPTYPES = Vector{String}(undef,NUM_MODES)
 
 # maximum number of BP iterations
@@ -108,19 +108,12 @@ MAXITERS[i] = MAXITER
 
 # RBP
 i += 1
-ACTIVE[i] = 1
-BPTYPES[i] = "FAST"
-MAXITERS[i] = MAXITER
-DECAYS[i] = FACTORS
-
-# List-RBP
-i += 1
 ACTIVE[i] = 0
 BPTYPES[i] = "FAST"
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
 
-# Variable Node RBP
+# List-RBP
 i += 1
 ACTIVE[i] = 0
 BPTYPES[i] = "FAST"
@@ -136,14 +129,21 @@ DECAYS[i] = FACTORS
 
 # NW-RBP
 i += 1
+ACTIVE[i] = 1
+BPTYPES[i] = "FAST"
+MAXITERS[i] = MAXITER
+DECAYS[i] = FACTORS
+
+# Variable Node RBP
+i += 1
 ACTIVE[i] = 0
 BPTYPES[i] = "FAST"
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
 
 # List-RBP sizes (min values = 4 and 2)
-LISTSIZES[1] = 128
-LISTSIZES[2] = 16
+LISTSIZES[1] = 16
+LISTSIZES[2] = 2 
 
 ############################### 7) LOOKUP TABLE ################################
 
@@ -250,19 +250,16 @@ end
 
 ############################ PERFORMANCE SIMULATION ############################
 if TEST
-    if TEST
-        LRM = Dict()
-        LQM = Dict()
-        for i in eachindex(ACTIVE)
-            if ACTIVE[i]
-                LRM[MODES[i]], LQM[MODES[i]] = performance_sim(
-                                            EbN0_TEST,
-                                            MODES[i],
-                                            TRIALS_TEST,
-                                            MAXITER_TEST,
-                                            BPTYPES[i],
-                                            DECAY_TEST)
-            end
+    LRM = zeros(MM,NN)
+    LQM = zeros(MM,NN)
+    for i in eachindex(ACTIVE)
+        if ACTIVE[i]
+            global LRM, LQM = performance_sim(EbN0_TEST,
+                                              MODES[i],
+                                              TRIALS_TEST,
+                                              MAXITER_TEST,
+                                              BPTYPES[i],
+                                              DECAY_TEST)
         end
     end
 else

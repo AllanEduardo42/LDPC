@@ -2,109 +2,80 @@
 # Allan Eduardo Feitosa
 # 26 set 2024
 # Horizontal update of the LLR
-# There are 4 different methods for SPA: Mckay, tanh, alternative and table
+# There are 4 different methods for SPA: Mckay, tanh, fast tanh and table
 
-include("minsum.jl")
 
 ####################### SPA USING FAST HYPERBOLIC TANGENT ######################
-function
-    update_Lr!(
-        Lr::Matrix{<:AbstractFloat},
+function 
+    calc_ABCD!(
+        aux::Vector{<:AbstractFloat},
+        ::Nothing,
+        ::Nothing,
         Lq::Matrix{<:AbstractFloat},
         ci::Integer,
         Nci::Vector{<:Integer},
-        Lrj::Vector{<:AbstractFloat},
+    )
+
+    pLr = 1.0
+    no_zeros = true
+    vj0 = 0
+    @fastmath @inbounds for vj in Nci
+        lq = Lq[ci,vj]
+        if lq == 0.0 # Lr[ci,vj] = 0 for vj ≠ vj0
+            if no_zeros == false # Lr[ci,vj0] = 0
+                vj0 = 0
+                break
+            end
+            no_zeros = false
+            vj0 = vj
+            aux[vj] = 1.0 # s.t. Lr[ci,vj0] = 2*atanh(pLr)
+        else
+            aux[vj] = tanh(0.5*lq)
+        end
+        pLr *= aux[vj]
+    end
+    
+    return pLr, no_zeros, vj0, nothing
+end
+
+function 
+    calc_Lr(
+        pLr::AbstractFloat, #A
+        no_zeros::Bool,     #B
+        vj0::Integer,       #C
+        ::Nothing,          #D
+        vj::Integer,
+        aux::Vector{<:AbstractFloat},
         ::Nothing,
-        ::Nothing     
+        ::Nothing
     )
 
     @fastmath @inbounds begin
-
-        pLr, countzeros, vj0 = calc_pLr(Lq,ci,Nci,Lrj)
-        for vj in Nci
-            Lr[ci,vj] = fast_Lr(Lrj,pLr,countzeros,vj0,vj)
-        end
-    end
-end
-
-function calc_pLr(
-    Lq::Matrix{<:AbstractFloat},
-    ci::Integer,
-    Nci::Vector{<:Integer},
-    Lrj::Vector{<:AbstractFloat}
-)
-
-    pLr = 1.0
-    countzeros = 0
-    vj0 = 0
-    for vj in Nci
-        lq = Lq[ci,vj]
-        if lq == 0.0 # Lr[ci,vj] = 0 for vj ≠ vj0
-            countzeros += 1
-            vj0 = vj
-            Lrj[vj] = 1.0 # s.t. Lr[ci,vj0] = 2*atanh(pLr)
-            if countzeros > 1 # Lr[ci,vj] = 0 ∀n
-                break
+        if no_zeros
+            x = pLr/aux[vj]
+            if abs(x) < 1 # controls divergent values of Lr
+                return 2*atanh(x)
+            elseif x > 0
+                return INFFLOAT
+            else
+                return NINFFLOAT
             end
-        else
-            Lrj[vj] = tanh(0.5*lq)
-        end
-        pLr *= Lrj[vj]
-    end
-
-    return pLr, countzeros, vj0
-end
-
-function fast_Lr(
-    Lrj::Vector{<:AbstractFloat},
-    pLr::AbstractFloat,
-    countzeros::Integer,
-    vj0::Integer,
-    vj::Integer
-)
-
-    if countzeros == 0
-        x = pLr/Lrj[vj]
-        if abs(x) < 1 # controls divergent values of Lr
-            return 2*atanh(x)
-        elseif x > 0
-            return INFFLOAT
-        else
-            return NINFFLOAT
-        end
-    else
-        if countzeros == 1 && vj == vj0
+        elseif vj == vj0
             return 2*atanh(pLr)
         else
             return 0.0
-        end 
+        end
     end
 end
 
 ###################### SPA USING HYPERBOLIC TANGENT NO OPT #####################
-
 function 
-    update_Lr!(
-        Lr::Matrix{<:AbstractFloat},
-        Lq::Matrix{<:AbstractFloat},
-        ci::Integer,
+    calc_Lr(
         Nci::Vector{<:Integer},
-        ::Nothing,
-        ::Nothing,
-        ::Nothing
+        ci::Integer,
+        vj::Integer,    
+        Lq::Matrix{<:AbstractFloat}
     )
-    
-    @inbounds for vj in Nci
-        Lr[ci,vj] = calc_Lr(Nci,ci,vj,Lq)
-    end
-end
-
-function calc_Lr(
-    Nci::Vector{<:Integer},
-    ci::Integer,
-    vj::Integer,    
-    Lq::Matrix{<:AbstractFloat}
-)
 
     @fastmath @inbounds begin
         pLr = 1.0
@@ -118,110 +89,148 @@ function calc_Lr(
 end
 
 
-################# ALTERNATIVE TO HYPERBOLIC TANGENT AND TABLE ##################
-
-function ϕ(Lq::AbstractFloat, ::Nothing)    
-    @fastmath log(1 + 2/(exp(Lq)-1))
-end
-
-function ϕ(Lq::AbstractFloat, phi::Vector{<:AbstractFloat})    
-    @inbounds phi[get_index(Lq)]
-end
-
-function
-    phi_sign!(
-        Lq::AbstractFloat,
-        s::Bool,
-        phi::Union{Vector{<:AbstractFloat},Nothing}
+################ ALTERNATIVE TO HYPERBOLIC TANGENT USING TABLE ################
+function 
+    calc_ABCD!(
+        aux::Vector{<:AbstractFloat},
+        signs::Vector{Bool},
+        phi::Vector{<:AbstractFloat},
+        Lq::Matrix{<:AbstractFloat},
+        ci::Integer,
+        Nci::Vector{<:Integer},
     )
 
-    sig = signbit(Lq)
-    @fastmath ab = abs(Lq)
-    return ϕ(ab,phi), sig, s ⊻ sig
+    sLr = 0.0
+    s = false
+    @fastmath @inbounds for vj in Nci
+        lq = Lq[ci,vj]
+        sig = signbit(lq)
+        s ⊻= sig
+        aux[vj] = ϕ(abs(lq),phi)
+        signs[vj] = sig
+        sLr += aux[vj] 
+    end
+
+    return sLr, s, nothing, nothing
+end
+
+function 
+    calc_Lr(
+        sLr::AbstractFloat, #A
+        s::Bool,            #B          
+        ::Nothing,          #C
+        ::Nothing,          #D
+        vj::Integer,
+        aux::Vector{<:AbstractFloat},
+        signs::Vector{Bool},
+        phi::Vector{<:AbstractFloat}
+    )
+
+    @fastmath @inbounds begin
+        x = abs(sLr - aux[vj])
+        y = signs[vj] ⊻ s
+        return (1 - 2*y)*ϕ(x,phi)
+    end
+end
+
+################################### MIN SUM ###################################
+function 
+    calc_ABCD!(
+        ::Nothing,
+        signs::Vector{Bool},
+        ::Nothing,
+        Lq::Matrix{<:AbstractFloat},
+        ci::Integer,
+        Nci::Vector{<:Integer}
+    )
+
+    @fastmath @inbounds begin
+        s = false
+        minL = INFFLOAT
+        minL2 = INFFLOAT
+        vjmin = Nci[1]
+        for vj in Nci
+            lq = Lq[ci,vj]
+            sig = signbit(lq)
+            s ⊻= sig
+            β = abs(lq)
+            signs[vj] = sig
+            if β < minL
+                vjmin = vj
+                minL, minL2 = β, minL
+            elseif β < minL2
+                minL2 = β
+            end
+        end
+    end
+
+    return minL*ALPHA, s, vjmin, minL2*ALPHA
 
 end
 
 function 
-    update_Lr!(
-        Lr::Matrix{<:AbstractFloat},
-        Lq::Matrix{<:AbstractFloat},
-        ci::Integer,
-        Nci::Vector{<:Integer},
-        Lrj::Vector{<:AbstractFloat},
+    calc_Lr(
+        minL::AbstractFloat,
+        s::Bool,
+        vjmin::Integer,
+        minL2::AbstractFloat,
+        vj::Integer,
+        ::Nothing,
         signs::Vector{Bool},
-        phi::Union{Vector{<:AbstractFloat},Nothing}
+        ::Nothing
     )
 
     @fastmath @inbounds begin
-        sLr = 0.0
-        s = false
-        for vj in Nci
-            Lrj[vj], signs[vj], s = phi_sign!(Lq[ci,vj],s,phi)
-            sLr += Lrj[vj] 
-        end
-        for vj in Nci
-            x = abs(sLr - Lrj[vj])
-            if x > 0 # (Inf restriction)
-                Lr[ci,vj] = (1 - 2*(signs[vj] ⊻ s))*ϕ(x,phi)
+        if signs[vj] ⊻ s
+            if vj ≠ vjmin
+                return -minL
+            else
+                return -minL2
+            end
+        else
+            if vj ≠ vjmin
+                return minL
+            else
+                return minL2
             end
         end
-    end   
-end
-
-################################### MIN SUM ###################################
-
-
-function
-    update_Lr!(
-        Lr::Matrix{<:AbstractFloat},
-        Lq::Matrix{<:AbstractFloat},
-        ci::Integer,
-        Nci::Vector{<:Integer},
-        ::Nothing,
-        signs::Vector{Bool},
-        ::Nothing       
-    )
-
-    minsum!(Lq,Lr,signs,ci,Nci)
-
+    end
 end
 
 
 ########################### SPA USING MKAY's METHOD ############################
 function
-    update_Lr!(
-        r::Array{<:AbstractFloat,3},
-        δq::Vector{<:AbstractFloat},
-        ci::Integer,
-        Nci::Vector{<:Integer}    
+    calc_δr(
+        Nci::Vector{<:Integer},
+        vj::Integer,
+        δq::Vector{<:AbstractFloat}
     )
     
-    @inbounds for vj in Nci
+    @fastmath @inbounds begin
         δr = 1.0
         for vb in Nci
             if vb ≠ vj
                 δr *= δq[vb]
             end
         end
-        r[ci,vj,1] = 0.5*(1+δr)
-        r[ci,vj,2] = 0.5*(1-δr)
+        return δr
     end 
 
 end
 
 # pre-historic method
 function
-    update_Lr!(
-        r::Array{<:AbstractFloat,3},
+    calc_r(
         q::Array{<:AbstractFloat,3},
         ci::Integer,
-        Nci::Vector{<:Integer}    
+        vj::Integer,
+        Nci::Vector{<:Integer},
+        S::Integer
     )
 
-    S = length(Nci)-1
-    @inbounds for vj in Nci
-        r[ci,vj,1] = 0.0   
-        r[ci,vj,2] = 0.0          
+    @fastmath @inbounds begin
+        r1 = 0.0   
+        r2 = 0.0          
         for s = 0:2^S-1
             dig = digits(s, base = 2, pad = S)
             count = 0
@@ -233,7 +242,7 @@ function
                         rr *= q[ci,nn,dig[count]+1]
                     end
                 end
-                r[ci,vj,1] += rr
+                r1 += rr
             else
                 for nn in Nci
                     if nn != vj
@@ -241,9 +250,10 @@ function
                         rr *= q[ci,nn,dig[count]+1]
                     end               
                 end
-                r[ci,vj,2] += rr
+                r2 += rr
             end
         end
+        return r1, r2
     end
 end
 

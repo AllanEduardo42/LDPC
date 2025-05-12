@@ -14,24 +14,66 @@ function
         Lf::Vector{<:AbstractFloat},
         Nc::Vector{Vector{T}} where {T<:Integer},
         Nv::Vector{Vector{T}} where {T<:Integer},
-        Lrj::Union{Vector{<:AbstractFloat},Nothing},
+        aux::Union{Vector{<:AbstractFloat},Nothing},
         signs::Union{Vector{Bool},Nothing},
         phi::Union{Vector{<:AbstractFloat},Nothing}
     )
 
     # Lr update
     @inbounds for ci in eachindex(Nc)
-
-        update_Lr!(Lr,Lq,ci,Nc[ci],Lrj,signs,phi)
-
+        Nci = Nc[ci]
+        A, B, C, D = calc_ABCD!(aux,signs,phi,Lq,ci,Nci)
+        for vj in Nci
+            Lr[ci,vj] = calc_Lr(A,B,C,D,vj,aux,signs,phi)
+        end
     end
 
     # Lq update
-    @inbounds for vj in eachindex(Nv)
-
-        bitvector[vj] = update_Lq!(Lq,Lr,Lf,vj,Nv[vj],Lrj)
-        
+    @fastmath @inbounds for vj in eachindex(Nv)
+        Nvj = Nv[vj]
+        Ld = calc_Ld(vj,Nvj,Lf,Lr)
+        bitvector[vj] = signbit(Ld)
+        for ci in Nvj
+            li = LinearIndices(Lq)[ci,vj]
+            Lq[li] = Ld - Lr[li]
+        end        
     end
+end
+
+# TANH
+function
+    flooding!(
+        bitvector::Vector{Bool},
+        Lq::Matrix{<:AbstractFloat},
+        Lr::Matrix{<:AbstractFloat},
+        Lf::Vector{<:AbstractFloat},
+        Nc::Vector{Vector{T}} where {T<:Integer},
+        Nv::Vector{Vector{T}} where {T<:Integer},
+        ::Nothing,
+        ::Nothing,
+        ::Nothing
+    )
+
+    # Lr update
+    @inbounds for ci in eachindex(Nc)
+        Nci = Nc[ci]
+        for vj in Nci
+            Lr[ci,vj] = calc_Lr(Nci,ci,vj,Lq)
+        end
+    end
+
+    # Lq update
+    ci = 0
+    @fastmath @inbounds for vj in eachindex(Nv)
+        Nvj = Nv[vj]
+        for outer ci in Nvj
+            Lq[ci,vj] = calc_Lq(Nvj,ci,vj,Lr,Lf)
+        end
+        # get the last ci of the loop iteration to calc Ld
+        li = LinearIndices(Lq)[ci,vj]
+        Ld = Lq[li] + Lr[li]
+        bitvector[vj] = signbit(Ld)
+    end    
 end
 
 ### if mode == "MKAY"
@@ -49,25 +91,34 @@ function
         ::Nothing
     )
 
-    @inbounds begin
+    @fastmath @inbounds begin
 
         # horizontal update
 
         for ci in eachindex(Nc)
-
-            vns = Nc[ci]
-            # update_Lr!(r,q,ci,vns)
-            for vj in vns
+            Nci = Nc[ci]
+            # S = length(Nci)-1
+            for vj in Nci
                 δq[vj] = q[ci,vj,1] - q[ci,vj,2]
             end
-            update_Lr!(r,δq,ci,vns)
+            for vj in Nci
+                δr = calc_δr(Nci,vj,δq)
+                r[ci,vj,1] = 0.5*(1+δr)
+                r[ci,vj,2] = 0.5*(1-δr)
+                # r[ci,vj,1], r[ci,vj,2] = calc_r(q,ci,vj,Nci,S)
+            end
 
         end
         
-        # vertical update
-        
-        for vj in eachindex(Nv)    
-            update_Lq!(q,r,f[vj,:],vj,Nv[vj])
+        # vertical update        
+        for vj in eachindex(Nv)
+            Nvj = Nv[vj]    
+            for ci in Nvj
+                Ld1, Ld2 = calc_Ld(r,f,ci,vj,Nvj)
+                a = Ld1 + Ld2
+                q[ci,vj,1] = Ld1/a
+                q[ci,vj,2] = Ld2/a
+            end
         end
 
         for vj in eachindex(Nv) 

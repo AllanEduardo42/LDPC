@@ -17,7 +17,7 @@ function
         Lf::Vector{<:AbstractFloat},
         Nc::Vector{Vector{T}} where {T<:Integer},
         Nv::Vector{Vector{T}} where {T<:Integer},
-        Lrj::Union{Vector{<:AbstractFloat},Nothing},
+        aux::Union{Vector{<:AbstractFloat},Nothing},
         signs::Union{Vector{Bool},Nothing},
         phi::Union{Vector{<:AbstractFloat},Nothing},
         decayfactor::AbstractFloat,
@@ -34,10 +34,7 @@ function
         bp_not_converged::Bool
     )
 
-    # count = 0 
-
     @fastmath @inbounds for e in 1:num_edges
-    # @fastmath @inbounds while count < 200000
 
         # display("e = $e")
 
@@ -47,8 +44,8 @@ function
             if max_edge == 0
                 bp_not_converged = false
                 break # i.e., BP has converged
-            elseif max_edge == -1 # if list-RBP
-                calc_all_residues!(Lq,Lr,Nc,Lrj,signs,phi,newLr,Factors,rbpmatrix,
+            elseif max_edge == 1 # if list-RBP
+                calc_all_residues!(Lq,Lr,Nc,aux,signs,phi,newLr,Factors,rbpmatrix,
                 residues,coords,listsizes,relative)
                 if residues[1] == 0.0
                     bp_not_converged = false
@@ -68,7 +65,7 @@ function
         Factors[limax] *= decayfactor
 
         # 3) update check to node message Lr[cimax,vjmax]
-        RBP_update_Lr!(limax,Lr,newLr,cimax,vjmax,Nc[cimax],Lq,Lrj,signs,phi)
+        RBP_update_Lr!(limax,Lr,newLr,cimax,vjmax,Nc[cimax],Lq,aux,signs,phi)
 
         # 4) set maximum residue to zero
         remove_residue!(limax,listsizes[1],residues,coords,rbpmatrix,max_edge)
@@ -85,15 +82,14 @@ function
                 Lq[li] = Ld - Lr[li]
                 # 7) calculate residues
                 Nci = Nc[ci]    
-                pLr, countzeros, vj0 = calc_pLr(Lq,ci,Nci,Lrj) 
+                A, B, C, D = calc_ABCD!(aux,signs,phi,Lq,ci,Nci)
                 for vj in Nci
                     if vj ≠ vjmax
+                        newlr = calc_Lr(A,B,C,D,vj,aux,signs,phi)
                         li = LinearIndices(Lr)[ci,vj]
-                        # count += 1
-                        newlr = fast_Lr(Lrj,pLr,countzeros,vj0,vj)
-                        newLr[li]= newlr                                                    
+                        newLr[li] = newlr                                              
                         residue = calc_residue(newlr,Lr[li],Factors[li],
-                                                        relative,Lq[li],Lrj)
+                                                        relative,Lq[li],aux)
                         update_local_list!(residues,coords,local_residues,
                             local_coords,listsizes,rbpmatrix,li,ci,vj,residue)
                     end
@@ -104,8 +100,6 @@ function
         update_global_list!(residues,coords,local_residues,local_coords,listsizes,
             rbpmatrix)
     end
-
-    # display(count)
 
     return bp_not_converged
 end
@@ -142,9 +136,9 @@ function
 
         # 1) Find largest residue  and coordenates
         max_edge, _ = findmaxedge(residues,nothing)
-        if max_edge == 0
+        if max_edge == 0.0
             bp_not_converged = false
-            break # i.e., RBP has converged
+            break # i.e., BP has converged
         else
             cimax = coords[1,max_edge]
             vjmax = coords[2,max_edge]
@@ -172,7 +166,7 @@ function
                         oldLr = Lr[li]
                         newLr[li] = newlr
                         residues[edges[li]] = calc_residue(newlr,oldLr,
-                            Factors[li],relative,Lq[li],nothing)
+                                                    Factors[li],relative,Lq[li])
                     end
                 end
             end

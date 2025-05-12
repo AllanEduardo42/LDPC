@@ -27,8 +27,8 @@ HH = Matrix(Bool.(
 
 MM,NN = size(HH)
 
-CN2VN  = make_cn2vn_list(HH)
-VN2CN  = make_vn2cn_list(HH)
+NC  = make_cn2vn_list(HH)
+NV  = make_vn2cn_list(HH)
 
 GG = [gf2_mat_mult(gf2_inverse(HH[:,1:MM]),HH[:,MM+1:NN]); I(NN-MM)] 
 
@@ -45,21 +45,21 @@ SIGNALTEST = [1.3129, 2.6584, 0.7413, 2.1745, 0.5981, −0.8323, −0.3962, −1
 1.4905, 0.4084, −0.9290, 1.0765]
 
 AA = length(MSGTEST)
+RR = 1/2
 
 PRINTTEST = true
 MAXITER = 3
 BPTYPE = "MKAY"
 
-MLR, MLQ, _ = simcore(AA,
+MLR, MLQ  = simcore(AA,
+                    RR,
                     SNR,
                     HH,
                     GG,
-                    MM,
-                    NN,
-                    CN2VN,
-                    VN2CN,
-                    ones(Int,2,2),
-                    2,
+                    NC,
+                    NV,
+                    nothing,
+                    "PEG",
                     0,
                     nothing,
                     "Flooding",
@@ -69,7 +69,7 @@ MLR, MLQ, _ = simcore(AA,
                     false,
                     0.0,
                     [0],
-                    0,
+                    false,
                     0,
                     0;
                     test=true,
@@ -77,12 +77,12 @@ MLR, MLQ, _ = simcore(AA,
                     msgtest=MSGTEST,
                     noisetest=(SIGNALTEST-U)/STDEV)
 
-if BPTYPE == "MKAY"
-    LLR = log.(MLR[:,:,1]) - log.(MLR[:,:,2])
-    LLQ = log.(MLQ[:,:,1]) - log.(MLQ[:,:,2])
-else
-    LLR = MLR
-    LLQ = MLQ
-end
+# if BPTYPE == "MKAY"
+#     LLR = log.(MLR[:,:,1]) - log.(MLR[:,:,2])
+#     LLQ = log.(MLQ[:,:,1]) - log.(MLQ[:,:,2])
+# else
+#     LLR = MLR
+#     LLQ = MLQ
+# end
 ;
 

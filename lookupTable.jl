@@ -14,6 +14,10 @@ function lookupTable()
     return phi
 end
 
+function ϕ(Lq::AbstractFloat, phi::Vector{<:AbstractFloat})    
+    @inbounds phi[get_index(Lq)]
+end
+
 function get_index(arg::AbstractFloat)
     
     if arg > TABLESIZE

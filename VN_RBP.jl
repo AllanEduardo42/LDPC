@@ -23,10 +23,7 @@ function
         bp_not_converged::Bool
     )
 
-    # count = 0
-
     @fastmath @inbounds for e in 1:num_edges
-    # @fastmath @inbounds while count < 200000
 
         # display("e = $e")
 
@@ -56,7 +53,6 @@ function
             pLr, countzeros, vj0 = calc_pLr(Lq,ci,Nci,Lrj) 
             for vj in Nci
                 if vj ≠ vjmax
-                    # count += 1
                     li = LinearIndices(newLr)[ci,vj]
                     newlr = fast_Lr(Lrj,pLr,countzeros,vj0,vj)
                     newLr[li]= newlr   
@@ -66,8 +62,6 @@ function
             end
         end
     end
-
-    # display(count)
 
     return bp_not_converged
 

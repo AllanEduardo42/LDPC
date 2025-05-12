@@ -3,67 +3,52 @@
 # 23 Feb 2024
 # Update check to node messages of the RBP protocol
 
-# 1) if the residues are calculate by TANH and FAST 
+# 1) if the residues are calculate by the FAST or TABL method
 function 
     RBP_update_Lr!(
         lmax::Integer,
         Lr::Matrix{<:AbstractFloat},
-        Ms::Matrix{<:AbstractFloat},
-        ::Integer,
-        ::Integer,
-        ::Vector{<:Integer},
-        ::Matrix{<:AbstractFloat},        
-        ::Union{Vector{<:AbstractFloat},Nothing},
-        ::Nothing,
-        ::Nothing,
-    )
-    
-    # update check to node message Lr[cnmax,vnmax]
-    @inbounds Lr[lmax] = Ms[lmax]
-
-end
-
-# 2) if the residues are calculate by ALTN and TABL
-function 
-    RBP_update_Lr!(
-        lmax::Integer,
-        Lr::Matrix{<:AbstractFloat},
-        Ms::Matrix{<:AbstractFloat},
+        newLr::Matrix{<:AbstractFloat},
         ::Integer,
         ::Integer,
         ::Vector{<:Integer},
         ::Matrix{<:AbstractFloat},        
         ::Vector{<:AbstractFloat},
-        ::Vector{Bool},
-        ::Union{Vector{<:AbstractFloat},Nothing},
-    )    
-
-    # update check to node message Lr[cnmax,vnmax]
-    @inbounds Lr[lmax] = Ms[lmax]
+        ::Union{Vector{Bool},Nothing},
+        ::Union{Vector{<:AbstractFloat},Nothing}
+    )
+    
+    # update check to node message Lr[cimax,vjmax]
+    @inbounds Lr[lmax] = newLr[lmax]
 
 end
 
-# 3) if the residues are calculate by MSUM
+# 2) if the residues are calculate by MSUM methods
 function 
     RBP_update_Lr!(
         lmax::Integer,
         Lr::Matrix{<:AbstractFloat},
         ::Matrix{<:AbstractFloat},
-        cnmax::Integer,
-        vnmax::Integer,
-        vns::Vector{<:Integer},
+        cimax::Integer,
+        vjmax::Integer,
+        Ncimax::Vector{<:Integer},
         Lq::Matrix{<:AbstractFloat},     
         ::Nothing,
         ::Vector{Bool},
         ::Nothing
     )
 
-    # update check to node message Lr[cnmax,vnmax]
+    # update check to node message Lr[cimax,vjmax]
     @fastmath @inbounds begin
         pLr = 1.0
-        for n in vns
-            if n != vnmax
-                pLr *= tanh(0.5*Lq[n,cnmax])
+        for vj in Ncimax
+            if vj != vjmax
+                lq = Lq[cimax,vj]
+                if lq == 0.0
+                    return 0.0
+                else
+                    pLr *= tanh(0.5*lq)
+                end
             end
         end    
         if abs(pLr) < 1 

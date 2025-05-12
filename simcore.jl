@@ -108,7 +108,7 @@ function
     else
         a = 0.0
     end
-    Lf = (bptype != "MKAY") ? a*ones(N) : a*ones(N,2)
+    Lf = (bptype != "MKAY") ? a*ones(N) : 0.5*ones(N,2)
 
     # noise
     # L = length(cword)
@@ -127,18 +127,18 @@ function
 
     Lr = (bptype != "MKAY") ? zeros(M,N) : zeros(M,N,2)
     
-    # Set variables Lrn and signs depending on the BP type (used for dispatch)
+    # Set variables aux and signs depending on the BP type (used for dispatch)
     if bptype == "FAST" || bptype == "MKAY"
-        Lrn = zeros(N)
+        aux = zeros(N)
         signs = nothing
-    elseif bptype == "ALTN" || bptype == "TABL" 
-        Lrn = zeros(N)
+    elseif bptype == "TABL" 
+        aux = zeros(N)
         signs = zeros(Bool,N)
     elseif bptype == "MSUM"
-        Lrn = nothing
+        aux = nothing
         signs = zeros(Bool,N)
-    else
-        Lrn = nothing
+    else # bytype == TANH
+        aux = nothing
         signs = nothing
     end
 
@@ -252,7 +252,7 @@ function
 
         # 10) precalculate the residues for RBP
         if mode == "RBP" || mode == "List-RBP" || mode == "Genius-RBP"
-            calc_all_residues!(Lq,Lr,Nc,Lrn,signs,phi,newLr,Factors,rbpmatrix,
+            calc_all_residues!(Lq,Lr,Nc,aux,signs,phi,newLr,Factors,rbpmatrix,
                 residues,coords,listsizes,relative)
         elseif mode == "NW-RBP"
             for ci in 1:M
@@ -274,7 +274,7 @@ function
         elseif mode == "VN-RBP"
             for m in 1:M 
                 # calculate the new check to node messages
-                update_Lr!(newLr,Lq,m,Nc[m],Lrn,signs,phi)
+                update_Lr!(newLr,Lq,m,Nc[m],aux,signs,phi)
             end
             for n in 1:N
                 residue = 0.0
@@ -308,7 +308,7 @@ function
                     Lf,
                     Nc,
                     Nv,
-                    Lrn,
+                    aux,
                     signs,
                     phi)
             elseif mode == "LBP"
@@ -319,7 +319,7 @@ function
                     Lf,
                     Nc,
                     Nv,
-                    Lrn,
+                    aux,
                     signs,
                     phi)
             elseif (mode == "RBP" || mode == "List-RBP")
@@ -330,7 +330,7 @@ function
                     Lf,
                     Nc,
                     Nv,
-                    Lrn,
+                    aux,
                     signs,
                     phi,
                     decayfactor,
@@ -357,7 +357,7 @@ function
                     Lf,
                     Nc,
                     Nv,
-                    Lrn,
+                    aux,
                     signs,
                     phi,
                     decayfactor,
@@ -383,7 +383,7 @@ function
                     Lf,
                     Nc,
                     Nv,
-                    Lrn,
+                    aux,
                     decayfactor,
                     num_edges,
                     newLr,
@@ -402,7 +402,7 @@ function
                     Lf,
                     Nc,
                     Nv,
-                    Lrn,
+                    aux,
                     decayfactor,
                     M,
                     newLr,

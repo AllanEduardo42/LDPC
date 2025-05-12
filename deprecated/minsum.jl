@@ -11,10 +11,10 @@ end
 
 function minsum!(                           
     Lq::Matrix{<:AbstractFloat},
-    Ms::Matrix{<:AbstractFloat},
+    Lr::Matrix{<:AbstractFloat},
     signs::Vector{Bool},
-    m::Integer,
-    vns::Vector{<:Integer}
+    ci::Integer,
+    Nci::Vector{<:Integer}
     )
 
     @fastmath @inbounds begin
@@ -22,11 +22,11 @@ function minsum!(
         s = false
         minL = INFFLOAT
         minL2 = INFFLOAT
-        max_idx = vns[1]
-        for n in vns
-            β, signs[n], s = abs_sign!(Lq[m,n],s)
+        max_idx = Nci[1]
+        for vj in Nci
+            β, signs[vj], s = abs_sign!(Lq[ci,vj],s)
             if β < minL
-                max_idx = n
+                max_idx = vj
                 minL, minL2 = β, minL
             elseif β < minL2
                 minL2 = β
@@ -35,17 +35,17 @@ function minsum!(
         minL *= ALPHA
         minL2 *= ALPHA
 
-        for n in vns
-            if signs[n] ⊻ s
-                Ms[m,n] = -minL
+        for vj in Nci
+            if signs[vj] ⊻ s
+                Lr[ci,vj] = -minL
             else
-                Ms[m,n] = minL
+                Lr[ci,vj] = minL
             end
         end
-        if signbit(Ms[m,max_idx])
-            Ms[m,max_idx] = -minL2
+        if signbit(Lr[ci,max_idx])
+            Lr[ci,max_idx] = -minL2
         else
-            Ms[m,max_idx] = minL2
+            Lr[ci,max_idx] = minL2
         end
 
     end
