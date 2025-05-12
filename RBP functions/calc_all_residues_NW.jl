@@ -1,68 +1,62 @@
 ################################################################################
 # Allan Eduardo Feitosa
-# 3 Mar 2025
-# Calculate all residues
+# 12 May 2025
+# Calculate all alpha for the NW-RBP
 
 include("calc_residue.jl")
-include("add_residue.jl")
 
-# FAST, TABL and MSUM
 function
-    calc_all_residues!(
+    calc_all_residues_NW!(
         Lq::Matrix{<:AbstractFloat},
-        Lr::Matrix{<:AbstractFloat},
         Nc::Vector{Vector{T}} where {T<:Integer},
         aux::Union{Vector{<:AbstractFloat},Nothing},
         signs::Union{Vector{Bool},Nothing},
         phi::Union{Vector{<:AbstractFloat},Nothing},
         newLr::Matrix{<:AbstractFloat},
-        Factors::Matrix{<:AbstractFloat},        
-        rbpmatrix::Matrix{<:Integer},
-        residues::Vector{<:AbstractFloat},
-        coords::Matrix{<:Integer},
-        listsizes::Vector{<:Integer},
-        relative::Bool
+        alpha::Vector{<:AbstractFloat},
     )
     
     @fastmath @inbounds for ci in eachindex(Nc)
         Nci = Nc[ci]
         A, B, C, D = calc_ABCD!(aux,signs,phi,Lq,ci,Nci)
+        maxresidue = 0.0
         for vj in Nci
             li = LinearIndices(newLr)[ci,vj]
             newlr = calc_Lr(A,B,C,D,vj,aux,signs,phi)
             newLr[li] = newlr
-            residue = calc_residue(newLr[li],Lr[li],Factors[li],relative,Lq[li])
-            add_residue!(rbpmatrix,residues,coords,residue,li,ci,vj,listsizes[1])
+            residue = calc_residue(newlr,0.0,1.0)
+            if residue > maxresidue
+                maxresidue = residue
+            end
         end
+        alpha[ci] = maxresidue
     end
 end
 
-# TANH
-function 
-    calc_all_residues!(
+# RAW
+function
+    calc_all_residues_NW!(
         Lq::Matrix{<:AbstractFloat},
-        Lr::Matrix{<:AbstractFloat},
         Nc::Vector{Vector{T}} where {T<:Integer},
         ::Nothing,
         ::Nothing,
         ::Nothing,
         newLr::Matrix{<:AbstractFloat},
-        Factors::Matrix{<:AbstractFloat},        
-        rbpmatrix::Matrix{<:Integer},
-        residues::Vector{<:AbstractFloat},
-        coords::Matrix{<:Integer},
-        listsizes::Vector{<:Integer},
-        relative::Bool
+        alpha::Vector{<:AbstractFloat},
     )
-
+    
     @fastmath @inbounds for ci in eachindex(Nc)
         Nci = Nc[ci]
+        maxresidue = 0.0
         for vj in Nci
             li = LinearIndices(newLr)[ci,vj]
             newlr = calc_Lr(Nci,ci,vj,Lq)
             newLr[li] = newlr
-            residue = calc_residue_raw(newLr[li],Lr[li],Factors[li],relative,Lq[li])
-            add_residue!(rbpmatrix,residues,coords,residue,li,ci,vj,listsizes[1])
+            residue = calc_residue(newlr,0.0,1.0)
+            if residue > maxresidue
+                maxresidue = residue
+            end
         end
+        alpha[ci] = maxresidue
     end
 end

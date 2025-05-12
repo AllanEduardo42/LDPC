@@ -3,8 +3,9 @@
 # 06 mai 2025
 # Nodewise RBP Algorithm with residual decaying factor
 
-include("./RBP functions/findmaxedge.jl")
+include("./RBP functions/findmaxnode.jl")
 include("./RBP functions/calc_residue.jl")
+include("./RBP functions/RBP_update_Lr.jl")
 
 function
     NW_RBP!(
@@ -14,7 +15,9 @@ function
         Lf::Vector{<:AbstractFloat},
         Nc::Vector{Vector{T}} where {T<:Integer},
         Nv::Vector{Vector{T}} where {T<:Integer},
-        Lrj::Vector{<:AbstractFloat},
+        aux::Union{Vector{<:AbstractFloat},Nothing},
+        signs::Union{Vector{Bool},Nothing},
+        phi::Union{Vector{<:AbstractFloat},Nothing},
         decayfactor::AbstractFloat,
         M::Integer,
         newLr::Matrix{<:AbstractFloat},
@@ -24,7 +27,6 @@ function
     )
 
     @fastmath @inbounds for m in 1:M
-    # @fastmath @inbounds while count < 200000
 
         # display("m = $m")
 
@@ -42,30 +44,31 @@ function
         # 3) Decay the maximum alpha
         Factors[cimax] *= decayfactor
 
-        for vj in Nc[cimax]
+        Ncimax = Nc[cimax]
+        for vk in Ncimax
             # 4) update check to node messages Lr[cimax,vnmax]
-            li = LinearIndices(Lr)[cimax,vj]
-            Lr[li] = newLr[li]
-            # 5) update Nv messages Lq[vj,ci] and bitvector[vj]
-            Nvj = Nv[vj]
-            Ld = calc_Ld(vj,Nvj,Lf,Lr)
-            bitvector[vj] = signbit(Ld)
+            li = LinearIndices(Lr)[cimax,vk]
+            RBP_update_Lr!(li,Lr,newLr,cimax,vk,Ncimax,Lq,aux,signs,phi)
+            # 5) update Nv messages Lq[vk,ci] and bitvector[vk]
+            Nvk = Nv[vk]
+            Ld = calc_Ld(vk,Nvk,Lf,Lr)
+            bitvector[vk] = signbit(Ld)
             # 6) calculate residues
-            for ci in Nvj
+            for ci in Nvk
                 if ci ≠ cimax
-                    # 6) update Nv messages Lq[ci,vj]
-                    li = LinearIndices(Lq)[ci,vj]
+                    # 6) update Nv messages Lq[ci,vk]
+                    li = LinearIndices(Lq)[ci,vk]
                     Lq[li] = Ld - Lr[li]
                     Nci = Nc[ci]    
                     # calculate the new check to node messages
-                    pLr, countzeros, vj0 = calc_pLr(Lq,ci,Nci,Lrj) 
+                    A,B,C,D = calc_ABCD!(aux,signs,phi,Lq,ci,Nci)
                     # calculate alpha
                     maxresidue = 0.0
-                    for vk in Nci
-                        # if vk ≠ vj
-                            li = LinearIndices(Lr)[ci,vk]
-                            newlr = fast_Lr(Lrj,pLr,countzeros,vj0,vk)
-                            newLr[li]= newlr
+                    for vj in Nci
+                        # if vj ≠ vk
+                            newlr = calc_Lr(A,B,C,D,vj,aux,signs,phi)
+                            li = LinearIndices(Lr)[ci,vj]
+                            newLr[li] = newlr
                             residue = calc_residue(newlr,Lr[li],Factors[ci])
                             if residue > maxresidue
                                 maxresidue = residue
@@ -90,6 +93,8 @@ function
         Lf::Vector{<:AbstractFloat},
         Nc::Vector{Vector{T}} where {T<:Integer},
         Nv::Vector{Vector{T}} where {T<:Integer},
+        ::Nothing,
+        ::Nothing,
         ::Nothing,
         decayfactor::AbstractFloat,
         M::Integer,
@@ -117,25 +122,24 @@ function
         # 3) Decay the maximum alpha
         Factors[cimax] *= decayfactor
        
-        for vj in Nc[cimax]
+        for vk in Nc[cimax]
             # 4) update check to node messages Lr[cimax,vnmax]
-            li = LinearIndices(Lr)[cimax,vj]
+            li = LinearIndices(Lr)[cimax,vk]
             Lr[li] = newLr[li]
-            Nvj = Nv[vj]
-            for ci in Nvj
+            Nvk = Nv[vk]
+            for ci in Nvk
                 if ci ≠ cimax
                     # 5) update Nv messages Lq[ci,vnmax]
-                    Lq[ci,vj] = calc_Lq(Nvj,ci,vj,Lr,Lf)   
+                    Lq[ci,vk] = calc_Lq(Nvk,ci,vk,Lr,Lf)   
                     # 6) calculate alpha
                     Nci = Nc[ci]
                     maxresidue = 0.0
-                    for vk in Nci
-                        # if vk ≠ vj
-                            li = LinearIndices(Lr)[ci,vk]
-                            oldLr = Lr[li]
-                            newlr = calc_Lr(Nci,ci,vk,Lq)
+                    for vj in Nci
+                        # if vj ≠ vk
+                            newlr = calc_Lr(Nci,ci,vj,Lq)
+                            li = LinearIndices(Lr)[ci,vj]
                             newLr[li] = newlr
-                            residue = calc_residue(newlr,oldLr,Factors[ci])
+                            residue = calc_residue_raw(newlr,Lr[li],Factors[ci])
                             if residue > maxresidue
                                 maxresidue = residue
                             end
@@ -148,10 +152,10 @@ function
     end
 
     # 7) update bitvector
-    for vj in eachindex(Nv)
-        ci = Nv[vj][1]
-        li = LinearIndices(Lr)[ci,vj]
-        bitvector[vj] = signbit(Lr[li] + Lq[li])
+    for vk in eachindex(Nv)
+        ci = Nv[vk][1]
+        li = LinearIndices(Lr)[ci,vk]
+        bitvector[vk] = signbit(Lr[li] + Lq[li])
     end
 
     return bp_not_converged

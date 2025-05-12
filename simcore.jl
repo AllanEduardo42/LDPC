@@ -10,10 +10,11 @@ include("calc_syndrome.jl")
 include("flooding.jl")
 include("LBP.jl")
 include("RBP.jl")
-include("Genius-RBP.jl")
 include("VN_RBP.jl")
 include("NW_RBP.jl")
 include("./RBP functions/calc_all_residues.jl")
+include("./RBP functions/calc_all_residues_NW.jl")
+include("./RBP functions/calc_all_residues_VN.jl")
 include("update_Lq.jl")
 include("update_Lr.jl")
 
@@ -46,8 +47,7 @@ function
         noisetest=nothing        
     )
 
-    if mode == "RBP" || mode == "List-RBP" || mode == "VN-RBP" || 
-       mode == "Genius-RBP" || mode == "NW-RBP"
+    if mode == "RBP" || mode == "List-RBP" || mode == "VN-RBP" || mode == "NW-RBP"
         RBP = true
     else
         RBP = false
@@ -149,7 +149,7 @@ function
     Factors = RBP ? 1.0*H  : nothing
 
     # RBP modes
-    if mode == "RBP" || mode == "Genius-RBP"
+    if mode == "RBP"
         residues = zeros(num_edges)
         coords = zeros(Int,3,num_edges)
         localresidues = nothing
@@ -165,9 +165,6 @@ function
                 coords[3,e] = li
                 rbpmatrix[li] = e
             end
-        end
-        if mode == "Genius-RBP"
-            global TOTALBITERROR = zeros(Int,num_edges)
         end
     elseif mode == "NW-RBP"
         residues = zeros(M)
@@ -251,42 +248,13 @@ function
         init_Lq!(Lq,Lf,Nv)
 
         # 10) precalculate the residues for RBP
-        if mode == "RBP" || mode == "List-RBP" || mode == "Genius-RBP"
+        if mode == "RBP" || mode == "List-RBP"
             calc_all_residues!(Lq,Lr,Nc,aux,signs,phi,newLr,Factors,rbpmatrix,
-                residues,coords,listsizes,relative)
+                                        residues,coords,listsizes,relative)
         elseif mode == "NW-RBP"
-            for ci in 1:M
-                # calculate the new check to node messages
-                Nci = Nc[ci]
-                maxresidue = 0.0
-                for vj in Nci
-                    li = LinearIndices(Lr)[ci,vj]
-                    newlr = calc_Lr(Nci,ci,vj,Lq)
-                    newLr[li] = newlr
-                    Lr[li] = newlr
-                    residue = calc_residue(newlr,0.0,Factors[ci])
-                    if residue > maxresidue
-                        maxresidue = residue
-                    end
-                end
-                residues[ci] = maxresidue
-            end
+            calc_all_residues_NW!(Lq,Nc,aux,signs,phi,newLr,residues)
         elseif mode == "VN-RBP"
-            for m in 1:M 
-                # calculate the new check to node messages
-                update_Lr!(newLr,Lq,m,Nc[m],aux,signs,phi)
-            end
-            for n in 1:N
-                residue = 0.0
-                for m in Nv[n]
-                    li = LinearIndices(newLr)[m,n]
-                    residue += newLr[li]
-                end
-                if relative     
-                    residue /= Lf[n]
-                end
-                residues[n] = abs(residue)
-            end
+            calc_all_residues_VN!(Lq,Nc,aux,signs,phi,newLr,residues,Nv)
         end
         
         # BP routine
@@ -348,10 +316,29 @@ function
                     )
                 # reset factors
                 resetmatrix!(Factors,Nv,1.0)
-            elseif mode == "Genius-RBP"
-                bp_not_converged = genius_RBP!(
+            elseif mode == "NW-RBP"
+                bp_not_converged = NW_RBP!(
                     bitvector,
-                    complete_cword,
+                    Lq,
+                    Lr,
+                    Lf,
+                    Nc,
+                    Nv,
+                    aux,
+                    signs,
+                    phi,
+                    decayfactor,
+                    M,
+                    newLr,
+                    Factors,
+                    residues,
+                    bp_not_converged
+                )
+                # reset factors
+                Factors .= 1.0
+            elseif mode == "VN-RBP"
+                bp_not_converged = VN_RBP!(
+                    bitvector,
                     Lq,
                     Lr,
                     Lf,
@@ -364,55 +351,12 @@ function
                     num_edges,
                     newLr,
                     Factors,
-                    coords,
-                    rbpmatrix,
-                    residues,
-                    localresidues,
-                    localcoords,
-                    listsizes,
-                    relative,
-                    bp_not_converged
-                    )
-                # reset factors
-                resetmatrix!(Factors,Nv,1.0)
-            elseif mode == "VN-RBP"
-                bp_not_converged = VN_RBP!(
-                    bitvector,
-                    Lq,
-                    Lr,
-                    Lf,
-                    Nc,
-                    Nv,
-                    aux,
-                    decayfactor,
-                    num_edges,
-                    newLr,
-                    Factors,
                     residues,
                     bp_not_converged
                     )
                 # reset factors
                 Factors .= 1.0
-
-            elseif mode == "NW-RBP"
-                bp_not_converged = NW_RBP!(
-                    bitvector,
-                    Lq,
-                    Lr,
-                    Lf,
-                    Nc,
-                    Nv,
-                    aux,
-                    decayfactor,
-                    M,
-                    newLr,
-                    Factors,
-                    residues,
-                    bp_not_converged
-                )
-                # reset factors
-                Factors .= 1.0
-            end
+            end            
     
             calc_syndrome!(syndrome,bitvector,Nc)
 

@@ -4,32 +4,35 @@
 # Script for profviewing
 
 
-SNR_PROF = 1.2
-Mode_prof = "RBP"
+EbN0_PROF = 1.2
+MODE_PROOF = "RBP"
 TRIALSPROF = 2^5
-Maxiter_prof = 50
-Bptypte_prof = "FAST"
-Decay_prof = 0.9
+MAXITER_PROOF = 50
+BPTYPE_PROOF = "FAST"
+DECAY_PROOF = 0.9
 
 
 @time @profview simcore(
     AA,
-    SNR_PROF,
+    RR,
+    EbN0_PROF,
     HH,
     GG,
-    CN2VN,
-    VN2CN,
+    NC,
+    NV,
     E_H,
     PROTOCOL,
     ZF,
     NR_LDPC_DATA,
-    Mode_prof,
-    Bptypte_prof,
+    MODE_PROOF,
+    BPTYPE_PROOF,
     TRIALSPROF,
-    Maxiter_prof,
+    MAXITER_PROOF,
     STOP,
-    Decay_prof,
+    DECAY_PROOF,
     LISTSIZES,
     RELATIVE,
     RGN_NOISE_SEEDS[1],
-    RGN_MESSAGE_SEEDS[1])
+    RGN_MESSAGE_SEEDS[1];
+    test=TEST,
+    printtest = TEST ? PRIN : false)

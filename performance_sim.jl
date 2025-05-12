@@ -19,8 +19,6 @@ function
         throw(error(lazy"The McKay method is only supported for Flooding"))
     elseif bptype == "TANH" && mode == "List-RBP"
         throw(error(lazy"The TANH method is not supported for List-RBP. Use the FAST, TABL or MSUM methods"))
-    elseif (mode == "NW-RBP" || mode == "VN-RBP") && (bptype ≠ "FAST" && bptype ≠ "TANH")
-        throw(error("$mode only supports the FAST and TANH methods."))
     end
 
 ########################### PRINT SIMULATION DETAILS ###########################

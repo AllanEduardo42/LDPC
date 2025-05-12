@@ -5,7 +5,8 @@
 
 include("./RBP functions/RBP_update_Lr.jl")
 include("./RBP functions/findmaxedge.jl")
-include("./RBP functions/update_lists.jl")
+include("./RBP functions/update_local_list.jl")
+include("./RBP functions/update_global_list.jl")
 include("./RBP functions/remove_residue!.jl")
 include("./RBP functions/calc_residue.jl")
 
@@ -89,7 +90,7 @@ function
                         li = LinearIndices(Lr)[ci,vj]
                         newLr[li] = newlr                                              
                         residue = calc_residue(newlr,Lr[li],Factors[li],
-                                                        relative,Lq[li],aux)
+                                                        relative,Lq[li])
                         update_local_list!(residues,coords,local_residues,
                             local_coords,listsizes,rbpmatrix,li,ci,vj,residue)
                     end
@@ -161,12 +162,11 @@ function
                 Nci = Nc[ci]
                 for vj in Nci
                     if vj ≠ vjmax
-                        li = LinearIndices(Lr)[ci,vj]
                         newlr = calc_Lr(Nci,ci,vj,Lq)
-                        oldLr = Lr[li]
+                        li = LinearIndices(Lr)[ci,vj]
                         newLr[li] = newlr
-                        residues[edges[li]] = calc_residue(newlr,oldLr,
-                                                    Factors[li],relative,Lq[li])
+                        residues[edges[li]] = calc_residue_raw(newlr,Lr[li],
+                                                Factors[li],relative,Lq[li])
                     end
                 end
             end

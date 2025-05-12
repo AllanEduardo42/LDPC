@@ -14,7 +14,9 @@ function
         Lf::Vector{<:AbstractFloat},
         Nc::Vector{Vector{T}} where {T<:Integer},
         Nv::Vector{Vector{T}} where {T<:Integer},
-        Lrj::Vector{<:AbstractFloat},
+        aux::Union{Vector{<:AbstractFloat},Nothing},
+        signs::Union{Vector{Bool},Nothing},
+        phi::Union{Vector{<:AbstractFloat},Nothing},
         decayfactor::AbstractFloat,
         num_edges::Integer,
         newLr::Matrix{<:AbstractFloat},
@@ -36,8 +38,8 @@ function
         residues[vjmax] = 0.0
 
         for ci in Nv[vjmax]
-            li = LinearIndices(newLr)[ci,vjmax]
-            Lr[li] = newLr[li]
+            li = LinearIndices(Lr)[ci,vjmax]
+            RBP_update_Lr!(li,Lr,newLr,ci,vjmax,Nc[ci],Lq,aux,signs,phi)
         end   
         
         Nvjmax = Nv[vjmax]
@@ -50,14 +52,13 @@ function
             Lq[li] = Ld - Lr[li]
             # calculate the new check to node messages
             Nci = Nc[ci]
-            pLr, countzeros, vj0 = calc_pLr(Lq,ci,Nci,Lrj) 
+            A, B, C, D = calc_ABCD!(aux,signs,phi,Lq,ci,Nci)
             for vj in Nci
                 if vj ≠ vjmax
+                    newlr = calc_Lr(A,B,C,D,vj,aux,signs,phi)
                     li = LinearIndices(newLr)[ci,vj]
-                    newlr = fast_Lr(Lrj,pLr,countzeros,vj0,vj)
-                    newLr[li]= newlr   
-                    residue = newlr- Lr[li]
-                    residues[vj] = abs(residue)*Factors[vj]
+                    newLr[li] = newlr   
+                    residues[vj] = calc_residue(newlr,Lr[li],Factors[vj])
                 end
             end
         end
@@ -75,6 +76,8 @@ function
         Lf::Vector{<:AbstractFloat},
         Nc::Vector{Vector{T}} where {T<:Integer},
         Nv::Vector{Vector{T}} where {T<:Integer},
+        ::Nothing,
+        ::Nothing,
         ::Nothing,
         decayfactor::AbstractFloat,
         num_edges::Integer,
@@ -109,11 +112,10 @@ function
             Nci = Nc[ci]
             for vj in Nci
                 if vj ≠ vjmax
-                    li = LinearIndices(Lr)[ci,vj]
-                    oldLr = Lr[li]
                     newlr = calc_Lr(Nci,ci,vj,Lq)
+                    li = LinearIndices(Lr)[ci,vj]
                     newLr[li] = newlr
-                    residues[vj] = calc_residue(newlr,oldLr,Factors[vj])
+                    residues[vj] = calc_residue_raw(newlr,Lr[li],Factors[vj])
                 end
             end
         end

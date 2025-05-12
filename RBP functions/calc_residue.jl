@@ -3,19 +3,18 @@
 # 26 Feb 2025
 # Calculate the residue for the RBP algorithm
 
-# FAST
+# FAST, TABL and MSUM
 function 
     calc_residue(
         newlr::AbstractFloat,
         oldlr::AbstractFloat,
         factor::AbstractFloat,
         relative::Bool,
-        lq::AbstractFloat,
-        ::Union{Vector{<:AbstractFloat},Nothing}
+        lq::AbstractFloat
     )
 
 
-    @fastmath @inbounds begin      
+    @fastmath begin      
         residue = newlr - oldlr
         return _calc_residue(residue,oldlr,factor,relative,lq)
     end
@@ -23,7 +22,7 @@ end
 
 #TANH
 function
-    calc_residue(
+    calc_residue_raw(
         newlr::AbstractFloat,
         oldlr::AbstractFloat,
         factor::AbstractFloat,
@@ -50,34 +49,38 @@ function _calc_residue(
     lq::AbstractFloat,
 )
 
-    @fastmath @inbounds begin
+    @fastmath begin
         if relative
             rLd = oldlr + lq
             residue /= rLd
         end
-        residue *= factor
-        if signbit(residue)
-            return -residue
-        else
-            return residue
-        end
+        return abs(residue)*factor
     end
+end
+
+# NW-RBP and VN-RBP (FAST, TABL and MSUM)
+function 
+    calc_residue(
+        newlr::AbstractFloat,
+        oldlr::AbstractFloat,
+        factor::AbstractFloat,
+    )
+
+    @fastmath abs(newlr - oldlr)*factor
 
 end
 
-# NW-RBP and VN-RBP
-function calc_residue(
-    newlr::AbstractFloat,
-    oldlr::AbstractFloat,
-    factor::AbstractFloat
-)
-
-    @inbounds begin
-        residue = newlr - oldlr
-        if isnan(residue)
-            return 0.0
-        else
-            @fastmath return abs(residue)*factor
-        end
+# NW-RBP and VN-RBP (TANH)
+function
+    calc_residue_raw(
+        newlr::AbstractFloat,
+        oldlr::AbstractFloat,
+        factor::AbstractFloat
+    )
+    residue = newlr - oldlr
+    if isnan(residue)
+        return 0.0
+    else
+        @fastmath return abs(residue)*factor
     end
 end
