@@ -244,6 +244,19 @@ function
             bitvector[i] = signbit(Lf[i])
         end
         
+        # 0-th iter
+        if test && printtest
+            println()
+            println("### Iteration #0 ###")
+            calc_syndrome!(syndrome,bitvector,Nc)
+            biterror .= (bitvector .≠ complete_cword)
+            print_test("Bit error",biterror)   
+            println("Bit error rate: $(sum(biterror))/$N")
+            print_test("Syndrome",syndrome)  
+            println("Syndrome rate: $(sum(syndrome))/$M")
+            println()
+        end
+        
         # 9) init the Lq matrix
         init_Lq!(Lq,Lf,Nv)
 

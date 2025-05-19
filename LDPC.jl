@@ -19,7 +19,7 @@ using DelimitedFiles
 include("PEG.jl")
 include("GF2_functions.jl")
 include("IEEE80216e.jl")
-include("NR_LDPC_encode.jl")
+include("NR LDPC/NR_LDPC_encode.jl")
 include("performance_sim.jl")
 include("find_girth.jl")
 
@@ -54,25 +54,25 @@ SEED_MESSA::Int = 1000
 
 ############################### 4) CONTROL FLAGS ###############################
 
-TEST::Bool = false
+TEST::Bool = true
 PRIN::Bool = true
 STOP::Bool = false # stop simulation at zero syndrome (if true, BER curves are
 # not printed)
 
 ################################## 5) NUMBERS ##################################
 
-MAXITER::Int = 10
+MAXITER::Int = 50
 # FACTORS = [0.7, 0.8, 0.9, 1.0]
 # FACTORS = collect(0.1:0.1:1.0)
 FACTORS = [1.0]
 # EbN0 = [1.2, 1.4, 1.6, 1.8]
-EbN0 = [1.5]
-TRIALS = 10 .^(0:length(EbN0)-1)*2^15
+EbN0 = [6.5]
+TRIALS = 10 .^(0:length(EbN0)-1)*2^10
 RELATIVE::Bool = false
 
 # TEST
 MAXITER_TEST::Int = 1
-EbN0_TEST::Float64 = 1.5
+EbN0_TEST::Float64 = 4.75
 TRIALS_TEST::Int = 1
 DECAY_TEST::Float64 = 1.0
 
@@ -122,14 +122,14 @@ DECAYS[i] = FACTORS
 
 # NW-RBP
 i += 1
-ACTIVE[i] = 1
+ACTIVE[i] = 0
 BPTYPES[i] = "FAST"
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
 
 # Variable Node RBP
 i += 1
-ACTIVE[i] = 1
+ACTIVE[i] = 0
 BPTYPES[i] = "FAST"
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
@@ -147,19 +147,19 @@ PHI = lookupTable()
 RR::Float64 = 1/2
 # Message (Payload) size
 # AA::Int = 576*RR
-AA::Int = 1008
+AA::Int = 512
 # LDPC protocol: NR5G = NR-LDPC (5G); PEG = PEG; WiMAX = IEEE80216e;
 PROTOCOL::String = "NR5G"
     DENSITIES = 1:8
 
 ############################# PARITY-CHECK MATRIX #############################
 
-MSG = zeros(Bool,AA)
+MSG = rand(Xoshiro(201),Bool,AA)
 
 if PROTOCOL == "NR5G"
     ZF = 0
     RV = 0
-    CWORD, HH, E_H, NR_LDPC_DATA = NR_LDPC_encode(MSG,RR,RV)
+    CWORD, HH, E_H, R, NR_LDPC_DATA = NR_LDPC_encode(MSG,RR,RV,false)
     MM, NN = size(HH)
     GIRTH = find_girth(HH,100000)
     GG = nothing
@@ -202,7 +202,7 @@ STR =
 """############################### LDPC parameters ################################
 LDPC Protocol: """
 if PROTOCOL == "NR5G"
-    STR *= "NR-LDPC (5G)"
+    STR *= "NR-LDPC (5G), Zc = $(NR_LDPC_DATA.Zc)"
 elseif PROTOCOL == "PEG"
     STR *= "PEG"
 elseif PROTOCOL == "WiMAX"
@@ -219,6 +219,7 @@ display(sparse(HH))
 STR = """
 
 Graph girth = $GIRTH
+Rate = $(round(R,digits=3))
 """
 println(STR)
 if SAVE

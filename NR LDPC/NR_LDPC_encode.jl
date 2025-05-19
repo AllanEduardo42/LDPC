@@ -5,8 +5,8 @@
 
 using SparseArrays
 
-include("GF2_poly.jl")
-include("GF2_functions.jl")
+include("../GF2_poly.jl")
+include("../GF2_functions.jl")
 include("NR_LDPC_functions.jl")
 
 const R_LBRM = 2//3
@@ -22,6 +22,7 @@ struct nr_ldpc_data
     Zc::Integer
     iLS::Integer
     N::Integer
+    P::Integer
     bg::String
     N_cb::Integer
     E_r::Vector{<:Integer}
@@ -34,7 +35,8 @@ function
     NR_LDPC_encode(
         a::Vector{Bool},
         R::Float64,
-        rv::Integer;
+        rv::Integer,
+        show_nr_par::Bool;
         E_H = nothing,
         I_LBRM = 0,
         TBS_LBRM = Inf,
@@ -71,13 +73,6 @@ function
 
     B = A + L_1
 
-    # display("B = $B")
-
-    b = zeros(Bool,B)
-
-    @inbounds b[1:A] = a
-    @inbounds _,b[A+1:end] = divide_poly(b,g_CRC)
-
     ### 1.5) LDPC base graph selection (TS38212 Clause 7.2.2 and 6.2.2)
 
     if A ≤ 292 || (A ≤ 3824 && R ≤ 0.67) || R ≤ 0.25
@@ -85,7 +80,6 @@ function
     else
         bg = "1"
     end
-    # display("bg = $bg")
 
     ### 2) Code block segmentation and code block CRC attachment
     ### (TS38212 Clauses 7.2.3, 6.2.3 and 5.2.2)
@@ -102,7 +96,7 @@ function
         B_prime = B
     else
         L_2 = 24
-        C = cld(A,Kcb - L_2)
+        C = cld(B,Kcb - L_2)
         B_prime = (B + C*L_2)
     end
 
@@ -124,19 +118,22 @@ function
 
     Zc, iLS = get_Zc(K_prime, Kb)
 
+    if K_prime < 2*Zc
+        throw(error(
+            """K_prime must be greater than 2*Zc (K_prime = $K_prime, Zc = $Zc)"""
+        ))
+    end
+
+    b = zeros(Bool,B)
+
+    @inbounds b[1:A] = a
+    @inbounds _,b[A+1:end] = divide_poly(b,g_CRC)
+
     if bg == "1"
         K = 22*Zc
     else
         K = 10*Zc
-    end
-
-    # display("L_1 = $L_1")
-    # display("L_2 = $L_2")
-    # display("C = $C")
-    # display("K_prime = $K_prime")
-    # display("K = $K")
-    # display("Zc = $Zc")
-    # display("iLS = $iLS")
+    end    
 
     c = code_block_segmentation(b,C,K_prime,K,L_2)
 
@@ -147,7 +144,6 @@ function
     else
         N = 50*Zc
     end
-    # display("N = $N")
 
     if R == 0
         P = -1
@@ -155,40 +151,59 @@ function
         P = 100*Zc
     else
         G = round(Int,(A/R)/Q_m)*Q_m
-        # display("G = $G")
         P = N - G÷C - K + K_prime
-        # display("P = $P")
+    end
+
+    if show_nr_par
+        display("B = $B")
+        display("bg = $bg")
+        display("L_1 = $L_1")
+        display("L_2 = $L_2")
+        display("C = $C")
+        display("K_prime = $K_prime")
+        display("K = $K")
+        display("Zc = $Zc")
+        display("iLS = $iLS")
+        display("N = $N")
+        display("G = $G")
+        display("P = $P")
     end
 
     if P > 42*Zc && bg == "1"
-        G = C*(N - 42*Zc - K + K_prime)
-        # display("new G = $G")
-        P = N - G÷C - K + K_prime
-        # display("new P = $P")
-        R = A/G
-        # display("new R = $(round(R*1000)/1000)")
+        G = C*(N - 42*Zc - K + K_prime)       
+        P = N - G÷C - K + K_prime        
+        R = A/G        
+        if show_nr_par
+             display("new G = $G")
+             display("new P = $P")
+        end
+        display("Atention: NR-LDPC new rate R = $(round(R,digits=3))")
     elseif P > 38*Zc && bg == "2"
         G = C*(N - 38*Zc - K + K_prime)
-        # display("new G = $G")
         P = N - G÷C - K + K_prime
-        # display("new P = $P")
         R = A/G
-        # display("new R = $(round(R*1000)/1000)")
+        if show_nr_par
+             display("new G = $G")
+             display("new P = $P")
+        end
+        display("Atention: NR-LDPC new rate R = $(round(R,digits=3))")
     end
 
     if P < 0
-        G = C*(N -  K + K_prime)
-        # display("new G = $G")
+        G = C*(N - K + K_prime)
         P = N - G÷C - K + K_prime
-        # display("new P = $P")
         R = A/G
-        # display("new R = $(round(R*1000)/1000)")
+        if show_nr_par
+             display("new G = $G")
+             display("new P = $P")
+        end
+        display("Atention: NR-LDPC new rate R = $(round(R,digits=3))")
     end
 
-    d, H, E_H = channel_coding(c,C,K_prime,K,Zc,iLS,N,bg,E_H)
+    d, H, E_H = channel_coding(c,C,K_prime,K,Zc,iLS,N,bg,E_H,P)
 
-    # d[1:(K_prime-2*Zc),:] == c[(2*Zc+1):K_prime,:] #(payload + CRC)
-    # d[(K_prime-2*Zc+1):(K-2*Zc),:] == c[(K_prime+1):K,:] #(filler bits)
+    # d[1:(K_prime - 2*Zc),:] == c[(2*Zc + 1):K_prime,:] #(payload + CRC)
+    # d[(K_prime - 2*Zc+1):(K - 2*Zc),:] == c[(K_prime + 1):K,:] #(filler bits)
 
     ### 4) Rate Matching (TS38212 Clauses 7.2.5, 6.2.5 and 5.4.2)
 
@@ -233,14 +248,14 @@ function
         H = H[1:end-P,1:end-P]
         H = [H[:,1:K_prime] H[:,K+1:end]]
 
-        if !iszero(H*[b[1:2*Zc];g])
+        if !iszero(H*[a[1:2*Zc];g])
             throw(error(
                         lazy"""Wrong encoding"."""
                     ))
         end
     end
 
-    return g, H, E_H, nr_ldpc_data(A, B, C, G, K_prime, K, L_2, Zc, iLS, N, bg, N_cb, E_r, k0, g_CRC)
+    return g, H, E_H, R, nr_ldpc_data(A,B,C,G,K_prime,K,L_2,Zc,iLS,N,P,bg,N_cb,E_r,k0,g_CRC)
 
 end
 
@@ -262,6 +277,7 @@ function
     Zc = nr_ldpc_data.Zc
     iLS = nr_ldpc_data.iLS
     N = nr_ldpc_data.N
+    P = nr_ldpc_data.P
     bg = nr_ldpc_data.bg
     N_cb = nr_ldpc_data.N_cb
     E_r = nr_ldpc_data.E_r
@@ -275,7 +291,7 @@ function
 
     c = code_block_segmentation(b,C,K_prime,K,L_2)
 
-    d, ___ = channel_coding(c,C,K_prime,K,Zc,iLS,N,bg,E_H)
+    d, ___ = channel_coding(c,C,K_prime,K,Zc,iLS,N,bg,E_H,P)
 
     e =  rate_matching(d,C,N_cb,E_r,k0)
 

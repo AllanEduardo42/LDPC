@@ -155,12 +155,12 @@ function print_test(
 
 )    
     println()
-    println("$text (L = $(length(array))):")
+    print("$text (L = $(length(array))):")
     for i in eachindex(array)
-        print(Int(array[i]))
-        if i%80 == 0
+        if i%80 == 1
             println()
         end
+        print(Int(array[i]))
     end
     println()
 end 

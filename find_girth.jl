@@ -34,7 +34,9 @@ function find_girth(H,max)
             node = rand(1:N)
         else
             nodes = filter(x->x!=node,cn2vn[check])
-            node = rand(nodes)
+            if !isempty(nodes)
+                node = rand(nodes)
+            end
         end
         if visited[node]
             girth = min(girth,i - count[node])

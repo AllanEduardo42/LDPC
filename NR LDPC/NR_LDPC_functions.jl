@@ -3,6 +3,9 @@
 # 14 Nov 2024
 # Auxiliary functions of the NR-LDPC encoding
 
+include("NR_LDPC_parity_bits.jl")
+include("NR_LDPC_make_parity_check_matrix.jl")
+
 using DelimitedFiles
 
 function 
@@ -88,7 +91,8 @@ function
         iLS::Integer,
         N::Integer,
         bg::String,
-        E_H::Union{Matrix{<:Integer},Nothing}
+        E_H::Union{Matrix{<:Integer},Nothing},
+        P::Integer
     )
 
     d = zeros(Union{Bool,Missing},N,C)
@@ -96,7 +100,7 @@ function
     cw[1:K_prime,:] = c[1:K_prime,:]
 
     @inbounds for r = 1:C
-        for k = 2*Zc +1 : K_prime
+        for k = 2*Zc + 1 : K_prime
             d[k-2*Zc,r] = c[k,r]
         end
         for k = K_prime + 1 : K #(filler bits)
@@ -105,15 +109,15 @@ function
     end
 
     if E_H === nothing    
-        H, E_H = make_parity_check_matrix(Zc,iLS,bg)
+        H, E_H = NR_LDPC_make_parity_check_matrix(Zc,iLS,bg)
     else
         H = nothing
     end
 
     @inbounds for r = 1:C
-        w = parity_bits(cw[1:K,r],bg,Zc,K,E_H)
+        w = NR_LDPC_parity_bits(cw[1:K,r],bg,Zc,K,E_H,P)
         cw[K+1:end,r] = w
-        if H !== nothing && !iszero(H*cw[:,r])
+        if H !== nothing && !iszero(H[1:end-P,1:end-P]*cw[1:end-P,r])
             throw(error(
                     lazy"""Wrong encoding"."""
                 ))
@@ -202,16 +206,20 @@ function
         Q_m::Integer
     )
 
-    f = zeros(Bool,maximum(E_r),C)
-    @inbounds for r = 1:C
-        for j = 0:(E_r[r]÷Q_m - 1)
-            for i = 0:(Q_m - 1)
-                f[i + j*Q_m + 1,r] = e[i*E_r[r]÷Q_m + j + 1,r]
+    if Q_m == 1
+        return e
+    else
+        f = zeros(Bool,maximum(E_r),C)
+        @inbounds for r = 1:C
+            for j = 0:(E_r[r]÷Q_m - 1)
+                for i = 0:(Q_m - 1)
+                    f[i + j*Q_m + 1,r] = e[i*E_r[r]÷Q_m + j + 1,r]
+                end
             end
-        end
-    end    
+        end    
 
-    return f
+        return f
+    end
 end
 
 function 
@@ -391,69 +399,6 @@ function
 
 end
 
-function 
-    parity_bits(
-        c::Vector{Bool},
-        bg::String,
-        Zc::Integer,
-        K::Integer,
-        E_H::Matrix{<:Integer}
-    )
-
-    if bg == "1"
-        J = 22
-        N = 68
-        M = 46
-    else
-        J = 10
-        N = 52
-        M = 42
-    end
-
-    cw = zeros(Bool,Zc,N)
-    cw[1:K] = c
-
-    a = zeros(Bool,Zc,4)
-    Sc = zeros(Bool,Zc)
-
-    @inbounds for i = 1:4
-        for j = 1:J            
-            if E_H[i,j] ≠ -1
-                a[:,i] .⊻= circshift(cw[:,j],-E_H[i,j])
-            end
-        end
-        Sc .⊻= a[:,i]
-    end
-
-    @inbounds for i = 1:4
-        if E_H[i,J+1] ≠ -1
-            cw[:,J+1] .⊻= circshift(Sc,E_H[i,J+1])
-        end
-    end
-    
-    z = zeros(Bool,Zc,4)
-    @inbounds for i=1:4
-        if E_H[i,J+1] ≠ -1
-            z[:,i] = circshift(cw[:,J+1],-E_H[i,J+1])
-        end
-    end
-
-    @inbounds for i = 4:-1:2
-        cw[:,J+i] = a[:,i] .⊻ z[:,i] .⊻ cw[:,J+i+1]
-    end
-
-    @inbounds for i=5:M
-        for j=1:J+4
-            if E_H[i,j] ≠ -1
-                cw[:,J+i] .⊻= circshift(cw[:,j],-E_H[i,j])
-            end
-        end
-    end    
-
-    return cw[K+1:end]
-
-end
-
 # function circ_mult(
 #         e_H::AbstractArray{<:Integer},
 #         Zc::Integer,
@@ -475,32 +420,3 @@ end
 
 #     return q
 # end
-
-function
-    make_parity_check_matrix(
-        Zc::Integer,
-        iLS::Integer,
-        bg::String
-    )
-
-    E_H = readdlm("./5G_exponent_matrices/EM_$(bg)_$(iLS)_$(Zc).txt",'\t', Int,'\n')
-
-    m, n = size(E_H)
-
-    H = zeros(Bool,m*Zc, n*Zc)
-
-    I_matrix = Matrix(I(Zc))
-
-    @inbounds for i = 1:m
-        for j = 1:n 
-            row_range = Zc*(i-1)+1 : Zc*i
-            col_range = Zc*(j-1)+1 : Zc*j
-            if E_H[i,j] != -1
-                H[row_range,col_range] = circshift(I_matrix,-E_H[i,j])
-            end  
-        end   
-    end
-
-    return H, E_H
-
-end
