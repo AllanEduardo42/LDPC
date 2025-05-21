@@ -21,10 +21,11 @@ include("update_Lr.jl")
 function
     simcore(
         A::Integer,
-        R::AbstractFloat,
+        R::Rational,
         ebn0::AbstractFloat,
         H::Matrix{Bool},
-        G::Union{Nothing,Matrix{Bool}},
+        L::Union{Nothing,Matrix{Bool}},
+        U::Union{Nothing,Matrix{Bool}},
         Nc::Vector{Vector{T}} where {T<:Integer},
         Nv::Vector{Vector{T}} where {T<:Integer},
         E_H::Union{Nothing,Matrix{<:Integer}},
@@ -111,7 +112,6 @@ function
     Lf = (bptype != "MKAY") ? a*ones(N) : 0.5*ones(N,2)
 
     # noise
-    # L = length(cword)
     noise = Vector{Float64}(undef,N-twoZc)
 
     # received signal
@@ -147,7 +147,7 @@ function
     # Set other variables that depend on the mode
     newLr = RBP ? H*0.0 : nothing
     Factors = RBP ? 1.0*H  : nothing
-
+    
     # RBP modes
     if mode == "RBP"
         residues = zeros(num_edges)
@@ -196,7 +196,7 @@ function
         if protocol == "NR5G"
             cword = NR_LDPC_encode(E_H,msg,Nr_ldpc_data)
         elseif protocol == "PEG"
-            cword = gf2_mat_mult(G,msg)   
+            cword = LU_parity_bits(H,L,U,msg)
         elseif protocol == "WiMAX"
             cword = IEEE80216e_parity_bits(msg,Zf,E_H,E_M,E_N,E_K)
         end
@@ -267,7 +267,7 @@ function
         elseif mode == "NW-RBP"
             calc_all_residues_NW!(Lq,Nc,aux,signs,phi,newLr,residues)
         elseif mode == "VN-RBP"
-            calc_all_residues_VN!(Lq,Nc,aux,signs,phi,newLr,residues,Nv)
+            calc_all_residues_VN!(Lq,Nc,aux,signs,phi,Lr,newLr,residues,Nv)
         end
         
         # BP routine

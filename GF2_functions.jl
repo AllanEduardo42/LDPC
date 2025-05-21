@@ -288,3 +288,47 @@ function find_gf2_invertible_matrix(M::Integer)
     return A, A_inv
 
 end
+
+function 
+    gf2_solve_LU(
+        A::Matrix{Bool},
+        y::Vector{Bool}
+    )
+
+    M,N = size(A)
+    if M ≠ N
+        throw(
+            DimensionMismatch(
+                lazy"matrix is not square: dimensions are ($M,N)"
+            )
+        )
+    end
+
+    @inbounds begin
+        if istril(A)
+            x = zeros(Bool,M)
+            for i in 1:M
+                x[i] = y[i]
+                for j=1:i-1
+                    x[i] ⊻= A[i,j] && x[j]
+                end
+            end
+        elseif istriu(A)
+            x = zeros(Bool,M)
+            for i in M:-1:1
+                x[i] = y[i]
+                for j=i+1:M
+                    x[i] ⊻= A[i,j] && x[j]
+                end
+            end
+        else
+            throw(
+                    ArgumentError(
+                        lazy"Matrix must be triangular"
+                    )
+                )
+        end
+    end
+    
+    return x
+end

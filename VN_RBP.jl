@@ -56,7 +56,7 @@ function
             for vj in Nci
                 if vj ≠ vjmax
                     newlr = calc_Lr(A,B,C,D,vj,aux,signs,phi)
-                    li = LinearIndices(newLr)[ci,vj]
+                    li = LinearIndices(newLr)[ci,vj] 
                     newLr[li] = newlr   
                     residues[vj] = calc_residue(newlr,Lr[li],Factors[vj])
                 end

@@ -1,12 +1,22 @@
-using LinearAlgebra
+################################################################################
+# Allan Eduardo Feitosa
+# 20 Mai 2025
+# IEEE80216e LDPC enconding (WiMAX)
 
 function
     IEEE80216e(
         N::Integer,
-        R::Float64,
+        R::Rational,
         mode::String
     )
 
+    if iszero(N .== [576,672,768,864,960,1056,1152,1248,1344,1440,1536,1632,1728,1824,1920,2016,2112,2208,2304])
+        throw(
+            DimensionMismatch(
+                lazy"N must take values in {576,672,768,864,960,1056,1152,1248,1344,1440,1536,1632,1728,1824,1920,2016,2112,2208,2304}"
+            )
+        )
+    end
     if R ≤ 1/2
         rate = "1/2"
     elseif R ≤ 2/3
@@ -96,27 +106,29 @@ function
 
     end
     
-    zf = N÷size(E_H,2)
-    for i in axes(E_H,1)
-        for j in axes(E_H,2)
-            if E_H[i,j] > 0
-                if rate == "2/3A"
-                    E_H[i,j] = rem(E_H[i,j],zf)
-                else
-                    E_H[i,j] = fld(E_H[i,j]*zf,z0)
+    @inbounds begin
+        zf = N÷size(E_H,2)
+        for i in axes(E_H,1)
+            for j in axes(E_H,2)
+                if E_H[i,j] > 0
+                    if rate == "2/3A"
+                        E_H[i,j] = rem(E_H[i,j],zf)
+                    else
+                        E_H[i,j] = fld(E_H[i,j]*zf,z0)
+                    end
                 end
             end
         end
-    end
 
-    base_M = size(E_H,1)
-    base_N = size(E_H,2)
-    H = zeros(Bool, zf * base_M, zf * base_N)
-    I_matrix = Matrix(I(zf))
-    for i = 1:base_M
-        for j = 1:base_N
-            if E_H[i,j] != -1
-                H[(i-1)*zf+1 : i*zf,(j-1)*zf+1 : j*zf] = circshift(I_matrix,(0,E_H[i,j]))
+        base_M = size(E_H,1)
+        base_N = size(E_H,2)
+        H = zeros(Bool, zf * base_M, zf * base_N)
+        I_matrix = Matrix(I(zf))
+        for i = 1:base_M
+            for j = 1:base_N
+                if E_H[i,j] != -1
+                    H[(i-1)*zf+1 : i*zf,(j-1)*zf+1 : j*zf] = circshift(I_matrix,(0,E_H[i,j]))
+                end
             end
         end
     end
@@ -134,38 +146,40 @@ function
         E_K::Integer
     )
 
-    cw = zeros(Bool,zf,E_N+1)
-    cw[1:zf*E_K] = c
+    @inbounds begin
+        cw = zeros(Bool,zf,E_N+1)
+        cw[1:zf*E_K] = c
 
-    a = zeros(Bool,zf,E_M)
-    Sc = zeros(Bool,zf)
+        a = zeros(Bool,zf,E_M)
+        Sc = zeros(Bool,zf)
 
-    @inbounds for i = 1:E_M
-        for j = 1:E_K            
-            if E_H[i,j] ≠ -1
-                a[:,i] .⊻= circshift(cw[:,j],-E_H[i,j])
+        for i = 1:E_M
+            for j = 1:E_K            
+                if E_H[i,j] ≠ -1
+                    a[:,i] .⊻= circshift(cw[:,j],-E_H[i,j])
+                end
+            end
+            Sc .⊻= a[:,i]
+        end
+
+        for i = 1:E_M
+            if E_H[i,E_K+1] ≠ -1
+                cw[:,E_K+1] .⊻= circshift(Sc,E_H[i,E_K+1])
             end
         end
-        Sc .⊻= a[:,i]
-    end
-
-    @inbounds for i = 1:E_M
-        if E_H[i,E_K+1] ≠ -1
-            cw[:,E_K+1] .⊻= circshift(Sc,E_H[i,E_K+1])
+        
+        z = zeros(Bool,zf,E_M)
+        for i=1:E_M
+            if E_H[i,E_K+1] ≠ -1
+                z[:,i] = circshift(cw[:,E_K+1],-E_H[i,E_K+1])
+            end
         end
-    end
-    
-    z = zeros(Bool,zf,E_M)
-    @inbounds for i=1:E_M
-        if E_H[i,E_K+1] ≠ -1
-            z[:,i] = circshift(cw[:,E_K+1],-E_H[i,E_K+1])
-        end
-    end
 
-    @inbounds for i = E_M:-1:2
-        cw[:,E_K+i] = a[:,i] .⊻ z[:,i] .⊻ cw[:,E_K+i+1]
-    end   
-
-    return cw[1:end-zf]
+        for i = E_M:-1:2
+            cw[:,E_K+i] = a[:,i] .⊻ z[:,i] .⊻ cw[:,E_K+i+1]
+        end  
+        
+        return cw[1:end-zf]
+    end
 
 end

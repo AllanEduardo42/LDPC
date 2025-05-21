@@ -3,30 +3,65 @@
 # 3 set 2024
 # PEG Algorithm
 
+using Polynomials
+
 function 
     PEG(
-        d::Vector{<:Integer},
+        lambda::Vector{<:AbstractFloat},
+        ro::Vector{<:AbstractFloat},
         M::Integer,
         N::Integer
     )
 
-    sort!(d)
-    H = zeros(Bool,M,N)
-    check_degrees = zeros(Int,M)
-    girth = Inf
+    @inbounds begin
+        BitNode_poly = lambda[end:-1:1]
+        ChkNode_poly = ro[end:-1:1]
+        lamb = zeros(Int,length(BitNode_poly))
+        Nc = zeros(Int,length(ChkNode_poly))
+        d = Vector{Int}()
 
-    @inbounds for n in 1:N
-        for k in 1:d[n]
-            if k == 1
-                _,m = findmin(check_degrees)
-                H[m,n] = 1
-                check_degrees[m] += 1
-            else
-                L0_checks = findall(isone,H[:,n])
-                level = subtree!(H,M,n,0,check_degrees,L0_checks,[n],
-                            copy(L0_checks),copy(L0_checks))
-                if level > 0
-                    girth = min(girth, 2*(level+1))
+        # Computing the Integral of lamda and ro polynomial distribution
+        Lambda = integrate(Polynomial(BitNode_poly))
+        Rou = integrate(Polynomial(ChkNode_poly))
+        temp1 = N/(Lambda(1) - Lambda(0))
+        temp2 = M/(Rou(1) - Rou(0))
+
+        for j in eachindex(BitNode_poly)
+            lamb[j] = round(Int,temp1*BitNode_poly[j]/j)
+        end
+        
+        for j in eachindex(ChkNode_poly)
+            Nc[j] = round(Int,temp2*ChkNode_poly[j]/j)
+        end
+        
+        if sum(lamb) ≠ N
+            lamb[end] = N - sum(lamb[1:end-1])
+        end
+        
+        if sum(Nc) ≠ M
+            Nc[end] = M - sum(Nc[1:end-1])
+        end
+
+        for kk in eachindex(lamb)
+            append!(d,kk*ones(Int,lamb[kk]))
+        end
+        H = zeros(Bool,M,N)
+        check_degrees = zeros(Int,M)
+        girth = typemax(Int)
+
+        for n in 1:N
+            for k in 1:d[n]
+                if k == 1
+                    _,m = findmin(check_degrees)
+                    H[m,n] = true
+                    check_degrees[m] += 1
+                else
+                    L0_checks = findall(isone,H[:,n])
+                    level = subtree!(H,M,n,0,check_degrees,L0_checks,[n],
+                                copy(L0_checks),copy(L0_checks))
+                    if level > 0
+                        girth = min(girth, 2*(level+1))
+                    end
                 end
             end
         end
@@ -82,7 +117,7 @@ function
             deleteat!(compl, L0_check_set)  # take the complement set
             _,m = findmin(check_degrees[compl])
             idx = compl[m]
-            H[idx,root] = 1
+            H[idx,root] = true
             check_degrees[idx] += 1
         else
             append_sort_unique!(L0_check_set,L1_checks)

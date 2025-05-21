@@ -34,7 +34,7 @@ end
 function
     NR_LDPC_encode(
         a::Vector{Bool},
-        R::Float64,
+        R::Rational,
         rv::Integer,
         show_nr_par::Bool;
         E_H = nothing,
@@ -302,27 +302,5 @@ function
     return g
 
 end
-
-# # Message (Payload) size
-# A::Int = 2000
-# # Rate
-# R::Float64 = 1/2
-# a = rand(Bool,A)
-# rv = 0
-# g, H, E_H, A, B, C, G, K_prime, K, L, Zc, iLS, N, bg, N_cb, E_r, k0, g_CRC = NR_LDPC_encode(a,R,rv)
-# if !iszero(H*[a[1:2*Zc];g])
-#     throw(error(
-#                 lazy"""Wrong encoding"."""
-#             ))
-# end
-# for i = 1:10
-#     global a = rand(Bool,A)
-#     global g = NR_LDPC_encode(E_H,a,A,B,C,G,K_prime,K,L,Zc,iLS,N,bg,N_cb,E_r,k0,g_CRC)
-#     if !iszero(H*[a[1:2*Zc];g])
-#         throw(error(
-#                     lazy"""Wrong encoding"."""
-#                 ))
-#     end
-# end
 
 

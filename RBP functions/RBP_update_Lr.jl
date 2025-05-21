@@ -23,7 +23,7 @@ function
 
 end
 
-# 2) if the residues are calculate by MSUM methods
+# 2) if the residues are calculate by MSUM method
 function 
     RBP_update_Lr!(
         lmax::Integer,
