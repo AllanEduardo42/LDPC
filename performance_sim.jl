@@ -69,7 +69,7 @@ function
     ################################ MULTITHREADING ################################
 
     if TEST
-        Lr, Lq = simcore(
+        @time Lr, Lq = simcore(
             AA,
             RR,
             GG,

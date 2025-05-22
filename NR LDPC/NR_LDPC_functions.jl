@@ -52,7 +52,10 @@ function
         J::Integer
     ) 
 
+    Sc .= false
+
     @inbounds for i = 1:4
+        W[:,i] .= false
         for j = 1:J   
             if E_H[i,j] ≠ -1
                 W[:,i] .⊻= circshift(Cw[:,j],-E_H[i,j])
@@ -103,8 +106,8 @@ function
     @inbounds begin
         j = 0
         k = 1
-        while k ≤ E_r
-            x = rem(k0+j,N_cb) + twoZc + 1
+        while k ≤ E_r + twoZc
+            x = rem(k0+j,N_cb) + 1
             if x ≤ K_prime || x > K
                 e[k] = Cw[x]
                 k += 1
@@ -137,7 +140,8 @@ function
         g::Matrix{Bool},
         f::Matrix{Bool},
         C::Integer,
-        E_r::Vector{<:Integer}
+        E_r::Vector{<:Integer},
+        twoZc::Integer
     )
 
     
@@ -146,7 +150,7 @@ function
     @inbounds while r ≤ C
         j = 1
         while j ≤ E_r[r]
-            g[k] = f[j,r]
+            g[k] = f[j+twoZc,r]
             k += 1
             j += 1
         end

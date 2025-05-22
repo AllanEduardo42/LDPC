@@ -52,9 +52,10 @@ function
     return coeffs
 end
 
-function divide_poly(
-    p::Vector{Bool},
-    d::Vector{Bool}
+function 
+    divide_poly(
+        p::Vector{Bool},
+        d::Vector{Bool}
     )
 
     if !d[1]

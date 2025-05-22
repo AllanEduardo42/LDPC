@@ -71,21 +71,19 @@ function
         W = zeros(Bool,Zf,E_M)
         Sc = zeros(Bool,Zf)
     elseif protocol == "NR5G"
-        B = Nr_ldpc_data.B
         K_prime = Nr_ldpc_data.K_prime
         K = Nr_ldpc_data.K
         Zc = Nr_ldpc_data.Zc
         bg = Nr_ldpc_data.bg
         N_cb = Nr_ldpc_data.N_cb
-        E_r = Nr_ldpc_data.E_r
         k0 = Nr_ldpc_data.k0
         g_CRC = Nr_ldpc_data.g_CRC
         P_Zc = Nr_ldpc_data.P_Zc
         
         twoZc = 2*Zc
         W = Matrix{Bool}(undef,Zc,4)
-        Z = Matrix{Bool}(undef,Zc,4)
         Sc = Vector{Bool}(undef,Zc)
+        Z = zeros(Bool,Zc,4)
         if bg == "1"
             Cw = Matrix{Bool}(undef,Zc,68-P_Zc)
             J = 22
@@ -112,9 +110,7 @@ function
 
     msg = Vector{Bool}(undef,A)
 
-    cword = Vector{Bool}(undef,G)
-
-    complete_cword = Vector{Bool}(undef,N)
+    cword = Vector{Bool}(undef,N)
 
     # frame error rate
     sum_decoded = zeros(Int,maxiter)
@@ -222,14 +218,10 @@ function
         # 2) generate the cword
         if protocol == "NR5G"
             Cw[1:A] = msg
-            Cw[A+1:B] .= false
-            _,Cw[A+1:K_prime] = divide_poly(Cw[1:B],g_CRC)
-            Cw[K_prime+1:end] .= false
-            W .= false
-            Sc .= false
-            Z .= false
+            Cw[A+1:end] .= false
+            _,Cw[A+1:K_prime] = divide_poly(Cw[1:K_prime],g_CRC)
             NR_LDPC_parity_bits!(Cw,W,Sc,Z,E_H,I,J)
-            rate_matching!(cword,Cw,twoZc,N_cb,E_r[1],k0,K,K_prime)
+            rate_matching!(cword,Cw,twoZc,N_cb,G,k0,K,K_prime)
         elseif protocol == "PEG"
             LU_parity_bits!(cword,H,L,U,msg)
         elseif protocol == "WiMAX"
@@ -242,7 +234,7 @@ function
         end
 
         # 3) Modulation of the cword
-        @. signal = 2*cword - 1
+        @. signal = 2*cword[twoZc+1:end] - 1
 
         # 4) sum the noise to the modulated cword to produce the received signal
         received_signal!(signal,noise,stdev,rgn_noise,noisetest)
@@ -250,17 +242,17 @@ function
         # 5) print info in test mode
         if test && printtest
             println("Trial #$trial:")
-            print_test("msg",msg)
-            print_test("cword",cword)
+            print_test("Message",msg)
+            print_test("Transmitted cword",cword[twoZc+1:end])
         end
         
         # 6) Include the punctured bits in the cword for biterror calculation
-        if twoZc > 0
-            complete_cword[1:twoZc] = msg[1:twoZc]
-            complete_cword[twoZc+1:end] = cword
-        else
-            complete_cword .= cword
-        end
+        # if twoZc > 0
+        #     complete_cword[1:twoZc] = msg[1:twoZc]
+        #     complete_cword[twoZc+1:end] = cword
+        # else
+        #     complete_cword .= cword
+        # end
 
         # 7) reset simulation variables
         syndrome .= true
@@ -289,7 +281,7 @@ function
             println()
             println("### Iteration #0 ###")
             calc_syndrome!(syndrome,bitvector,Nc)
-            biterror .= (bitvector .≠ complete_cword)
+            biterror .= (bitvector .≠ cword)
             print_test("Bit error",biterror)   
             println("Bit error rate: $(sum(biterror))/$N")
             print_test("Syndrome",syndrome)  
@@ -413,7 +405,7 @@ function
     
             calc_syndrome!(syndrome,bitvector,Nc)
 
-            biterror .= (bitvector .≠ complete_cword)
+            biterror .= (bitvector .≠ cword)
     
             if test && printtest
                 print_test("Bit error",biterror)   
@@ -426,7 +418,7 @@ function
                 end        
             else
                 if iszero(syndrome)
-                    if bitvector == complete_cword
+                    if bitvector == cword
                         decoded[iter] = true
                     end
                     if stop

@@ -19,7 +19,7 @@ using DelimitedFiles
 include("PEG.jl")
 include("GF2_functions.jl")
 include("IEEE80216e.jl")
-include("NR LDPC/NR_LDPC_encode.jl")
+include("NR LDPC/NR_LDPC_parameters.jl")
 include("performance_sim.jl")
 include("find_girth.jl")
 include("LU_encoding.jl")
@@ -54,7 +54,7 @@ SEED_MESSA::Int = 1000
 
 ############################### 4) CONTROL FLAGS ###############################
 
-TEST::Bool = true
+TEST::Bool = false
 PRIN::Bool = true
 STOP::Bool = false # stop simulation at zero syndrome (if true, BER curves are
 # not printed)
@@ -67,7 +67,7 @@ MAXITER::Int = 50
 FACTORS = [1.0]
 # EbN0 = [1.2, 1.4, 1.6, 1.8]
 EbN0 = [2.5]
-TRIALS = 10 .^(0:length(EbN0)-1)*2^13
+TRIALS = 10 .^(0:length(EbN0)-1)*2^16
 RELATIVE::Bool = false
 
 # TEST
@@ -122,14 +122,14 @@ DECAYS[i] = FACTORS
 
 # NW-RBP
 i += 1
-ACTIVE[i] = 0
+ACTIVE[i] = 1
 BPTYPES[i] = "FAST"
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
 
 # Variable Node RBP
 i += 1
-ACTIVE[i] = 0
+ACTIVE[i] = 1
 BPTYPES[i] = "FAST"
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
@@ -156,12 +156,16 @@ PROTOCOL::String = "NR5G"
 
 ############################# PARITY-CHECK MATRIX #############################
 
-MSG = zeros(Bool,AA)
-
 if PROTOCOL == "NR5G"
     ZF = 0
     RV = 0
-    CWORD, HH, E_H, RR, NR_LDPC_DATA = NR_LDPC_encode(MSG,RR,RV,false)
+    NR_LDPC_DATA, RR = NR_LDPC_parameters(AA,RR,RV,false)
+    HH, E_H = NR_LDPC_make_parity_check_matrix(NR_LDPC_DATA.Zc,
+                                               NR_LDPC_DATA.iLS,
+                                               NR_LDPC_DATA.bg,
+                                               NR_LDPC_DATA.P,
+                                               NR_LDPC_DATA.K_prime,
+                                               NR_LDPC_DATA.K)
     MM, NN = size(HH)
     GIRTH = find_girth(HH,100000)
     LL = nothing
