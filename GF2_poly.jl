@@ -53,11 +53,11 @@ function
 end
 
 function divide_poly(
-    p::Union{Vector{Bool},Vector{Union{Bool,Missing}}},
+    p::Vector{Bool},
     d::Vector{Bool}
     )
 
-    if d[1] != 1
+    if !d[1]
         throw(ArgumentError(
             lazy"d[1] must be one."
         ))

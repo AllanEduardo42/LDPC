@@ -1,53 +1,19 @@
 ################################################################################
 # Allan Eduardo Feitosa
 # 14 Nov 2024
-# Auxiliary functions of the NR-LDPC encoding
+# Encoding functions for the NR-LDPC encoding
 
-include("NR_LDPC_parity_bits.jl")
 include("NR_LDPC_make_parity_check_matrix.jl")
+include("NR_LDPC_auxiliary_functions.jl")
 
 using DelimitedFiles
 
 function 
-    get_Zc(
-        K_prime::Integer,
-        Kb::Integer
-    )
-
-    Z = K_prime/Kb
-
-    liftSizeMtx = [ 2   4   8  16  32  64 128 256;
-                    3   6  12  24  48  96 192 384;
-                    5  10  20  40  80 160 320   0;
-                    7  14  28  56 112 224   0   0;
-                    9  18  36  72 144 288   0   0;
-                   11  22  44  88 176 352   0   0;
-                   13  26  52 104 208   0   0   0;
-                   15  30  60 120 240   0   0   0]
-
-
-
-    _,coords = findmin(x -> (x ≥ 0) ? x : Inf, liftSizeMtx .- Z)
-
-    Zc = liftSizeMtx[coords]
-    iLS = coords[1]-1
-
-    if Kb * Zc < K_prime
-        throw(error(
-                lazy"""Kb * Zc must be greater than K_prime"."""
-            ))
-    end
-
-    return Zc, iLS    
-
-end
-
-function 
-    code_block_segmentation(
+    code_block_segmentation!(
+        cw::Matrix{<:Integer},
         b::Vector{Bool},
         C::Integer,
         K_prime::Integer,
-        K::Integer,
         L::Integer
     )
 
@@ -59,103 +25,136 @@ function
 
     end
 
-    c = zeros(Union{Bool,Missing},K,C)
     s = 1
     @inbounds for r = 1:C
         for k = 1 : (K_prime - L)
-            c[k,r] = b[s]
+            cw[k,r] = b[s]
             s += 1
         end
         if C > 1
-            _, p = divide_poly(c[1:K_prime,r],g_CRC)
+            _, p = divide_poly(cw[1:K_prime,r],g_CRC)
             for k = (K_prime - L + 1) : K_prime
-                c[k,r] = p[k + L - K_prime]
+                cw[k,r] = p[k + L - K_prime]
+            end
+        end      
+    end
+    
+end
+
+function 
+    NR_LDPC_parity_bits!(
+        Cw::Matrix{Bool},
+        W::Matrix{Bool},
+        Sc::Vector{Bool},
+        Z::Matrix{Bool},
+        E_H::Matrix{<:Integer},
+        I::Integer,
+        J::Integer
+    ) 
+
+    @inbounds for i = 1:4
+        for j = 1:J   
+            if E_H[i,j] ≠ -1
+                W[:,i] .⊻= circshift(Cw[:,j],-E_H[i,j])
             end
         end
-        for k = (K_prime + 1) : K #(filler bits)
-            c[k,r] = missing
-        end        
+        Sc .⊻= W[:,i]
     end
 
-    return c
+    @inbounds for i = 1:4
+        if E_H[i,J+1] ≠ -1
+            Cw[:,J+1] .⊻= circshift(Sc,E_H[i,J+1])
+        end
+    end
     
-end
-
-function 
-    channel_coding(
-        c::Matrix{Union{Bool,Missing}},
-        C::Integer,
-        K_prime::Integer,
-        K::Integer,
-        Zc::Integer,
-        iLS::Integer,
-        N::Integer,
-        bg::String,
-        E_H::Union{Matrix{<:Integer},Nothing},
-        P::Integer
-    )
-
-    d = zeros(Union{Bool,Missing},N,C)
-    cw = zeros(Bool,N+2*Zc,C)
-    cw[1:K_prime,:] = c[1:K_prime,:]
-
-    @inbounds for r = 1:C
-        for k = 2*Zc + 1 : K_prime
-            d[k-2*Zc,r] = c[k,r]
-        end
-        for k = K_prime + 1 : K #(filler bits)
-            d[k-2*Zc,r] = missing
+    
+    @inbounds for i=1:4
+        if E_H[i,J+1] ≠ -1
+            Z[:,i] = circshift(Cw[:,J+1],-E_H[i,J+1])
         end
     end
 
-    if E_H === nothing    
-        H, E_H = NR_LDPC_make_parity_check_matrix(Zc,iLS,bg)
-    else
-        H = nothing
+    @inbounds for i = 4:-1:2
+        Cw[:,J+i] = W[:,i] .⊻ Z[:,i] .⊻ Cw[:,J+i+1]
     end
 
-    @inbounds for r = 1:C
-        w = NR_LDPC_parity_bits(cw[1:K,r],bg,Zc,K,E_H,P)
-        cw[K+1:end,r] = w
-        if H !== nothing && !iszero(H[1:end-P,1:end-P]*cw[1:end-P,r])
-            throw(error(
-                    lazy"""Wrong encoding"."""
-                ))
-        end
-        for k = (K + 1) : N + 2*Zc
-            d[k - 2*Zc,r] = w[k - K]
+    @inbounds for i = 5:I
+        for j=1:J+4
+            if E_H[i,j] ≠ -1
+                Cw[:,J+i] .⊻= circshift(Cw[:,j],-E_H[i,j])
+            end
         end
     end
-    return d, H, E_H
 
 end
 
 function 
-    rate_matching(
-        d::Matrix{Union{Bool,Missing}},
-        C::Integer,
+    rate_matching!(
+        e::Vector{Bool},
+        Cw::Matrix{Bool},
+        twoZc::Integer,
         N_cb::Integer,
-        E_r::Vector{<:Integer},
-        k0::Integer
+        E_r::Integer,
+        k0::Integer,
+        K::Integer,
+        K_prime::Integer
     )
-
-    e = zeros(Bool,maximum(E_r),C)
     
-    @inbounds for r = 1:C
+    @inbounds begin
         j = 0
         k = 1
-        while k ≤ E_r[r]
-            x = rem(k0+j,N_cb)+1
-            if d[x,r] !== missing
-                e[k,r] = d[x,r]
+        while k ≤ E_r
+            x = rem(k0+j,N_cb) + twoZc + 1
+            if x ≤ K_prime || x > K
+                e[k] = Cw[x]
                 k += 1
             end
             j += 1
         end
     end
-
-    return e
 end
+
+function 
+    bit_interleaving!(
+        f::Vector{Bool},
+        e::Vector{Bool},
+        E_r::Integer,
+        Q_m::Integer
+    )
+
+    @inbounds begin
+        for j = 0:(E_r÷Q_m - 1)
+            for i = 0:(Q_m - 1)
+                f[i + j*Q_m + 1] = e[i*E_r÷Q_m + j + 1]
+            end
+        end
+    end    
+
+end
+
+function
+    code_concatenation!(
+        g::Matrix{Bool},
+        f::Matrix{Bool},
+        C::Integer,
+        E_r::Vector{<:Integer}
+    )
+
+    
+    k = 1
+    r = 1
+    @inbounds while r ≤ C
+        j = 1
+        while j ≤ E_r[r]
+            g[k] = f[j,r]
+            k += 1
+            j += 1
+        end
+        r += 1
+    end
+end
+
+
 
 function 
     inv_rate_matching(
@@ -199,30 +198,6 @@ function
 end
 
 function 
-    bit_interleaving(
-        e::Matrix{Bool},
-        C::Integer,
-        E_r::Vector{<:Integer},
-        Q_m::Integer
-    )
-
-    if Q_m == 1
-        return e
-    else
-        f = zeros(Bool,maximum(E_r),C)
-        @inbounds for r = 1:C
-            for j = 0:(E_r[r]÷Q_m - 1)
-                for i = 0:(Q_m - 1)
-                    f[i + j*Q_m + 1,r] = e[i*E_r[r]÷Q_m + j + 1,r]
-                end
-            end
-        end    
-
-        return f
-    end
-end
-
-function 
     inv_bit_interleaving(
         f::Matrix{Bool},
         C::Integer,
@@ -239,72 +214,6 @@ function
             end
         end
     end
-
-    return e
-end
-
-function
-    code_concatenation(
-        f::Matrix{Bool},
-        C::Integer,
-        G::Integer,
-        E_r::Vector{<:Integer}
-    )
-
-    g = zeros(Bool,Int(G))
-    k = 1
-    r = 1
-    @inbounds while r ≤ C
-        j = 1
-        while j ≤ E_r[r]
-            g[k] = f[j,r]
-            k += 1
-            j += 1
-        end
-        r += 1
-    end
-
-    return g
-end
-
-function 
-    get_Er(
-        C::Integer,
-        G::Integer,
-        CBGTI::Vector{<:Any},
-        N_L::Integer,
-        Q_m::Integer
-    )
-
-    CBGTI_flags = get_CBGTI_flags(C, CBGTI)
-    C_prime = sum(CBGTI_flags)
-    j=0
-    E_r = zeros(Int,C)
-    @inbounds for r = 1:C
-        if CBGTI_flags[r] == 0
-            E_r[r] = 0
-        else
-            if j <= C_prime - rem(G/(N_L*Q_m),C_prime)-1
-                E_r[r] = N_L*Q_m*fld(G,N_L*Q_m*C_prime)
-            else
-                E_r[r] = N_L*Q_m*cld(G,N_L*Q_m*C_prime)
-            end
-            j += 1
-        end
-    end
-    return E_r
-end
-
-function 
-    get_CBGTI_flags(
-        C::Integer,
-        CBGTI::Vector{<:Any}
-    )
-    
-    CBGTI_flags = ones(Bool,C)
-    CBGTI_flags[CBGTI[CBGTI .< C] .+ 1] .= false
-
-    return CBGTI_flags
 end
 
 function 
@@ -330,93 +239,3 @@ function
 
     return f
 end
-
-
-function
-    get_k0(
-        rv::Integer,
-        Zc::Integer,
-        N_cb::Integer,
-        bg::String
-    )
-
-    if rv == 0
-        k0 = 0
-    else
-        if bg == "1"
-            den = 66       
-            if rv == 1
-                num = 17
-            elseif rv == 2
-                num = 33        
-            elseif rv == 3
-                num = 56        
-            else
-                throw(ArgumentError(
-                    lazy"""rv must be a integer between "0" and "3"."""
-                ))
-            end
-        elseif bg == "2"
-            den = 50
-            if rv == 1
-                num = 13
-            elseif rv == 2
-                num = 25
-            elseif rv == 3
-                num = 43
-            else
-                throw(ArgumentError(
-                    lazy"""rv must be a integer between "0" and "3"."""
-                ))
-            end
-        else
-            throw(ArgumentError(
-                lazy"""bg must be "1" or "2"."""
-            ))
-        end
-        k0 = fld(num*N_cb,den*Zc)*Zc
-    end
-
-    return k0
-end
-
-function 
-    parity_bits_G(
-        c::Vector{Bool},
-        Zc::Integer,
-        K::Integer,
-        H::BitMatrix,
-    )
-
-    G = gf2_nullspace(H[1:(4*Zc),1:(K+4*Zc)])
-    gf2_reduce!(G)
-
-    p = G[K+1:end,:]*c
-
-    q = H[4*Zc+1:end,1:K+4*Zc]*[c;p]
-
-    return [p;q]
-
-end
-
-# function circ_mult(
-#         e_H::AbstractArray{<:Integer},
-#         Zc::Integer,
-#         u::Vector{Bool}
-#     )
-
-#     L = size(e_H,1)
-
-#     q = zeros(Bool,Zc,L)
-
-#     @inbounds for i in axes(e_H,1)
-#         for j in axes(e_H,2)
-#             if e_H[i,j] != -1
-#                 range = (1 + (j-1)*Zc) : (j*Zc)
-#                 q[:,i] .⊻= circshift(u[range],-e_H[i,j])
-#             end
-#         end
-#     end
-
-#     return q
-# end

@@ -8,42 +8,42 @@ using Polynomials
 function 
     PEG(
         lambda::Vector{<:AbstractFloat},
-        ro::Vector{<:AbstractFloat},
+        rho::Vector{<:AbstractFloat},
         M::Integer,
         N::Integer
     )
 
     @inbounds begin
         BitNode_poly = lambda[end:-1:1]
-        ChkNode_poly = ro[end:-1:1]
-        lamb = zeros(Int,length(BitNode_poly))
-        Nc = zeros(Int,length(ChkNode_poly))
+        # ChkNode_poly = rho[end:-1:1]
+        Nv = zeros(Int,length(BitNode_poly))
+        # Nc = zeros(Int,length(ChkNode_poly))
         d = Vector{Int}()
 
-        # Computing the Integral of lamda and ro polynomial distribution
+        # Computing the Integral of lamda and rho polynomial distribution
         Lambda = integrate(Polynomial(BitNode_poly))
-        Rou = integrate(Polynomial(ChkNode_poly))
+        # Rou = integrate(Polynomial(ChkNode_poly))
         temp1 = N/(Lambda(1) - Lambda(0))
-        temp2 = M/(Rou(1) - Rou(0))
+        # temp2 = M/(Rou(1) - Rou(0))
 
         for j in eachindex(BitNode_poly)
-            lamb[j] = round(Int,temp1*BitNode_poly[j]/j)
+            Nv[j] = round(Int,temp1*BitNode_poly[j]/j)
         end
         
-        for j in eachindex(ChkNode_poly)
-            Nc[j] = round(Int,temp2*ChkNode_poly[j]/j)
+        # for j in eachindex(ChkNode_poly)
+        #     Nc[j] = round(Int,temp2*ChkNode_poly[j]/j)
+        # end
+        
+        if sum(Nv) ≠ N
+            Nv[end] = N - sum(Nv[1:end-1])
         end
         
-        if sum(lamb) ≠ N
-            lamb[end] = N - sum(lamb[1:end-1])
-        end
-        
-        if sum(Nc) ≠ M
-            Nc[end] = M - sum(Nc[1:end-1])
-        end
+        # if sum(Nc) ≠ M
+        #     Nc[end] = M - sum(Nc[1:end-1])
+        # end
 
-        for kk in eachindex(lamb)
-            append!(d,kk*ones(Int,lamb[kk]))
+        for kk in eachindex(Nv)
+            append!(d,kk*ones(Int,Nv[kk]))
         end
         H = zeros(Bool,M,N)
         check_degrees = zeros(Int,M)

@@ -54,7 +54,7 @@ SEED_MESSA::Int = 1000
 
 ############################### 4) CONTROL FLAGS ###############################
 
-TEST::Bool = false
+TEST::Bool = true
 PRIN::Bool = true
 STOP::Bool = false # stop simulation at zero syndrome (if true, BER curves are
 # not printed)
@@ -67,12 +67,12 @@ MAXITER::Int = 50
 FACTORS = [1.0]
 # EbN0 = [1.2, 1.4, 1.6, 1.8]
 EbN0 = [2.5]
-TRIALS = 10 .^(0:length(EbN0)-1)*2^16
+TRIALS = 10 .^(0:length(EbN0)-1)*2^13
 RELATIVE::Bool = false
 
 # TEST
 MAXITER_TEST::Int = 2
-EbN0_TEST::Float64 = 2.0
+EbN0_TEST::Float64 = 1.5
 TRIALS_TEST::Int = 1
 DECAY_TEST::Float64 = 1.0
 
@@ -122,14 +122,14 @@ DECAYS[i] = FACTORS
 
 # NW-RBP
 i += 1
-ACTIVE[i] = 1
+ACTIVE[i] = 0
 BPTYPES[i] = "FAST"
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
 
 # Variable Node RBP
 i += 1
-ACTIVE[i] = 1
+ACTIVE[i] = 0
 BPTYPES[i] = "FAST"
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
@@ -144,18 +144,19 @@ PHI = lookupTable()
 
 ########################### 8) MESSAGE AND CODEWORD ############################
 # Rate
-RR::Rational = 1//2
+RR = 1//2
 # Message (Payload) size
-AA::Int = 576*RR
+GG::Int = 576
+AA::Int = round(Int,GG*RR)
 # AA::Int = 128
 # LDPC protocol: NR5G = NR-LDPC (5G); PEG = PEG; WiMAX = IEEE80216e;
-PROTOCOL::String = "PEG"
+PROTOCOL::String = "NR5G"
     LAMBDA = [0.21, 0.25, 0.25, 0.29, 0]
     RO = [1.0, 0, 0, 0, 0, 0]
 
 ############################# PARITY-CHECK MATRIX #############################
 
-MSG = rand(Xoshiro(201),Bool,AA)
+MSG = zeros(Bool,AA)
 
 if PROTOCOL == "NR5G"
     ZF = 0
@@ -163,19 +164,18 @@ if PROTOCOL == "NR5G"
     CWORD, HH, E_H, RR, NR_LDPC_DATA = NR_LDPC_encode(MSG,RR,RV,false)
     MM, NN = size(HH)
     GIRTH = find_girth(HH,100000)
-    GG = nothing
+    LL = nothing
+    UU = nothing
 else
     NR_LDPC_DATA = nothing
-    NN = round(Int,AA/RR)
+    NN = GG
     if PROTOCOL == "PEG"
         ZF = 0
         E_H = nothing
         MM = NN - AA
         # Generate Parity-Check Matrix by the PEG algorithm
-        HH, GIRTH = PEG(LAMBDA,RO,MM,NN)
-        # KK = NN-MM
-        # GG = [I(KK); gf2_mat_mult(gf2_inverse(HH[:,KK+1:NN]), HH[:,1:KK])]
-        HH, LL, UU = remake_H(HH,0)
+        H_PEG, GIRTH = PEG(LAMBDA,RO,MM,NN)
+        HH, LL, UU = remake_H(H_PEG,0)
     elseif PROTOCOL == "WiMAX"
         # N takes values in {576,672,768,864,960,1056,1152,1248,1344,1440,1536,
         # 1632,1728,1824,1920,2016,2112,2208,2304}.    
@@ -183,13 +183,14 @@ else
         HH,ZF,E_H = IEEE80216e(NN,RR,"A")
         MM,NN = size(HH)
         GIRTH = find_girth(HH,100000)
-        GG = nothing
+        LL = nothing
+    UU = nothing
     end
 end
 
 # list of checks and variables nodes
-NC  = make_cn2vn_list(HH)
-NV  = make_vn2cn_list(HH)
+NC = make_cn2vn_list(HH)
+NV = make_vn2cn_list(HH)
 
 STR = 
 """############################### LDPC parameters ################################

@@ -69,9 +69,9 @@ function
     
     v = similar(A,mA)
     v .*= false
-    for i in 1:mA
+    @inbounds for i in 1:mA
         for k in 1:nA
-            @inbounds v[i] ⊻= A[i,k] && B[k]
+            v[i] ⊻= A[i,k] && B[k]
         end
     end
 
@@ -89,27 +89,28 @@ function gf2_nullspace(A::AbstractMatrix{Bool})
 
     _ = gf2_column_echelon_form!(AA,N)
 
+    @inbounds begin
+        AA_sup = view(AA,1:M,:)
+        AA_inf = view(AA,M+1:M+N,:)
 
-    @inbounds AA_sup = view(AA,1:M,:)
-    @inbounds AA_inf = view(AA,M+1:M+N,:)
+        # find the zero columns of AA_sup
+        zero_columns = []
 
-    # find the zero columns of AA_sup
-    zero_columns = []
-
-    for j = 1:N
-        if @inbounds iszero(view(AA_sup,:,j))
-            append!(zero_columns, j)
+        for j = 1:N
+            if iszero(view(AA_sup,:,j))
+                append!(zero_columns, j)
+            end
         end
-    end
 
-    # The nullspace of A is the columns of AA_inf corresponding to the zero 
-    # columns of AA_sup
+        # The nullspace of A is the columns of AA_inf corresponding to the zero 
+        # columns of AA_sup
 
-    nullspace_A = similar(A,N,length(zero_columns))
-    j = 0
-    for column in zero_columns
-        j += 1
-        @inbounds nullspace_A[:,j] = view(AA_inf,:,column)
+        nullspace_A = similar(A,N,length(zero_columns))
+        j = 0
+        for column in zero_columns
+            j += 1
+            nullspace_A[:,j] = view(AA_inf,:,column)
+        end
     end
 
     return nullspace_A
@@ -211,26 +212,26 @@ function gf2_column_echelon_form!(AA::AbstractMatrix{Bool},N::Integer)
 
     full_rank_sub_matrix = true
 
-    for j in 1:N-1
-        if !(@inbounds AA[j,j])
+    @inbounds for j in 1:N-1
+        if !(AA[j,j])
             p = j+1
-            while p <= N && !(@inbounds AA[j,p])
+            while p <= N && !(AA[j,p])
                 p +=1
             end
             if p <= N
-                @. @inbounds AA[:,j] ⊻= AA[:,p]
-                @. @inbounds AA[:,p] ⊻= AA[:,j]
+                @. AA[:,j] ⊻= AA[:,p]
+                @. AA[:,p] ⊻= AA[:,j]
             else
                 full_rank_sub_matrix = false
             end
         end
         for k in j+1:N
-            if @inbounds AA[j,k]
-                @. @inbounds AA[:,k] ⊻= AA[:,j]
+            if AA[j,k]
+                @. AA[:,k] ⊻= AA[:,j]
             end
         end
     end
-    if !(@inbounds AA[N,N])
+    if !(AA[N,N])
         full_rank_sub_matrix = false
     end
 
@@ -249,10 +250,10 @@ end
 
 function gf2_reduce!(AA::AbstractMatrix{Bool},N::Integer)
     
-    for j in N:-1:2
+    @inbounds for j in N:-1:2
         for k in j-1:-1:1
-            if @inbounds AA[j,k]
-                @. @inbounds AA[:,k] ⊻= AA[:,j]
+            if AA[j,k]
+                @. AA[:,k] ⊻= AA[:,j]
             end
         end
     end

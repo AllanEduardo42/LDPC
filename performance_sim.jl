@@ -72,6 +72,7 @@ function
         Lr, Lq = simcore(
             AA,
             RR,
+            GG,
             ebn0,
             HH,
             LL,
@@ -111,6 +112,7 @@ function
                 sum_decoded[:,k,i], sum_ber[:,k,i] = simcore(
                                                 AA,
                                                 RR,
+                                                GG,
                                                 ebn0[k],
                                                 HH,
                                                 LL,

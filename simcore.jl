@@ -17,11 +17,13 @@ include("./RBP functions/calc_all_residues_NW.jl")
 include("./RBP functions/calc_all_residues_VN.jl")
 include("update_Lq.jl")
 include("update_Lr.jl")
+include("NR LDPC/NR_LDPC_functions.jl")
 
 function
     simcore(
         A::Integer,
         R::Rational,
+        G::Integer,
         ebn0::AbstractFloat,
         H::Matrix{Bool},
         L::Union{Nothing,Matrix{Bool}},
@@ -58,18 +60,41 @@ function
 
     # Parity-Check Matrix dimensions
     M,N = size(H)
-    
-    # constant Zc of NR/5G
-    if protocol == "NR5G"
-        twoZc = 2*Nr_ldpc_data.Zc
-    else
-        twoZc = 0
-    end
+
+    twoZc = 0
 
     # constants for IEEE80216e
     if protocol == "WiMAX"
         E_M, E_N = size(E_H)
         E_K = E_N - E_M
+        Cw = zeros(Bool,Zf,E_N+1)
+        W = zeros(Bool,Zf,E_M)
+        Sc = zeros(Bool,Zf)
+    elseif protocol == "NR5G"
+        B = Nr_ldpc_data.B
+        K_prime = Nr_ldpc_data.K_prime
+        K = Nr_ldpc_data.K
+        Zc = Nr_ldpc_data.Zc
+        bg = Nr_ldpc_data.bg
+        N_cb = Nr_ldpc_data.N_cb
+        E_r = Nr_ldpc_data.E_r
+        k0 = Nr_ldpc_data.k0
+        g_CRC = Nr_ldpc_data.g_CRC
+        P_Zc = Nr_ldpc_data.P_Zc
+        
+        twoZc = 2*Zc
+        W = Matrix{Bool}(undef,Zc,4)
+        Z = Matrix{Bool}(undef,Zc,4)
+        Sc = Vector{Bool}(undef,Zc)
+        if bg == "1"
+            Cw = Matrix{Bool}(undef,Zc,68-P_Zc)
+            J = 22
+            I = 46 - Int(P_Zc)
+        else
+            Cw = Matrix{Bool}(undef,Zc,52-P_Zc)
+            J = 10
+            I = 42 - Int(P_Zc)
+        end
     end
 
     # number of edges in the graph
@@ -86,6 +111,8 @@ function
 ################################# PREALLOCATIONS ###############################
 
     msg = Vector{Bool}(undef,A)
+
+    cword = Vector{Bool}(undef,G)
 
     complete_cword = Vector{Bool}(undef,N)
 
@@ -112,10 +139,10 @@ function
     Lf = (bptype != "MKAY") ? a*ones(N) : 0.5*ones(N,2)
 
     # noise
-    noise = Vector{Float64}(undef,N-twoZc)
+    noise = Vector{Float64}(undef,G)
 
     # received signal
-    signal = zeros(N-twoZc)
+    signal = zeros(G)
 
     # bit-error
     biterror = Vector{Bool}(undef,N) 
@@ -194,18 +221,31 @@ function
 
         # 2) generate the cword
         if protocol == "NR5G"
-            cword = NR_LDPC_encode(E_H,msg,Nr_ldpc_data)
+            Cw[1:A] = msg
+            Cw[A+1:B] .= false
+            _,Cw[A+1:K_prime] = divide_poly(Cw[1:B],g_CRC)
+            Cw[K_prime+1:end] .= false
+            W .= false
+            Sc .= false
+            Z .= false
+            NR_LDPC_parity_bits!(Cw,W,Sc,Z,E_H,I,J)
+            rate_matching!(cword,Cw,twoZc,N_cb,E_r[1],k0,K,K_prime)
         elseif protocol == "PEG"
-            cword = LU_parity_bits(H,L,U,msg)
+            LU_parity_bits!(cword,H,L,U,msg)
         elseif protocol == "WiMAX"
-            cword = IEEE80216e_parity_bits(msg,Zf,E_H,E_M,E_N,E_K)
+            Cw .= false
+            W .= false
+            Sc .= false
+            Cw[1:Zf*E_K] = msg
+            IEEE80216e_parity_bits!(Cw,W,Sc,Zf,E_H,E_M,E_K)
+            cword .= Cw[1:end-Zf]
         end
 
         # 3) Modulation of the cword
-        u = Float64.(2*cword .- 1)
+        @. signal = 2*cword - 1
 
         # 4) sum the noise to the modulated cword to produce the received signal
-        received_signal!(signal,noise,stdev,u,rgn_noise,noisetest)
+        received_signal!(signal,noise,stdev,rgn_noise,noisetest)
 
         # 5) print info in test mode
         if test && printtest

@@ -12,22 +12,16 @@ include("NR_LDPC_functions.jl")
 const R_LBRM = 2//3
 
 struct nr_ldpc_data
-    A::Integer
     B::Integer
-    C::Integer
-    G::Integer
     K_prime::Integer
     K::Integer
-    L_2::Integer
     Zc::Integer
-    iLS::Integer
-    N::Integer
-    P::Integer
     bg::String
     N_cb::Integer
     E_r::Vector{<:Integer}
     k0::Integer
     g_CRC::Vector{Bool}
+    P_Zc::Integer
 end
 
 
@@ -45,17 +39,9 @@ function
         Q_m = 1
     )
 
-    ### for testing
-    # a = rand(Bool,2064)
-    # R = 1/2
-    # rv = 0
-    # I_LBRM = 0
-    # TBS_LBRM = Inf
-    # CBGTI = []
-    # N_L = 1
-    # Q_m = 1
-
     A = length(a)
+
+    G = round(Int,(A/R)/Q_m)*Q_m
 
     ### 1) Transport Block CRC attachment (TS38212 Clause 6.2.1, 7.2.1 and 5.1)
 
@@ -118,9 +104,11 @@ function
 
     Zc, iLS = get_Zc(K_prime, Kb)
 
-    if K_prime < 2*Zc
+    twoZc = 2*Zc
+
+    if K_prime < twoZc
         throw(error(
-            """K_prime must be greater than 2*Zc (K_prime = $K_prime, Zc = $Zc)"""
+            """K_prime must be greater than 2 Zc (K_prime = $K_prime, Zc = $Zc)"""
         ))
     end
 
@@ -131,28 +119,14 @@ function
 
     if bg == "1"
         K = 22*Zc
-    else
-        K = 10*Zc
-    end    
-
-    c = code_block_segmentation(b,C,K_prime,K,L_2)
-
-    ### 3) Channel coding (TS38212 Clauses 7.2.4, 6.2.4 and 5.3.2)
-
-    if bg == "1"
         N = 66*Zc
     else
+        K = 10*Zc
         N = 50*Zc
-    end
-
-    if R == 0
-        P = -1
-    elseif R == 1
-        P = 100*Zc
-    else
-        G = round(Int,(A/R)/Q_m)*Q_m
-        P = N - G÷C - K + K_prime
-    end
+    end  
+    
+    # Parity bit puncturing size
+    P = N - G÷C - K + K_prime
 
     if show_nr_par
         display("B = $B")
@@ -169,41 +143,81 @@ function
         display("P = $P")
     end
 
+    recalc_P = false
     if P > 42*Zc && bg == "1"
-        G = C*(N - 42*Zc - K + K_prime)       
-        P = N - G÷C - K + K_prime        
-        R = A/G        
-        if show_nr_par
-             display("new G = $G")
-             display("new P = $P")
-        end
-        display("Atention: NR-LDPC new rate R = $(round(R,digits=3))")
+        G = C*(N - 42*Zc - K + K_prime)
+        recalc_P = true  
     elseif P > 38*Zc && bg == "2"
         G = C*(N - 38*Zc - K + K_prime)
-        P = N - G÷C - K + K_prime
-        R = A/G
-        if show_nr_par
-             display("new G = $G")
-             display("new P = $P")
-        end
-        display("Atention: NR-LDPC new rate R = $(round(R,digits=3))")
-    end
-
-    if P < 0
+        recalc_P = true
+    elseif P < 0
         G = C*(N - K + K_prime)
+        recalc_P = true
+    end
+    
+    if recalc_P
         P = N - G÷C - K + K_prime
-        R = A/G
+        R = A//G
         if show_nr_par
-             display("new G = $G")
-             display("new P = $P")
+            display("new G = $G")
+            display("new P = $P")
         end
         display("Atention: NR-LDPC new rate R = $(round(R,digits=3))")
     end
 
-    d, H, E_H = channel_coding(c,C,K_prime,K,Zc,iLS,N,bg,E_H,P)
+    # calc the length of d
+    P_Zc = P÷Zc
+    if C == 1
+        if bg == "1"
+            Cw = zeros(Bool,Zc,68 - P_Zc)
+        else
+            Cw = zeros(Bool,Zc,52 - P_Zc)
+        end
+        Cw[1:K_prime] = b
+    else
+        Ld = N - (P÷Zc)*Zc
+        cw = zeros(Int8,Ld+twoZc,C)
+        code_block_segmentation!(cw,b,C,K_prime,L_2)
+    end
 
-    # d[1:(K_prime - 2*Zc),:] == c[(2*Zc + 1):K_prime,:] #(payload + CRC)
-    # d[(K_prime - 2*Zc+1):(K - 2*Zc),:] == c[(K_prime + 1):K,:] #(filler bits)
+    ### 3) Channel coding (TS38212 Clauses 7.2.4, 6.2.4 and 5.3.2)    
+
+    if E_H === nothing    
+        H, E_H = NR_LDPC_make_parity_check_matrix(Zc,iLS,bg)
+    else
+        H = nothing
+    end
+    
+    W = zeros(Bool,Zc,4)
+    Z = zeros(Bool,Zc,4)
+    Sc = zeros(Bool,Zc)
+    
+    if bg == "1"
+        J = 22
+        I = 46 - P_Zc
+    else
+        J = 10
+        I = 42 - P_Zc
+    end   
+
+    if C == 1
+        NR_LDPC_parity_bits!(Cw,W,Sc,Z,E_H,I,J)
+    else
+        for r = 1:C
+            Cw .= false
+            W .= false
+            Sc .= false
+            Z .= false
+            Cw[1:K,r] = cw[1:K,r]
+            NR_LDPC_parity_bits!(Cw,W,Sc,Z,E_H,I,J)
+            for k = K_prime + 1 : K
+                cw[k,r] = -1
+            end
+            cw[K+1:end,r] = Cw[K+1:end,r]
+        end
+    end
+
+    # cw = cw[twoZc+1:end]    
 
     ### 4) Rate Matching (TS38212 Clauses 7.2.5, 6.2.5 and 5.4.2)
 
@@ -219,13 +233,40 @@ function
 
     k0 = get_k0(rv,Zc,N_cb,bg)
 
-    e =  rate_matching(d,C,N_cb,E_r,k0)
+    if C == 1
+        e = zeros(Bool,maximum(E_r))
+        rate_matching!(e,Cw,twoZc,N_cb,E_r[1],k0,K,K_prime)
+    else
+        e = zeros(Bool,maximum(E_r),C)
+        for r = 1:C
+            rate_matching!(e[:,r],cw[:,r],twoZc,N_cb,E_r[r],k0)
+        end
+    end
 
-    f =  bit_interleaving(e,C,E_r,Q_m)
+    # bit interleaving
+    if Q_m ≠ 1
+        if C == 1
+            f = zeros(Bool,maximum(E_r),1)
+            bit_interleaving!(f,e,E_r[1],Q_m)
+        else
+            f = zeros(Bool,maximum(E_r),C)
+            for r = 1:C
+                bit_interleaving!(f[:,r],e[:,r],E_r[r],Q_m)
+            end
+        end
+        
+    else
+        f = e
+    end
 
     ### 5) Code block concatenation (TS38212 Clauses 7.2.6, 6.2.6 and 5.5)
-
-    g = code_concatenation(f,C,G,E_r)
+    
+    if C == 1
+        g = f[:]
+    else
+        g = zeros(Bool,G)
+        code_concatenation!(g,f,G,E_r)
+    end
 
     # test inv functions
 
@@ -237,7 +278,7 @@ function
 
     # display("e: $(e_prime == e)")
 
-    # range = (K_prime-2*Zc+1):(K-2*Zc)
+    # range = (K_prime-twoZc+1):(K-twoZc)
 
     # d_prime, cw_prime = inv_rate_matching(e_prime,C,Zc,N,N_cb,E_r,k0,range)
 
@@ -248,59 +289,24 @@ function
         H = H[1:end-P,1:end-P]
         H = [H[:,1:K_prime] H[:,K+1:end]]
 
-        if !iszero(H*[a[1:2*Zc];g])
+        if !iszero(H*[a[1:twoZc];g])
             throw(error(
                         lazy"""Wrong encoding"."""
                     ))
         end
     end
 
-    return g, H, E_H, R, nr_ldpc_data(A,B,C,G,K_prime,K,L_2,Zc,iLS,N,P,bg,N_cb,E_r,k0,g_CRC)
+    return g, H, E_H, R, nr_ldpc_data(B,K_prime,K,Zc,bg,N_cb,E_r,k0,g_CRC,P_Zc)
 
 end
 
-function 
-    NR_LDPC_encode(
-        E_H::Matrix{<:Integer},
-        a::Vector{Bool},
-        nr_ldpc_data::Any;
-        Q_m = 1
-    )
+# KK = 256
+# MSG = rand(Bool,KK)
+# RR = 1//2
 
-    A = nr_ldpc_data.A
-    B = nr_ldpc_data.B
-    C = nr_ldpc_data.C
-    G = nr_ldpc_data.G
-    K_prime = nr_ldpc_data.K_prime
-    K = nr_ldpc_data.K
-    L_2 = nr_ldpc_data.L_2
-    Zc = nr_ldpc_data.Zc
-    iLS = nr_ldpc_data.iLS
-    N = nr_ldpc_data.N
-    P = nr_ldpc_data.P
-    bg = nr_ldpc_data.bg
-    N_cb = nr_ldpc_data.N_cb
-    E_r = nr_ldpc_data.E_r
-    k0 = nr_ldpc_data.k0
-    g_CRC = nr_ldpc_data.g_CRC
-    
+# CWORD, HH, E_H, RR, NR_LDPC_DATA = NR_LDPC_encode(MSG,RR,0,true)
+# twoZc = 2*NR_LDPC_DATA.Zc
 
-    b = zeros(Bool,B)
-    @inbounds b[1:A] = a
-    @inbounds _,b[A+1:end] = divide_poly(b,g_CRC)
-
-    c = code_block_segmentation(b,C,K_prime,K,L_2)
-
-    d, ___ = channel_coding(c,C,K_prime,K,Zc,iLS,N,bg,E_H,P)
-
-    e =  rate_matching(d,C,N_cb,E_r,k0)
-
-    f =  bit_interleaving(e,C,E_r,Q_m)
-
-    g = code_concatenation(f,C,G,E_r)
-
-    return g
-
-end
+# iszero(HH*[MSG[1:twoZc];CWORD])
 
 

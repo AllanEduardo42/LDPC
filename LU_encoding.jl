@@ -18,7 +18,7 @@ function
     #                         - Number of non-zeros its row minus 1
 
     # Get the matric dimension
-    M,_ = size(H)
+    M,N = size(H)
     newH = copy(H)
     # Set a new matrix F for LU decomposition
     F = copy(newH)
@@ -35,7 +35,7 @@ function
         if strategy == 0
             
             # Find non-zero elements (1s) for the diagonal
-            y = findall(F[:, i:end])
+            y = findall(F[:,i:end])
             r = getindex.(y,1)
             c = getindex.(y,2)
             
@@ -67,7 +67,7 @@ function
         elseif strategy == 2
             
             # Find non-zero elements (1s) for the diagonal
-            y = findall(F[:, i:end])
+            y = findall(F[:,i:end])
             r = getindex.(y,1)
             c = getindex.(y,2)
             colWeight = sum(F[:, i:end],dims=1) - 1
@@ -104,18 +104,23 @@ function
             r2 = findall(F[(i + 1):end, i])       
             # Add current row to the later rows which have a 1 in column i
             for j in r2
-                F[i+j,:] = F[i+j, :] .⊻ F[i,:]
+                @. F[i+j,:] ⊻= F[i,:]
             end                            
         end
             
     end
 
-return [newH[:,M+1:end] newH[:,1:M]], L, U
+    K = N - M
+
+    @inbounds newH = [newH[:,K+1:end] newH[:,1:M]]
+
+    return newH, L, U
 
 end
 
 function 
-    LU_parity_bits(
+    LU_parity_bits!(
+        cword::Vector{Bool},
         H::Matrix{Bool}, 
         L::Matrix{Bool}, 
         U::Matrix{Bool}, 
@@ -123,12 +128,14 @@ function
     )
 
     M,N = size(H)
+    K = N - M
 
     # Find B.dsource 
-    @inbounds z = H[:,1:N-M]*msg
+    @inbounds z = H[:,1:K]*msg
 
     # Parity check vector found by solving sparse LU
 
-    return [msg; gf2_solve_LU(U,gf2_solve_LU(L,z))]
+    cword[1:K] = msg
+    cword[K+1:end] = gf2_solve_LU(U,gf2_solve_LU(L,z))
 
 end

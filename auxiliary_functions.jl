@@ -70,15 +70,13 @@ function
         signal::AbstractArray{<:AbstractFloat},
         noise::Vector{<:AbstractFloat},
         σ::AbstractFloat,
-        u::Vector{<:AbstractFloat},
-        rng_noise::AbstractRNG,
+        rgn_noise::AbstractRNG,
         noisetest::Nothing
     )
 
     @fastmath begin
-        randn!(rng_noise,noise)
-        noise .*= σ
-        signal .= u .+ noise
+        randn!(rgn_noise,noise)
+        @. signal += noise*σ
     end
 
 end
@@ -89,7 +87,7 @@ function
         noise::Vector{<:AbstractFloat},
         σ::AbstractFloat,
         u::Vector{<:AbstractFloat},
-        rng_noise::AbstractRNG,
+        rgn_noise::AbstractRNG,
         noisetest::Vector{<:AbstractFloat}
     )
 

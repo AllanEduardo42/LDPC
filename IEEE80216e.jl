@@ -107,14 +107,14 @@ function
     end
     
     @inbounds begin
-        zf = N÷size(E_H,2)
+        Zf = N÷size(E_H,2)
         for i in axes(E_H,1)
             for j in axes(E_H,2)
                 if E_H[i,j] > 0
                     if rate == "2/3A"
-                        E_H[i,j] = rem(E_H[i,j],zf)
+                        E_H[i,j] = rem(E_H[i,j],Zf)
                     else
-                        E_H[i,j] = fld(E_H[i,j]*zf,z0)
+                        E_H[i,j] = fld(E_H[i,j]*Zf,z0)
                     end
                 end
             end
@@ -122,64 +122,59 @@ function
 
         base_M = size(E_H,1)
         base_N = size(E_H,2)
-        H = zeros(Bool, zf * base_M, zf * base_N)
-        I_matrix = Matrix(I(zf))
+        H = zeros(Bool, Zf * base_M, Zf * base_N)
+        I_matrix = Matrix(I(Zf))
         for i = 1:base_M
             for j = 1:base_N
                 if E_H[i,j] != -1
-                    H[(i-1)*zf+1 : i*zf,(j-1)*zf+1 : j*zf] = circshift(I_matrix,(0,E_H[i,j]))
+                    H[(i-1)*Zf+1 : i*Zf,(j-1)*Zf+1 : j*Zf] = circshift(I_matrix,(0,E_H[i,j]))
                 end
             end
         end
     end
 
-    return H, zf, E_H
+    return H, Zf, E_H
 end
 
 function 
-    IEEE80216e_parity_bits(
-        c::Vector{Bool},
-        zf::Integer,
+    IEEE80216e_parity_bits!(
+        Cw::Matrix{Bool},
+        W::Matrix{Bool},
+        Sc::Vector{Bool},
+        Zf::Integer,
         E_H::Matrix{<:Integer},
         E_M::Integer,
-        E_N::Integer,
         E_K::Integer
     )
 
     @inbounds begin
-        cw = zeros(Bool,zf,E_N+1)
-        cw[1:zf*E_K] = c
-
-        a = zeros(Bool,zf,E_M)
-        Sc = zeros(Bool,zf)
 
         for i = 1:E_M
             for j = 1:E_K            
                 if E_H[i,j] ≠ -1
-                    a[:,i] .⊻= circshift(cw[:,j],-E_H[i,j])
+                    W[:,i] .⊻= circshift(Cw[:,j],-E_H[i,j])
                 end
             end
-            Sc .⊻= a[:,i]
+            Sc .⊻= W[:,i]
         end
 
         for i = 1:E_M
             if E_H[i,E_K+1] ≠ -1
-                cw[:,E_K+1] .⊻= circshift(Sc,E_H[i,E_K+1])
+                Cw[:,E_K+1] .⊻= circshift(Sc,E_H[i,E_K+1])
             end
         end
         
-        z = zeros(Bool,zf,E_M)
+        z = zeros(Bool,Zf,E_M)
         for i=1:E_M
             if E_H[i,E_K+1] ≠ -1
-                z[:,i] = circshift(cw[:,E_K+1],-E_H[i,E_K+1])
+                z[:,i] = circshift(Cw[:,E_K+1],-E_H[i,E_K+1])
             end
         end
 
         for i = E_M:-1:2
-            cw[:,E_K+i] = a[:,i] .⊻ z[:,i] .⊻ cw[:,E_K+i+1]
+            Cw[:,E_K+i] = W[:,i] .⊻ z[:,i] .⊻ Cw[:,E_K+i+1]
         end  
         
-        return cw[1:end-zf]
     end
 
 end
