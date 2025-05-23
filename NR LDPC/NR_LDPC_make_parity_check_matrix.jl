@@ -10,7 +10,8 @@ function
         bg::String,
         P::Integer,
         K_prime::Integer,
-        K::Integer
+        K::Integer,
+        P_Zc::Integer
     )
 
     E_H = readdlm("./5G_exponent_matrices/EM_$(bg)_$(iLS)_$(Zc).txt",'\t', Int,'\n')
@@ -34,6 +35,12 @@ function
     # Puncturing 
     H = H[1:end-P,1:end-P]
     H = [H[:,1:K_prime] H[:,K+1:end]]
+
+    J1 = cld(K_prime,Zc)
+    J2 = K÷Zc
+
+    E_H = E_H[1:end-P_Zc,1:end-P_Zc]
+    E_H = [E_H[:,1:J1] E_H[:,J2+1:end]]
 
     return H, E_H
 

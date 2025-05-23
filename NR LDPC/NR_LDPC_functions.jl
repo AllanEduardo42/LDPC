@@ -45,46 +45,57 @@ function
     NR_LDPC_parity_bits!(
         Cw::Matrix{Bool},
         W::Matrix{Bool},
-        Sc::Vector{Bool},
+        Sw::Vector{Bool},
         Z::Matrix{Bool},
         E_H::Matrix{<:Integer},
         I::Integer,
-        J::Integer
-    ) 
+        J::Integer,
+    )  
+    
+    Sw .= false
 
-    Sc .= false
+    # I, _ = size(E_H)
 
-    @inbounds for i = 1:4
-        W[:,i] .= false
-        for j = 1:J   
-            if E_H[i,j] ≠ -1
-                W[:,i] .⊻= circshift(Cw[:,j],-E_H[i,j])
+    @inbounds begin
+
+        for i = 1:4
+            W[:,i] .= false
+            for j = 1:J   
+                if E_H[i,j] ≠ -1
+                    W[:,i] .⊻= circshift(Cw[:,j],-E_H[i,j])
+                end
+            end
+            Sw .⊻= W[:,i]
+        end
+
+        # b1
+        for i = 1:4
+            if E_H[i,J+1] ≠ -1
+                Cw[:,J+1] .⊻= circshift(Sw,E_H[i,J+1])
             end
         end
-        Sc .⊻= W[:,i]
-    end
-
-    @inbounds for i = 1:4
-        if E_H[i,J+1] ≠ -1
-            Cw[:,J+1] .⊻= circshift(Sc,E_H[i,J+1])
+        
+        # z
+        for i=1:4
+            if E_H[i,J+1] ≠ -1
+                Z[:,i] = circshift(Cw[:,J+1],-E_H[i,J+1])
+            end
         end
-    end
-    
-    
-    @inbounds for i=1:4
-        if E_H[i,J+1] ≠ -1
-            Z[:,i] = circshift(Cw[:,J+1],-E_H[i,J+1])
-        end
-    end
 
-    @inbounds for i = 4:-1:2
-        Cw[:,J+i] = W[:,i] .⊻ Z[:,i] .⊻ Cw[:,J+i+1]
-    end
+        # B = | I(z1) I 0 0 |
+        #     | I(z2) I I 0 |
+        #     | I(z3) 0 I I |
+        #     | I(z4) 0 0 I |
 
-    @inbounds for i = 5:I
-        for j=1:J+4
-            if E_H[i,j] ≠ -1
-                Cw[:,J+i] .⊻= circshift(Cw[:,j],-E_H[i,j])
+        Cw[:,J+4] = W[:,4] .⊻ Z[:,4]
+        Cw[:,J+3] = W[:,3] .⊻ Z[:,3] .⊻ Cw[:,J+4]
+        Cw[:,J+2] = W[:,1] .⊻ Z[:,1]
+
+        for i = 5:I
+            for j=1:J+4
+                if E_H[i,j] ≠ -1
+                    Cw[:,J+i] .⊻= circshift(Cw[:,j],-E_H[i,j])
+                end
             end
         end
     end
@@ -106,8 +117,8 @@ function
     @inbounds begin
         j = 0
         k = 1
-        while k ≤ E_r + twoZc
-            x = rem(k0+j,N_cb) + 1
+        while k ≤ twoZc + E_r
+            x = rem(k0+j,N_cb + twoZc) + 1
             if x ≤ K_prime || x > K
                 e[k] = Cw[x]
                 k += 1

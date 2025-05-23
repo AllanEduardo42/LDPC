@@ -42,8 +42,6 @@ function
         N_L = 1,
     )
 
-    G = round(Int,(A/R)/Q_m)*Q_m
-
     if A > 3824
         # CRC24A:
         B = A + 24
@@ -53,6 +51,8 @@ function
         B = A + 16
         p_CRC = "x^16 + x^12 + x^5 + 1"
     end
+
+    G = round(Int,(A/R)/Q_m)*Q_m
 
     g_CRC = gf2_poly(p_CRC)
 
@@ -157,7 +157,7 @@ function
 
     k0 = get_k0(rv,Zc,N_cb,bg)
 
-    return nr_ldpc_data(A,B,C,g_CRC,bg,K_prime,K,N,Zc,iLS,P,P_Zc,N_cb,E_r,k0), R
+    return nr_ldpc_data(A,B,C,g_CRC,bg,K_prime,K,N,Zc,iLS,P,P_Zc,N_cb,E_r,k0), R, G
 
 end
 

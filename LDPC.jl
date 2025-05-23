@@ -54,24 +54,24 @@ SEED_MESSA::Int = 1000
 
 ############################### 4) CONTROL FLAGS ###############################
 
-TEST::Bool = false
+TEST::Bool = true
 PRIN::Bool = true
 STOP::Bool = false # stop simulation at zero syndrome (if true, BER curves are
 # not printed)
 
 ################################## 5) NUMBERS ##################################
 
-MAXITER::Int = 50
+MAXITER::Int = 5
 # FACTORS = [0.7, 0.8, 0.9, 1.0]
 # FACTORS = collect(0.1:0.1:1.0)
 FACTORS = [1.0]
 # EbN0 = [1.2, 1.4, 1.6, 1.8]
 EbN0 = [2.5]
-TRIALS = 10 .^(0:length(EbN0)-1)*2^16
+TRIALS = 10 .^(0:length(EbN0)-1)*2^5
 RELATIVE::Bool = false
 
 # TEST
-MAXITER_TEST::Int = 2
+MAXITER_TEST::Int = 1
 EbN0_TEST::Float64 = 1.5
 TRIALS_TEST::Int = 1
 DECAY_TEST::Float64 = 1.0
@@ -122,14 +122,14 @@ DECAYS[i] = FACTORS
 
 # NW-RBP
 i += 1
-ACTIVE[i] = 1
+ACTIVE[i] = 0
 BPTYPES[i] = "FAST"
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
 
 # Variable Node RBP
 i += 1
-ACTIVE[i] = 1
+ACTIVE[i] = 0
 BPTYPES[i] = "FAST"
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
@@ -144,10 +144,9 @@ PHI = lookupTable()
 
 ########################### 8) MESSAGE AND CODEWORD ############################
 # Rate
-RR = 1//2
+RR = 1//5
 # Message (Payload) size
-GG::Int = 576
-AA::Int = round(Int,GG*RR)
+AA::Int = 3824
 # AA::Int = 128
 # LDPC protocol: NR5G = NR-LDPC (5G); PEG = PEG; WiMAX = IEEE80216e;
 PROTOCOL::String = "NR5G"
@@ -159,13 +158,14 @@ PROTOCOL::String = "NR5G"
 if PROTOCOL == "NR5G"
     ZF = 0
     RV = 0
-    NR_LDPC_DATA, RR = NR_LDPC_parameters(AA,RR,RV,false)
+    NR_LDPC_DATA, RR, GG = NR_LDPC_parameters(AA,RR,RV,true)
     HH, E_H = NR_LDPC_make_parity_check_matrix(NR_LDPC_DATA.Zc,
                                                NR_LDPC_DATA.iLS,
                                                NR_LDPC_DATA.bg,
                                                NR_LDPC_DATA.P,
                                                NR_LDPC_DATA.K_prime,
-                                               NR_LDPC_DATA.K)
+                                               NR_LDPC_DATA.K,
+                                               NR_LDPC_DATA.P_Zc)
     MM, NN = size(HH)
     GIRTH = find_girth(HH,100000)
     LL = nothing

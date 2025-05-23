@@ -72,27 +72,18 @@ function
         Sc = zeros(Bool,Zf)
     elseif protocol == "NR5G"
         K_prime = Nr_ldpc_data.K_prime
-        K = Nr_ldpc_data.K
         Zc = Nr_ldpc_data.Zc
-        bg = Nr_ldpc_data.bg
         N_cb = Nr_ldpc_data.N_cb
         k0 = Nr_ldpc_data.k0
         g_CRC = Nr_ldpc_data.g_CRC
-        P_Zc = Nr_ldpc_data.P_Zc
         
         twoZc = 2*Zc
         W = Matrix{Bool}(undef,Zc,4)
         Sc = Vector{Bool}(undef,Zc)
         Z = zeros(Bool,Zc,4)
-        if bg == "1"
-            Cw = Matrix{Bool}(undef,Zc,68-P_Zc)
-            J = 22
-            I = 46 - Int(P_Zc)
-        else
-            Cw = Matrix{Bool}(undef,Zc,52-P_Zc)
-            J = 10
-            I = 42 - Int(P_Zc)
-        end
+        I,IpJ = size(E_H)
+        J = IpJ - I
+        Cw = Matrix{Bool}(undef,Zc,IpJ)
     end
 
     # number of edges in the graph
@@ -221,7 +212,8 @@ function
             Cw[A+1:end] .= false
             _,Cw[A+1:K_prime] = divide_poly(Cw[1:K_prime],g_CRC)
             NR_LDPC_parity_bits!(Cw,W,Sc,Z,E_H,I,J)
-            rate_matching!(cword,Cw,twoZc,N_cb,G,k0,K,K_prime)
+            rate_matching!(cword,Cw,twoZc,N_cb,G,k0,J*Zc,K_prime)
+            # display(iszero(H*cword))
         elseif protocol == "PEG"
             LU_parity_bits!(cword,H,L,U,msg)
         elseif protocol == "WiMAX"
@@ -246,15 +238,7 @@ function
             print_test("Transmitted cword",cword[twoZc+1:end])
         end
         
-        # 6) Include the punctured bits in the cword for biterror calculation
-        # if twoZc > 0
-        #     complete_cword[1:twoZc] = msg[1:twoZc]
-        #     complete_cword[twoZc+1:end] = cword
-        # else
-        #     complete_cword .= cword
-        # end
-
-        # 7) reset simulation variables
+        # 6) reset simulation variables
         syndrome .= true
         decoded .= false
         resetmatrix!(Lr,Nv,0.0)
@@ -266,7 +250,7 @@ function
             resetmatrix!(rbpmatrix,Nv,false)
         end
 
-        # 8) init the LLR priors
+        # 7) init the LLR priors
         calc_Lf!(Lf,twoZc,signal,variance)
         if bptype == "TABL"
             # scale for table
@@ -289,10 +273,10 @@ function
             println()
         end
         
-        # 9) init the Lq matrix
+        # 8) init the Lq matrix
         init_Lq!(Lq,Lf,Nv)
 
-        # 10) precalculate the residues for RBP
+        # 9) precalculate the residues for RBP
         if mode == "RBP" || mode == "List-RBP"
             calc_all_residues!(Lq,Lr,Nc,aux,signs,phi,newLr,Factors,rbpmatrix,
                                         residues,coords,listsizes,relative)
@@ -302,7 +286,7 @@ function
             calc_all_residues_VN!(Lq,Nc,aux,signs,phi,Lr,newLr,residues,Nv)
         end
         
-        # BP routine
+        # 10) BP routine
         bp_not_converged = true
 
         iter = 0
