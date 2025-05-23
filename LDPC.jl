@@ -55,7 +55,7 @@ SEED_MESSA::Int = 1000
 ############################### 4) CONTROL FLAGS ###############################
 
 TEST::Bool = true
-PRIN::Bool = true
+PRIN::Bool = false
 STOP::Bool = false # stop simulation at zero syndrome (if true, BER curves are
 # not printed)
 
@@ -146,7 +146,7 @@ PHI = lookupTable()
 # Rate
 RR = 1//5
 # Message (Payload) size
-AA::Int = 3824
+GG = 100
 # AA::Int = 128
 # LDPC protocol: NR5G = NR-LDPC (5G); PEG = PEG; WiMAX = IEEE80216e;
 PROTOCOL::String = "NR5G"
@@ -158,7 +158,7 @@ PROTOCOL::String = "NR5G"
 if PROTOCOL == "NR5G"
     ZF = 0
     RV = 0
-    NR_LDPC_DATA, RR, GG = NR_LDPC_parameters(AA,RR,RV,true)
+    NR_LDPC_DATA, AA, RR = NR_LDPC_parameters(GG,RR,RV,true)
     HH, E_H = NR_LDPC_make_parity_check_matrix(NR_LDPC_DATA.Zc,
                                                NR_LDPC_DATA.iLS,
                                                NR_LDPC_DATA.bg,
@@ -217,7 +217,7 @@ display(sparse(HH))
 STR = """
 
 Graph girth = $GIRTH
-Rate = $RR
+Effective rate = $RR ($(round(RR,digits=3)))
 """
 println(STR)
 if SAVE

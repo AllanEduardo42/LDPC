@@ -31,7 +31,7 @@ end
 
 function 
     NR_LDPC_parameters(
-        A::Integer,
+        G::Integer,
         R::Rational,
         rv::Integer,
         show_nr_par::Bool;
@@ -42,6 +42,10 @@ function
         N_L = 1,
     )
 
+    A = get_TBS(G,R)
+
+    R = A // G
+
     if A > 3824
         # CRC24A:
         B = A + 24
@@ -51,8 +55,6 @@ function
         B = A + 16
         p_CRC = "x^16 + x^12 + x^5 + 1"
     end
-
-    G = round(Int,(A/R)/Q_m)*Q_m
 
     g_CRC = gf2_poly(p_CRC)
 
@@ -121,26 +123,37 @@ function
         display("P = $P")
     end
 
-    recalc_P = false
-    if P > 42*Zc && bg == "1"
-        G = C*(N - 42*Zc - K + K_prime)
-        recalc_P = true  
-    elseif P > 38*Zc && bg == "2"
-        G = C*(N - 38*Zc - K + K_prime)
-        recalc_P = true
-    elseif P < 0
-        G = C*(N - K + K_prime)
-        recalc_P = true
-    end
+    # recalc_P = false
+    # if P > 42*Zc && bg == "1"
+    #     G = C*(N - 42*Zc - K + K_prime)
+    #     recalc_P = true  
+    # elseif P > 38*Zc && bg == "2"
+    #     G = C*(N - 38*Zc - K + K_prime)
+    #     recalc_P = true
+    # elseif P < 0
+    #     G = C*(N - K + K_prime)
+    #     recalc_P = true
+    # end
     
-    if recalc_P
-        P = N - G÷C - K + K_prime
-        R = A//G
-        if show_nr_par
-            display("new G = $G")
-            display("new P = $P")
-        end
-        display("Atention: NR-LDPC new rate R = $(round(R,digits=3))")
+    # if recalc_P
+    #     P = N - G÷C - K + K_prime
+    #     R = A//G
+    #     if show_nr_par
+    #         display("new G = $G")
+    #         display("new P = $P")
+    #     end
+    #     display("Atention: NR-LDPC new rate R = $(round(R,digits=3))")
+    # end
+
+    if P > 42*Zc && bg == "1" || P > 38*Zc && bg == "2"
+        throw(error(
+            """rate is too high or G is too low"""
+        ))
+    end
+    if P < 0
+        throw(error(
+            """rate is too low"""
+        ))
     end
 
     P_Zc = P÷Zc
@@ -157,7 +170,7 @@ function
 
     k0 = get_k0(rv,Zc,N_cb,bg)
 
-    return nr_ldpc_data(A,B,C,g_CRC,bg,K_prime,K,N,Zc,iLS,P,P_Zc,N_cb,E_r,k0), R, G
+    return nr_ldpc_data(A,B,C,g_CRC,bg,K_prime,K,N,Zc,iLS,P,P_Zc,N_cb,E_r,k0), A, R
 
 end
 
