@@ -3,8 +3,6 @@
 # 27 ago 2024
 # Auxiliary functions
 
-using Random
-
 """For each column j of matrix H, find the indices i where H[i,j] = 1, and 
 return a vector "vn2cn" where vn2cn[j] is a vector containing the
 indices i where H[i,j] = 1"""

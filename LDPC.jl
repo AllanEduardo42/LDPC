@@ -54,8 +54,8 @@ SEED_MESSA::Int = 1000
 
 ############################### 4) CONTROL FLAGS ###############################
 
-TEST::Bool = true
-PRIN::Bool = false
+TEST::Bool = false
+PRIN::Bool = true
 STOP::Bool = false # stop simulation at zero syndrome (if true, BER curves are
 # not printed)
 
@@ -66,8 +66,8 @@ MAXITER::Int = 5
 # FACTORS = collect(0.1:0.1:1.0)
 FACTORS = [1.0]
 # EbN0 = [1.2, 1.4, 1.6, 1.8]
-EbN0 = [2.5]
-TRIALS = 10 .^(0:length(EbN0)-1)*2^5
+EbN0 = [3.5]
+TRIALS = 10 .^(0:length(EbN0)-1)*2^15
 RELATIVE::Bool = false
 
 # TEST
@@ -108,7 +108,7 @@ MAXITERS[i] = MAXITER
 
 # RBP
 i += 1
-ACTIVE[i] = 1
+ACTIVE[i] = 0
 BPTYPES[i] = "FAST"
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
@@ -129,7 +129,7 @@ DECAYS[i] = FACTORS
 
 # Variable Node RBP
 i += 1
-ACTIVE[i] = 0
+ACTIVE[i] = 1
 BPTYPES[i] = "FAST"
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
@@ -143,11 +143,11 @@ LISTSIZES[2] = 2
 PHI = lookupTable()
 
 ########################### 8) MESSAGE AND CODEWORD ############################
-# Rate
-RR = 1//5
+
 # Message (Payload) size
-GG = 100
-# AA::Int = 128
+GG = 576
+# Effective Rate
+RR = 2/3 - 16/GG  # WiMAX compatibility offset
 # LDPC protocol: NR5G = NR-LDPC (5G); PEG = PEG; WiMAX = IEEE80216e;
 PROTOCOL::String = "NR5G"
     LAMBDA = [0.21, 0.25, 0.25, 0.29, 0]
@@ -156,10 +156,9 @@ PROTOCOL::String = "NR5G"
 ############################# PARITY-CHECK MATRIX #############################
 
 if PROTOCOL == "NR5G"
-    ZF = 0
     RV = 0
-    NR_LDPC_DATA, AA, RR = NR_LDPC_parameters(GG,RR,RV,true)
-    HH, E_H = NR_LDPC_make_parity_check_matrix(NR_LDPC_DATA.Zc,
+    AA, K_PRIME, RR, G_CRC, LIFTSIZE, NR_LDPC_DATA = NR_LDPC_parameters(GG,RR,RV,false)
+    HH, E_H = NR_LDPC_make_parity_check_matrix(LIFTSIZE,
                                                NR_LDPC_DATA.iLS,
                                                NR_LDPC_DATA.bg,
                                                NR_LDPC_DATA.P,
@@ -171,12 +170,13 @@ if PROTOCOL == "NR5G"
     LL = nothing
     UU = nothing
 else
-    NR_LDPC_DATA = nothing
     NN = GG
-    if PROTOCOL == "PEG"
-        ZF = 0
+    AA = round(Int,GG*RR)
+    K_PRIME, g_CRC = get_CRC_poly(AA)
+    if PROTOCOL == "PEG"     
+        LIFTSIZE = 0
         E_H = nothing
-        MM = NN - AA
+        MM = NN - K_PRIME
         # Generate Parity-Check Matrix by the PEG algorithm
         H_PEG, GIRTH = PEG(LAMBDA,RO,MM,NN)
         HH, LL, UU = remake_H(H_PEG,0)
@@ -184,11 +184,14 @@ else
         # N takes values in {576,672,768,864,960,1056,1152,1248,1344,1440,1536,
         # 1632,1728,1824,1920,2016,2112,2208,2304}.    
         # R takes values in {"1/2","2/3A","2/3B","3/4A","3/4B","5/6"}.
-        HH,ZF,E_H = IEEE80216e(NN,RR,"A")
-        MM,NN = size(HH)
+        HH, LIFTSIZE, E_H = IEEE80216e(NN,RR,"A")
+        MM,_ = size(HH)
+        K_PRIME = NN - MM
+        AA = K_PRIME - 16 # since max(AA) = 2304*5/6 ≤ 3824, g_cRC = {CRC16}
+        _, g_CRC = get_CRC_poly(AA)         
         GIRTH = find_girth(HH,100000)
         LL = nothing
-    UU = nothing
+        UU = nothing
     end
 end
 
@@ -217,7 +220,7 @@ display(sparse(HH))
 STR = """
 
 Graph girth = $GIRTH
-Effective rate = $RR ($(round(RR,digits=3)))
+Effective rate = $(round(RR,digits=3))
 """
 println(STR)
 if SAVE
@@ -338,7 +341,7 @@ else
             # FER x Iterations
             for j=1:2
                 p = plot()
-                title = FB[j]*"ER $PROTOCOL (R = $RR)"
+                title = FB[j]*"ER $PROTOCOL (R = $(round(RR,digits=2)))"
                 for i in eachindex(ACTIVE)
                     if ACTIVE[i]
                         for decay in DECAYS[i]

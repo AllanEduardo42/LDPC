@@ -5,7 +5,7 @@
 
 using SparseArrays
 
-include("../GF2_poly.jl")
+include("../get_CRC_poly.jl")
 include("../GF2_functions.jl")
 include("NR_LDPC_auxiliary_functions.jl")
 
@@ -15,7 +15,6 @@ struct nr_ldpc_data
     A::Integer
     B::Integer
     C::Integer
-    g_CRC::Vector{Bool}
     bg::String
     K_prime::Integer
     K::Integer
@@ -32,7 +31,7 @@ end
 function 
     NR_LDPC_parameters(
         G::Integer,
-        R::Rational,
+        R::AbstractFloat,
         rv::Integer,
         show_nr_par::Bool;
         Q_m = 1,
@@ -44,19 +43,7 @@ function
 
     A = get_TBS(G,R)
 
-    R = A // G
-
-    if A > 3824
-        # CRC24A:
-        B = A + 24
-        p_CRC = "x^24 + x^23 + x^18 + x^17 + x^14 + x^11 + x^10 + x^7 + x^6 + x^5 + x^4 + x^3 + x + 1"
-    else
-        # CRC16:
-        B = A + 16
-        p_CRC = "x^16 + x^12 + x^5 + 1"
-    end
-
-    g_CRC = gf2_poly(p_CRC)
+    B, g_CRC = get_CRC_poly(A)   
 
     if A ≤ 292 || (A ≤ 3824 && R ≤ 0.67) || R ≤ 0.25
         bg = "2"
@@ -170,7 +157,7 @@ function
 
     k0 = get_k0(rv,Zc,N_cb,bg)
 
-    return nr_ldpc_data(A,B,C,g_CRC,bg,K_prime,K,N,Zc,iLS,P,P_Zc,N_cb,E_r,k0), A, R
+    return A, K_prime, R, g_CRC, Zc, nr_ldpc_data(A,B,C,bg,K_prime,K,N,Zc,iLS,P,P_Zc,N_cb,E_r,k0) 
 
 end
 

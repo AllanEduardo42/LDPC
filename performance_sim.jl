@@ -71,8 +71,10 @@ function
     if TEST
         @time Lr, Lq = simcore(
             AA,
+            K_PRIME,
             RR,
             GG,
+            G_CRC,
             ebn0,
             HH,
             LL,
@@ -81,8 +83,7 @@ function
             NV,
             E_H,
             PROTOCOL,
-            ZF,
-            NR_LDPC_DATA,
+            LIFTSIZE,
             mode,
             bptype,
             trials,
@@ -111,8 +112,10 @@ function
             stats = @timed Threads.@threads for i in 1:NTHREADS
                 sum_decoded[:,k,i], sum_ber[:,k,i] = simcore(
                                                 AA,
+                                                K_PRIME,
                                                 RR,
                                                 GG,
+                                                G_CRC,
                                                 ebn0[k],
                                                 HH,
                                                 LL,
@@ -121,8 +124,7 @@ function
                                                 NV,
                                                 E_H,
                                                 PROTOCOL,
-                                                ZF,
-                                                NR_LDPC_DATA,
+                                                LIFTSIZE,
                                                 mode,
                                                 bptype,
                                                 trials[k]÷NTHREADS,

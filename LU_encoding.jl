@@ -112,7 +112,9 @@ function
 
     K = N - M
 
-    @inbounds newH = [newH[:,K+1:end] newH[:,1:M]]
+    display("K = $K, M = $M, N = $N")
+
+    @inbounds newH = [newH[:,M+1:end] newH[:,1:M]]
 
     return newH, L, U
 
@@ -124,18 +126,12 @@ function
         H::Matrix{Bool}, 
         L::Matrix{Bool}, 
         U::Matrix{Bool}, 
-        msg::Vector{Bool}
+        K::Integer
     )
 
-    M,N = size(H)
-    K = N - M
-
-    # Find B.dsource 
-    @inbounds z = H[:,1:K]*msg
-
-    # Parity check vector found by solving sparse LU
-
-    cword[1:K] = msg
-    cword[K+1:end] = gf2_solve_LU(U,gf2_solve_LU(L,z))
-
+    @inbounds begin
+        z = H[:,1:K]*cword[1:K]
+        # Parity check vector found by solving sparse LU
+        cword[K+1:end] = gf2_solve_LU(U,gf2_solve_LU(L,z))
+    end
 end

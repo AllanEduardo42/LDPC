@@ -6,7 +6,7 @@
 function
     IEEE80216e(
         N::Integer,
-        R::Rational,
+        R::AbstractFloat,
         mode::String
     )
 
@@ -17,9 +17,9 @@ function
             )
         )
     end
-    if R ≤ 1/2
+    if R == 1/2 - 16/N
         rate = "1/2"
-    elseif R ≤ 2/3
+    elseif R == 2/3 - 16/N
         if mode == "A"
             rate = "2/3A"
         elseif mode == "B"
@@ -31,7 +31,7 @@ function
             )
             )
         end
-    elseif R ≤ 3/4
+    elseif R == 3/4 - 16/N
         if mode == "A"
             rate = "3/4A"
         elseif mode == "B"
@@ -43,8 +43,14 @@ function
             )
             )
         end
-    else
+    elseif R == 5/6 - 16/N
         rate = "5/6"
+    else
+        throw(
+            ArgumentError(
+                "$R must take values in {1/2, 2/3, 3/4, 5/6}"
+            )
+        )
     end
     
     z0 = 96; #the largest sub-block-size.
@@ -134,47 +140,4 @@ function
     end
 
     return H, Zf, E_H
-end
-
-function 
-    IEEE80216e_parity_bits!(
-        Cw::Matrix{Bool},
-        W::Matrix{Bool},
-        Sc::Vector{Bool},
-        Zf::Integer,
-        E_H::Matrix{<:Integer},
-        E_M::Integer,
-        E_K::Integer
-    )
-
-    @inbounds begin
-
-        for i = 1:E_M
-            for j = 1:E_K            
-                if E_H[i,j] ≠ -1
-                    W[:,i] .⊻= circshift(Cw[:,j],-E_H[i,j])
-                end
-            end
-            Sc .⊻= W[:,i]
-        end
-
-        for i = 1:E_M
-            if E_H[i,E_K+1] ≠ -1
-                Cw[:,E_K+1] .⊻= circshift(Sc,E_H[i,E_K+1])
-            end
-        end
-        
-        z = zeros(Bool,Zf,E_M)
-        for i=1:E_M
-            if E_H[i,E_K+1] ≠ -1
-                z[:,i] = circshift(Cw[:,E_K+1],-E_H[i,E_K+1])
-            end
-        end
-
-        for i = E_M:-1:2
-            Cw[:,E_K+i] = W[:,i] .⊻ z[:,i] .⊻ Cw[:,E_K+i+1]
-        end  
-        
-    end
-
 end

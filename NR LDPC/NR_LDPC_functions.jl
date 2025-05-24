@@ -42,67 +42,6 @@ function
 end
 
 function 
-    NR_LDPC_parity_bits!(
-        Cw::Matrix{Bool},
-        W::Matrix{Bool},
-        Sw::Vector{Bool},
-        Z::Matrix{Bool},
-        E_H::Matrix{<:Integer},
-        I::Integer,
-        J::Integer,
-    )  
-    
-    Sw .= false
-
-    # I, _ = size(E_H)
-
-    @inbounds begin
-
-        for i = 1:4
-            W[:,i] .= false
-            for j = 1:J   
-                if E_H[i,j] ≠ -1
-                    W[:,i] .⊻= circshift(Cw[:,j],-E_H[i,j])
-                end
-            end
-            Sw .⊻= W[:,i]
-        end
-
-        # b1
-        for i = 1:4
-            if E_H[i,J+1] ≠ -1
-                Cw[:,J+1] .⊻= circshift(Sw,E_H[i,J+1])
-            end
-        end
-        
-        # z
-        for i=1:4
-            if E_H[i,J+1] ≠ -1
-                Z[:,i] = circshift(Cw[:,J+1],-E_H[i,J+1])
-            end
-        end
-
-        # B = | I(z1) I 0 0 |
-        #     | I(z2) I I 0 |
-        #     | I(z3) 0 I I |
-        #     | I(z4) 0 0 I |
-
-        Cw[:,J+4] = W[:,4] .⊻ Z[:,4]
-        Cw[:,J+3] = W[:,3] .⊻ Z[:,3] .⊻ Cw[:,J+4]
-        Cw[:,J+2] = W[:,1] .⊻ Z[:,1]
-
-        for i = 5:I
-            for j=1:J+4
-                if E_H[i,j] ≠ -1
-                    Cw[:,J+i] .⊻= circshift(Cw[:,j],-E_H[i,j])
-                end
-            end
-        end
-    end
-
-end
-
-function 
     rate_matching!(
         e::Vector{Bool},
         Cw::Matrix{Bool},
