@@ -19,12 +19,12 @@ function
 
     # Get the matric dimension
     M,N = size(H)
-    newH = copy(H)
+    K = N - M
+    @inbounds newH = [H[:,K+1:end] H[:,1:K]]
     # Set a new matrix F for LU decomposition
     F = copy(newH)
-    # LU matrices
+    # L matrix
     L = zeros(Bool,M,M)
-    U = zeros(Bool,M,M)
 
     # Re-order the M x (N - M) submatrix
     @inbounds for i = 1:M
@@ -34,16 +34,11 @@ function
         # Create diagonally structured matrix using 'First' strategy
         if strategy == 0
             
-            # Find non-zero elements (1s) for the diagonal
-            y = findall(F[:,i:end])
-            r = getindex.(y,1)
-            c = getindex.(y,2)
-            
-            # Find non-zero diagonal element candidates
-            rowIndex = findall(r .== i)
-            
-            # Find the first non-zero column
-            chosenCol = c[rowIndex[1]] + (i - 1)
+            # # Find non-zero elements (1s) for the diagonal
+            chosenCol = i
+            while !F[i,chosenCol]
+                chosenCol += 1
+            end
             
         # Create diagonally structured matrix using 'Mincol' strategy
         elseif strategy == 1
@@ -87,51 +82,32 @@ function
         end 
 
         # Re-ordering columns of both newH and F
-        tmp1 = F[:,i]
-        tmp2 = newH[:,i]
-        F[:,i] = F[:,chosenCol]
-        newH[:,i] = newH[:,chosenCol]
-        F[:,chosenCol] = tmp1
-        newH[:,chosenCol] = tmp2
+        if chosenCol ≠ i
+            tmp = F[:,i]
+            F[:,i] = F[:,chosenCol]
+            F[:,chosenCol] = tmp
+
+            tmp = newH[:,i]        
+            newH[:,i] = newH[:,chosenCol]        
+            newH[:,chosenCol] = tmp
+        end
                             
-        # Fill the LU matrices column by column
+        # Fill the L matrix column by column
         L[i:end,i] = F[i:end,i]
-        U[1:i,i] = F[1:i,i]
                 
         # There will be no rows operation at the last row
-        if i < M
-            # Find the later rows with non-zero elements in column i
-            r2 = findall(F[(i + 1):end, i])       
-            # Add current row to the later rows which have a 1 in column i
-            for j in r2
-                @. F[i+j,:] ⊻= F[i,:]
+        if i < M      
+            for j in (i + 1):M
+                if F[j,i]
+                    @. F[j,i:end] ⊻= F[i,i:end]
+                end
             end                            
-        end
-            
+        end            
     end
 
-    K = N - M
+    # U = F[:,1:M]
+    # L*U = newH[1:M]
 
-    display("K = $K, M = $M, N = $N")
+    @inbounds return [newH[:,M+1:end] newH[:,1:M]], L, F[:,1:M]
 
-    @inbounds newH = [newH[:,M+1:end] newH[:,1:M]]
-
-    return newH, L, U
-
-end
-
-function 
-    LU_parity_bits!(
-        cword::Vector{Bool},
-        H::Matrix{Bool}, 
-        L::Matrix{Bool}, 
-        U::Matrix{Bool}, 
-        K::Integer
-    )
-
-    @inbounds begin
-        z = H[:,1:K]*cword[1:K]
-        # Parity check vector found by solving sparse LU
-        cword[K+1:end] = gf2_solve_LU(U,gf2_solve_LU(L,z))
-    end
 end

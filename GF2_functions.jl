@@ -291,10 +291,13 @@ function find_gf2_invertible_matrix(M::Integer)
 end
 
 function 
-    gf2_solve_LU(
+    gf2_solve_LU!(
+        x::Vector{Bool},
         A::Matrix{Bool},
         y::Vector{Bool}
     )
+
+    x .= false
 
     M,N = size(A)
     if M ≠ N
@@ -307,7 +310,6 @@ function
 
     @inbounds begin
         if istril(A)
-            x = zeros(Bool,M)
             for i in 1:M
                 x[i] = y[i]
                 for j=1:i-1
@@ -315,7 +317,6 @@ function
                 end
             end
         elseif istriu(A)
-            x = zeros(Bool,M)
             for i in M:-1:1
                 x[i] = y[i]
                 for j=i+1:M
@@ -330,6 +331,4 @@ function
                 )
         end
     end
-    
-    return x
 end

@@ -71,7 +71,7 @@ function
     if TEST
         @time Lr, Lq = simcore(
             AA,
-            K_PRIME,
+            KK,
             RR,
             GG,
             G_CRC,
@@ -112,7 +112,7 @@ function
             stats = @timed Threads.@threads for i in 1:NTHREADS
                 sum_decoded[:,k,i], sum_ber[:,k,i] = simcore(
                                                 AA,
-                                                K_PRIME,
+                                                KK,
                                                 RR,
                                                 GG,
                                                 G_CRC,

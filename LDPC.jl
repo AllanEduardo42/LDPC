@@ -54,8 +54,8 @@ SEED_MESSA::Int = 1000
 
 ############################### 4) CONTROL FLAGS ###############################
 
-TEST::Bool = false
-PRIN::Bool = true
+TEST::Bool = true
+PRIN::Bool = false
 STOP::Bool = false # stop simulation at zero syndrome (if true, BER curves are
 # not printed)
 
@@ -72,8 +72,8 @@ RELATIVE::Bool = false
 
 # TEST
 MAXITER_TEST::Int = 1
-EbN0_TEST::Float64 = 1.5
-TRIALS_TEST::Int = 1
+EbN0_TEST::Float64 = 1.0
+TRIALS_TEST::Int = 1000
 DECAY_TEST::Float64 = 1.0
 
 ################################ 6) BP SCHEDULE ################################
@@ -145,11 +145,11 @@ PHI = lookupTable()
 ########################### 8) MESSAGE AND CODEWORD ############################
 
 # Message (Payload) size
-GG = 576
+GG = 45
 # Effective Rate
 RR = 2/3 - 16/GG  # WiMAX compatibility offset
 # LDPC protocol: NR5G = NR-LDPC (5G); PEG = PEG; WiMAX = IEEE80216e;
-PROTOCOL::String = "NR5G"
+PROTOCOL::String = "PEG"
     LAMBDA = [0.21, 0.25, 0.25, 0.29, 0]
     RO = [1.0, 0, 0, 0, 0, 0]
 
@@ -157,7 +157,7 @@ PROTOCOL::String = "NR5G"
 
 if PROTOCOL == "NR5G"
     RV = 0
-    AA, K_PRIME, RR, G_CRC, LIFTSIZE, NR_LDPC_DATA = NR_LDPC_parameters(GG,RR,RV,false)
+    AA, KK, RR, G_CRC, LIFTSIZE, NR_LDPC_DATA = NR_LDPC_parameters(GG,RR,RV,false)
     HH, E_H = NR_LDPC_make_parity_check_matrix(LIFTSIZE,
                                                NR_LDPC_DATA.iLS,
                                                NR_LDPC_DATA.bg,
@@ -172,11 +172,12 @@ if PROTOCOL == "NR5G"
 else
     NN = GG
     AA = round(Int,GG*RR)
-    K_PRIME, g_CRC = get_CRC_poly(AA)
+    KK, g_CRC = get_CRC_poly(AA)
+    _, G_CRC = get_CRC_poly(AA)  
     if PROTOCOL == "PEG"     
         LIFTSIZE = 0
         E_H = nothing
-        MM = NN - K_PRIME
+        MM = NN - KK
         # Generate Parity-Check Matrix by the PEG algorithm
         H_PEG, GIRTH = PEG(LAMBDA,RO,MM,NN)
         HH, LL, UU = remake_H(H_PEG,0)
@@ -186,9 +187,8 @@ else
         # R takes values in {"1/2","2/3A","2/3B","3/4A","3/4B","5/6"}.
         HH, LIFTSIZE, E_H = IEEE80216e(NN,RR,"A")
         MM,_ = size(HH)
-        K_PRIME = NN - MM
-        AA = K_PRIME - 16 # since max(AA) = 2304*5/6 ≤ 3824, g_cRC = {CRC16}
-        _, g_CRC = get_CRC_poly(AA)         
+        KK = NN - MM
+        AA = KK - 16 # since max(AA) = 2304*5/6 ≤ 3824, g_cRC = {CRC16}      
         GIRTH = find_girth(HH,100000)
         LL = nothing
         UU = nothing

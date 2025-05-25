@@ -68,7 +68,12 @@ function
     # constants for IEEE80216e
     if protocol == "PEG"
         Cw = Vector{Bool}(undef,N)
+        z = Vector{Bool}(undef,M)
+        v = Vector{Bool}(undef,M)
+        w = Vector{Bool}(undef,M)
+        cword = Cw
     else
+        cword = Vector{Bool}(undef,N)
         E_M, E_N = size(E_H)
         E_K = E_N - E_M 
         Cw = Matrix{Bool}(undef,liftsize,E_N) # info bits + CRC + filler bits + parity bits
@@ -101,8 +106,6 @@ function
 ################################# PREALLOCATIONS ###############################
 
     msg = Vector{Bool}(undef,A)
-
-    cword = Vector{Bool}(undef,N)
 
     # frame error rate
     sum_decoded = zeros(Int,maxiter)
@@ -212,8 +215,10 @@ function
         Cw[A+1:end] .= false
         _,Cw[A+1:K_prime] = divide_poly(Cw[1:K_prime],g_CRC)
         if protocol == "PEG"  
-            LU_parity_bits!(Cw,H,L,U,K_prime)
-            cword = Cw         
+            z .= H[:,1:K_prime]*Cw[1:K_prime]
+            gf2_solve_LU!(v,L,z)
+            gf2_solve_LU!(w,U,v)
+            Cw[K_prime+1:end] = w
         else
             calc_parity_bits!(Cw,W,Sw,Z,E_H,E_M,E_K,E_B)
             cword[1:K_prime] = Cw[1:K_prime]        # systematic bits
@@ -221,7 +226,7 @@ function
         end
 
         if !iszero(H*cword)
-            print("ERROR ")
+            println("ERROR")
         end
 
         # 3) Modulation of the cword
@@ -390,18 +395,28 @@ function
 
             biterror .= (bitvector .≠ cword)
     
-            if test && printtest
-                print_test("Bit error",biterror)   
-                println("Bit error rate: $(sum(biterror))/$N")
-                print_test("Syndrome",syndrome)  
-                println("Syndrome rate: $(sum(syndrome))/$M")
-                println() 
-                if !bp_not_converged
-                    println("#### BP has converged at iteration $iter ####")
-                end        
+            if test
+                if printtest
+                    print_test("Bit error",biterror)   
+                    println("Bit error rate: $(sum(biterror))/$N")
+                    print_test("Syndrome",syndrome)  
+                    println("Syndrome rate: $(sum(syndrome))/$M")
+                    println() 
+                    if !bp_not_converged
+                        println("#### BP has converged at iteration $iter ####")
+                    end
+                end
+                if iszero(syndrome)
+                    if iszero(biterror)
+                        display("everyting is fine")
+                    else
+                        display("wrong decoding")
+                        break
+                    end
+                end
             else
                 if iszero(syndrome)
-                    if bitvector == cword
+                    if iszero(biterror)
                         decoded[iter] = true
                     end
                     if stop
