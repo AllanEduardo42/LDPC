@@ -45,11 +45,11 @@ function
         listsizes::Vector{<:Integer},
         relative::Bool,
         rgn_seed_noise::Integer,
-        rgn_seed_msg::Integer;
-        test=false,
-        printtest=false,
-        msgtest=nothing,
-        noisetest=nothing        
+        rgn_seed_msg::Integer,
+        test::Bool,
+        printtest::Bool,
+        msgtest::Union{Nothing,Vector{Bool}},
+        noisetest::Union{Nothing,Vector{Bool}}   
     )
     
 ################################## CONSTANTS ###################################
@@ -81,7 +81,7 @@ function
     num_edges = sum(H)
 
     # transform EbN0 in standard deviations
-    variance = exp10.(-ebn0/10) / (2*R)
+    variance = exp10.(-ebn0/10) / (2*(R+16/G))
     stdev = sqrt.(variance)
 
     # Set the random seeds
@@ -404,14 +404,14 @@ function
                         println("#### BP has converged at iteration $iter ####")
                     end
                 end
-                if iszero(syndrome)
-                    if iszero(biterror)
-                        display("everyting is fine")
-                    else
-                        display("wrong decoding")
-                        break
-                    end
-                end
+                # if iszero(syndrome)
+                #     if iszero(biterror)
+                #         display("everyting is fine")
+                #     else
+                #         display("wrong decoding")
+                #         break
+                #     end
+                # end
             else
                 if iszero(syndrome)
                     if iszero(biterror)
@@ -450,12 +450,11 @@ function
                     retq[m,n] = log.(Lq[m,n,1]) - log.(Lq[m,n,2])
                 end
             end
-            return retr, retq
-        else
-            return Lr, Lq
+            Lr = retr
+            Lq = retq
         end
+        return Lr, Lq, nothing, nothing
     else
-        return sum_decoded, sum_ber
+        return nothing, nothing, sum_decoded, sum_ber
     end
-
 end
