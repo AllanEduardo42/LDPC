@@ -18,7 +18,7 @@ include("./RBP functions/calc_all_residues_VN.jl")
 include("update_Lq.jl")
 include("update_Lr.jl")
 include("NR LDPC/NR_LDPC_functions.jl")
-include("calc_parity_bits.jl")
+include("encode_LDPC.jl")
 
 function
     simcore(
@@ -51,47 +51,32 @@ function
         msgtest=nothing,
         noisetest=nothing        
     )
-
-    if mode == "RBP" || mode == "List-RBP" || mode == "VN-RBP" || mode == "NW-RBP"
-        RBP = true
-    else
-        RBP = false
-    end
     
 ################################## CONSTANTS ###################################
 
     # Parity-Check Matrix dimensions
     M,N = size(H)
 
+    # 2*liftsize in NR5G (determines the number of initial punctured bits)
+    # =0 otherwise
     twoZc = 0
 
-    # constants for IEEE80216e
-    if protocol == "PEG"
-        Cw = Vector{Bool}(undef,N)
-        z = Vector{Bool}(undef,M)
-        v = Vector{Bool}(undef,M)
-        w = Vector{Bool}(undef,M)
-        cword = Cw
-    else
-        cword = Vector{Bool}(undef,N)
+    # protocol constants
+    if protocol == "WiMAX" || protocol == "NR5G"
         E_M, E_N = size(E_H)
         E_K = E_N - E_M 
-        Cw = Matrix{Bool}(undef,liftsize,E_N) # info bits + CRC + filler bits + parity bits
-        Sw = Vector{Bool}(undef,liftsize)
         if protocol == "WiMAX"            
             E_B = E_M
             K = K_prime       
             P = 0   
         elseif protocol == "NR5G"
-            E_B = 4
             twoZc = 2*liftsize
+            E_B = 4
             K = E_K*liftsize
-            S = K - K_prime             # quantity of filler bits
-            P = liftsize*E_N - S - N    # quantity of removed parity bits (rate matching)
-        end        
-        W = Matrix{Bool}(undef,liftsize,E_B)
-        Z = Matrix{Bool}(undef,liftsize,E_B)
+            P = liftsize*E_N - (K - K_prime) - N # quantity of removed parity bits (rate matching)
+        end
     end
+
     # number of edges in the graph
     num_edges = sum(H)
 
@@ -103,9 +88,30 @@ function
     rgn_noise = Xoshiro(rgn_seed_noise)
     rgn_msg = Xoshiro(rgn_seed_msg)
 
+    # if NR5G and relative, we must init the llr with not zero values due to puncturing
+    if protocol == "NR5G" && relative
+        init_Lf = 10/INFFLOAT
+    else
+        init_Lf = 0.0
+    end
+
 ################################# PREALLOCATIONS ###############################
 
-    msg = Vector{Bool}(undef,A)
+    msg = Vector{Bool}(undef,A)    
+
+    cword = Vector{Bool}(undef,N)
+
+    if protocol == "PEG"
+        Cw = cword
+        z = Vector{Bool}(undef,M)
+        v = Vector{Bool}(undef,M)
+        w = Vector{Bool}(undef,M)
+    else
+        Cw = Matrix{Bool}(undef,liftsize,E_N) # info bits + CRC + filler bits + parity bits
+        sw = Vector{Bool}(undef,liftsize)       
+        W = Matrix{Bool}(undef,liftsize,E_B)
+        Z = Matrix{Bool}(undef,liftsize,E_B)
+    end
 
     # frame error rate
     sum_decoded = zeros(Int,maxiter)
@@ -121,13 +127,8 @@ function
     # syndrome
     syndrome = Vector{Bool}(undef,M)
 
-    # prior llr (if mode == "MKAY" just the prior probabilities)
-    if protocol == "NR5G" && relative
-        a = 10/INFFLOAT
-    else
-        a = 0.0
-    end
-    Lf = (bptype != "MKAY") ? a*ones(N) : 0.5*ones(N,2)
+    # prior llr (if mode == "MKAY" it is just the prior probabilities)
+    Lf = (bptype != "MKAY") ? init_Lf*ones(N) : 0.5*ones(N,2)
 
     # noise
     noise = Vector{Float64}(undef,G)
@@ -139,13 +140,12 @@ function
     biterror = Vector{Bool}(undef,N) 
 
     # Lq -> matrix of Nv messages (N x M)
-    # Lr -> matrix of Nc messages (M x N)
-    # if mode == "MKAY" the are matrices for bit = 0 and bit = 1
+    # Lr -> matrix of Nc messages (N x M)
+    # if mode == "MKAY" the are different matrices for bit = 0 and bit = 1
     Lq = (bptype != "MKAY") ? zeros(M,N) : zeros(M,N,2)
-
     Lr = (bptype != "MKAY") ? zeros(M,N) : zeros(M,N,2)
     
-    # Set variables aux and signs depending on the BP type (used for dispatch)
+    # Set variables aux and signs depending on the BP type (for dispatching)
     if bptype == "FAST" || bptype == "MKAY"
         aux = zeros(N)
         signs = nothing
@@ -160,18 +160,14 @@ function
         signs = nothing
     end
 
-    phi = (bptype == "TABL") ? PHI : nothing
+    phi = (bptype == "TABL") ? lookupTable() : nothing
 
-    # Set other variables that depend on the mode
-    newLr = RBP ? H*0.0 : nothing
-    Factors = RBP ? 1.0*H  : nothing
-    
-    # RBP modes
+    # RBP preallocations
     if mode == "RBP"
+        newLr = zeros(M,N)
         residues = zeros(num_edges)
+        Factors = Float64.(H)
         coords = zeros(Int,3,num_edges)
-        localresidues = nothing
-        localcoords = nothing
         rbpmatrix = 0*H
         e = 0
         for m in axes(H,1)
@@ -184,11 +180,12 @@ function
                 rbpmatrix[li] = e
             end
         end
-    elseif mode == "NW-RBP"
-        residues = zeros(M)
-        Factors = ones(M)
+        localresidues = nothing
+        localcoords = nothing
     elseif mode == "List-RBP"
+        newLr = zeros(M,N)
         residues = zeros(listsizes[1]+1)
+        Factors = Float64.(H)
         coords = zeros(Int,3,listsizes[1]+1)
         rbpmatrix = Matrix(false*H)
         if listsizes[2] == 1
@@ -198,7 +195,12 @@ function
             localresidues = zeros(listsizes[2]+1)
             localcoords = zeros(Int,3,listsizes[2]+1)
         end
+    elseif mode == "NW-RBP"
+        newLr = zeros(M,N)
+        residues = zeros(M)
+        Factors = ones(M)       
     elseif mode == "VN-RBP"
+        newLr = zeros(M,N)
         residues = zeros(N)
         Factors = ones(N)
     end
@@ -211,38 +213,32 @@ function
         generate_message!(msg,rgn_msg,msgtest)
 
         # 2) generate the cword
-        Cw[1:A] = msg
-        Cw[A+1:end] .= false
-        _,Cw[A+1:K_prime] = divide_poly(Cw[1:K_prime],g_CRC)
-        if protocol == "PEG"  
-            z .= H[:,1:K_prime]*Cw[1:K_prime]
-            gf2_solve_LU!(v,L,z)
-            gf2_solve_LU!(w,U,v)
-            Cw[K_prime+1:end] = w
+        append_CRC!(Cw,msg,g_CRC,A,K_prime)
+        if protocol == "PEG"
+            encode_LDPC_LU!(Cw,H,z,w,v,L,U,K_prime)
         else
-            calc_parity_bits!(Cw,W,Sw,Z,E_H,E_M,E_K,E_B)
-            cword[1:K_prime] = Cw[1:K_prime]        # systematic bits
-            cword[K_prime+1:end] = Cw[K+1:end-P]    # parity bits 
-        end
+            encode_LDPC_BG!(cword,Cw,Z,W,sw,K_prime,K,E_H,E_M,E_K,E_B,P)
+        end        
 
+        # verify the encoding
         if !iszero(H*cword)
-            println("ERROR")
+            println("Encoding error")
         end
 
-        # 3) Modulation of the cword
+        # 3) Modulation of the cword in BPSK
         @. signal = 2*cword[twoZc+1:end] - 1
 
         # 4) sum the noise to the modulated cword to produce the received signal
         received_signal!(signal,noise,stdev,rgn_noise,noisetest)
 
-        # 5) print info in test mode
+        # print info if in test mode
         if test && printtest
             println("Trial #$trial:")
             print_test("Message",msg)
             print_test("Transmitted cword",cword[twoZc+1:end])
         end
         
-        # 6) reset simulation variables
+        # 5) reset simulation variables
         syndrome .= true
         decoded .= false
         resetmatrix!(Lr,Nv,0.0)
@@ -254,17 +250,18 @@ function
             resetmatrix!(rbpmatrix,Nv,false)
         end
 
-        # 7) init the LLR priors
+        # 6) init the LLR priors
         calc_Lf!(Lf,twoZc,signal,variance)
         if bptype == "TABL"
             # scale for table
             Lf[twoZc+1:end] .*= SIZE_PER_RANGE
         end
+        # initial estimate of the bits (0-th iteration)
         for i in eachindex(bitvector)
             bitvector[i] = signbit(Lf[i])
         end
         
-        # 0-th iter
+        # print info if in test mode
         if test && printtest
             println()
             println("### Iteration #0 ###")
@@ -291,10 +288,10 @@ function
         end
         
         # 10) BP routine
-        bp_not_converged = true
+        rbp_not_converged = true
 
         iter = 0
-        while iter < maxiter && bp_not_converged
+        while iter < maxiter && rbp_not_converged
             iter += 1
 
             if test && printtest  
@@ -324,7 +321,7 @@ function
                     signs,
                     phi)
             elseif (mode == "RBP" || mode == "List-RBP")
-                bp_not_converged = RBP!(
+                rbp_not_converged = RBP!(
                     bitvector,
                     Lq,
                     Lr,
@@ -345,12 +342,12 @@ function
                     localcoords,
                     listsizes,
                     relative,
-                    bp_not_converged
+                    rbp_not_converged
                     )
                 # reset factors
                 resetmatrix!(Factors,Nv,1.0)
             elseif mode == "NW-RBP"
-                bp_not_converged = NW_RBP!(
+                rbp_not_converged = NW_RBP!(
                     bitvector,
                     Lq,
                     Lr,
@@ -365,12 +362,12 @@ function
                     newLr,
                     Factors,
                     residues,
-                    bp_not_converged
+                    rbp_not_converged
                 )
                 # reset factors
                 Factors .= 1.0
             elseif mode == "VN-RBP"
-                bp_not_converged = VN_RBP!(
+                rbp_not_converged = VN_RBP!(
                     bitvector,
                     Lq,
                     Lr,
@@ -385,7 +382,7 @@ function
                     newLr,
                     Factors,
                     residues,
-                    bp_not_converged
+                    rbp_not_converged
                     )
                 # reset factors
                 Factors .= 1.0
@@ -394,7 +391,8 @@ function
             calc_syndrome!(syndrome,bitvector,Nc)
 
             biterror .= (bitvector .≠ cword)
-    
+            
+            # print info if in test mode
             if test
                 if printtest
                     print_test("Bit error",biterror)   
@@ -402,7 +400,7 @@ function
                     print_test("Syndrome",syndrome)  
                     println("Syndrome rate: $(sum(syndrome))/$M")
                     println() 
-                    if !bp_not_converged
+                    if !rbp_not_converged
                         println("#### BP has converged at iteration $iter ####")
                     end
                 end
@@ -430,7 +428,8 @@ function
             end
         end
 
-        if !bp_not_converged
+        # if all the residues are zero
+        if !rbp_not_converged
             decoded[iter+1:end] .= decoded[iter]
             ber[iter+1:end] .= ber[iter]
         end

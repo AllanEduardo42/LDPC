@@ -54,26 +54,26 @@ SEED_MESSA::Int = 1000
 
 ############################### 4) CONTROL FLAGS ###############################
 
-TEST::Bool = true
-PRIN::Bool = false
+TEST::Bool = false
+PRIN::Bool = true
 STOP::Bool = false # stop simulation at zero syndrome (if true, BER curves are
 # not printed)
 
 ################################## 5) NUMBERS ##################################
 
-MAXITER::Int = 5
+MAXITER::Int = 10
 # FACTORS = [0.7, 0.8, 0.9, 1.0]
 # FACTORS = collect(0.1:0.1:1.0)
-FACTORS = [1.0]
+FACTORS = [0.9]
 # EbN0 = [1.2, 1.4, 1.6, 1.8]
-EbN0 = [3.5]
-TRIALS = 10 .^(0:length(EbN0)-1)*2^15
-RELATIVE::Bool = false
+EbN0 = [2.5]
+TRIALS = 10 .^(0:length(EbN0)-1)*2^14
+RELATIVE::Bool = true
 
 # TEST
 MAXITER_TEST::Int = 1
 EbN0_TEST::Float64 = 1.0
-TRIALS_TEST::Int = 1000
+TRIALS_TEST::Int = 10
 DECAY_TEST::Float64 = 1.0
 
 ################################ 6) BP SCHEDULE ################################
@@ -96,7 +96,7 @@ end
 
 i = 1
 # Flooding
-ACTIVE[i] = 0
+ACTIVE[i] = 1
 BPTYPES[i] = "FAST"
 MAXITERS[i] = MAXITER
 
@@ -108,21 +108,21 @@ MAXITERS[i] = MAXITER
 
 # RBP
 i += 1
-ACTIVE[i] = 0
+ACTIVE[i] = 1
 BPTYPES[i] = "FAST"
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
 
 # List-RBP
 i += 1
-ACTIVE[i] = 0
+ACTIVE[i] = 1
 BPTYPES[i] = "FAST"
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
 
 # NW-RBP
 i += 1
-ACTIVE[i] = 0
+ACTIVE[i] = 1
 BPTYPES[i] = "FAST"
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
@@ -136,18 +136,14 @@ DECAYS[i] = FACTORS
 
 # List-RBP sizes (min values = 4 and 2)
 LISTSIZES[1] = 16
-LISTSIZES[2] = 2 
-
-############################### 7) LOOKUP TABLE ################################
-
-PHI = lookupTable()
+LISTSIZES[2] = 2
 
 ########################### 8) MESSAGE AND CODEWORD ############################
 
 # Message (Payload) size
-GG = 45
+GG = 576
 # Effective Rate
-RR = 2/3 - 16/GG  # WiMAX compatibility offset
+RR = 1/2 - 16/GG  # WiMAX compatibility offset
 # LDPC protocol: NR5G = NR-LDPC (5G); PEG = PEG; WiMAX = IEEE80216e;
 PROTOCOL::String = "PEG"
     LAMBDA = [0.21, 0.25, 0.25, 0.29, 0]

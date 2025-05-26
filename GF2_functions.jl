@@ -297,13 +297,12 @@ function
         y::Vector{Bool}
     )
 
-    x .= false
-
     M,N = size(A)
+
     if M ≠ N
         throw(
             DimensionMismatch(
-                lazy"matrix is not square: dimensions are ($M,N)"
+                "matrix is not square: dimensions are ($M,$N)"
             )
         )
     end
@@ -313,22 +312,26 @@ function
             for i in 1:M
                 x[i] = y[i]
                 for j=1:i-1
-                    x[i] ⊻= A[i,j] && x[j]
+                    if A[i,j] && x[j]
+                        x[i] ⊻= true
+                    end
                 end
             end
         elseif istriu(A)
             for i in M:-1:1
                 x[i] = y[i]
                 for j=i+1:M
-                    x[i] ⊻= A[i,j] && x[j]
+                    if A[i,j] && x[j]
+                        x[i] ⊻= true
+                    end
                 end
             end
         else
             throw(
-                    ArgumentError(
-                        lazy"Matrix must be triangular"
-                    )
+                ArgumentError(
+                    lazy"Matrix must be triangular"
                 )
+            )
         end
     end
 end

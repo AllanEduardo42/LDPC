@@ -69,7 +69,7 @@ function
         noise::Vector{<:AbstractFloat},
         σ::AbstractFloat,
         rgn_noise::AbstractRNG,
-        noisetest::Nothing
+        ::Nothing
     )
 
     @fastmath begin
@@ -82,10 +82,10 @@ end
 function
     received_signal!(
         signal::AbstractArray{<:AbstractFloat},
-        noise::Vector{<:AbstractFloat},
+        ::Vector{<:AbstractFloat},
         σ::AbstractFloat,
         u::Vector{<:AbstractFloat},
-        rgn_noise::AbstractRNG,
+        ::AbstractRNG,
         noisetest::Vector{<:AbstractFloat}
     )
 
@@ -143,6 +143,23 @@ function generate_message!(
 
     msg .= msgtest
 
+end
+
+# append the CRC to the message
+function 
+    append_CRC!(
+        Cw::Union{Vector{Bool},Matrix{Bool}},
+        msg::Vector{Bool},
+        g_CRC::Vector{Bool},
+        A::Integer,
+        K::Integer
+    )
+
+    @inbounds begin
+        Cw[1:A] = msg
+        Cw[A+1:end] .= false 
+        _,Cw[A+1:K] = divide_poly(Cw[1:K],g_CRC)
+    end
 end
 
 function print_test(
