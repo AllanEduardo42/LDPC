@@ -15,14 +15,14 @@ function
         listsizes::Vector{<:Integer},
         inlist::Matrix{<:Integer},
         li::Integer,
-        m::Integer,
-        n::Integer,
+        ci::Integer,
+        vj::Integer,
         residue::AbstractFloat    
     )
     
     @inbounds begin
-        if inlist[li]  # if residue(m,n) is in the list
-            # display("($m,$n) is on the list")
+        if inlist[li]  # if residue(ci,vj) is in the list
+            # display("($ci,$vj) is on the list")
             pos = 0
             for i = 1:listsizes[1]
                 if coords[3,i] == li
@@ -38,7 +38,7 @@ function
             remove_residue!(li,listsizes[1],residues,coords,inlist,pos)
         end                
 
-        add_residue!(nothing,localresidues,localcoords,residue,li,m,n,listsizes[2])
+        add_residue!(nothing,localresidues,localcoords,residue,li,ci,vj,listsizes[2])
 
     end
 

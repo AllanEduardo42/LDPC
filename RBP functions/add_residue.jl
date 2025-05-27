@@ -10,8 +10,8 @@ function add_residue!(
         coords::Matrix{<:Integer},
         residue::AbstractFloat,
         li::Integer,
-        m::Integer,
-        n::Integer,
+        ci::Integer,
+        vj::Integer,
         listsize::Integer
     )
 
@@ -48,8 +48,8 @@ function add_residue!(
             i = 1
         end
 
-        coords[1,i] = m
-        coords[2,i] = n
+        coords[1,i] = ci
+        coords[2,i] = vj
         coords[3,i] = li
         residues[i] = residue        
     end

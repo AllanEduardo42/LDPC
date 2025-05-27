@@ -125,7 +125,7 @@ if TEST
                                                 BPTYPES[i],
                                                 DECAY_TEST)
             else
-            LRM[MODES[i]], LQM[MODES[i]]  = prepare_simulation(
+            LRM[MODES[i]], LQM[MODES[i]] = prepare_simulation(
                                                 EbN0_TEST,
                                                 MODES[i],
                                                 TRIALS_TEST,

@@ -44,7 +44,7 @@ SEED_MESSA::Int = 1000
 
 ################################ CONTROL FLAGS #################################
 
-TEST::Bool = false
+TEST::Bool = true
 PRIN::Bool = true
 PROF::Bool = false
 STOP::Bool = false # stop simulation at zero syndrome (if true, BER curves are
@@ -52,18 +52,18 @@ STOP::Bool = false # stop simulation at zero syndrome (if true, BER curves are
 
 ################################## PARAMETERS ##################################
 
-MAXITER::Int = 20
+MAXITER::Int = 10
 # FACTORS = [0.7, 0.8, 0.9, 1.0]
 # FACTORS = collect(0.1:0.1:1.0)
 FACTORS = [1.0]
 # EbN0 = [1.2, 1.4, 1.6, 1.8]
 EbN0 = [2.5]
-TRIALS = 10 .^(0:length(EbN0)-1)*2^15
+TRIALS = 10 .^(0:length(EbN0)-1)*2^17
 RELATIVE::Bool = false
 
 # TEST
 MAXITER_TEST::Int = 1
-EbN0_TEST::Float64 = 2.5
+EbN0_TEST::Float64 = 1.5
 TRIALS_TEST::Int = 1
 DECAY_TEST::Float64 = 1.0
 MSGTEST = nothing
@@ -71,7 +71,7 @@ NOISETEST = nothing
 
 ################################### SCHEDULE ###################################
 
-MODES = ["Flooding","LBP","RBP","List-RBP","NW-RBP","VN-RBP"]
+MODES = ["Flooding","LBP","RBP","List-RBP","NW-RBP","VN-RBP","List-VN-RBP"]
 NUM_MODES = length(MODES)
 ACTIVE = zeros(Bool,NUM_MODES)
 LISTSIZES = zeros(Int,4)
@@ -101,7 +101,7 @@ MAXITERS[i] = MAXITER
 
 # RBP
 i += 1
-ACTIVE[i] = 1
+ACTIVE[i] = 0
 BPTYPES[i] = "FAST"
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
@@ -115,7 +115,7 @@ DECAYS[i] = FACTORS
 
 # NW-RBP
 i += 1
-ACTIVE[i] = 1
+ACTIVE[i] = 0
 BPTYPES[i] = "FAST"
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
@@ -127,8 +127,15 @@ BPTYPES[i] = "FAST"
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
 
-# List-RBP sizes (min values = 4 and 2)
-LISTSIZES[1] = 16
+# List Variable Node RBP
+i += 1
+ACTIVE[i] = 0
+BPTYPES[i] = "FAST"
+MAXITERS[i] = MAXITER
+DECAYS[i] = FACTORS
+
+# List sizes (min values = 4 and 2)
+LISTSIZES[1] = 32
 LISTSIZES[2] = 2
 
 ######################## CODE LENGTH, RATE AND PROTOCOL ########################

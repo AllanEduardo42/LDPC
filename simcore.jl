@@ -11,10 +11,12 @@ include("flooding.jl")
 include("LBP.jl")
 include("RBP.jl")
 include("VN_RBP.jl")
+include("List_VN_RBP.jl")
 include("NW_RBP.jl")
 include("./RBP functions/calc_all_residues.jl")
 include("./RBP functions/calc_all_residues_NW.jl")
 include("./RBP functions/calc_all_residues_VN.jl")
+include("./RBP functions/calc_all_residues_list_VN.jl")
 include("update_Lq.jl")
 include("update_Lr.jl")
 include("NR LDPC/NR_LDPC_functions.jl")
@@ -180,8 +182,8 @@ function
                 rbpmatrix[li] = e
             end
         end
-        localresidues = nothing
-        localcoords = nothing
+        local_residues = nothing
+        local_coords = nothing
     elseif mode == "List-RBP"
         newLr = zeros(M,N)
         residues = zeros(listsizes[1]+1)
@@ -189,11 +191,11 @@ function
         coords = zeros(Int,3,listsizes[1]+1)
         rbpmatrix = Matrix(false*H)
         if listsizes[2] == 1
-            localresidues = zeros(listsizes[1]+1)
-            localcoords = zeros(Int,3,listsizes[1]+1)
+            local_residues = zeros(listsizes[1]+1)
+            local_coords = zeros(Int,3,listsizes[1]+1)
         else
-            localresidues = zeros(listsizes[2]+1)
-            localcoords = zeros(Int,3,listsizes[2]+1)
+            local_residues = zeros(listsizes[2]+1)
+            local_coords = zeros(Int,3,listsizes[2]+1)
         end
     elseif mode == "NW-RBP"
         newLr = zeros(M,N)
@@ -203,6 +205,19 @@ function
         newLr = zeros(M,N)
         residues = zeros(N)
         Factors = ones(N)
+    elseif mode == "List-VN-RBP"
+        newLr = zeros(M,N)
+        residues = zeros(listsizes[1]+1)
+        Factors = ones(N)
+        coords = zeros(Int,listsizes[1]+1)
+        inlist = zeros(Bool,N)
+        if listsizes[2] == 1
+            local_residues = zeros(listsizes[1]+1)
+            local_coords = zeros(Int,listsizes[1]+1)
+        else
+            local_residues = zeros(listsizes[2]+1)
+            local_coords = zeros(Int,listsizes[2]+1)
+        end
     end
 
 ################################## MAIN LOOP ###################################
@@ -245,8 +260,8 @@ function
         if mode == "List-RBP"
             residues .= 0.0
             coords .= 0
-            localresidues .= 0.0
-            localcoords .= 0
+            local_residues .= 0.0
+            local_coords .= 0
             resetmatrix!(rbpmatrix,Nv,false)
         end
 
@@ -285,6 +300,8 @@ function
             calc_all_residues_NW!(Lq,Nc,aux,signs,phi,newLr,residues)
         elseif mode == "VN-RBP"
             calc_all_residues_VN!(Lq,Nc,aux,signs,phi,Lr,newLr,residues,Nv)
+        elseif mode == "List-VN-RBP"
+            calc_all_residues_list_VN!(Lq,Nc,aux,signs,phi,Lr,newLr,residues,Nv,inlist,listsizes,coords)
         end
         
         # 10) BP routine
@@ -338,8 +355,8 @@ function
                     coords,
                     rbpmatrix,
                     residues,
-                    localresidues,
-                    localcoords,
+                    local_residues,
+                    local_coords,
                     listsizes,
                     relative,
                     rbp_not_converged
@@ -384,6 +401,31 @@ function
                     residues,
                     rbp_not_converged
                     )
+                # reset factors
+                Factors .= 1.0
+            elseif mode == "List-VN-RBP"
+                rbp_not_converged = List_VN_RBP!(
+                    bitvector,
+                    Lq,
+                    Lr,
+                    Lf,
+                    Nc,
+                    Nv,
+                    aux,
+                    signs,
+                    phi,
+                    decayfactor,
+                    num_edges,
+                    newLr,
+                    Factors,
+                    residues,
+                    rbp_not_converged,
+                    inlist,
+                    local_residues,
+                    local_coords,
+                    listsizes,
+                    coords
+                )
                 # reset factors
                 Factors .= 1.0
             end            

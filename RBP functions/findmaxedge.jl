@@ -13,7 +13,7 @@ function
     max_edge = 0
     maxresidue = 0.0
     @fastmath @inbounds for edge in eachindex(residues)
-        residue = residues[edge]
+        residue = abs(residues[edge])
         if residue > maxresidue
             maxresidue = residue
             max_edge = edge

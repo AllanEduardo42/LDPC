@@ -5,9 +5,12 @@
 
 include("./RBP functions/findmaxnode.jl")
 include("./RBP functions/calc_residue.jl")
+include("./RBP functions/remove_residue_VN.jl")
+include("./RBP functions/update_local_list_VN.jl")
+include("./RBP functions/update_global_list_VN.jl")
 
 function
-    VN_RBP!(
+    List_VN_RBP!(
         bitvector::Vector{Bool},
         Lq::Matrix{<:AbstractFloat},
         Lr::Matrix{<:AbstractFloat},
@@ -22,31 +25,48 @@ function
         newLr::Matrix{<:AbstractFloat},
         Factors::Vector{<:AbstractFloat},
         alpha::Vector{<:AbstractFloat},
-        rbp_not_converged::Bool
+        bp_not_converged::Bool,
+        inlist::Vector{Bool},
+        local_alpha::Vector{<:AbstractFloat},
+        local_coords::Vector{<:Integer},
+        listsizes::Vector{<:Integer},
+        coords::Vector{<:Integer},
     )
 
     @fastmath @inbounds for e in 1:num_edges
 
         # display("e = $e")
 
-        vjmax = findmaxnode(alpha)
-        if vjmax == 0
-            rbp_not_converged = false
-            break # i.e., BP has converged
+        # display([alpha coords])
+
+        if alpha[1] == 0
+            # display("e = $e")
+            # display([alpha coords])
+            # calc_all_residues_list_VN!(Lq,Nc,aux,signs,phi,Lr,newLr,alpha,Nv,inlist,listsizes,coords)
+            # display([alpha coords])
+            if alpha[1] == 0
+                bp_not_converged = false
+                break # i.e., BP has converged
+            end
+            vjmax = coords[1]
+        else
+            vjmax = coords[1]
         end
         Factors[vjmax] *= decayfactor
-        alpha[vjmax] = 0.0
+        remove_residue_VN!(vjmax,listsizes[1],alpha,coords,inlist,1)
 
-        Nvjmax = Nv[vjmax]
-        for ci in Nvjmax
+        # display([alpha coords])
+
+        for ci in Nv[vjmax]
             li = LinearIndices(Lr)[ci,vjmax]
             RBP_update_Lr!(li,Lr,newLr,ci,vjmax,Nc[ci],Lq,aux,signs,phi)
         end   
         
+        Nvjmax = Nv[vjmax]
         Ld = calc_Ld(vjmax,Nvjmax,Lf,Lr)
         bitvector[vjmax] = signbit(Ld)
 
-        for ci in Nvjmax
+        for ci in Nv[vjmax]
             # update Nv messages Lq[ci,vjmax]
             li = LinearIndices(Lq)[ci,vjmax]
             Lq[li] = Ld - Lr[li]
@@ -57,17 +77,23 @@ function
                 if vj ≠ vjmax
                     newlr = calc_Lr(A,B,C,D,vj,aux,signs,phi)
                     li = LinearIndices(newLr)[ci,vj] 
-                    newLr[li] = newlr   
+                    newLr[li] = newlr  
                     residue = calc_residue(newlr,Lr[li],Factors[vj])
-                    # if residue > alpha[vj]
-                        alpha[vj] = residue
-                    # end
+                    update_local_list_VN!(alpha,coords,local_alpha,
+                            local_coords,listsizes,inlist,vj,residue)
                 end
             end
         end
     end
 
-    return rbp_not_converged
+    # display([local_alpha local_coords])
+
+    update_global_list_VN!(alpha,coords,local_alpha,local_coords,listsizes,
+            inlist)
+
+    # display([alpha coords])
+
+    return bp_not_converged
 
 end
 
@@ -87,27 +113,27 @@ function
         newLr::Matrix{<:AbstractFloat},
         Factors::Vector{<:AbstractFloat},
         alpha::Vector{<:AbstractFloat},
-        rbp_not_converged::Bool
+        bp_not_converged::Bool
     )
 
     @fastmath @inbounds for e in 1:num_edges
 
-        # display("e = $e")
+        # # display("e = $e")
 
         vjmax = findmaxnode(alpha)
         if vjmax == 0
-            rbp_not_converged = false
+            bp_not_converged = false
             break # i.e., BP has converged
         end
         Factors[vjmax] *= decayfactor
         alpha[vjmax] = 0.0
 
-        Nvjmax = Nv[vjmax]
-        for ci in Nvjmax
+        for ci in Nv[vjmax]
             li = LinearIndices(Lr)[ci,vjmax]
             Lr[li] = newLr[li]
         end 
 
+        Nvjmax = Nv[vjmax]
         for ci in Nvjmax
             # 5) update Nv messages Lq[ci,vnmax]
             Lq[ci,vjmax] = calc_Lq(Nvjmax,ci,vjmax,Lr,Lf)
@@ -131,6 +157,6 @@ function
         bitvector[vj] = signbit(Lr[li] + Lq[li])
     end
 
-    return rbp_not_converged
+    return bp_not_converged
 end
 
