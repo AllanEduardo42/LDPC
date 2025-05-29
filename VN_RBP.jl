@@ -22,7 +22,8 @@ function
         newLr::Matrix{<:AbstractFloat},
         Factors::Vector{<:AbstractFloat},
         alpha::Vector{<:AbstractFloat},
-        rbp_not_converged::Bool
+        rbp_not_converged::Bool,
+        mode2::Bool
     )
 
     @fastmath @inbounds for e in 1:num_edges
@@ -56,12 +57,16 @@ function
             for vj in Nci
                 if vj ≠ vjmax
                     newlr = calc_Lr(A,B,C,D,vj,aux,signs,phi)
-                    li = LinearIndices(newLr)[ci,vj] 
-                    newLr[li] = newlr   
-                    residue = calc_residue(newlr,Lr[li],Factors[vj])
-                    # if residue > alpha[vj]
+                    li = LinearIndices(newLr)[ci,vj]
+                    newLr[li] = newlr
+                    residue = abs(newlr - Lr[li])*Factors[vj]
+                    if mode2
+                        if residue > alpha[vj]
+                            alpha[vj] = residue
+                        end
+                    else
                         alpha[vj] = residue
-                    # end
+                    end            
                 end
             end
         end
@@ -118,7 +123,7 @@ function
                     newlr = calc_Lr(Nci,ci,vj,Lq)
                     li = LinearIndices(Lr)[ci,vj]
                     newLr[li] = newlr
-                    alpha[vj] = calc_residue_raw(newlr,Lr[li],Factors[vj])
+                    alpha[vj] = calc_residue_VN_NW_raw(newlr,Lr[li],Factors[vj])
                 end
             end
         end

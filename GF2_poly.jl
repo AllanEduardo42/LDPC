@@ -73,7 +73,7 @@ function
     # Length{q(x)} - 1 = Length{p(x)} - 1 - (Length{d(x)} - 1) ==>
     # Length{q(x)} = Length{p(x)} - Length{d(x)} + 1 ==>
     # Length{q(x)} = N - M + 1
-    L = N-M+1
+    L = N - M + 1
     if L < 1
         return [0], p
     end
@@ -99,6 +99,33 @@ function
     # r(x) = a[N-(M-1)+1:end]
 
     @inbounds return q, a[N-M+2:end]
+
+end
+
+function 
+    divide_poly_CRC!(
+        b::Vector{Bool},
+        Cw::Union{Matrix{Bool},Vector{Bool}},
+        g_CRC::Vector{Bool},
+        A::Integer,
+        K::Integer,
+    )
+
+    @inbounds begin
+        for i in 1:K
+            b[i] = Cw[i]
+        end
+        for i = 1:A
+            if b[i]
+                for j in eachindex(g_CRC)
+                    b[j+i-1] ⊻= g_CRC[j]
+                end
+            end
+        end
+        for i in A+1:K
+            Cw[i] = b[i]
+        end
+    end
 
 end
 

@@ -21,8 +21,55 @@ function
     (mA, nA) =  (ndims(A) == 2) ? size(A) : (length(A),1)
     (mB, nB) =  (ndims(B) == 2) ? size(B) : (length(B),1)
 
+    if nB > 1
+        C = similar(A,mA,nB)
+    else
+        C = similar(A,mA)
+    end
+
     if nA == mB
-        C = _gf2_mat_mult(A,B,mA,nA,nB)
+        if nB > 1
+            _gf2_mat_mult!(C,A,B,mA,nA,nB)
+        else
+            _gf2_mat_mult!(C,A,B,mA,nA)
+        end
+    else
+        throw(
+            DimensionMismatch(
+                lazy"A has dimensions ($mA,$nA) but B has dimensions ($mB,$nB)"
+            )
+        )
+    end
+
+    return C
+
+end
+
+function
+    gf2_mat_mult!(
+        C::AbstractMatrix{Bool},
+        A::AbstractMatrix{Bool},
+        B::AbstractArray{Bool}
+    )
+
+    (mC, nC) =  (ndims(C) == 2) ? size(C) : (length(C),1)
+    (mA, nA) =  (ndims(A) == 2) ? size(A) : (length(A),1)
+    (mB, nB) =  (ndims(B) == 2) ? size(B) : (length(B),1)
+
+    if nA == mB 
+        if mC == mA && nC == nB
+            if nB > 1
+                _gf2_mat_mult!(C,A,B,mA,nA,nB)
+            else
+                _gf2_mat_mult!(C,A,B,mA,nA)
+            end
+        else
+            throw(
+                DimensionMismatch(
+                    lazy"C has dimensions ($mC,$nC) but A*B has dimensions ($mA,$nB)"
+                )
+            )
+        end
     else
         throw(
             DimensionMismatch(
@@ -36,7 +83,8 @@ function
 end
 
 function 
-    _gf2_mat_mult(
+    _gf2_mat_mult!(
+        C::AbstractMatrix{Bool},
         A::AbstractMatrix{Bool},
         B::AbstractMatrix{Bool},
         mA::Integer,
@@ -44,39 +92,42 @@ function
         nB::Integer
     )
     
-    C = similar(A,mA,nB)
-    C .*= false
-    for i in 1:mA
+    @inbounds for i in 1:mA
         for j in 1:nB
+            result = false
             for k in 1:nA
-                @inbounds C[i,j] ⊻= A[i,k] && B[k,j]
+                if A[i,k]
+                    if B[k,j]
+                         result ⊻= true
+                    end
+                end
             end
+            C[i,j] = result
         end
     end
-
-    return C
 
 end
 
 function 
-    _gf2_mat_mult(
+    _gf2_mat_mult!(
+        y::AbstractVector{Bool},
         A::AbstractMatrix{Bool},
-        B::AbstractVector{Bool},
+        x::AbstractVector{Bool},
         mA::Integer,
-        nA::Integer,
-        nB::Integer
+        nA::Integer
     )
     
-    v = similar(A,mA)
-    v .*= false
     @inbounds for i in 1:mA
+        result = false
         for k in 1:nA
-            v[i] ⊻= A[i,k] && B[k]
+            if A[i,k]
+                if x[k]
+                    result ⊻= true
+                end
+            end
         end
+        y[i] = result
     end
-
-    return v
-
 end
 
 ################################# GF2 NULLSPACE ################################
@@ -291,47 +342,155 @@ function find_gf2_invertible_matrix(M::Integer)
 end
 
 function 
-    gf2_solve_LU!(
-        x::Vector{Bool},
-        A::Matrix{Bool},
+    gf2_solve_LU(
+        L::Matrix{Bool},
+        U::Matrix{Bool},
         y::Vector{Bool}
     )
 
-    M,N = size(A)
+    M = is_LU_conformable(L,U,y)
 
-    if M ≠ N
+    x = zeros(Bool,M)
+
+    _gf2_solve_LU!(x,L,U,y,M)
+
+    return x
+
+end
+
+function 
+    gf2_solve_LU!(
+        x::Vector{Bool},
+        L::Matrix{Bool},
+        U::Matrix{Bool},
+        y::Vector{Bool}
+    )
+
+    M = is_LU_conformable(L,U,y)
+    Lx = length(x)
+
+    if Lx ≠ M
         throw(
             DimensionMismatch(
-                "matrix is not square: dimensions are ($M,$N)"
+                lazy"x must have the dimension $M, got $Lx"
             )
         )
     end
 
-    @inbounds begin
-        if istril(A)
-            for i in 1:M
-                x[i] = y[i]
-                for j=1:i-1
-                    if A[i,j] && x[j]
-                        x[i] ⊻= true
-                    end
-                end
-            end
-        elseif istriu(A)
-            for i in M:-1:1
-                x[i] = y[i]
-                for j=i+1:M
-                    if A[i,j] && x[j]
-                        x[i] ⊻= true
-                    end
-                end
-            end
-        else
-            throw(
-                ArgumentError(
-                    lazy"Matrix must be triangular"
-                )
+    _gf2_solve_LU!(x,L,U,y,M)
+
+end
+
+function 
+    is_LU_conformable(
+        L::Matrix{Bool},
+        U::Matrix{Bool},
+        y::Vector{Bool}
+    )
+
+    ML,NL = size(L)
+    MU,NU = size(U)
+    L = length(y)
+
+    if ML ≠ NL 
+        throw(
+            DimensionMismatch(
+                lazy"matrix L is not square: dimensions are ($ML,$NL)"
             )
+        )
+    elseif !istril(L)
+        throw(
+            ArgumentError(
+                lazy"Matrix L must be lower triangular triangular"
+            )
+        )
+    elseif MU ≠ NU
+        throw(
+            DimensionMismatch(
+                lazy"matrix U is not square: dimensions are ($MU,$NU)"
+            )
+        )
+    elseif !istriu(U)
+        throw(
+            ArgumentError(
+                lazy"Matrix U must be upper triangular"
+            )
+        )
+    elseif ML ≠ MU
+        throw(
+            DimensionMismatch(
+                lazy"matrices L and U must have same dimension: L has dimensions ($ML,$NL), U has dimensions ($MU,$NU)"
+            )
+        )
+    elseif L ≠ ML
+        throw(
+            DimensionMismatch(
+                lazy"y must have the dimension $ML, got $L"
+            )
+        )
+    end
+
+    return ML
+
+end
+
+
+function 
+    _gf2_solve_LU!(
+        x::Vector{Bool},
+        L::Matrix{Bool},
+        U::Matrix{Bool},
+        y::Vector{Bool},
+        M::Integer
+    )
+
+    @inbounds begin
+        _gf2_solve_L!(x,L,y,M)
+        _gf2_solve_U!(x,U,M)
+    end
+end
+
+function 
+    _gf2_solve_L!(
+        x::Vector{Bool},
+        L::Matrix{Bool},
+        y::Vector{Bool},
+        M::Integer
+    )
+
+    @inbounds begin
+        for i in 1:M
+            result = y[i]
+            for j=1:i-1
+                if L[i,j]
+                    if x[j]
+                        result ⊻= true
+                    end
+                end
+            end
+            x[i] = result
+        end
+    end
+end
+
+function 
+    _gf2_solve_U!(
+        x::Vector{Bool},
+        U::Matrix{Bool},
+        M::Integer
+    )
+
+    @inbounds begin
+        for i in M:-1:1
+            result = x[i]
+            for j=i+1:M
+                if U[i,j]
+                    if x[j]
+                        result ⊻= true
+                    end
+                end
+            end
+            x[i] = result
         end
     end
 end

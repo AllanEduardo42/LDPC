@@ -53,11 +53,10 @@ else
     end
 
     if !STOP  
-        FB = ["F","B"]  
-        # FER x Iterations
+        FB = ["F","B"]
         for j=1:2
             p = plot()
-            title = FB[j]*"ER $PROTOCOL (R = $(round(RR,digits=2)))"
+            title = FB[j]*"ER $PROTOCOL (R = $(round(RR,digits=2)), N = $NN)"
             for i in eachindex(ACTIVE)
                 if ACTIVE[i]
                     for decay in DECAYS[i]

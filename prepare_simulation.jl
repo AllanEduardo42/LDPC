@@ -47,6 +47,7 @@ function
                                 G_CRC,
                                 ebn0[k],
                                 HH,
+                                H1,
                                 LL,
                                 UU,
                                 NC,

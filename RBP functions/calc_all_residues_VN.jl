@@ -25,7 +25,7 @@ function
             li = LinearIndices(Lr)[ci,vj]
             newlr = calc_Lr(A,B,C,D,vj,aux,signs,phi)
             newLr[li] = newlr
-            Lr[li] = newlr
+            # Lr[li] = newlr
         end
     end
     @inbounds for vj in eachindex(Nv)
@@ -53,7 +53,7 @@ function
             li = LinearIndices(Lr)[ci,vj]
             newlr = calc_Lr(Nci,ci,vj,Lq)
             newLr[li] = newlr
-            Lr[li] = newlr
+            # Lr[li] = newlr
         end
     end
     @inbounds for vj in eachindex(Nv)
@@ -69,7 +69,7 @@ function
     )
 
     residue = 0.0
-    for ci in Nvj          
+    @fastmath @inbounds for ci in Nvj          
         residue += newLr[ci,vj]
     end
 

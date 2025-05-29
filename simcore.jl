@@ -25,12 +25,13 @@ include("encode_LDPC.jl")
 function
     simcore(
         A::Integer,
-        K_prime::Integer,
+        K::Integer,
         R::AbstractFloat,
         G::Integer,
         g_CRC::Vector{Bool},
         ebn0::AbstractFloat,
         H::Matrix{Bool},
+        H1::Union{Matrix{Bool},Nothing},
         L::Union{Nothing,Matrix{Bool}},
         U::Union{Nothing,Matrix{Bool}},
         Nc::Vector{Vector{T}} where {T<:Integer},
@@ -68,14 +69,12 @@ function
         E_M, E_N = size(E_H)
         E_K = E_N - E_M 
         if protocol == "WiMAX"            
-            E_B = E_M
-            K = K_prime       
-            P = 0   
+            E_B = E_M  
+            S = 0   
         elseif protocol == "NR5G"
             twoZc = 2*liftsize
             E_B = 4
-            K = E_K*liftsize
-            P = liftsize*E_N - (K - K_prime) - N # quantity of removed parity bits (rate matching)
+            S = E_K*liftsize - K
         end
     end
 
@@ -99,20 +98,22 @@ function
 
 ################################# PREALLOCATIONS ###############################
 
-    msg = Vector{Bool}(undef,A)    
+
+
+    msg = Vector{Bool}(undef,A)  
+    
+    b = Vector{Bool}(undef,K)
 
     cword = Vector{Bool}(undef,N)
 
     if protocol == "PEG"
         Cw = cword
-        z = Vector{Bool}(undef,M)
-        v = Vector{Bool}(undef,M)
         w = Vector{Bool}(undef,M)
     else
         Cw = Matrix{Bool}(undef,liftsize,E_N) # info bits + CRC + filler bits + parity bits
-        sw = Vector{Bool}(undef,liftsize)       
+        sw = Vector{Bool}(undef,liftsize)
+        circ_aux = Vector{Bool}(undef,liftsize)     
         W = Matrix{Bool}(undef,liftsize,E_B)
-        Z = Matrix{Bool}(undef,liftsize,E_B)
     end
 
     # frame error rate
@@ -201,10 +202,15 @@ function
         newLr = zeros(M,N)
         residues = zeros(M)
         Factors = ones(M)       
-    elseif mode == "VN-RBP"
+    elseif mode == "VN-RBP" || mode == "VN-RBP2"
         newLr = zeros(M,N)
         residues = zeros(N)
         Factors = ones(N)
+        if mode == "VN-RBP2"
+            mode2 = true
+        else
+            mode2 = false
+        end
     elseif mode == "List-VN-RBP"
         newLr = zeros(M,N)
         residues = zeros(listsizes[1]+1)
@@ -228,23 +234,27 @@ function
         generate_message!(msg,rgn_msg,msgtest)
 
         # 2) generate the cword
-        append_CRC!(Cw,msg,g_CRC,A,K_prime)
+        append_CRC!(Cw,b,msg,g_CRC,A,K)
         if protocol == "PEG"
-            encode_LDPC_LU!(Cw,H,z,w,v,L,U,K_prime)
+            encode_LDPC_LU!(Cw,H1,w,L,U,M,K)
+            for i in eachindex(w)
+                Cw[K+i] = w[i]
+            end
         else
-            encode_LDPC_BG!(cword,Cw,Z,W,sw,K_prime,K,E_H,E_M,E_K,E_B,P)
-        end        
-
+            encode_LDPC_BG!(cword,Cw,W,sw,circ_aux,K,N,E_H,E_M,E_K,E_B,S)
+        end
         # verify the encoding
         if !iszero(H*cword)
             println("Encoding error")
         end
 
         # 3) Modulation of the cword in BPSK
-        @. signal = 2*cword[twoZc+1:end] - 1
+        for i in 1:G
+            signal[i] = 2*cword[twoZc+i] - 1
+        end
 
         # 4) sum the noise to the modulated cword to produce the received signal
-        received_signal!(signal,noise,stdev,rgn_noise,noisetest)
+        received_signal!(signal,noise,G,stdev,rgn_noise,noisetest)
 
         # print info if in test mode
         if test && printtest
@@ -298,7 +308,7 @@ function
                                         residues,coords,listsizes,relative)
         elseif mode == "NW-RBP"
             calc_all_residues_NW!(Lq,Nc,aux,signs,phi,newLr,residues)
-        elseif mode == "VN-RBP"
+        elseif mode == "VN-RBP" || mode == "VN-RBP2"
             calc_all_residues_VN!(Lq,Nc,aux,signs,phi,Lr,newLr,residues,Nv)
         elseif mode == "List-VN-RBP"
             calc_all_residues_list_VN!(Lq,Nc,aux,signs,phi,Lr,newLr,residues,Nv,inlist,listsizes,coords)
@@ -383,7 +393,7 @@ function
                 )
                 # reset factors
                 Factors .= 1.0
-            elseif mode == "VN-RBP"
+            elseif mode == "VN-RBP" || mode == "VN-RBP2"
                 rbp_not_converged = VN_RBP!(
                     bitvector,
                     Lq,
@@ -399,7 +409,8 @@ function
                     newLr,
                     Factors,
                     residues,
-                    rbp_not_converged
+                    rbp_not_converged,
+                    mode2
                     )
                 # reset factors
                 Factors .= 1.0

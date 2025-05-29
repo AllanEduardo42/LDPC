@@ -37,6 +37,7 @@ function
     received_signal!(
         signal::AbstractArray{<:AbstractFloat},
         noise::Vector{<:AbstractFloat},
+        G::Integer,
         σ::AbstractFloat,
         rgn_noise::AbstractRNG,
         ::Nothing
@@ -44,7 +45,9 @@ function
 
     @fastmath begin
         randn!(rgn_noise,noise)
-        @. signal += noise*σ
+        for i in 1:G
+            signal[i] += noise[i]*σ 
+        end
     end
 
 end
@@ -53,15 +56,16 @@ function
     received_signal!(
         signal::AbstractArray{<:AbstractFloat},
         ::Vector{<:AbstractFloat},
+        G::Integer,
         σ::AbstractFloat,
-        u::Vector{<:AbstractFloat},
         ::AbstractRNG,
         noisetest::Vector{<:AbstractFloat}
     )
 
     @fastmath begin
-        noisetest .*= σ
-        signal .= u .+ noisetest
+        for i in 1:G
+            signal[i] += noisetest[i]*σ
+        end
     end
 
 end
@@ -118,7 +122,8 @@ end
 # append the CRC to the message
 function 
     append_CRC!(
-        Cw::Union{Vector{Bool},Matrix{Bool}},
+        Cw::Union{Matrix{Bool},Vector{Bool}},
+        b::Vector{Bool},
         msg::Vector{Bool},
         g_CRC::Vector{Bool},
         A::Integer,
@@ -126,9 +131,13 @@ function
     )
 
     @inbounds begin
-        Cw[1:A] = msg
-        Cw[A+1:end] .= false 
-        _,Cw[A+1:K] = divide_poly(Cw[1:K],g_CRC)
+        for i in 1:A
+            Cw[i] = msg[i]
+        end
+        for i in A+1:K
+            Cw[i] = false
+        end
+        divide_poly_CRC!(b,Cw,g_CRC,A,K)
     end
 end
 

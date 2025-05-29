@@ -24,7 +24,7 @@ function
             li = LinearIndices(newLr)[ci,vj]
             newlr = calc_Lr(A,B,C,D,vj,aux,signs,phi)
             newLr[li] = newlr
-            residue = calc_residue(newlr,0.0,1.0)
+            residue = abs(newlr)
             if residue > maxresidue
                 maxresidue = residue
             end
@@ -52,7 +52,7 @@ function
             li = LinearIndices(newLr)[ci,vj]
             newlr = calc_Lr(Nci,ci,vj,Lq)
             newLr[li] = newlr
-            residue = calc_residue(newlr,0.0,1.0)
+            residue = calc_residue_VN_NW_raw(newlr,0.0,1.0)
             if residue > maxresidue
                 maxresidue = residue
             end

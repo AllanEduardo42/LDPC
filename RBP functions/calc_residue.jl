@@ -58,21 +58,9 @@ function _calc_residue(
     end
 end
 
-# NW-RBP and VN-RBP (FAST, TABL and MSUM)
-function 
-    calc_residue(
-        newlr::AbstractFloat,
-        oldlr::AbstractFloat,
-        factor::AbstractFloat,
-    )
-
-    @fastmath abs(newlr - oldlr)*factor
-
-end
-
 # NW-RBP and VN-RBP (TANH)
 function
-    calc_residue_raw(
+    calc_residue_VN_NW_raw(
         newlr::AbstractFloat,
         oldlr::AbstractFloat,
         factor::AbstractFloat

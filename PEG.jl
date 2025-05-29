@@ -57,7 +57,7 @@ function
                     check_degrees[m] += 1
                 else
                     L0_checks = findall(isone,H[:,n])
-                    level = subtree!(H,M,n,0,check_degrees,L0_checks,[n],
+                    level = subtree!(H,M,N,n,0,check_degrees,L0_checks,[n],
                                 copy(L0_checks),copy(L0_checks))
                     if level > 0
                         girth = min(girth, 2*(level+1))
@@ -75,6 +75,7 @@ function
     subtree!(
         H::Matrix{Bool},
         M::Integer,
+        N::Integer,
         root::Integer,
         level::Integer,
         check_degrees::Vector{<:Integer},
@@ -93,16 +94,23 @@ function
         L1_checks = Vector{Int}(undef,0)    # checks in the current level
         L1_nodes = Vector{Int}(undef,0)     # nodes in the current level
 
+        row = zeros(Bool,N)
+        column = zeros(Bool,M)
+
         for check in L0_checks
-            row = H[check,:]
+            for i in 1:N
+                row[i] = H[check,i]
+            end
             row[parent_nodes] .= 0              # remove parent nodes
-            check_nodes = findall(isone,row)    # nodes linked to the current check
+            check_nodes = findall(row)    # nodes linked to the current check
             append_sort_unique!(L1_nodes,check_nodes)
             for node in check_nodes
-                column = H[:,node]
+                for i in 1:M
+                    column[i] = H[i,node]
+                end
                 column[check] = 0  
                 # include checks linked to the current node
-                append_sort_unique!(L1_checks,findall(isone,column))
+                append_sort_unique!(L1_checks,findall(column))
             end
         end
         append_sort_unique!(L1_check_set,L1_checks)
@@ -122,7 +130,7 @@ function
         else
             append_sort_unique!(L0_check_set,L1_checks)
             level = 
-                subtree!(H,M,root,level,check_degrees,L1_checks,L1_nodes,L0_check_set,
+                subtree!(H,M,N,root,level,check_degrees,L1_checks,L1_nodes,L0_check_set,
                     L1_check_set)
         end
     end

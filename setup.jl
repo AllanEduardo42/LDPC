@@ -16,6 +16,7 @@ include("prepare_simulation.jl")
 
 ############################# PARITY-CHECK MATRIX #############################
 if PROTOCOL == "NR5G"
+    H1 = nothing
     RV = 0
     AA, KK, RR, G_CRC, LIFTSIZE, NR_LDPC_DATA = NR_LDPC_parameters(GG,RR,RV,false)
     HH, E_H = NR_LDPC_make_parity_check_matrix(LIFTSIZE,
@@ -41,6 +42,7 @@ else
         # Generate Parity-Check Matrix by the PEG algorithm
         H_PEG, GIRTH = PEG(LAMBDA,RO,MM,NN)
         HH, LL, UU = remake_H(H_PEG,0)
+        H1 = HH[:,1:KK]
     elseif PROTOCOL == "WiMAX"
         # N takes values in {576,672,768,864,960,1056,1152,1248,1344,1440,1536,
         # 1632,1728,1824,1920,2016,2112,2208,2304}.    
@@ -52,6 +54,7 @@ else
         GIRTH = find_girth(HH,100000)
         LL = nothing
         UU = nothing
+        H1 = nothing
     end
 end
 
