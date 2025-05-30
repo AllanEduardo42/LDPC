@@ -6,7 +6,7 @@
 
 include("auxiliary_functions.jl")
 
-function find_girth(H,max)
+function find_girth(H,max)::Int
 
     M,N = size(H)
 

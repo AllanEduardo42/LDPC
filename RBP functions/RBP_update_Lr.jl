@@ -6,16 +6,16 @@
 # 1) if the residues are calculate by the FAST or TABL method
 function 
     RBP_update_Lr!(
-        lmax::Integer,
-        Lr::Matrix{<:AbstractFloat},
-        newLr::Matrix{<:AbstractFloat},
-        ::Integer,
-        ::Integer,
-        ::Vector{<:Integer},
-        ::Matrix{<:AbstractFloat},        
-        ::Vector{<:AbstractFloat},
+        lmax::Int,
+        Lr::Matrix{Float64},
+        newLr::Matrix{Float64},
+        ::Int,
+        ::Int,
+        ::Vector{Int},
+        ::Matrix{Float64},        
+        ::Vector{Float64},
         ::Union{Vector{Bool},Nothing},
-        ::Union{Vector{<:AbstractFloat},Nothing}
+        ::Union{Vector{Float64},Nothing}
     )
     
     # update check to node message Lr[cimax,vjmax]
@@ -26,13 +26,13 @@ end
 # 2) if the residues are calculate by MSUM method
 function 
     RBP_update_Lr!(
-        lmax::Integer,
-        Lr::Matrix{<:AbstractFloat},
-        ::Matrix{<:AbstractFloat},
-        cimax::Integer,
-        vjmax::Integer,
-        Ncimax::Vector{<:Integer},
-        Lq::Matrix{<:AbstractFloat},     
+        lmax::Int,
+        Lr::Matrix{Float64},
+        ::Matrix{Float64},
+        cimax::Int,
+        vjmax::Int,
+        Ncimax::Vector{Int},
+        Lq::Matrix{Float64},     
         ::Nothing,
         ::Vector{Bool},
         ::Nothing

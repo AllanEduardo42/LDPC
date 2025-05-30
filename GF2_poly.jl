@@ -107,8 +107,8 @@ function
         b::Vector{Bool},
         Cw::Union{Matrix{Bool},Vector{Bool}},
         g_CRC::Vector{Bool},
-        A::Integer,
-        K::Integer,
+        A::Int,
+        K::Int,
     )
 
     @inbounds begin

@@ -7,15 +7,15 @@ include("calc_residue.jl")
 
 function
     calc_all_residues_VN!(
-        Lq::Matrix{<:AbstractFloat},
-        Nc::Vector{Vector{T}} where {T<:Integer},
-        aux::Union{Vector{<:AbstractFloat},Nothing},
+        Lq::Matrix{Float64},
+        Nc::Vector{Vector{Int}},
+        aux::Vector{Float64},
         signs::Union{Vector{Bool},Nothing},
-        phi::Union{Vector{<:AbstractFloat},Nothing},
-        Lr::Matrix{<:AbstractFloat},
-        newLr::Matrix{<:AbstractFloat},
-        alpha::Vector{<:AbstractFloat},
-        Nv::Vector{Vector{T}} where {T<:Integer},
+        phi::Union{Vector{Float64},Nothing},
+        Lr::Matrix{Float64},
+        newLr::Matrix{Float64},
+        alpha::Vector{Float64},
+        Nv::Vector{Vector{Int}},
     )
     
     @inbounds for ci in eachindex(Nc)
@@ -36,15 +36,15 @@ end
 # RAW
 function
     calc_all_residues_VN!(
-        Lq::Matrix{<:AbstractFloat},
-        Nc::Vector{Vector{T}} where {T<:Integer},
+        Lq::Matrix{Float64},
+        Nc::Vector{Vector{Int}},
         ::Nothing,
         ::Nothing,
         ::Nothing,
-        Lr::Matrix{<:AbstractFloat},
-        newLr::Matrix{<:AbstractFloat},
-        alpha::Vector{<:AbstractFloat},
-        Nv::Vector{Vector{T}} where {T<:Integer},
+        Lr::Matrix{Float64},
+        newLr::Matrix{Float64},
+        alpha::Vector{Float64},
+        Nv::Vector{Vector{Int}}
     )
     
     @inbounds for ci in eachindex(Nc)
@@ -63,9 +63,9 @@ end
 
 function 
     _calc_all_residues_VN(
-        newLr::Matrix{<:AbstractFloat},
-        vj::Integer,
-        Nvj::Vector{<:Integer}
+        newLr::Matrix{Float64},
+        vj::Int,
+        Nvj::Vector{Int}
     )
 
     residue = 0.0

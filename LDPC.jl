@@ -46,7 +46,7 @@ SEED_MESSA::Int = 1000
 
 TEST::Bool = true
 PRIN::Bool = true
-PROF::Bool = false
+PROF::Bool = true
 STOP::Bool = false # stop simulation at zero syndrome (if true, BER curves are
 # not printed)
 
@@ -66,8 +66,6 @@ MAXITER_TEST::Int = 1
 EbN0_TEST::Float64 = 1.5
 TRIALS_TEST::Int = 1
 DECAY_TEST::Float64 = 1.0
-MSGTEST = nothing
-NOISETEST = nothing
 
 ################################### SCHEDULE ###################################
 
@@ -148,9 +146,9 @@ LISTSIZES[2] = 2
 ######################## CODE LENGTH, RATE AND PROTOCOL ########################
 
 # Message (Payload) size
-GG = 576
+GG::Int = 576
 # Effective Rate
-RR = 1/2 - 16/GG  # WiMAX compatibility offset
+RR::Float64 = 1/2 - 16/GG  # WiMAX compatibility offset
 # LDPC protocol: NR5G = NR-LDPC (5G); PEG = PEG; WiMAX = IEEE80216e;
 PROTOCOL::String = "NR5G"
     LAMBDA = [0.21, 0.25, 0.25, 0.29, 0]

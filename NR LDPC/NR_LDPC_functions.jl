@@ -10,11 +10,11 @@ using DelimitedFiles
 
 function 
     code_block_segmentation!(
-        cw::Matrix{<:Integer},
+        cw::Matrix{Int},
         b::Vector{Bool},
-        C::Integer,
-        K_prime::Integer,
-        L::Integer
+        C::Int,
+        K_prime::Int,
+        L::Int
     )
 
     if C > 1
@@ -45,12 +45,12 @@ function
     rate_matching!(
         e::Vector{Bool},
         Cw::Matrix{Bool},
-        twoZc::Integer,
-        N_cb::Integer,
-        E_r::Integer,
-        k0::Integer,
-        K::Integer,
-        K_prime::Integer
+        twoZc::Int,
+        N_cb::Int,
+        E_r::Int,
+        k0::Int,
+        K::Int,
+        K_prime::Int
     )
     
     @inbounds begin
@@ -71,8 +71,8 @@ function
     bit_interleaving!(
         f::Vector{Bool},
         e::Vector{Bool},
-        E_r::Integer,
-        Q_m::Integer
+        E_r::Int,
+        Q_m::Int
     )
 
     @inbounds begin
@@ -89,9 +89,9 @@ function
     code_concatenation!(
         g::Matrix{Bool},
         f::Matrix{Bool},
-        C::Integer,
-        E_r::Vector{<:Integer},
-        twoZc::Integer
+        C::Int,
+        E_r::Vector{Int},
+        twoZc::Int
     )
 
     
@@ -113,12 +113,12 @@ end
 function 
     inv_rate_matching(
         e::Matrix{Bool},
-        C::Integer,
-        Zc::Integer,
-        N::Integer,
-        N_cb::Integer,
-        E_r::Vector{<:Integer},        
-        k0::Integer,
+        C::Int,
+        Zc::Int,
+        N::Int,
+        N_cb::Int,
+        E_r::Vector{Int},        
+        k0::Int,
         range::UnitRange{Int}
         # I_HARQ,
         # d_buffer
@@ -154,9 +154,9 @@ end
 function 
     inv_bit_interleaving(
         f::Matrix{Bool},
-        C::Integer,
-        E_r::Vector{<:Integer},
-        Q_m::Integer
+        C::Int,
+        E_r::Vector{Int},
+        Q_m::Int
     )
 
     e = zeros(Bool,maximum(E_r),C)
@@ -173,8 +173,8 @@ end
 function 
     inv_code_concatenation(
         g::Vector{Bool},
-        C::Integer,
-        E_r::Vector{<:Integer}
+        C::Int,
+        E_r::Vector{Int}
     )
 
     f = zeros(Bool,maximum(E_r),C)

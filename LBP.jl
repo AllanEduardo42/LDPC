@@ -10,14 +10,14 @@ include("calc_syndrome.jl")
 function
     LBP!(
         bitvector::Vector{Bool},
-        Lq::Matrix{<:AbstractFloat},
-        Lr::Matrix{<:AbstractFloat},        
-        Lf::Vector{<:AbstractFloat},
-        Nc::Vector{Vector{T}} where {T<:Integer},
-        Nv::Vector{Vector{T}} where {T<:Integer},
-        Lrj::Vector{<:AbstractFloat},
+        Lq::Matrix{Float64},
+        Lr::Matrix{Float64},        
+        Lf::Vector{Float64},
+        Nc::Vector{Vector{Int}},
+        Nv::Vector{Vector{Int}},
+        Lrj::Vector{Float64},
         signs::Union{Vector{Bool},Nothing},
-        phi::Union{Vector{<:AbstractFloat},Nothing}
+        phi::Union{Vector{Float64},Nothing}
     )
 
     @fastmath @inbounds for ci in eachindex(Nc)
@@ -39,13 +39,13 @@ end
 # function
 #     LBP!(
 #         bitvector::Vector{Bool},
-#         Lq::Matrix{<:AbstractFloat},
-#         Lr::Matrix{<:AbstractFloat},
-#         Lf::Vector{<:AbstractFloat},
-#         Ldn::Vector{<:AbstractFloat},
-#         Nc::Vector{Vector{T}} where {T<:Integer},
-#         Nv::Vector{Vector{T}} where {T<:Integer},
-#         Lrj::Vector{<:AbstractFloat},
+#         Lq::Matrix{Float64},
+#         Lr::Matrix{Float64},
+#         Lf::Vector{Float64},
+#         Ldn::Vector{Float64},
+#         Nc::Vector{Vector{T}} where {TInteger},
+#         Nv::Vector{Vector{T}} where {TInteger},
+#         Lrj::Vector{Float64},
 #         syndrome::Vector{Bool},
 #         visited_vns::Vector{Bool},
 #         i::Integer

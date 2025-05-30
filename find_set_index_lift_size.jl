@@ -1,5 +1,5 @@
 function 
-    find_set_index_lift_size(Zc)
+    find_set_index_lift_size(Zc::Int)::Int
 
     if Zc < 2 || Zc > 384
         error("Zc was not found!")

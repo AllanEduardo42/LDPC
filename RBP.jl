@@ -13,24 +13,24 @@ include("./RBP functions/calc_residue.jl")
 function
     RBP!(
         bitvector::Vector{Bool},
-        Lq::Matrix{<:AbstractFloat},
-        Lr::Matrix{<:AbstractFloat},
-        Lf::Vector{<:AbstractFloat},
-        Nc::Vector{Vector{T}} where {T<:Integer},
-        Nv::Vector{Vector{T}} where {T<:Integer},
-        aux::Union{Vector{<:AbstractFloat},Nothing},
+        Lq::Matrix{Float64},
+        Lr::Matrix{Float64},
+        Lf::Vector{Float64},
+        Nc::Vector{Vector{Int}},
+        Nv::Vector{Vector{Int}},
+        aux::Union{Vector{Float64},Nothing},
         signs::Union{Vector{Bool},Nothing},
-        phi::Union{Vector{<:AbstractFloat},Nothing},
-        decayfactor::AbstractFloat,
-        num_edges::Integer,
-        newLr::Matrix{<:AbstractFloat},
-        Factors::Matrix{<:AbstractFloat},
-        coords::Matrix{<:Integer},
-        rbpmatrix::Matrix{<:Integer},
-        residues::Vector{<:AbstractFloat},
-        local_residues::Union{Vector{<:AbstractFloat},Nothing},
-        local_coords::Union{Matrix{<:Integer},Nothing},
-        listsizes::Vector{<:Integer},
+        phi::Union{Vector{Float64},Nothing},
+        decayfactor::Float64,
+        num_edges::Int,
+        newLr::Matrix{Float64},
+        Factors::Matrix{Float64},
+        coords::Matrix{Int},
+        Edges::Matrix{<:Integer},
+        residues::Vector{Float64},
+        local_residues::Union{Vector{Float64},Nothing},
+        local_coords::Union{Matrix{Int},Nothing},
+        listsizes::Vector{Int},
         relative::Bool,
         bp_not_converged::Bool
     )
@@ -46,7 +46,7 @@ function
                 bp_not_converged = false
                 break # i.e., BP has converged
             elseif max_edge == 1 # if list-RBP
-                calc_all_residues!(Lq,Lr,Nc,aux,signs,phi,newLr,Factors,rbpmatrix,
+                calc_all_residues!(Lq,Lr,Nc,aux,signs,phi,newLr,Factors,Edges,
                 residues,coords,listsizes,relative)
                 if residues[1] == 0.0
                     bp_not_converged = false
@@ -69,7 +69,7 @@ function
         RBP_update_Lr!(limax,Lr,newLr,cimax,vjmax,Nc[cimax],Lq,aux,signs,phi)
 
         # 4) set maximum residue to zero
-        remove_residue!(limax,listsizes[1],residues,coords,rbpmatrix,max_edge)
+        remove_residue!(limax,listsizes[1],residues,coords,Edges,max_edge)
 
         # 5) Calculate Ld of vjmax and bitvector[vjmax]
         Nvjmax = Nv[vjmax]
@@ -92,14 +92,14 @@ function
                         residue = calc_residue(newlr,Lr[li],Factors[li],
                                                         relative,Lq[li])
                         update_local_list!(residues,coords,local_residues,
-                            local_coords,listsizes,rbpmatrix,li,ci,vj,residue)
+                            local_coords,listsizes,Edges,li,ci,vj,residue)
                     end
                 end
             end
         end
         # if List-RBP: update list 1 
         update_global_list!(residues,coords,local_residues,local_coords,listsizes,
-            rbpmatrix)
+            Edges)
     end
 
     return bp_not_converged
@@ -109,24 +109,24 @@ end
 function
     RBP!(
         bitvector::Vector{Bool},
-        Lq::Matrix{<:AbstractFloat},
-        Lr::Matrix{<:AbstractFloat},
-        Lf::Vector{<:AbstractFloat},
-        Nc::Vector{Vector{T}} where {T<:Integer},
-        Nv::Vector{Vector{T}} where {T<:Integer},
+        Lq::Matrix{Float64},
+        Lr::Matrix{Float64},
+        Lf::Vector{Float64},
+        Nc::Vector{Vector{Int}},
+        Nv::Vector{Vector{Int}},
         ::Nothing,
         ::Nothing,
         ::Nothing,
-        decayfactor::AbstractFloat,
-        num_edges::Integer,
-        newLr::Matrix{<:AbstractFloat},
-        Factors::Matrix{<:AbstractFloat},
-        coords::Matrix{<:Integer},
-        edges::Matrix{<:Integer},
-        residues::Vector{<:AbstractFloat},
+        decayfactor::Float64,
+        num_edges::Int,
+        newLr::Matrix{Float64},
+        Factors::Matrix{Float64},
+        coords::Matrix{Int},
+        Edges::Matrix{<:Integer},
+        residues::Vector{Float64},
         ::Nothing,
         ::Nothing,
-        ::Vector{<:Integer},
+        ::Vector{Int},
         relative::Bool,
         bp_not_converged::Bool
     )
@@ -165,7 +165,7 @@ function
                         newlr = calc_Lr(Nci,ci,vj,Lq)
                         li = LinearIndices(Lr)[ci,vj]
                         newLr[li] = newlr
-                        residues[edges[li]] = calc_residue_raw(newlr,Lr[li],
+                        residues[Edges[li]] = calc_residue_raw(newlr,Lr[li],
                                                 Factors[li],relative,Lq[li])
                     end
                 end

@@ -87,9 +87,9 @@ function
         C::AbstractMatrix{Bool},
         A::AbstractMatrix{Bool},
         B::AbstractMatrix{Bool},
-        mA::Integer,
-        nA::Integer,
-        nB::Integer
+        mA::Int,
+        nA::Int,
+        nB::Int
     )
     
     @inbounds for i in 1:mA
@@ -113,8 +113,8 @@ function
         y::AbstractVector{Bool},
         A::AbstractMatrix{Bool},
         x::AbstractVector{Bool},
-        mA::Integer,
-        nA::Integer
+        mA::Int,
+        nA::Int
     )
     
     @inbounds for i in 1:mA
@@ -259,7 +259,7 @@ function gf2_column_echelon_form!(AA::AbstractMatrix{Bool})
 
 end
 
-function gf2_column_echelon_form!(AA::AbstractMatrix{Bool},N::Integer)
+function gf2_column_echelon_form!(AA::AbstractMatrix{Bool},N::Int)
 
     full_rank_sub_matrix = true
 
@@ -299,7 +299,7 @@ function gf2_reduce!(AA::AbstractMatrix{Bool})
 
 end
 
-function gf2_reduce!(AA::AbstractMatrix{Bool},N::Integer)
+function gf2_reduce!(AA::AbstractMatrix{Bool},N::Int)
     
     @inbounds for j in N:-1:2
         for k in j-1:-1:1
@@ -325,7 +325,7 @@ function isgf2invertible(A::AbstractMatrix{Bool})
 
 end
 
-function find_gf2_invertible_matrix(M::Integer)
+function find_gf2_invertible_matrix(M::Int)
 
     A = bitrand(M,M)
 
@@ -441,7 +441,7 @@ function
         L::Matrix{Bool},
         U::Matrix{Bool},
         y::Vector{Bool},
-        M::Integer
+        M::Int
     )
 
     @inbounds begin
@@ -455,7 +455,7 @@ function
         x::Vector{Bool},
         L::Matrix{Bool},
         y::Vector{Bool},
-        M::Integer
+        M::Int
     )
 
     @inbounds begin
@@ -477,7 +477,7 @@ function
     _gf2_solve_U!(
         x::Vector{Bool},
         U::Matrix{Bool},
-        M::Integer
+        M::Int
     )
 
     @inbounds begin

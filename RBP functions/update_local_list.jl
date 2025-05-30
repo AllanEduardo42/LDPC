@@ -8,16 +8,16 @@ include("add_residue.jl")
 # List-RBP
 function
     update_local_list!(
-        residues::Vector{<:AbstractFloat},
-        coords::Matrix{<:Integer},
-        localresidues::Vector{<:AbstractFloat},
-        localcoords::Matrix{<:Integer},
-        listsizes::Vector{<:Integer},
-        inlist::Matrix{<:Integer},
-        li::Integer,
-        ci::Integer,
-        vj::Integer,
-        residue::AbstractFloat    
+        residues::Vector{Float64},
+        coords::Matrix{Int},
+        localresidues::Vector{Float64},
+        localcoords::Matrix{Int},
+        listsizes::Vector{Int},
+        inlist::Matrix{Bool},
+        li::Int,
+        ci::Int,
+        vj::Int,
+        residue::Float64    
     )
     
     @inbounds begin
@@ -47,16 +47,16 @@ end
 # RBP
 function
     update_local_list!(
-        residues::Vector{<:AbstractFloat},
-        ::Matrix{<:Integer},
+        residues::Vector{Float64},
+        ::Matrix{Int},
         ::Nothing,
         ::Nothing,
-        ::Vector{<:Integer},
-        indices::Matrix{<:Integer},
-        li::Integer,
-        ::Integer,
-        ::Integer,
-        residue::AbstractFloat    
+        ::Vector{Int},
+        indices::Matrix{Int},
+        li::Int,
+        ::Int,
+        ::Int,
+        residue::Float64    
     )
 
     @inbounds residues[indices[li]] = residue

@@ -6,13 +6,13 @@
 # List-RBP
 function add_residue!(
         inlist::Union{Matrix{Bool},Nothing},
-        residues::Vector{<:AbstractFloat},
-        coords::Matrix{<:Integer},
-        residue::AbstractFloat,
-        li::Integer,
-        ci::Integer,
-        vj::Integer,
-        listsize::Integer
+        residues::Vector{Float64},
+        coords::Matrix{Int},
+        residue::Float64,
+        li::Int,
+        ci::Int,
+        vj::Int,
+        listsize::Int
     )
 
     @fastmath @inbounds if residue > residues[listsize]
@@ -57,14 +57,14 @@ end
 
 # RBP
 function add_residue!(
-    inlist::Matrix{<:Integer},
-    residues::Vector{<:AbstractFloat},
-    ::Matrix{<:Integer},
-    residue::AbstractFloat,
-    li::Integer,
-    ::Integer,
-    ::Integer,
-    ::Integer
+    inlist::Matrix{Int},
+    residues::Vector{Float64},
+    ::Matrix{Int},
+    residue::Float64,
+    li::Int,
+    ::Int,
+    ::Int,
+    ::Int
 )
 
     @inbounds residues[inlist[li]] = residue
@@ -74,8 +74,8 @@ end
 # auxiliary function
 function update_inlist!(
     inlist::Matrix{Bool},
-    coords::Matrix{<:Integer},
-    li::Integer
+    coords::Matrix{Int},
+    li::Int
 )
 
     @inbounds begin
@@ -91,8 +91,8 @@ end
 
 function update_inlist!(
     ::Nothing,
-    ::Matrix{<:Integer},
-    ::Integer
+    ::Matrix{Int},
+    ::Int
 )
 
 end

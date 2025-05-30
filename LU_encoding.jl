@@ -7,8 +7,8 @@
 function 
     remake_H(
         H::Matrix{Bool},
-        strategy::Integer
-    )
+        strategy::Int
+    )::Tuple{Matrix{Bool},Matrix{Bool},Matrix{Bool}}
     
     #  strategy: Strategy for finding the next non-zero diagonal elements
     #            {0} First  : First non-zero found by column search

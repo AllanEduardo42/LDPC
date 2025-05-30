@@ -10,19 +10,19 @@ include("./RBP functions/RBP_update_Lr.jl")
 function
     NW_RBP!(
         bitvector::Vector{Bool},
-        Lq::Matrix{<:AbstractFloat},
-        Lr::Matrix{<:AbstractFloat},
-        Lf::Vector{<:AbstractFloat},
-        Nc::Vector{Vector{T}} where {T<:Integer},
-        Nv::Vector{Vector{T}} where {T<:Integer},
-        aux::Union{Vector{<:AbstractFloat},Nothing},
+        Lq::Matrix{Float64},
+        Lr::Matrix{Float64},
+        Lf::Vector{Float64},
+        Nc::Vector{Vector{Int}},
+        Nv::Vector{Vector{Int}},
+        aux::Union{Vector{Float64},Nothing},
         signs::Union{Vector{Bool},Nothing},
-        phi::Union{Vector{<:AbstractFloat},Nothing},
-        decayfactor::AbstractFloat,
-        M::Integer,
-        newLr::Matrix{<:AbstractFloat},
-        Factors::Vector{<:AbstractFloat},
-        alpha::Vector{<:AbstractFloat},
+        phi::Union{Vector{Float64},Nothing},
+        decayfactor::Float64,
+        M::Int,
+        newLr::Matrix{Float64},
+        Factors::Vector{Float64},
+        alpha::Vector{Float64},
         bp_not_converged::Bool
     )
 
@@ -88,19 +88,19 @@ end
 function
     NW_RBP!(
         bitvector::Vector{Bool},
-        Lq::Matrix{<:AbstractFloat},
-        Lr::Matrix{<:AbstractFloat},
-        Lf::Vector{<:AbstractFloat},
-        Nc::Vector{Vector{T}} where {T<:Integer},
-        Nv::Vector{Vector{T}} where {T<:Integer},
+        Lq::Matrix{Float64},
+        Lr::Matrix{Float64},
+        Lf::Vector{Float64},
+        Nc::Vector{Vector{Int}},
+        Nv::Vector{Vector{Int}},
         ::Nothing,
         ::Nothing,
         ::Nothing,
-        decayfactor::AbstractFloat,
-        M::Integer,
-        newLr::Matrix{<:AbstractFloat},
-        Factors::Vector{<:AbstractFloat},
-        alpha::Vector{<:AbstractFloat},
+        decayfactor::Float64,
+        M::Int,
+        newLr::Matrix{Float64},
+        Factors::Vector{Float64},
+        alpha::Vector{Float64},
         bp_not_converged::Bool
     )
 

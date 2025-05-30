@@ -5,14 +5,14 @@
 
 function
     NR_LDPC_make_parity_check_matrix(
-        Zc::Integer,
-        iLS::Integer,
+        Zc::Int,
+        iLS::Int,
         bg::String,
-        P::Integer,
-        K_prime::Integer,
-        K::Integer,
-        P_Zc::Integer
-    )
+        P::Int,
+        K_prime::Int,
+        K::Int,
+        P_Zc::Int
+    )::Tuple{Matrix{Bool},Matrix{Int}}
 
     E_H = readdlm("./5G_exponent_matrices/EM_$(bg)_$(iLS)_$(Zc).txt",'\t', Int,'\n')
 

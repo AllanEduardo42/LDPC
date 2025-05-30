@@ -16,7 +16,7 @@ include("prepare_simulation.jl")
 
 ############################# PARITY-CHECK MATRIX #############################
 if PROTOCOL == "NR5G"
-    H1 = nothing
+    H1::Matrix{Bool} = [false false]
     RV = 0
     AA, KK, RR, G_CRC, LIFTSIZE, NR_LDPC_DATA = NR_LDPC_parameters(GG,RR,RV,false)
     HH, E_H = NR_LDPC_make_parity_check_matrix(LIFTSIZE,
@@ -28,8 +28,8 @@ if PROTOCOL == "NR5G"
                                                NR_LDPC_DATA.P_Zc)
     MM, NN = size(HH)
     GIRTH = find_girth(HH,100000)
-    LL = nothing
-    UU = nothing
+    LL = H1
+    UU = H1
 else
     NN = GG
     AA = round(Int,GG*RR)
@@ -37,7 +37,7 @@ else
     _, G_CRC = get_CRC_poly(AA)  
     if PROTOCOL == "PEG"     
         LIFTSIZE = 0
-        E_H = nothing
+        E_H = [0 0]
         MM = NN - KK
         # Generate Parity-Check Matrix by the PEG algorithm
         H_PEG, GIRTH = PEG(LAMBDA,RO,MM,NN)
@@ -52,9 +52,9 @@ else
         KK = NN - MM
         AA = KK - 16 # since max(AA) = 2304*5/6 ≤ 3824, g_cRC = {CRC16}      
         GIRTH = find_girth(HH,100000)
-        LL = nothing
-        UU = nothing
-        H1 = nothing
+        LL = [false false]
+        UU = [false false]
+        H1 = [false false]
     end
 end
 
@@ -99,8 +99,8 @@ end
 
 ####################### GENERATE NOISE AND SAMPLE SEEDS ########################
 
-RGN_NOISE_SEEDS = zeros(Int,NTHREADS)
-RGN_MESSAGE_SEEDS = zeros(Int,NTHREADS)
+RGN_NOISE_SEEDS::Vector{Int} = zeros(Int,NTHREADS)
+RGN_MESSAGE_SEEDS::Vector{Int} = zeros(Int,NTHREADS)
 for i in eachindex(RGN_NOISE_SEEDS)
     RGN_NOISE_SEEDS[i] = SEED_NOISE + i - 1
     RGN_MESSAGE_SEEDS[i] = SEED_MESSA + 1 - 1
@@ -121,17 +121,17 @@ if TEST
                     global MAXITER_TEST = 20
                 end
                 @profview _,_ = prepare_simulation(
-                                                EbN0_TEST,
+                                                [EbN0_TEST],
                                                 MODES[i],
-                                                TRIALS_TEST,
+                                                [TRIALS_TEST],
                                                 MAXITER_TEST,
                                                 BPTYPES[i],
                                                 DECAY_TEST)
             else
             LRM[MODES[i]], LQM[MODES[i]] = prepare_simulation(
-                                                EbN0_TEST,
+                                                [EbN0_TEST],
                                                 MODES[i],
-                                                TRIALS_TEST,
+                                                [TRIALS_TEST],
                                                 MAXITER_TEST,
                                                 BPTYPES[i],
                                                 DECAY_TEST)

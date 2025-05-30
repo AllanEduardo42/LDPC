@@ -6,11 +6,11 @@
 # FAST, TABL and MSUM
 function 
     calc_residue(
-        newlr::AbstractFloat,
-        oldlr::AbstractFloat,
-        factor::AbstractFloat,
+        newlr::Float64,
+        oldlr::Float64,
+        factor::Float64,
         relative::Bool,
-        lq::AbstractFloat
+        lq::Float64
     )
 
 
@@ -23,11 +23,11 @@ end
 #TANH
 function
     calc_residue_raw(
-        newlr::AbstractFloat,
-        oldlr::AbstractFloat,
-        factor::AbstractFloat,
+        newlr::Float64,
+        oldlr::Float64,
+        factor::Float64,
         relative::Bool,
-        lq::AbstractFloat
+        lq::Float64
     )
 
     @inbounds begin
@@ -42,11 +42,11 @@ end
 
 # core
 function _calc_residue(
-    residue::AbstractFloat,
-    oldlr::AbstractFloat,
-    factor::AbstractFloat,
+    residue::Float64,
+    oldlr::Float64,
+    factor::Float64,
     relative::Bool,
-    lq::AbstractFloat,
+    lq::Float64,
 )
 
     @fastmath begin
@@ -61,9 +61,9 @@ end
 # NW-RBP and VN-RBP (TANH)
 function
     calc_residue_VN_NW_raw(
-        newlr::AbstractFloat,
-        oldlr::AbstractFloat,
-        factor::AbstractFloat
+        newlr::Float64,
+        oldlr::Float64,
+        factor::Float64
     )
     residue = newlr - oldlr
     if isnan(residue)

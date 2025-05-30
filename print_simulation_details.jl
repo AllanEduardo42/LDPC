@@ -1,12 +1,12 @@
 function 
     print_simulation_details(
         test::Bool,
-        trials::Union{Vector{<:Integer},Integer},
+        trials::Vector{Int},
         mode::String,
         bptype::String,
-        maxiter::Integer,
-        ebn0::Union{Vector{<:AbstractFloat},AbstractFloat},
-        decay::AbstractFloat,
+        maxiter::Int,
+        ebn0::Vector{Float64},
+        decay::Float64,
     )
     if test
         str =

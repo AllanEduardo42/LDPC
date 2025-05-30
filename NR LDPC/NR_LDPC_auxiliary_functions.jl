@@ -5,8 +5,8 @@
 
 function 
     get_TBS(
-        G::Integer,
-        R::AbstractFloat
+        G::Int,
+        R::Float64
     )
 
     TBS = [  24,   32,   40,   48,   56,   64,   72,   80,   88,   96,  104,  112,  

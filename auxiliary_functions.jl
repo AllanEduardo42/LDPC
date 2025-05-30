@@ -5,9 +5,9 @@
 
 function 
     init_Lq!(
-        Lq::Matrix{<:AbstractFloat},
-        Lf::Vector{<:AbstractFloat},
-        vn2cn::Vector{Vector{T}} where {T<:Integer}
+        Lq::Matrix{Float64},
+        Lf::Vector{Float64},
+        vn2cn::Vector{Vector{Int}}
     )
     
     @inbounds for n in eachindex(vn2cn)
@@ -19,9 +19,9 @@ end
 
 function
     init_Lq!(
-        Lq::Array{<:AbstractFloat,3},
-        Lf::Matrix{<:AbstractFloat},
-        vn2cn::Vector{Vector{T}} where {T<:Integer}
+        Lq::Array{Float64,3},
+        Lf::Matrix{Float64},
+        vn2cn::Vector{Vector{Int}}
     )
    
     @inbounds for n in eachindex(vn2cn)
@@ -35,10 +35,10 @@ end
 
 function
     received_signal!(
-        signal::AbstractArray{<:AbstractFloat},
-        noise::Vector{<:AbstractFloat},
-        G::Integer,
-        σ::AbstractFloat,
+        signal::Vector{Float64},
+        noise::Vector{Float64},
+        G::Int,
+        σ::Float64,
         rgn_noise::AbstractRNG,
         ::Nothing
     )
@@ -54,12 +54,12 @@ end
 
 function
     received_signal!(
-        signal::AbstractArray{<:AbstractFloat},
-        ::Vector{<:AbstractFloat},
-        G::Integer,
-        σ::AbstractFloat,
+        signal::Vector{Float64},
+        ::Vector{Float64},
+        G::Int,
+        σ::Float64,
         ::AbstractRNG,
-        noisetest::Vector{<:AbstractFloat}
+        noisetest::Vector{Float64}
     )
 
     @fastmath begin
@@ -73,7 +73,7 @@ end
 function
     resetmatrix!(
         X::Matrix{<:Real},
-        vn2cn::Vector{Vector{T}} where {T<:Integer},
+        vn2cn::Vector{Vector{Int}},
         value::Real
     )    
     
@@ -87,7 +87,7 @@ end
 function
     resetmatrix!(
         X::Array{<:Real,3},
-        vn2cn::Vector{Vector{T}} where {T<:Integer},
+        vn2cn::Vector{Vector{Int}},
         value::Real
     )    
     
@@ -126,8 +126,8 @@ function
         b::Vector{Bool},
         msg::Vector{Bool},
         g_CRC::Vector{Bool},
-        A::Integer,
-        K::Integer
+        A::Int,
+        K::Int
     )
 
     @inbounds begin

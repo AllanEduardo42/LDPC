@@ -8,10 +8,10 @@
 
 function 
     calc_Ld(
-        vj::Integer,
-        Nvj::Vector{<:Integer},
-        Lf::Vector{<:AbstractFloat},
-        Lr::Matrix{<:AbstractFloat}
+        vj::Int,
+        Nvj::Vector{Int},
+        Lf::Vector{Float64},
+        Lr::Matrix{Float64}
     )
 
     @fastmath @inbounds begin
@@ -28,11 +28,11 @@ end
 ######################### SPA USING LLRs METHOD NO OPT #########################
 
 function calc_Lq(
-    Nvj::Vector{<:Integer},
-    ci::Integer,
-    vj::Integer,
-    Lr::Matrix{<:AbstractFloat},
-    Lf::Vector{<:AbstractFloat}
+    Nvj::Vector{Int},
+    ci::Int,
+    vj::Int,
+    Lr::Matrix{Float64},
+    Lf::Vector{Float64}
 )
 
     @fastmath @inbounds begin
@@ -50,11 +50,11 @@ end
 
 function
     calc_Ld(
-        r::Array{<:AbstractFloat,3},
-        f::Matrix{<:AbstractFloat},
-        ci::Integer,
-        vj::Integer,
-        Nvj::Vector{<:Integer}
+        r::Array{Float64,3},
+        f::Matrix{Float64},
+        ci::Int,
+        vj::Int,
+        Nvj::Vector{Int}
     )
 
     @fastmath @inbounds begin

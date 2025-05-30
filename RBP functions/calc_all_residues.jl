@@ -9,18 +9,18 @@ include("add_residue.jl")
 # FAST, TABL and MSUM
 function
     calc_all_residues!(
-        Lq::Matrix{<:AbstractFloat},
-        Lr::Matrix{<:AbstractFloat},
-        Nc::Vector{Vector{T}} where {T<:Integer},
-        aux::Union{Vector{<:AbstractFloat},Nothing},
+        Lq::Matrix{Float64},
+        Lr::Matrix{Float64},
+        Nc::Vector{Vector{Int}},
+        aux::Vector{Float64},
         signs::Union{Vector{Bool},Nothing},
-        phi::Union{Vector{<:AbstractFloat},Nothing},
-        newLr::Matrix{<:AbstractFloat},
-        Factors::Matrix{<:AbstractFloat},        
+        phi::Union{Vector{Float64},Nothing},
+        newLr::Matrix{Float64},
+        Factors::Matrix{Float64},        
         rbpmatrix::Matrix{<:Integer},
-        residues::Vector{<:AbstractFloat},
-        coords::Matrix{<:Integer},
-        listsizes::Vector{<:Integer},
+        residues::Vector{Float64},
+        coords::Matrix{Int},
+        listsizes::Vector{Int},
         relative::Bool
     )
     
@@ -40,18 +40,18 @@ end
 # TANH
 function 
     calc_all_residues!(
-        Lq::Matrix{<:AbstractFloat},
-        Lr::Matrix{<:AbstractFloat},
-        Nc::Vector{Vector{T}} where {T<:Integer},
+        Lq::Matrix{Float64},
+        Lr::Matrix{Float64},
+        Nc::Vector{Vector{Int}},
         ::Nothing,
         ::Nothing,
         ::Nothing,
-        newLr::Matrix{<:AbstractFloat},
-        Factors::Matrix{<:AbstractFloat},        
+        newLr::Matrix{Float64},
+        Factors::Matrix{Float64},        
         rbpmatrix::Matrix{<:Integer},
-        residues::Vector{<:AbstractFloat},
-        coords::Matrix{<:Integer},
-        listsizes::Vector{<:Integer},
+        residues::Vector{Float64},
+        coords::Matrix{Int},
+        listsizes::Vector{Int},
         relative::Bool
     )
 

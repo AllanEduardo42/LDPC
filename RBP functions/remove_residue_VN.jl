@@ -6,12 +6,12 @@
 # List-RBP
 function 
     remove_residue_VN!(
-        vjmax::Integer,
-        listsize::Integer,
-        alpha::Vector{<:AbstractFloat},
-        coords::Vector{<:Integer},
+        vjmax::Int,
+        listsize::Int,
+        alpha::Vector{Float64},
+        coords::Vector{Int},
         inlist::Vector{Bool},
-        pos::Integer
+        pos::Int
     )
 
     @inbounds inlist[vjmax] = false

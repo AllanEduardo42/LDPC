@@ -5,10 +5,10 @@
 
 function
     calc_Lf!(
-        Lf::Vector{<:AbstractFloat},
-        twoZc::Integer,
-        signal::Vector{<:AbstractFloat},
-        σ²::AbstractFloat
+        Lf::Vector{Float64},
+        twoZc::Int,
+        signal::Vector{Float64},
+        σ²::Float64
     )
 
     @fastmath @inbounds begin
@@ -22,10 +22,10 @@ end
 # MKAY
 function
     calc_Lf!(
-        f::Matrix{<:AbstractFloat},
-        twoZc::Integer,
-        signal::Vector{<:AbstractFloat},
-        σ²::AbstractFloat
+        f::Matrix{Float64},
+        twoZc::Int,
+        signal::Vector{Float64},
+        σ²::Float64
     )
 
     @fastmath @inbounds begin
@@ -42,7 +42,7 @@ function
 
 end
 
-function normalize!(f::AbstractMatrix{<:AbstractFloat})
+function normalize!(f::AbstractMatrix{Float64})
     
     @inbounds @fastmath for n in axes(f,1)
         α = f[n,1] + f[n,2]

@@ -3,18 +3,18 @@ include("add_residue_VN.jl")
 
 function
     calc_all_residues_list_VN!(
-        Lq::Matrix{<:AbstractFloat},
-        Nc::Vector{Vector{T}} where {T<:Integer},
-        aux::Union{Vector{<:AbstractFloat},Nothing},
+        Lq::Matrix{Float64},
+        Nc::Vector{Vector{Int}},
+        aux::Vector{Float64},
         signs::Union{Vector{Bool},Nothing},
-        phi::Union{Vector{<:AbstractFloat},Nothing},
-        Lr::Matrix{<:AbstractFloat},
-        newLr::Matrix{<:AbstractFloat},
-        alpha::Vector{<:AbstractFloat},
-        Nv::Vector{Vector{T}} where {T<:Integer},
+        phi::Union{Vector{Float64},Nothing},
+        Lr::Matrix{Float64},
+        newLr::Matrix{Float64},
+        alpha::Vector{Float64},
+        Nv::Vector{Vector{Int}},
         inlist::Vector{Bool},
-        listsizes::Vector{<:Integer},
-        coords::Vector{<:Integer}
+        listsizes::Vector{Int},
+        coords::Vector{Int}
     )
     
     @inbounds for ci in eachindex(Nc)

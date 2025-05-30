@@ -9,7 +9,7 @@ function
     calc_syndrome!(
         syndrome::Vector{Bool},
         bitvector::Vector{Bool},
-        cn2vn::Vector{Vector{T}} where {T<:Integer}
+        cn2vn::Vector{Vector{Int}}
     )
 
     syndrome .*= false
@@ -22,7 +22,7 @@ end
 function 
     _calc_syndrome(
         bitvector::Vector{Bool},
-        varnodes_cn::Vector{<:Integer}
+        varnodes_cn::Vector{Int}
     )
 
     syndrome = false

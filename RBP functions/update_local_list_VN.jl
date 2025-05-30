@@ -8,14 +8,14 @@ include("add_residue_VN.jl")
 # List-RBP
 function
     update_local_list_VN!(
-        alpha::Vector{<:AbstractFloat},
-        coords::Vector{<:Integer},
-        localresidues::Vector{<:AbstractFloat},
-        localcoords::Vector{<:Integer},
-        listsizes::Vector{<:Integer},
-        inlist::Vector{<:Integer},
-        vj::Integer,
-        residue::AbstractFloat    
+        alpha::Vector{Float64},
+        coords::Vector{Int},
+        localresidues::Vector{Float64},
+        localcoords::Vector{Int},
+        listsizes::Vector{Int},
+        inlist::Vector{Int},
+        vj::Int,
+        residue::Float64    
     )
     
     @inbounds begin

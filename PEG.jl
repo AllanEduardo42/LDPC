@@ -7,11 +7,11 @@ using Polynomials
 
 function 
     PEG(
-        lambda::Vector{<:AbstractFloat},
-        rho::Vector{<:AbstractFloat},
-        M::Integer,
-        N::Integer
-    )
+        lambda::Vector{Float64},
+        rho::Vector{Float64},
+        M::Int,
+        N::Int
+    )::Tuple{Matrix{Bool},Int}
 
     @inbounds begin
         BitNode_poly = lambda[end:-1:1]
@@ -74,15 +74,15 @@ end
 function 
     subtree!(
         H::Matrix{Bool},
-        M::Integer,
-        N::Integer,
-        root::Integer,
-        level::Integer,
-        check_degrees::Vector{<:Integer},
-        L0_checks::Vector{<:Integer},
-        parent_nodes::Vector{<:Integer},
-        L0_check_set::Vector{<:Integer},
-        L1_check_set::Vector{<:Integer}
+        M::Int,
+        N::Int,
+        root::Int,
+        level::Int,
+        check_degrees::Vector{Int},
+        L0_checks::Vector{Int},
+        parent_nodes::Vector{Int},
+        L0_check_set::Vector{Int},
+        L1_check_set::Vector{Int}
     )    
     # L0: previous level in the subtree
     # L1: current level in the subtree
@@ -140,8 +140,8 @@ end
 
 function 
     append_sort_unique!(
-        x::Vector{<:Integer},
-        y::Vector{<:Integer}
+        x::Vector{Int},
+        y::Vector{Int}
     )
 
     append!(x,y)

@@ -5,10 +5,10 @@
 
 function
     IEEE80216e(
-        N::Integer,
-        R::AbstractFloat,
+        N::Int,
+        R::Float64,
         mode::String
-    )
+    )::Tuple{Matrix{Bool},Int,Matrix{Int}}
 
     if iszero(N .== [576,672,768,864,960,1056,1152,1248,1344,1440,1536,1632,1728,1824,1920,2016,2112,2208,2304])
         throw(

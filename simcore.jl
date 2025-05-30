@@ -24,36 +24,36 @@ include("encode_LDPC.jl")
 
 function
     simcore(
-        A::Integer,
-        K::Integer,
-        R::AbstractFloat,
-        G::Integer,
+        A::Int,
+        K::Int,
+        R::Float64,
+        G::Int,
         g_CRC::Vector{Bool},
-        ebn0::AbstractFloat,
+        ebn0::Float64,
         H::Matrix{Bool},
-        H1::Union{Matrix{Bool},Nothing},
-        L::Union{Nothing,Matrix{Bool}},
-        U::Union{Nothing,Matrix{Bool}},
-        Nc::Vector{Vector{T}} where {T<:Integer},
-        Nv::Vector{Vector{T}} where {T<:Integer},
-        E_H::Union{Nothing,Matrix{<:Integer}},
+        H1::Matrix{Bool},
+        L::Matrix{Bool},
+        U::Matrix{Bool},
+        Nc::Vector{Vector{Int}},
+        Nv::Vector{Vector{Int}},
+        E_H::Matrix{Int},
         protocol::String,
-        liftsize::Integer,
+        liftsize::Int,
         mode::String,
         bptype::String,
-        trials::Integer,
-        maxiter::Integer,
+        trials::Int,
+        maxiter::Int,
         stop::Bool,
-        decayfactor::AbstractFloat,
-        listsizes::Vector{<:Integer},
+        decayfactor::Float64,
+        listsizes::Vector{Int},
         relative::Bool,
-        rgn_seed_noise::Integer,
-        rgn_seed_msg::Integer,
+        rgn_seed_noise::Int,
+        rgn_seed_msg::Int,
         test::Bool,
-        printtest::Bool,
-        msgtest::Union{Nothing,Vector{Bool}},
-        noisetest::Union{Nothing,Vector{Bool}}   
-    )
+        printtest::Bool;
+        msgtest=nothing,
+        noisetest=nothing 
+    )::Tuple{Matrix{Float64},Matrix{Float64},Vector{Int},Vector{Int}}
     
 ################################## CONSTANTS ###################################
 
@@ -145,9 +145,11 @@ function
     # Lq -> matrix of Nv messages (N x M)
     # Lr -> matrix of Nc messages (N x M)
     # if mode == "MKAY" the are different matrices for bit = 0 and bit = 1
-    Lq = (bptype != "MKAY") ? zeros(M,N) : zeros(M,N,2)
-    Lr = (bptype != "MKAY") ? zeros(M,N) : zeros(M,N,2)
-    
+    # Lq = (bptype != "MKAY") ? zeros(M,N) : zeros(M,N,2)
+    # Lr = (bptype != "MKAY") ? zeros(M,N) : zeros(M,N,2)
+    Lq = zeros(M,N)
+    Lr = zeros(M,N)
+
     # Set variables aux and signs depending on the BP type (for dispatching)
     if bptype == "FAST" || bptype == "MKAY"
         aux = zeros(N)
@@ -156,7 +158,7 @@ function
         aux = zeros(N)
         signs = zeros(Bool,N)
     elseif bptype == "MSUM"
-        aux = nothing
+        aux = zeros(N)
         signs = zeros(Bool,N)
     else # bytype == TANH
         aux = nothing
@@ -493,21 +495,19 @@ function
 
     end
 
-    if test
-        if bptype == "MKAY"
-            retr = zeros(M,N)
-            retq = zeros(M,N)
-            for m in eachindex(Nc)
-                for n in Nc[m]
-                    retr[m,n] = log.(Lr[m,n,1]) - log.(Lr[m,n,2])
-                    retq[m,n] = log.(Lq[m,n,1]) - log.(Lq[m,n,2])
-                end
-            end
-            Lr = retr
-            Lq = retq
-        end
-        return Lr, Lq, nothing, nothing
-    else
-        return nothing, nothing, sum_decoded, sum_ber
-    end
+    # if test && bptype == "MKAY"
+    #         retr = zeros(M,N)
+    #         retq = zeros(M,N)
+    #         for m in eachindex(Nc)
+    #             for n in Nc[m]
+    #                 retr[m,n] = log.(Lr[m,n,1]) - log.(Lr[m,n,2])
+    #                 retq[m,n] = log.(Lq[m,n,1]) - log.(Lq[m,n,2])
+    #             end
+    #         end
+    #         Lr = retr
+    #         Lq = retq
+    # end
+
+    return Lr, Lq, sum_decoded, sum_ber
+
 end

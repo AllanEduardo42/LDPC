@@ -8,12 +8,12 @@ include("print_simulation_details.jl")
 
 function 
     prepare_simulation(
-        ebn0::Union{Vector{<:AbstractFloat},AbstractFloat},
+        ebn0::Vector{Float64},
         mode::String,
-        trials::Union{Vector{<:Integer},Integer},
+        trials::Vector{Int},
         maxiter::Integer,
         bptype::String,
-        decay::AbstractFloat 
+        decay::Float64
     )
 
     if bptype == "MKAY" && mode ≠ "Flooding"
@@ -26,19 +26,20 @@ function
     print_simulation_details(TEST,trials,mode,bptype,maxiter,ebn0,decay)
 
 ################################ MULTITHREADING ################################   
+    Lr = Matrix{Float64}(undef,MM,NN)
+    Lq = Matrix{Float64}(undef,MM,NN)
     if TEST
-        Lr = zeros(MM,NN)
-        Lq = zeros(MM,NN)
         K = 1
         nthreads = 1
     else
         K = length(ebn0) 
         nthreads = NTHREADS
-        sum_decoded = zeros(Int,maxiter,K,nthreads)
-        sum_ber = zeros(Int,maxiter,K,nthreads)
     end
+    sum_decoded = Array{Int,3}(undef,maxiter,K,nthreads)
+    sum_ber = Array{Int,3}(undef,maxiter,K,nthreads)
     for k in 1:K
         stats = @timed Threads.@threads for i in 1:nthreads
+        # for i in 1:nthreads
             x, y, z, w = simcore(
                                 AA,
                                 KK,
@@ -66,9 +67,8 @@ function
                                 RGN_NOISE_SEEDS[i],
                                 RGN_MESSAGE_SEEDS[i],
                                 TEST,
-                                PRIN,
-                                MSGTEST,
-                                NOISETEST)
+                                PRIN
+                            )
             if TEST
                 Lr .= x
                 Lq .= y

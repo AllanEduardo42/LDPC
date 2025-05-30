@@ -6,12 +6,12 @@
 # List-RBP
 function 
     remove_residue!(
-        lmax::Integer,
-        listsize::Integer,
-        residues::Vector{<:AbstractFloat},
-        coords::Matrix{<:Integer},
+        lmax::Int,
+        listsize::Int,
+        residues::Vector{Float64},
+        coords::Matrix{Int},
         inlist::Matrix{Bool},
-        pos::Integer
+        pos::Int
     )
 
     @inbounds inlist[lmax] = false
@@ -28,12 +28,12 @@ end
 #RBP
 function 
     remove_residue!(
-        ::Integer,
-        ::Integer,
-        residues::Vector{<:AbstractFloat},
-        ::Matrix{<:Integer},
-        ::Matrix{<:Integer},
-        max_edge::Integer
+        ::Int,
+        ::Int,
+        residues::Vector{Float64},
+        ::Matrix{Int},
+        ::Matrix{Int},
+        max_edge::Int
     )
 
     @inbounds residues[max_edge] = 0.0

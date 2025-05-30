@@ -12,34 +12,34 @@ include("NR_LDPC_auxiliary_functions.jl")
 const R_LBRM = 2//3
 
 struct nr_ldpc_data
-    A::Integer
-    B::Integer
-    C::Integer
+    A::Int
+    B::Int
+    C::Int
     bg::String
-    K_prime::Integer
-    K::Integer
-    N::Integer
-    Zc::Integer
-    iLS::Integer
-    P::Integer
-    P_Zc::Integer
-    N_cb::Integer
-    E_r::Vector{<:Integer}
-    k0::Integer    
+    K_prime::Int
+    K::Int
+    N::Int
+    Zc::Int
+    iLS::Int
+    P::Int
+    P_Zc::Int
+    N_cb::Int
+    E_r::Vector{Int}
+    k0::Int    
 end
 
 function 
     NR_LDPC_parameters(
-        G::Integer,
-        R::AbstractFloat,
-        rv::Integer,
+        G::Int,
+        R::Float64,
+        rv::Int,
         show_nr_par::Bool;
         Q_m = 1,
         I_LBRM = 0,
         TBS_LBRM = Inf,
         CBGTI = [],
         N_L = 1,
-    )
+    )::Tuple{Int,Int,Float64,Vector{Bool},Int,nr_ldpc_data}
 
     A = get_TBS(G,R)
 

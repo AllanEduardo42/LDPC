@@ -6,11 +6,11 @@
 # List-VN-RBP
 function add_residue_VN!(
         inlist::Union{Vector{Bool},Nothing},
-        alpha::Vector{<:AbstractFloat},
-        coords::Vector{<:Integer},
-        residue::AbstractFloat,
-        vj::Integer,
-        listsize::Integer
+        alpha::Vector{Float64},
+        coords::Vector{Int},
+        residue::Float64,
+        vj::Int,
+        listsize::Int
     )
 
     @fastmath @inbounds if residue > alpha[listsize]
@@ -52,8 +52,8 @@ end
 # auxiliary function
 function update_inlist_VN!(
     inlist::Vector{Bool},
-    coords::Vector{<:Integer},
-    vj::Integer
+    coords::Vector{Int},
+    vj::Int
 )
 
     @inbounds begin
@@ -67,8 +67,8 @@ end
 
 function update_inlist_VN!(
     ::Nothing,
-    ::Vector{<:Integer},
-    ::Integer
+    ::Vector{Int},
+    ::Int
 )
 
 end

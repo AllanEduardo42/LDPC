@@ -9,14 +9,14 @@ include("update_Lq.jl")
 function
     flooding!(
         bitvector::Vector{Bool},
-        Lq::Matrix{<:AbstractFloat},
-        Lr::Matrix{<:AbstractFloat},
-        Lf::Vector{<:AbstractFloat},
-        Nc::Vector{Vector{T}} where {T<:Integer},
-        Nv::Vector{Vector{T}} where {T<:Integer},
-        aux::Union{Vector{<:AbstractFloat},Nothing},
+        Lq::Matrix{Float64},
+        Lr::Matrix{Float64},
+        Lf::Vector{Float64},
+        Nc::Vector{Vector{Int}},
+        Nv::Vector{Vector{Int}},
+        aux::Vector{Float64},
         signs::Union{Vector{Bool},Nothing},
-        phi::Union{Vector{<:AbstractFloat},Nothing}
+        phi::Union{Vector{Float64},Nothing}
     )
 
     # Lr update
@@ -44,11 +44,11 @@ end
 function
     flooding!(
         bitvector::Vector{Bool},
-        Lq::Matrix{<:AbstractFloat},
-        Lr::Matrix{<:AbstractFloat},
-        Lf::Vector{<:AbstractFloat},
-        Nc::Vector{Vector{T}} where {T<:Integer},
-        Nv::Vector{Vector{T}} where {T<:Integer},
+        Lq::Matrix{Float64},
+        Lr::Matrix{Float64},
+        Lf::Vector{Float64},
+        Nc::Vector{Vector{Int}},
+        Nv::Vector{Vector{Int}},
         ::Nothing,
         ::Nothing,
         ::Nothing
@@ -81,12 +81,12 @@ end
 function
     flooding!(
         bitvector::Vector{Bool},
-        q::Array{<:AbstractFloat,3},
-        r::Array{<:AbstractFloat,3},
-        f::Matrix{<:AbstractFloat},
-        Nc::Vector{Vector{T}} where {T<:Integer},
-        Nv::Vector{Vector{T}} where {T<:Integer},
-        δq::Vector{<:AbstractFloat},
+        q::Array{Float64,3},
+        r::Array{Float64,3},
+        f::Matrix{Float64},
+        Nc::Vector{Vector{Int}},
+        Nv::Vector{Vector{Int}},
+        δq::Vector{Float64},
         ::Nothing,
         ::Nothing
     )

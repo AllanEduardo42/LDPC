@@ -8,12 +8,12 @@
 ####################### SPA USING FAST HYPERBOLIC TANGENT ######################
 function 
     calc_ABCD!(
-        aux::Vector{<:AbstractFloat},
+        aux::Vector{Float64},
         ::Nothing,
         ::Nothing,
-        Lq::Matrix{<:AbstractFloat},
-        ci::Integer,
-        Nci::Vector{<:Integer},
+        Lq::Matrix{Float64},
+        ci::Int,
+        Nci::Vector{Int},
     )
 
     pLr = 1.0
@@ -40,12 +40,12 @@ end
 
 function 
     calc_Lr(
-        pLr::AbstractFloat, #A
+        pLr::Float64, #A
         no_zeros::Bool,     #B
-        vj0::Integer,       #C
+        vj0::Int,       #C
         ::Nothing,          #D
-        vj::Integer,
-        aux::Vector{<:AbstractFloat},
+        vj::Int,
+        aux::Vector{Float64},
         ::Nothing,
         ::Nothing
     )
@@ -71,10 +71,10 @@ end
 ###################### SPA USING HYPERBOLIC TANGENT NO OPT #####################
 function 
     calc_Lr(
-        Nci::Vector{<:Integer},
-        ci::Integer,
-        vj::Integer,    
-        Lq::Matrix{<:AbstractFloat}
+        Nci::Vector{Int},
+        ci::Int,
+        vj::Int,    
+        Lq::Matrix{Float64}
     )
 
     @fastmath @inbounds begin
@@ -92,12 +92,12 @@ end
 ################ ALTERNATIVE TO HYPERBOLIC TANGENT USING TABLE ################
 function 
     calc_ABCD!(
-        aux::Vector{<:AbstractFloat},
+        aux::Vector{Float64},
         signs::Vector{Bool},
-        phi::Vector{<:AbstractFloat},
-        Lq::Matrix{<:AbstractFloat},
-        ci::Integer,
-        Nci::Vector{<:Integer},
+        phi::Vector{Float64},
+        Lq::Matrix{Float64},
+        ci::Int,
+        Nci::Vector{Int},
     )
 
     sLr = 0.0
@@ -116,14 +116,14 @@ end
 
 function 
     calc_Lr(
-        sLr::AbstractFloat, #A
+        sLr::Float64, #A
         s::Bool,            #B          
         ::Nothing,          #C
         ::Nothing,          #D
-        vj::Integer,
-        aux::Vector{<:AbstractFloat},
+        vj::Int,
+        aux::Vector{Float64},
         signs::Vector{Bool},
-        phi::Vector{<:AbstractFloat}
+        phi::Vector{Float64}
     )
 
     @fastmath @inbounds begin
@@ -136,12 +136,12 @@ end
 ################################### MIN SUM ###################################
 function 
     calc_ABCD!(
-        ::Nothing,
+        ::Vector{Float64},
         signs::Vector{Bool},
         ::Nothing,
-        Lq::Matrix{<:AbstractFloat},
-        ci::Integer,
-        Nci::Vector{<:Integer}
+        Lq::Matrix{Float64},
+        ci::Int,
+        Nci::Vector{Int}
     )
 
     @fastmath @inbounds begin
@@ -170,11 +170,11 @@ end
 
 function 
     calc_Lr(
-        minL::AbstractFloat,
+        minL::Float64,
         s::Bool,
-        vjmin::Integer,
-        minL2::AbstractFloat,
-        vj::Integer,
+        vjmin::Int,
+        minL2::Float64,
+        vj::Int,
         ::Nothing,
         signs::Vector{Bool},
         ::Nothing
@@ -201,9 +201,9 @@ end
 ########################### SPA USING MKAY's METHOD ############################
 function
     calc_δr(
-        Nci::Vector{<:Integer},
-        vj::Integer,
-        δq::Vector{<:AbstractFloat}
+        Nci::Vector{Int},
+        vj::Int,
+        δq::Vector{Float64}
     )
     
     @fastmath @inbounds begin
@@ -221,11 +221,11 @@ end
 # pre-historic method
 function
     calc_r(
-        q::Array{<:AbstractFloat,3},
-        ci::Integer,
-        vj::Integer,
-        Nci::Vector{<:Integer},
-        S::Integer
+        q::Array{Float64,3},
+        ci::Int,
+        vj::Int,
+        Nci::Vector{Int},
+        S::Int
     )
 
     @fastmath @inbounds begin

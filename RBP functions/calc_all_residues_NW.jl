@@ -7,13 +7,13 @@ include("calc_residue.jl")
 
 function
     calc_all_residues_NW!(
-        Lq::Matrix{<:AbstractFloat},
-        Nc::Vector{Vector{T}} where {T<:Integer},
-        aux::Union{Vector{<:AbstractFloat},Nothing},
+        Lq::Matrix{Float64},
+        Nc::Vector{Vector{Int}},
+        aux::Vector{Float64},
         signs::Union{Vector{Bool},Nothing},
-        phi::Union{Vector{<:AbstractFloat},Nothing},
-        newLr::Matrix{<:AbstractFloat},
-        alpha::Vector{<:AbstractFloat},
+        phi::Union{Vector{Float64},Nothing},
+        newLr::Matrix{Float64},
+        alpha::Vector{Float64},
     )
     
     @fastmath @inbounds for ci in eachindex(Nc)
@@ -36,13 +36,13 @@ end
 # RAW
 function
     calc_all_residues_NW!(
-        Lq::Matrix{<:AbstractFloat},
-        Nc::Vector{Vector{T}} where {T<:Integer},
+        Lq::Matrix{Float64},
+        Nc::Vector{Vector{Int}},
         ::Nothing,
         ::Nothing,
         ::Nothing,
-        newLr::Matrix{<:AbstractFloat},
-        alpha::Vector{<:AbstractFloat},
+        newLr::Matrix{Float64},
+        alpha::Vector{Float64},
     )
     
     @fastmath @inbounds for ci in eachindex(Nc)

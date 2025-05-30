@@ -5,7 +5,7 @@
 
 include("GF2_poly.jl")
 
-function get_CRC_poly(A)
+function get_CRC_poly(A::Int)::Tuple{Int,Vector{Bool}}
      if A > 3824
         # CRC24A:
         B = A + 24

@@ -11,13 +11,13 @@ function
         W::Matrix{Bool},
         sw::Vector{Bool},
         circ_aux::Vector{Bool},
-        K::Integer,
-        N::Integer,
-        E_H::Matrix{<:Integer},
-        E_M::Integer,
-        E_K::Integer,
-        E_B::Integer,
-        S::Integer,
+        K::Int,
+        N::Int,
+        E_H::Matrix{Int},
+        E_M::Int,
+        E_K::Int,
+        E_B::Int,
+        S::Int,
     )
 
     calc_LDPC_BG_parity_bits!(Cw,W,sw,circ_aux,E_H,E_M,E_K,E_B)
@@ -40,8 +40,8 @@ function
         w::Vector{Bool},
         L::Matrix{Bool},
         U::Matrix{Bool},
-        M::Integer,
-        K::Integer
+        M::Int,
+        K::Int
     )
 
     _gf2_mat_mult!(w,H1,cw,M,K)
@@ -55,10 +55,10 @@ function
         W::Matrix{Bool},
         sw::Vector{Bool},
         circ_aux::Vector{Bool},
-        E_H::Matrix{<:Integer},
-        E_M::Integer,
-        E_K::Integer,
-        E_B::Integer
+        E_H::Matrix{Int},
+        E_M::Int,
+        E_K::Int,
+        E_B::Int
     )  
     
     sw .= false

@@ -7,12 +7,12 @@ include("add_residue.jl")
 
 #List-RBP
 function update_global_list!(
-    residues::Vector{<:AbstractFloat},
-    coords::Matrix{<:Integer},
-    localresidues::Vector{<:AbstractFloat},
-    localcoords::Matrix{<:Integer},
-    listsizes::Vector{<:Integer},
-    inlist::Matrix{<:Integer}
+    residues::Vector{Float64},
+    coords::Matrix{Int},
+    localresidues::Vector{Float64},
+    localcoords::Matrix{Int},
+    listsizes::Vector{Int},
+    inlist::Matrix{Bool}
 )
     
     @inbounds begin
@@ -46,12 +46,12 @@ end
 
 # RBP
 function update_global_list!(
-    ::Vector{<:AbstractFloat},
-    ::Matrix{<:Integer},
+    ::Vector{Float64},
+    ::Matrix{Int},
     ::Nothing,
     ::Nothing,
-    ::Vector{<:Integer},
-    ::Matrix{<:Integer}
+    ::Vector{Int},
+    ::Matrix{Int}
 )
 
 end

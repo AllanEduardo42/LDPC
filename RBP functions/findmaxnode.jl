@@ -5,7 +5,7 @@
 
 function
     findmaxnode(
-        residues::Vector{<:AbstractFloat}        
+        residues::Vector{Float64}        
     )
 
     nmax = 0
