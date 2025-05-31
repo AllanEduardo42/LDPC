@@ -17,18 +17,20 @@ function
         coords::Vector{Int}
     )
     
-    @inbounds for ci in eachindex(Nc)
-        Nci = Nc[ci]
-        A, B, C, D = calc_ABCD!(aux,signs,phi,Lq,ci,Nci)
-        for vj in Nci
-            li = LinearIndices(Lr)[ci,vj]
-            newlr = calc_Lr(A,B,C,D,vj,aux,signs,phi)
-            newLr[li] = newlr
-            Lr[li] = newlr
+    @inbounds begin
+        for ci in eachindex(Nc)
+            Nci = Nc[ci]
+            A, B, C, D = calc_ABCD!(aux,signs,phi,Lq,ci,Nci)
+            for vj in Nci
+                li = LinearIndices(Lr)[ci,vj]
+                newlr = calc_Lr(A,B,C,D,vj,aux,signs,phi)
+                newLr[li] = newlr
+                Lr[li] = newlr
+            end
         end
-    end
-    @inbounds for vj in eachindex(Nv)
-         residue = _calc_all_residues_VN(newLr,vj,Nv[vj])
-         add_residue_VN!(inlist,alpha,coords,residue,vj,listsizes[1])
+        for vj in eachindex(Nv)
+            residue = _calc_all_residues_VN(newLr,vj,Nv[vj])
+            add_residue_VN!(inlist,alpha,coords,residue,vj,listsizes[1])
+        end
     end
 end

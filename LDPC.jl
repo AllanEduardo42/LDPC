@@ -44,9 +44,9 @@ SEED_MESSA::Int = 1000
 
 ################################ CONTROL FLAGS #################################
 
-TEST::Bool = true
+TEST::Bool = false
 PRIN::Bool = true
-PROF::Bool = true
+PROF::Bool = false
 STOP::Bool = false # stop simulation at zero syndrome (if true, BER curves are
 # not printed)
 
@@ -57,8 +57,8 @@ MAXITER::Int = 20
 # FACTORS = collect(0.1:0.1:1.0)
 FACTORS = [1.0]
 # EbN0 = [1.2, 1.4, 1.6, 1.8]
-EbN0 = [2.5]
-TRIALS = 10 .^(0:length(EbN0)-1)*2^17
+EbN0 = [2.0]
+TRIALS = 10 .^(0:length(EbN0)-1)*2^13
 RELATIVE::Bool = false
 
 # TEST

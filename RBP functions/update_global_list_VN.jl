@@ -10,7 +10,7 @@ function update_global_list_VN!(
     localresidues::Vector{Float64},
     localcoords::Vector{Int},
     listsizes::Vector{Int},
-    inlist::Vector{Int}
+    inlist::Vector{Bool}
 )
     
     @inbounds begin

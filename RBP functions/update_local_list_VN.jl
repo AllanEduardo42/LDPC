@@ -13,7 +13,7 @@ function
         localresidues::Vector{Float64},
         localcoords::Vector{Int},
         listsizes::Vector{Int},
-        inlist::Vector{Int},
+        inlist::Vector{Bool},
         vj::Int,
         residue::Float64    
     )

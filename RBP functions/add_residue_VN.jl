@@ -13,7 +13,7 @@ function add_residue_VN!(
         listsize::Int
     )
 
-    @fastmath @inbounds if residue > alpha[listsize]
+    @inbounds @fastmath if residue > alpha[listsize]
 
         if listsize > 1
             if residue ≥ alpha[1]

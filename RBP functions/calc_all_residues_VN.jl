@@ -69,7 +69,7 @@ function
     )
 
     residue = 0.0
-    @fastmath @inbounds for ci in Nvj          
+    @inbounds @fastmath for ci in Nvj          
         residue += newLr[ci,vj]
     end
 

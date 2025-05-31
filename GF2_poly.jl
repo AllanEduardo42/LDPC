@@ -116,9 +116,10 @@ function
             b[i] = Cw[i]
         end
         for i = 1:A
+            im1 = i - 1
             if b[i]
                 for j in eachindex(g_CRC)
-                    b[j+i-1] ⊻= g_CRC[j]
+                    b[j+im1] ⊻= g_CRC[j]
                 end
             end
         end

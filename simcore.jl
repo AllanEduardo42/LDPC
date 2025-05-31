@@ -61,7 +61,7 @@ function
     M,N = size(H)
 
     # 2*liftsize in NR5G (determines the number of initial punctured bits)
-    # =0 otherwise
+    # = 0 otherwise
     twoZc = 0
 
     # protocol constants
@@ -89,16 +89,7 @@ function
     rgn_noise = Xoshiro(rgn_seed_noise)
     rgn_msg = Xoshiro(rgn_seed_msg)
 
-    # if NR5G and relative, we must init the llr with not zero values due to puncturing
-    if protocol == "NR5G" && relative
-        init_Lf = 10/INFFLOAT
-    else
-        init_Lf = 0.0
-    end
-
 ################################# PREALLOCATIONS ###############################
-
-
 
     msg = Vector{Bool}(undef,A)  
     
@@ -112,8 +103,9 @@ function
     else
         Cw = Matrix{Bool}(undef,liftsize,E_N) # info bits + CRC + filler bits + parity bits
         sw = Vector{Bool}(undef,liftsize)
-        circ_aux = Vector{Bool}(undef,liftsize)     
-        W = Matrix{Bool}(undef,liftsize,E_B)
+        circ_aux = Vector{Bool}(undef,liftsize)    
+        auxi = Vector{Bool}(undef,liftsize)   
+        W = Matrix{Bool}(undef,liftsize,E_B)    
     end
 
     # frame error rate
@@ -122,7 +114,7 @@ function
 
     # bit error rate
     sum_ber = zeros(Int,maxiter)
-    ber = zeros(Int,maxiter)
+    ber = Vector{Int}(undef,maxiter)
 
     # estimate
     bitvector = Vector{Bool}(undef,N)
@@ -131,10 +123,19 @@ function
     syndrome = Vector{Bool}(undef,M)
 
     # prior llr (if mode == "MKAY" it is just the prior probabilities)
-    Lf = (bptype != "MKAY") ? init_Lf*ones(N) : 0.5*ones(N,2)
+    Lf = (bptype != "MKAY") ? Vector{Float64}(undef,N) : Matrix{Float64}(undef,N,2)
 
-    # noise
-    noise = Vector{Float64}(undef,G)
+    if twoZc > 0
+        if relative
+            for i in 1:twoZc
+                Lf[i] = 10/INFFLOAT
+            end
+        else
+            for i in 1:twoZc
+                Lf[i] = 0.0
+            end
+        end
+    end
 
     # received signal
     signal = Vector{Float64}(undef,G)
@@ -145,21 +146,19 @@ function
     # Lq -> matrix of Nv messages (N x M)
     # Lr -> matrix of Nc messages (N x M)
     # if mode == "MKAY" the are different matrices for bit = 0 and bit = 1
-    # Lq = (bptype != "MKAY") ? zeros(M,N) : zeros(M,N,2)
-    # Lr = (bptype != "MKAY") ? zeros(M,N) : zeros(M,N,2)
-    Lq = zeros(M,N)
-    Lr = zeros(M,N)
+    Lq = (bptype != "MKAY") ? Matrix{Float64}(undef,M,N) : Array{Float64,3}(undef,M,N,2)
+    Lr = (bptype != "MKAY") ? Matrix{Float64}(undef,M,N) : Array{Float64,3}(undef,M,N,2)
 
     # Set variables aux and signs depending on the BP type (for dispatching)
     if bptype == "FAST" || bptype == "MKAY"
-        aux = zeros(N)
+        aux = Vector{Float64}(undef,N)
         signs = nothing
     elseif bptype == "TABL" 
-        aux = zeros(N)
-        signs = zeros(Bool,N)
+        aux = Vector{Float64}(undef,N)
+        signs = Vector{Bool}(undef,N)
     elseif bptype == "MSUM"
-        aux = zeros(N)
-        signs = zeros(Bool,N)
+        aux = Vector{Float64}(undef,N)
+        signs = Vector{Bool}(undef,N)
     else # bytype == TANH
         aux = nothing
         signs = nothing
@@ -169,18 +168,19 @@ function
 
     # RBP preallocations
     if mode == "RBP"
-        newLr = zeros(M,N)
-        residues = zeros(num_edges)
-        Factors = Float64.(H)
-        coords = zeros(Int,3,num_edges)
-        rbpmatrix = 0*H
+        newLr = Matrix{Float64}(undef,M,N)
+        Factors = Matrix{Float64}(undef,M,N)
+        resetmatrix!(Factors,Nv,1.0)
+        residues = Vector{Float64}(undef,num_edges)
+        coords = Matrix{Int}(undef,3,num_edges)
+        rbpmatrix = Matrix{Int}(undef,M,N)
         e = 0
-        for m in axes(H,1)
-            for n in Nc[m]
+        for ci in eachindex(Nc)
+            for vj in Nc[ci]
                 e += 1
-                coords[1,e] = m
-                coords[2,e] = n
-                li = LinearIndices(rbpmatrix)[m,n]
+                coords[1,e] = ci
+                coords[2,e] = vj
+                li = LinearIndices(rbpmatrix)[ci,vj]
                 coords[3,e] = li
                 rbpmatrix[li] = e
             end
@@ -188,25 +188,26 @@ function
         local_residues = nothing
         local_coords = nothing
     elseif mode == "List-RBP"
-        newLr = zeros(M,N)
-        residues = zeros(listsizes[1]+1)
-        Factors = Float64.(H)
-        coords = zeros(Int,3,listsizes[1]+1)
-        rbpmatrix = Matrix(false*H)
+        newLr = Matrix{Float64}(undef,M,N)
+        residues = Vector{Float64}(undef,listsizes[1]+1)
+        Factors = Matrix{Float64}(undef,M,N)
+        resetmatrix!(Factors,Nv,1.0)
+        coords = Matrix{Int}(undef,3,listsizes[1]+1)
+        rbpmatrix = Matrix{Bool}(undef,M,N)
         if listsizes[2] == 1
-            local_residues = zeros(listsizes[1]+1)
-            local_coords = zeros(Int,3,listsizes[1]+1)
+            local_residues = Vector{Float64}(undef,listsizes[1]+1)
+            local_coords =  Matrix{Int}(undef,3,listsizes[1]+1)
         else
-            local_residues = zeros(listsizes[2]+1)
-            local_coords = zeros(Int,3,listsizes[2]+1)
+            local_residues = Vector{Float64}(undef,listsizes[2]+1)
+            local_coords = Matrix{Int}(undef,3,listsizes[2]+1)
         end
     elseif mode == "NW-RBP"
-        newLr = zeros(M,N)
-        residues = zeros(M)
-        Factors = ones(M)       
+        newLr = Matrix{Float64}(undef,M,N)
+        residues = Vector{Float64}(undef,M)
+        Factors = ones(M)   
     elseif mode == "VN-RBP" || mode == "VN-RBP2"
-        newLr = zeros(M,N)
-        residues = zeros(N)
+        newLr = Matrix{Float64}(undef,M,N)
+        residues = Vector{Float64}(undef,N)
         Factors = ones(N)
         if mode == "VN-RBP2"
             mode2 = true
@@ -214,17 +215,17 @@ function
             mode2 = false
         end
     elseif mode == "List-VN-RBP"
-        newLr = zeros(M,N)
-        residues = zeros(listsizes[1]+1)
+        newLr = Matrix{Float64}(undef,M,N)
+        residues = Vector{Float64}(undef,listsizes[1]+1)
         Factors = ones(N)
-        coords = zeros(Int,listsizes[1]+1)
+        coords = Vector{Int}(undef,listsizes[1]+1)
         inlist = zeros(Bool,N)
         if listsizes[2] == 1
-            local_residues = zeros(listsizes[1]+1)
-            local_coords = zeros(Int,listsizes[1]+1)
+            local_residues = Vector{Float64}(undef,listsizes[1]+1)
+            local_coords = Vector{Int}(undef,listsizes[1]+1)
         else
-            local_residues = zeros(listsizes[2]+1)
-            local_coords = zeros(Int,listsizes[2]+1)
+            local_residues = Vector{Float64}(undef,listsizes[2]+1)
+            local_coords = Vector{Int}(undef,listsizes[2]+1)
         end
     end
 
@@ -239,24 +240,22 @@ function
         append_CRC!(Cw,b,msg,g_CRC,A,K)
         if protocol == "PEG"
             encode_LDPC_LU!(Cw,H1,w,L,U,M,K)
-            for i in eachindex(w)
+            for i in 1:M
                 Cw[K+i] = w[i]
             end
         else
-            encode_LDPC_BG!(cword,Cw,W,sw,circ_aux,K,N,E_H,E_M,E_K,E_B,S)
+            encode_LDPC_BG!(cword,Cw,W,sw,auxi,circ_aux,K,N,E_H,E_M,E_K,E_B,S,liftsize)
         end
         # verify the encoding
-        if !iszero(H*cword)
-            println("Encoding error")
+        if test
+            _gf2_mat_mult!(syndrome,H,cword,M,N)
+            if iszero(syndrome)
+                println("Encoding error")
+            end
         end
 
-        # 3) Modulation of the cword in BPSK
-        for i in 1:G
-            signal[i] = 2*cword[twoZc+i] - 1
-        end
-
-        # 4) sum the noise to the modulated cword to produce the received signal
-        received_signal!(signal,noise,G,stdev,rgn_noise,noisetest)
+        # 3) sum the noise to the modulated cword to produce the received signal
+        received_signal!(signal,cword,G,twoZc,stdev,rgn_noise,noisetest)
 
         # print info if in test mode
         if test && printtest
@@ -265,19 +264,21 @@ function
             print_test("Transmitted cword",cword[twoZc+1:end])
         end
         
-        # 5) reset simulation variables
+        # 4) reset simulation variables
         syndrome .= true
         decoded .= false
         resetmatrix!(Lr,Nv,0.0)
-        if mode == "List-RBP"
+        if mode == "List-RBP" || mode == "List-VN-RBP"
             residues .= 0.0
             coords .= 0
             local_residues .= 0.0
             local_coords .= 0
-            resetmatrix!(rbpmatrix,Nv,false)
+            if mode == "List-RBP"
+                resetmatrix!(rbpmatrix,Nv,false)
+            end
         end
 
-        # 6) init the LLR priors
+        # 5) init the LLR priors
         calc_Lf!(Lf,twoZc,signal,variance)
         if bptype == "TABL"
             # scale for table
@@ -445,7 +446,9 @@ function
     
             calc_syndrome!(syndrome,bitvector,Nc)
 
-            biterror .= (bitvector .≠ cword)
+            for vj in 1:N
+                biterror[vj] = bitvector[vj] ≠ cword[vj]
+            end
             
             # print info if in test mode
             if test
@@ -474,7 +477,9 @@ function
                     end
                     if stop
                         if iter < maxiter
-                            decoded[iter+1:end] .= decoded[iter]
+                            for i = iter+1:maxiter
+                                decoded[i] = decoded[iter]
+                            end
                         end
                         break
                     end
@@ -485,28 +490,31 @@ function
 
         # if all the residues are zero
         if !rbp_not_converged
-            decoded[iter+1:end] .= decoded[iter]
-            ber[iter+1:end] .= ber[iter]
+            for i = iter+1:maxiter
+                decoded[i] = decoded[iter]
+                ber[i] = ber[iter]
+            end
         end
 
         # bit error rate
-        @. sum_ber += ber
-        @. sum_decoded += decoded
-
+        for i=1:maxiter
+            sum_ber[i] += ber[i]
+            sum_decoded[i] += decoded[i]
+        end
     end
 
-    # if test && bptype == "MKAY"
-    #         retr = zeros(M,N)
-    #         retq = zeros(M,N)
-    #         for m in eachindex(Nc)
-    #             for n in Nc[m]
-    #                 retr[m,n] = log.(Lr[m,n,1]) - log.(Lr[m,n,2])
-    #                 retq[m,n] = log.(Lq[m,n,1]) - log.(Lq[m,n,2])
-    #             end
-    #         end
-    #         Lr = retr
-    #         Lq = retq
-    # end
+    if test && bptype == "MKAY"
+        retr = Matrix{Float64}(undef,M,N)
+        retq = Matrix{Float64}(undef,M,N)
+        for ci in eachindex(Nc)
+            for vj in Nc[ci]
+                retr[ci,vj] = log.(Lr[ci,vj,1]) - log.(Lr[ci,vj,2])
+                retq[ci,vj] = log.(Lq[ci,vj,1]) - log.(Lq[ci,vj,2])
+            end
+        end
+        Lr = retr
+        Lq = retq
+    end
 
     return Lr, Lq, sum_decoded, sum_ber
 

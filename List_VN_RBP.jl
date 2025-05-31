@@ -33,7 +33,7 @@ function
         coords::Vector{Int},
     )
 
-    @fastmath @inbounds for e in 1:num_edges
+    @inbounds @fastmath for e in 1:num_edges
 
         # display("e = $e")
 
@@ -78,7 +78,7 @@ function
                     newlr = calc_Lr(A,B,C,D,vj,aux,signs,phi)
                     li = LinearIndices(newLr)[ci,vj] 
                     newLr[li] = newlr  
-                    residue = calc_residue(newlr,Lr[li],Factors[vj])
+                    residue = abs(newlr - Lr[li])*Factors[vj]
                     update_local_list_VN!(alpha,coords,local_alpha,
                             local_coords,listsizes,inlist,vj,residue)
                 end

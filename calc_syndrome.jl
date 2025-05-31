@@ -9,12 +9,12 @@ function
     calc_syndrome!(
         syndrome::Vector{Bool},
         bitvector::Vector{Bool},
-        cn2vn::Vector{Vector{Int}}
+        Nc::Vector{Vector{Int}}
     )
 
-    syndrome .*= false
-    for m in eachindex(cn2vn)
-        @inbounds syndrome[m] = _calc_syndrome(bitvector,cn2vn[m])
+    syndrome .= false
+    @inbounds for ci in eachindex(Nc)
+        syndrome[ci] = _calc_syndrome(bitvector,Nc[ci])
     end
     
 end
@@ -22,12 +22,12 @@ end
 function 
     _calc_syndrome(
         bitvector::Vector{Bool},
-        varnodes_cn::Vector{Int}
+        Nci::Vector{Int}
     )
 
     syndrome = false
-    for n in varnodes_cn
-        @inbounds syndrome ⊻= bitvector[n]
+    @inbounds for vj in Nci
+        syndrome ⊻= bitvector[vj]
     end
 
     return syndrome

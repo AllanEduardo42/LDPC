@@ -38,8 +38,8 @@ function
     sum_decoded = Array{Int,3}(undef,maxiter,K,nthreads)
     sum_ber = Array{Int,3}(undef,maxiter,K,nthreads)
     for k in 1:K
-        stats = @timed Threads.@threads for i in 1:nthreads
-        # for i in 1:nthreads
+        # stats = @timed Threads.@threads for i in 1:nthreads
+        stats = @timed for i in 1:nthreads
             x, y, z, w = simcore(
                                 AA,
                                 KK,
@@ -105,7 +105,6 @@ function
         replace!(x-> x < lowerfer ? lowerfer : x, Fer)
         replace!(x-> x < lowerber ? lowerber : x, Ber)
 
-        # return log10.(Fer), log10.(Ber)
         return Fer, Ber
     end
 end

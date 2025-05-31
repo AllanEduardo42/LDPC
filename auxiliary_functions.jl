@@ -36,17 +36,20 @@ end
 function
     received_signal!(
         signal::Vector{Float64},
-        noise::Vector{Float64},
+        cword::Vector{Bool},
         G::Int,
+        twoZc::Int,
         σ::Float64,
         rgn_noise::AbstractRNG,
         ::Nothing
     )
 
     @fastmath begin
-        randn!(rgn_noise,noise)
-        for i in 1:G
-            signal[i] += noise[i]*σ 
+        randn!(rgn_noise,signal)    # put the noise in the vector 'signal'
+        lmul!(σ,signal)             # multiply by the standard deviation
+        for g in 1:G
+            aux = 2*cword[twoZc+g] - 1  
+            signal[g] += aux            # sum the modulated signal
         end
     end
 
@@ -55,31 +58,34 @@ end
 function
     received_signal!(
         signal::Vector{Float64},
-        ::Vector{Float64},
+        cword::Vector{Bool},
         G::Int,
+        twoZc::Int,
         σ::Float64,
         ::AbstractRNG,
         noisetest::Vector{Float64}
     )
 
     @fastmath begin
-        for i in 1:G
-            signal[i] += noisetest[i]*σ
+        copy!(signal,noisetest)
+        lmul!(σ,signal)
+        for g in 1:G
+            aux = 2*cword[twoZc+g] - 1
+            signal[g] += aux
         end
     end
-
 end
 
 function
     resetmatrix!(
         X::Matrix{<:Real},
-        vn2cn::Vector{Vector{Int}},
+        Nv::Vector{Vector{Int}},
         value::Real
     )    
     
-    @inbounds for n in eachindex(vn2cn)
-        for m in vn2cn[n]
-            X[m,n] = value
+    @inbounds for vj in eachindex(Nv)
+        for ci in Nv[vj]
+            X[ci,vj] = value
         end
     end
 end
@@ -87,14 +93,14 @@ end
 function
     resetmatrix!(
         X::Array{<:Real,3},
-        vn2cn::Vector{Vector{Int}},
+        Nv::Vector{Vector{Int}},
         value::Real
     )    
     
-    @inbounds for n in eachindex(vn2cn)
-        for m in vn2cn[n]
-            X[m,n,1] = value
-            X[m,n,2] = value
+    @inbounds for vj in eachindex(Nv)
+        for ci in Nv[vj]
+            X[ci,vj,1] = value
+            X[ci,vj,2] = value
         end
     end
 end
@@ -115,7 +121,7 @@ function generate_message!(
     msgtest::Vector{Bool}
 )
 
-    msg .= msgtest
+    copy!(msg, msgtest)
 
 end
 
