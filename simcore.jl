@@ -249,7 +249,7 @@ function
         # verify the encoding
         if test
             _gf2_mat_mult!(syndrome,H,cword,M,N)
-            if iszero(syndrome)
+            if !iszero(syndrome)
                 println("Encoding error")
             end
         end

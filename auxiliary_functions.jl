@@ -7,12 +7,13 @@ function
     init_Lq!(
         Lq::Matrix{Float64},
         Lf::Vector{Float64},
-        vn2cn::Vector{Vector{Int}}
+        Nv::Vector{Vector{Int}}
     )
     
-    @inbounds for n in eachindex(vn2cn)
-        for m in vn2cn[n]
-            Lq[m,n] = Lf[n]
+    @inbounds for vj in eachindex(Nv)
+        aux = Lf[vj]
+        for ci in Nv[vj]
+            Lq[ci,vj] = aux
         end
     end
 end
@@ -21,13 +22,13 @@ function
     init_Lq!(
         Lq::Array{Float64,3},
         Lf::Matrix{Float64},
-        vn2cn::Vector{Vector{Int}}
+        Nv::Vector{Vector{Int}}
     )
    
-    @inbounds for n in eachindex(vn2cn)
-        for m in vn2cn[n]
-            Lq[m,n,1] = Lf[n,1]
-            Lq[m,n,2] = Lf[n,2]
+    @inbounds for vj in eachindex(Nv)
+        for ci in Nv[vj]
+            Lq[ci,vj,1] = Lf[vj,1]
+            Lq[ci,vj,2] = Lf[vj,2]
         end
     end
 

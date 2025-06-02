@@ -40,9 +40,9 @@ end
 
 function 
     calc_Lr(
-        pLr::Float64, #A
+        pLr::Float64,       #A
         no_zeros::Bool,     #B
-        vj0::Int,       #C
+        vj0::Int,           #C
         ::Nothing,          #D
         vj::Int,
         aux::Vector{Float64},
@@ -116,7 +116,7 @@ end
 
 function 
     calc_Lr(
-        sLr::Float64, #A
+        sLr::Float64,       #A
         s::Bool,            #B          
         ::Nothing,          #C
         ::Nothing,          #D
@@ -175,7 +175,7 @@ function
         vjmin::Int,
         minL2::Float64,
         vj::Int,
-        ::Nothing,
+        ::Vector{Float64},
         signs::Vector{Bool},
         ::Nothing
     )

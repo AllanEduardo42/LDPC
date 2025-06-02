@@ -44,7 +44,7 @@ SEED_MESSA::Int = 1000
 
 ################################ CONTROL FLAGS #################################
 
-TEST::Bool = false
+TEST::Bool = true
 PRIN::Bool = true
 PROF::Bool = false
 STOP::Bool = false # stop simulation at zero syndrome (if true, BER curves are
@@ -88,7 +88,7 @@ end
 i = 1
 # Flooding
 ACTIVE[i] = 0
-BPTYPES[i] = "FAST"
+BPTYPES[i] = "TABL"
 MAXITERS[i] = MAXITER
 
 # LBP
@@ -99,7 +99,7 @@ MAXITERS[i] = MAXITER
 
 # RBP
 i += 1
-ACTIVE[i] = 0
+ACTIVE[i] = 1
 BPTYPES[i] = "FAST"
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
@@ -120,7 +120,7 @@ DECAYS[i] = FACTORS
 
 # Variable Node RBP
 i += 1
-ACTIVE[i] = 1
+ACTIVE[i] = 0
 BPTYPES[i] = "FAST"
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
