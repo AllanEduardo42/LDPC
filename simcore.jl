@@ -10,13 +10,16 @@ include("calc_syndrome.jl")
 include("flooding.jl")
 include("LBP.jl")
 include("RBP.jl")
+include("List_RBP.jl")
 include("VN_RBP.jl")
+include("VN_RBP_alt.jl")
 include("List_VN_RBP.jl")
 include("NW_RBP.jl")
-include("./RBP functions/calc_all_residues.jl")
-include("./RBP functions/calc_all_residues_NW.jl")
-include("./RBP functions/calc_all_residues_VN.jl")
-include("./RBP functions/calc_all_residues_list_VN.jl")
+include("./RBP functions/init_RBP.jl")
+include("./RBP functions/init_list_RBP.jl")
+include("./RBP functions/init_NW_RBP.jl")
+include("./RBP functions/init_VN_RBP.jl")
+include("./RBP functions/init_list_VN_RBP.jl")
 include("update_Lq.jl")
 include("update_Lr.jl")
 include("NR LDPC/NR_LDPC_functions.jl")
@@ -167,33 +170,31 @@ function
     phi = (bptype == "TABL") ? lookupTable() : nothing
 
     # RBP preallocations
-    if mode == "RBP"
+    if mode == "RBP" || mode == "VN-RBP-ALT"
         newLr = Matrix{Float64}(undef,M,N)
         Factors = Matrix{Float64}(undef,M,N)
         resetmatrix!(Factors,Nv,1.0)
         residues = Vector{Float64}(undef,num_edges)
         coords = Matrix{Int}(undef,3,num_edges)
-        rbpmatrix = Matrix{Int}(undef,M,N)
+        indices = Matrix{Int}(undef,M,N)
         e = 0
         for ci in eachindex(Nc)
             for vj in Nc[ci]
                 e += 1
                 coords[1,e] = ci
                 coords[2,e] = vj
-                li = LinearIndices(rbpmatrix)[ci,vj]
+                li = LinearIndices(indices)[ci,vj]
                 coords[3,e] = li
-                rbpmatrix[li] = e
+                indices[li] = e
             end
         end
-        local_residues = nothing
-        local_coords = nothing
     elseif mode == "List-RBP"
         newLr = Matrix{Float64}(undef,M,N)
         residues = Vector{Float64}(undef,listsizes[1]+1)
         Factors = Matrix{Float64}(undef,M,N)
         resetmatrix!(Factors,Nv,1.0)
         coords = Matrix{Int}(undef,3,listsizes[1]+1)
-        rbpmatrix = Matrix{Bool}(undef,M,N)
+        inlist = Matrix{Bool}(undef,M,N)
         if listsizes[2] == 1
             local_residues = Vector{Float64}(undef,listsizes[1]+1)
             local_coords =  Matrix{Int}(undef,3,listsizes[1]+1)
@@ -203,20 +204,16 @@ function
         end
     elseif mode == "NW-RBP"
         newLr = Matrix{Float64}(undef,M,N)
-        residues = Vector{Float64}(undef,M)
+        alpha = Vector{Float64}(undef,M)
         Factors = ones(M)   
-    elseif mode == "VN-RBP" || mode == "VN-RBP2"
+    elseif mode == "VN-RBP"
         newLr = Matrix{Float64}(undef,M,N)
-        residues = Vector{Float64}(undef,N)
+        alpha =Vector{Float64}(undef,N)
         Factors = ones(N)
-        if mode == "VN-RBP2"
-            mode2 = true
-        else
-            mode2 = false
-        end
+        mode2 = true
     elseif mode == "List-VN-RBP"
         newLr = Matrix{Float64}(undef,M,N)
-        residues = Vector{Float64}(undef,listsizes[1]+1)
+        alpha = Vector{Float64}(undef,listsizes[1]+1)
         Factors = ones(N)
         coords = Vector{Int}(undef,listsizes[1]+1)
         inlist = zeros(Bool,N)
@@ -227,6 +224,11 @@ function
             local_residues = Vector{Float64}(undef,listsizes[2]+1)
             local_coords = Vector{Int}(undef,listsizes[2]+1)
         end
+    end
+
+    if mode == "VN-RBP-ALT"
+        alpha = Vector{Float64}(undef,N)
+        ci_alpha = Vector{Int}(undef,N)
     end
 
 ################################## MAIN LOOP ###################################
@@ -269,12 +271,11 @@ function
         decoded .= false
         resetmatrix!(Lr,Nv,0.0)
         if mode == "List-RBP" || mode == "List-VN-RBP"
-            residues .= 0.0
             coords .= 0
             local_residues .= 0.0
             local_coords .= 0
             if mode == "List-RBP"
-                resetmatrix!(rbpmatrix,Nv,false)
+                resetmatrix!(inlist,Nv,false)
             end
         end
 
@@ -305,18 +306,37 @@ function
         # 8) init the Lq matrix
         init_Lq!(Lq,Lf,Nv)
 
-        # 9) precalculate the residues for RBP
-        if mode == "RBP" || mode == "List-RBP"
-            calc_all_residues!(Lq,Lr,Nc,aux,signs,phi,newLr,Factors,rbpmatrix,
+        # 9) init the RBP methods
+        if mode == "RBP" || mode == "VN-RBP-ALT"
+            init_RBP!(Lq,Lr,Nc,aux,signs,phi,newLr,Factors,indices,residues,
+                                                                       relative)
+        elseif mode == "List-RBP"
+            init_list_RBP!(Lq,Lr,Nc,aux,signs,phi,newLr,Factors,inlist,
                                         residues,coords,listsizes,relative)
         elseif mode == "NW-RBP"
-            calc_all_residues_NW!(Lq,Nc,aux,signs,phi,newLr,residues)
-        elseif mode == "VN-RBP" || mode == "VN-RBP2"
-            calc_all_residues_VN!(Lq,Nc,aux,signs,phi,Lr,newLr,residues,Nv)
+            init_NW_RBP!(Lq,Nc,aux,signs,phi,newLr,alpha)
+        elseif mode == "VN-RBP"
+            init_VN_RBP!(Lq,Nc,aux,signs,phi,Lr,newLr,alpha,Nv,mode2)
         elseif mode == "List-VN-RBP"
-            calc_all_residues_list_VN!(Lq,Nc,aux,signs,phi,Lr,newLr,residues,Nv,inlist,listsizes,coords)
+            init_list_VN_RBP!(Lq,Nc,aux,signs,phi,Lr,newLr,alpha,Nv,inlist,listsizes,coords)
         end
-        
+
+        if mode == "VN-RBP-ALT"
+            for vj in 1:N
+                alp = 0.0
+                ci_alp = 0
+                for ci in Nv[vj]
+                    residue = residues[indices[ci,vj]] 
+                    if residue > alp
+                        alp = residue
+                        ci_alp = ci
+                    end
+                end
+                alpha[vj] = alp
+                ci_alpha[vj] = ci_alp
+            end
+        end
+  
         # 10) BP routine
         rbp_not_converged = true
 
@@ -350,7 +370,7 @@ function
                     aux,
                     signs,
                     phi)
-            elseif (mode == "RBP" || mode == "List-RBP")
+            elseif mode == "RBP"
                 rbp_not_converged = RBP!(
                     bitvector,
                     Lq,
@@ -366,14 +386,37 @@ function
                     newLr,
                     Factors,
                     coords,
-                    rbpmatrix,
+                    indices,
+                    residues,
+                    relative,
+                    rbp_not_converged
+                    )
+                # reset factors
+                resetmatrix!(Factors,Nv,1.0)
+            elseif mode == "List-RBP"
+                rbp_not_converged = List_RBP!(
+                    bitvector,
+                    Lq,
+                    Lr,
+                    Lf,
+                    Nc,
+                    Nv,
+                    aux,
+                    signs,
+                    phi,
+                    decayfactor,
+                    num_edges,
+                    newLr,
+                    Factors,
+                    coords,
+                    inlist,
                     residues,
                     local_residues,
                     local_coords,
                     listsizes,
                     relative,
                     rbp_not_converged
-                    )
+                )
                 # reset factors
                 resetmatrix!(Factors,Nv,1.0)
             elseif mode == "NW-RBP"
@@ -391,12 +434,12 @@ function
                     M,
                     newLr,
                     Factors,
-                    residues,
+                    alpha,
                     rbp_not_converged
                 )
                 # reset factors
                 Factors .= 1.0
-            elseif mode == "VN-RBP" || mode == "VN-RBP2"
+            elseif mode == "VN-RBP"
                 rbp_not_converged = VN_RBP!(
                     bitvector,
                     Lq,
@@ -411,7 +454,7 @@ function
                     num_edges,
                     newLr,
                     Factors,
-                    residues,
+                    alpha,
                     rbp_not_converged,
                     mode2
                     )
@@ -432,7 +475,7 @@ function
                     num_edges,
                     newLr,
                     Factors,
-                    residues,
+                    alpha,
                     rbp_not_converged,
                     inlist,
                     local_residues,
@@ -442,6 +485,31 @@ function
                 )
                 # reset factors
                 Factors .= 1.0
+            elseif mode == "VN-RBP-ALT"
+               rbp_not_converged = VN_RBP_ALT!(
+                    bitvector,
+                    Lq,
+                    Lr,
+                    Lf,
+                    Nc,
+                    Nv,
+                    aux,
+                    signs,
+                    phi,
+                    decayfactor,
+                    num_edges,
+                    newLr,
+                    Factors,
+                    coords,
+                    indices,
+                    residues,
+                    relative,
+                    rbp_not_converged,
+                    alpha,
+                    ci_alpha
+                    )
+                # reset factors
+                resetmatrix!(Factors,Nv,1.0)
             end            
     
             calc_syndrome!(syndrome,bitvector,Nc)

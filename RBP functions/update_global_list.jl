@@ -43,15 +43,3 @@ function update_global_list!(
         localcoords .*= 0
     end
 end
-
-# RBP
-function update_global_list!(
-    ::Vector{Float64},
-    ::Matrix{Int},
-    ::Nothing,
-    ::Nothing,
-    ::Vector{Int},
-    ::Matrix{Int}
-)
-
-end

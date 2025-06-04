@@ -58,7 +58,7 @@ MAXITER::Int = 20
 FACTORS = [1.0]
 # EbN0 = [1.2, 1.4, 1.6, 1.8]
 EbN0 = [2.0]
-TRIALS = 10 .^(0:length(EbN0)-1)*2^13
+TRIALS = 10 .^(0:length(EbN0)-1)*2^12
 RELATIVE::Bool = false
 
 # TEST
@@ -69,7 +69,7 @@ DECAY_TEST::Float64 = 1.0
 
 ################################### SCHEDULE ###################################
 
-MODES = ["Flooding","LBP","RBP","List-RBP","NW-RBP","VN-RBP","VN-RBP2","List-VN-RBP"]
+MODES = ["Flooding","LBP","RBP","List-RBP","NW-RBP","VN-RBP","VN-RBP-ALT","List-VN-RBP"]
 NUM_MODES = length(MODES)
 ACTIVE = zeros(Bool,NUM_MODES)
 LISTSIZES = zeros(Int,4)
@@ -87,7 +87,7 @@ end
 
 i = 1
 # Flooding
-ACTIVE[i] = 0
+ACTIVE[i] = 1
 BPTYPES[i] = "TABL"
 MAXITERS[i] = MAXITER
 
@@ -106,28 +106,28 @@ DECAYS[i] = FACTORS
 
 # List-RBP
 i += 1
-ACTIVE[i] = 0
+ACTIVE[i] = 1
 BPTYPES[i] = "FAST"
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
 
 # NW-RBP
 i += 1
-ACTIVE[i] = 0
+ACTIVE[i] = 1
 BPTYPES[i] = "FAST"
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
 
 # Variable Node RBP
 i += 1
-ACTIVE[i] = 0
+ACTIVE[i] = 1
 BPTYPES[i] = "FAST"
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
 
-# Mod Variable Node RBP
+# Variable Node RBP ALT
 i += 1
-ACTIVE[i] = 0
+ACTIVE[i] = 1
 BPTYPES[i] = "FAST"
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS

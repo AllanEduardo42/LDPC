@@ -4,11 +4,10 @@
 # Calculate all residues
 
 include("calc_residue.jl")
-include("add_residue.jl")
 
 # FAST, TABL and MSUM
 function
-    calc_all_residues!(
+    init_RBP!(
         Lq::Matrix{Float64},
         Lr::Matrix{Float64},
         Nc::Vector{Vector{Int}},
@@ -17,10 +16,8 @@ function
         phi::Union{Vector{Float64},Nothing},
         newLr::Matrix{Float64},
         Factors::Matrix{Float64},        
-        rbpmatrix::Matrix{<:Integer},
+        indices::Union{Matrix{Int},Matrix{Bool}},
         residues::Vector{Float64},
-        coords::Matrix{Int},
-        listsizes::Vector{Int},
         relative::Bool
     )
     
@@ -32,14 +29,14 @@ function
             newlr = calc_Lr(A,B,C,D,vj,aux,signs,phi)
             newLr[li] = newlr
             residue = calc_residue(newLr[li],Lr[li],Factors[li],relative,Lq[li])
-            add_residue!(rbpmatrix,residues,coords,residue,li,ci,vj,listsizes[1])
+            residues[indices[li]] = residue
         end
     end
 end
 
 # TANH
 function 
-    calc_all_residues!(
+    init_RBP!(
         Lq::Matrix{Float64},
         Lr::Matrix{Float64},
         Nc::Vector{Vector{Int}},
@@ -48,10 +45,8 @@ function
         ::Nothing,
         newLr::Matrix{Float64},
         Factors::Matrix{Float64},        
-        rbpmatrix::Matrix{<:Integer},
+        indices::Union{Matrix{Int},Matrix{Bool}},
         residues::Vector{Float64},
-        coords::Matrix{Int},
-        listsizes::Vector{Int},
         relative::Bool
     )
 
@@ -62,7 +57,7 @@ function
             newlr = calc_Lr(Nci,ci,vj,Lq)
             newLr[li] = newlr
             residue = calc_residue_raw(newLr[li],Lr[li],Factors[li],relative,Lq[li])
-            add_residue!(rbpmatrix,residues,coords,residue,li,ci,vj,listsizes[1])
+            residues[indices[li]] = residue
         end
     end
 end

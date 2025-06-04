@@ -44,22 +44,3 @@ function
 
 end
 
-# RBP
-function
-    update_local_list!(
-        residues::Vector{Float64},
-        ::Matrix{Int},
-        ::Nothing,
-        ::Nothing,
-        ::Vector{Int},
-        indices::Matrix{Int},
-        li::Int,
-        ::Int,
-        ::Int,
-        residue::Float64    
-    )
-
-    @inbounds residues[indices[li]] = residue
-
-end
-

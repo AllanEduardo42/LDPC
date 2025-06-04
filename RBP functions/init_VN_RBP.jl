@@ -6,7 +6,7 @@
 include("calc_residue.jl")
 
 function
-    calc_all_residues_VN!(
+    init_VN_RBP!(
         Lq::Matrix{Float64},
         Nc::Vector{Vector{Int}},
         aux::Vector{Float64},
@@ -16,6 +16,7 @@ function
         newLr::Matrix{Float64},
         alpha::Vector{Float64},
         Nv::Vector{Vector{Int}},
+        mode2::Bool
     )
     
     @inbounds for ci in eachindex(Nc)
@@ -29,13 +30,13 @@ function
         end
     end
     @inbounds for vj in eachindex(Nv)
-        alpha[vj] = _calc_all_residues_VN(newLr,vj,Nv[vj])
+        alpha[vj] = _calc_all_residues_VN(newLr,vj,Nv[vj],mode2)
     end
 end
 
 # RAW
 function
-    calc_all_residues_VN!(
+    init_VN_RBP!(
         Lq::Matrix{Float64},
         Nc::Vector{Vector{Int}},
         ::Nothing,
@@ -44,7 +45,8 @@ function
         Lr::Matrix{Float64},
         newLr::Matrix{Float64},
         alpha::Vector{Float64},
-        Nv::Vector{Vector{Int}}
+        Nv::Vector{Vector{Int}},
+        mode2::Bool
     )
     
     @inbounds for ci in eachindex(Nc)
@@ -57,7 +59,7 @@ function
         end
     end
     @inbounds for vj in eachindex(Nv)
-        alpha[vj] = _calc_all_residues_VN(newLr,vj,Nv[vj])
+        alpha[vj] = _calc_all_residues_VN(newLr,vj,Nv[vj],mode2)
     end
 end
 
@@ -65,12 +67,20 @@ function
     _calc_all_residues_VN(
         newLr::Matrix{Float64},
         vj::Int,
-        Nvj::Vector{Int}
+        Nvj::Vector{Int},
+        mode2::Bool
     )
 
-    residue = 0.0
-    @inbounds @fastmath for ci in Nvj          
-        residue += newLr[ci,vj]
+    residue = 0.0   
+    @inbounds @fastmath for ci in Nvj
+        if mode2
+            aux = abs(newLr[ci,vj])
+            if  aux > residue
+                residue = aux
+            end
+        else         
+            residue += newLr[ci,vj]
+        end
     end
 
     return abs(residue)

@@ -6,7 +6,7 @@
 include("calc_residue.jl")
 
 function
-    calc_all_residues_NW!(
+    init_NW_RBP!(
         Lq::Matrix{Float64},
         Nc::Vector{Vector{Int}},
         aux::Vector{Float64},
@@ -35,7 +35,7 @@ end
 
 # RAW
 function
-    calc_all_residues_NW!(
+    init_NW_RBP!(
         Lq::Matrix{Float64},
         Nc::Vector{Vector{Int}},
         ::Nothing,

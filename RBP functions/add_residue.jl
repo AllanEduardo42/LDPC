@@ -55,22 +55,6 @@ function add_residue!(
     end
 end
 
-# RBP
-function add_residue!(
-    inlist::Matrix{Int},
-    residues::Vector{Float64},
-    ::Matrix{Int},
-    residue::Float64,
-    li::Int,
-    ::Int,
-    ::Int,
-    ::Int
-)
-
-    @inbounds residues[inlist[li]] = residue
-
-end
-
 # auxiliary function
 function update_inlist!(
     inlist::Matrix{Bool},

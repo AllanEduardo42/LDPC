@@ -3,11 +3,9 @@
 # 22 Feb 2024
 # Function to find the edge of the maximum residue
 
-# RBP
 function
     findmaxedge(
-        residues::Vector{<:AbstractFloat},
-        ::Nothing     
+        residues::Vector{<:AbstractFloat}  
     )
 
     max_edge = 0
@@ -20,17 +18,6 @@ function
         end
     end
 
-    return max_edge, maxresidue
-
-end
-
-# List-RBP
-function
-    findmaxedge(
-        residues::Vector{<:AbstractFloat},
-        ::Vector{<:AbstractFloat}   
-    )
-
-    @inbounds return 1, residues[1]
+    return max_edge
 
 end

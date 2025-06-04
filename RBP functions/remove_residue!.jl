@@ -24,17 +24,3 @@ function
         coords[3,i] = coords[3,i+1]
     end    
 end
-
-#RBP
-function 
-    remove_residue!(
-        ::Int,
-        ::Int,
-        residues::Vector{Float64},
-        ::Matrix{Int},
-        ::Matrix{Int},
-        max_edge::Int
-    )
-
-    @inbounds residues[max_edge] = 0.0
-end

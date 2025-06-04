@@ -18,8 +18,6 @@ function
 
     if bptype == "MKAY" && mode ≠ "Flooding"
         throw(error(lazy"The McKay method is only supported for Flooding"))
-    elseif bptype == "TANH" && mode == "List-RBP"
-        throw(error(lazy"The TANH method is not supported for List-RBP. Use the FAST, TABL or MSUM methods"))
     end
 
 ########################### PRINT SIMULATION DETAILS ###########################

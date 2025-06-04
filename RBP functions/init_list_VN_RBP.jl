@@ -1,8 +1,5 @@
-include("add_residue_VN.jl")
-
-
 function
-    calc_all_residues_list_VN!(
+    init_list_VN_RBP!(
         Lq::Matrix{Float64},
         Nc::Vector{Vector{Int}},
         aux::Vector{Float64},
@@ -29,7 +26,7 @@ function
             end
         end
         for vj in eachindex(Nv)
-            residue = _calc_all_residues_VN(newLr,vj,Nv[vj])
+            residue = _calc_all_residues_VN(newLr,vj,Nv[vj],false)
             add_residue_VN!(inlist,alpha,coords,residue,vj,listsizes[1])
         end
     end
