@@ -5,7 +5,7 @@ SNR = [1.2, 1,4, 1.6, 1.8]
 decays = [0.7, 0.8, 0.9, 1.0]
 lines = [:dashdot, :dot, :dash, :solid]
 FB = ["F","B"]
-maxiter = 10
+maxiter = 20
 
 plotlyjs()
 directory = "./Saved Data/RBP NR5G relative/"

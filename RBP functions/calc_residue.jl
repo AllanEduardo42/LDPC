@@ -52,7 +52,11 @@ function _calc_residue(
     @fastmath begin
         if relative
             rLd = oldlr + lq
-            residue /= rLd
+            if rLd ≠ 0.0
+                residue /= rLd
+            else
+                residue = INFFLOAT
+            end
         end
         return abs(residue)*factor
     end

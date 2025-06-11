@@ -62,8 +62,7 @@ function
                                 decay,
                                 LISTSIZES,
                                 RELATIVE,
-                                RGN_NOISE_SEEDS[i],
-                                RGN_MESSAGE_SEEDS[i],
+                                RGN_SEEDS[i],
                                 TEST,
                                 PRIN
                             )

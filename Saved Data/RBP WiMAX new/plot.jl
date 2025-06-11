@@ -9,7 +9,7 @@ FB = ["F","B"]
 maxiter = 10
 
 plotlyjs()
-directory = "./Saved Data/RBP WiMAX (all decays)/"
+directory = "./Saved Data/RBP WiMAX new/"
 lim = log10(1/maximum(1000*2^10))+1
 
 for j=1:2
@@ -26,7 +26,7 @@ for j=1:2
         labels = permutedims(labels)
         p = plot!(
             1:maxiter,
-            x,
+            log10.(x),
             xlabel="Iteration",
             label=labels,
             lw=2,

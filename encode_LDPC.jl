@@ -9,9 +9,9 @@ function
         cword::Vector{Bool},
         Cw::Matrix{Bool},
         W::Matrix{Bool},
-        sw::Vector{Bool},
         aux1::Vector{Bool},
-        circ_aux::Vector{Bool},
+        aux2::Vector{Bool},
+        aux3::Vector{Bool},
         K::Int,
         N::Int,
         E_H::Matrix{Int},
@@ -19,17 +19,17 @@ function
         eK::Int,
         eB::Int,
         S::Int,
-        LS::Int
+        Ls::Int
     )
 
-    calc_LDPC_BG_parity_bits!(Cw,W,sw,aux1,circ_aux,E_H,eM,eK,eB,LS)
+    calc_LDPC_BG_parity_bits!(Cw,W,aux1,aux2,aux3,E_H,eM,eK,eB,Ls)
 
     @inbounds begin
         for i in 1:K
             cword[i] = Cw[i]      # systematic bits
         end
         for i = K+1:N
-            cword[i] = Cw[S+i]    # parity bits 
+            cword[i] = Cw[S+i]    # parity bits (remove the filler bits)
         end
     end
 end
@@ -55,60 +55,63 @@ function
     calc_LDPC_BG_parity_bits!(
         Cw::Matrix{Bool},
         W::Matrix{Bool},
-        sw::Vector{Bool},
         aux1::Vector{Bool},
-        circ_aux::Vector{Bool},
+        aux2::Vector{Bool},
+        aux3::Vector{Bool},
         E_H::Matrix{Int},
         eM::Int,
         eK::Int,
         eB::Int,
-        LS::Int
-    )  
-
-    # for reusing the vectors sw and circ_aux
-    aux2 = sw
-    aux3 = circ_aux
+        Ls::Int
+    )
 
     @inbounds begin
     # W[:,i] = ⊻(circshift(Cw[:,j],-E_H[i,j])), 1 ≤ i ≤ eB, 1 ≤ j ≤ eK, if E_H[i,j]≠-1
-    # sw = ⊻(W[:,i]), 1 ≤ i ≤ eB
-        sw .= false
-        for i in 1:eB
-            aux1 .= false
-            for j in 1:eK   
-                if E_H[i,j] ≠ -1
-                    my_copyto!(circ_aux,Cw,LS,j)
-                    circshift!(circ_aux,-E_H[i,j])
-                    my_inplace_xor!(aux1,circ_aux,LS)
-                end
-            end
-            my_copyto!(W,LS,i,aux1)
-            my_inplace_xor!(sw,aux1,LS)
-        end
-
-    # Cw[:,eK+1] = ⊻(circshift(sw,E[i,eK+1])), 1 ≤ i ≤ eB, if E_H[i,J] ≠ -1
-        J = eK + 1
+    # aux3 = circshift(Cw[:,j],-E_H[i,j])
+    # aux2 = W[:,i] = ⊻(aux3)
+    # aux1 = ⊻(W[:,i]) = ⊻(aux2)
         aux1 .= false
         for i in 1:eB
+            aux2 .= false
+            for j in 1:eK   
+                if E_H[i,j] ≠ -1
+                    my_copyto!(aux3,Cw,Ls,j)
+                    circshift!(aux3,-E_H[i,j])
+                    my_inplace_xor!(aux2,aux3,Ls)
+                end
+            end
+            my_copyto!(W,Ls,i,aux2)
+            my_inplace_xor!(aux1,aux2,Ls)
+        end
+    
+    # Cw[:,eK+1] = ⊻(circshift(aux1,E[i,eK+1])), 1 ≤ i ≤ eB, if E_H[i,J] ≠ -1
+    # aux1 = ⊻(W[:,i]), 1 ≤ i ≤ eB
+    # aux3 = circshift(aux1,E[i,eK+1])
+    # aux2 = ⊻(aux3) = Cw[:,eK+1] 
+        J = eK + 1
+        aux2 .= false
+        for i in 1:eB
             if E_H[i,J] ≠ -1
-                copy!(circ_aux,sw)
-                circshift!(circ_aux,E_H[i,J])
-                my_inplace_xor!(aux1,circ_aux,LS)
+                copy!(aux3,aux1)
+                circshift!(aux3,E_H[i,J])
+                my_inplace_xor!(aux2,aux3,Ls)
             end
         end
-        my_copyto!(Cw,LS,J,aux1)   
-
+        my_copyto!(Cw,Ls,J,aux2)
 
     # Cw[:,eK+i] = circshift(Cw[:,eK+1],-E_H[i,eK+1]), 2 ≤ i ≤ eB, if E_H[i,J] ≠ -1
-        aux2 .= false   # now the vector sw can be reused as aux2
+    # aux2 = Cw[:,eK+i]
+    # aux3 = circshift(aux1,-E_H[i,eK+1])
+    # aux2 = zeros(Bool,Ls)
+        aux1 .= false
         for i in 2:eB
             Ji = eK + i 
             if E_H[i,J] ≠ -1
-                copy!(circ_aux,aux1)            # aux1 = Cw[:,eK+1]
-                circshift!(circ_aux,-E_H[i,J])
-                my_copyto!(Cw,LS,Ji,circ_aux)
+                copy!(aux3,aux2)            # aux2 = Cw[:,eK+1]
+                circshift!(aux3,-E_H[i,J])
+                my_copyto!(Cw,Ls,Ji,aux3)
             else
-                my_copyto!(Cw,LS,Ji,aux2)                
+                my_copyto!(Cw,Ls,Ji,aux1)                
             end
         end
 
@@ -116,21 +119,25 @@ function
         # Cw[:,eK +i] = Cw[:,eK +i] ⊻ W[:,i] ⊻ Cw[:,eK+i+1], 1 ≤ i ≤ E_B-1
         # Cw[:,eK+eB] = Cw[:,eK+eB] ⊻ W[:,eB]
         
-        JB = eK + eB
-        my_copyto!(aux3,Cw,LS,JB)       # we use the vector circ_shift here as aux3
-        my_copyto!(aux2,W,LS,eB)        # we use the vector sw here as aux2
-        my_inplace_xor!(aux3,aux2,LS)
-        my_copyto!(Cw,LS,JB,aux3)
+        # aux3 = Cw[:,eK+eB]
+        # aux2 = W[:,eB]
+        JB = eK + eB    
+        my_copyto!(aux2,W,Ls,eB) 
+        my_copyto!(aux3,Cw,Ls,JB)          
+        my_inplace_xor!(aux3,aux2,Ls)
+        my_copyto!(Cw,Ls,JB,aux3)
 
+        # for E_B-1 ≥ i ≥ 1  :
+        # aux3 = Cw[:,eK+i+1]
+        # aux2 = W[:,i]
+        # aux1 = Cw[:,eK+i]
         for i in eB-1:-1:2
             Ji = eK + i
-            my_copyto!(aux1,Cw,LS,Ji)
-            my_copyto!(aux2,W,LS,i)
-            for k in 1:LS
-                aux1[k] ⊻= aux2[k]
-                aux1[k] ⊻= aux3[k]      # aux3 = Cw[:,eK+i+1]
-            end
-            my_copyto!(Cw,LS,Ji,aux1)
+            my_copyto!(aux1,Cw,Ls,Ji)
+            my_copyto!(aux2,W,Ls,i)
+            my_inplace_xor!(aux1,aux2,Ls)
+            my_inplace_xor!(aux1,aux3,Ls)
+            my_copyto!(Cw,Ls,Ji,aux1)
             copy!(aux3,aux1)      
         end
 
@@ -140,12 +147,12 @@ function
                 Ji = eK+i
                 for j in 1:eK+eB
                     if E_H[i,j] ≠ -1
-                        my_copyto!(circ_aux,Cw,LS,j)
-                        circshift!(circ_aux,-E_H[i,j])
-                        my_inplace_xor!(aux1,circ_aux,LS)
+                        my_copyto!(aux3,Cw,Ls,j)
+                        circshift!(aux3,-E_H[i,j])
+                        my_inplace_xor!(aux1,aux3,Ls)
                     end
                 end
-                my_copyto!(Cw,LS,Ji,aux1)
+                my_copyto!(Cw,Ls,Ji,aux1)
             end
         end
     end

@@ -99,11 +99,9 @@ end
 
 ####################### GENERATE NOISE AND SAMPLE SEEDS ########################
 
-RGN_NOISE_SEEDS::Vector{Int} = zeros(Int,NTHREADS)
-RGN_MESSAGE_SEEDS::Vector{Int} = zeros(Int,NTHREADS)
-for i in eachindex(RGN_NOISE_SEEDS)
-    RGN_NOISE_SEEDS[i] = SEED_NOISE + i - 1
-    RGN_MESSAGE_SEEDS[i] = SEED_MESSA + 1 - 1
+RGN_SEEDS = zeros(Int,NTHREADS)
+for i in 1:NTHREADS
+    RGN_SEEDS[i] = SEED + i - 1
 end
 
 ################################## SIMULATION ##################################
@@ -114,13 +112,13 @@ if TEST
         if ACTIVE[i]
             if PROF
                 global PRIN = false
-                if TRIALS_TEST < 1000
-                    global TRIALS_TEST = 1000
-                end
-                if MAXITER_TEST < 20
-                    global MAXITER_TEST = 20
-                end
-                @profview _,_ = prepare_simulation(
+                # if TRIALS_TEST < 1000
+                #     global TRIALS_TEST = 1000
+                # end
+                # if MAXITER_TEST < 20
+                #     global MAXITER_TEST = 20
+                # end
+                _,_ = prepare_simulation(
                                                 [EbN0_TEST],
                                                 MODES[i],
                                                 [TRIALS_TEST],

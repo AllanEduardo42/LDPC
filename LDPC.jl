@@ -27,7 +27,6 @@ else
     SAVE = false
 end
 
-
 ################################## CONSTANTS ###################################
 
 const INF = typemax(Int64)
@@ -38,13 +37,12 @@ const TABLESIZE = 8192
 const TABLERANGE = 10
 const SIZE_PER_RANGE = TABLESIZE/TABLERANGE
 
-# Seeds
-SEED_NOISE::Int = 1428
-SEED_MESSA::Int = 1000
+# Random seed
+SEED::Int = 1234
 
 ################################ CONTROL FLAGS #################################
 
-TEST::Bool = true
+TEST::Bool = false
 PRIN::Bool = true
 PROF::Bool = false
 STOP::Bool = false # stop simulation at zero syndrome (if true, BER curves are
@@ -52,20 +50,21 @@ STOP::Bool = false # stop simulation at zero syndrome (if true, BER curves are
 
 ################################## PARAMETERS ##################################
 
-MAXITER::Int = 20
-# FACTORS = [0.7, 0.8, 0.9, 1.0]
+MAXITER::Int = 10
+FACTORS = [0.7, 0.8, 0.9, 1.0]
 # FACTORS = collect(0.1:0.1:1.0)
-FACTORS = [1.0]
-# EbN0 = [1.2, 1.4, 1.6, 1.8]
-EbN0 = [2.0]
-TRIALS = 10 .^(0:length(EbN0)-1)*2^12
-RELATIVE::Bool = false
+# FACTORS = [0.7]
+EbN0 = [1.2, 1.4, 1.6, 1.8]
+# EbN0 = [1.2]
+# TRIALS = 8 .^(0:length(EbN0)-1)*2^5
+TRIALS = [128, 1280, 12800, 128000]
+RELATIVE::Bool = true
 
 # TEST
-MAXITER_TEST::Int = 1
-EbN0_TEST::Float64 = 1.5
+MAXITER_TEST::Int = 20
+EbN0_TEST::Float64 = 1.2
 TRIALS_TEST::Int = 1
-DECAY_TEST::Float64 = 1.0
+DECAY_TEST::Float64 = 0.7
 
 ################################### SCHEDULE ###################################
 
@@ -87,8 +86,8 @@ end
 
 i = 1
 # Flooding
-ACTIVE[i] = 1
-BPTYPES[i] = "TABL"
+ACTIVE[i] = 0
+BPTYPES[i] = "FAST"
 MAXITERS[i] = MAXITER
 
 # LBP
@@ -106,28 +105,28 @@ DECAYS[i] = FACTORS
 
 # List-RBP
 i += 1
-ACTIVE[i] = 1
+ACTIVE[i] = 0
 BPTYPES[i] = "FAST"
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
 
 # NW-RBP
 i += 1
-ACTIVE[i] = 1
+ACTIVE[i] = 0
 BPTYPES[i] = "FAST"
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
 
 # Variable Node RBP
 i += 1
-ACTIVE[i] = 1
+ACTIVE[i] = 0
 BPTYPES[i] = "FAST"
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
 
 # Variable Node RBP ALT
 i += 1
-ACTIVE[i] = 1
+ACTIVE[i] = 0
 BPTYPES[i] = "FAST"
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
@@ -145,12 +144,12 @@ LISTSIZES[2] = 2
 
 ######################## CODE LENGTH, RATE AND PROTOCOL ########################
 
-# Message (Payload) size
-GG::Int = 576
+# Transmitted message length
+GG::Int = 2016
 # Effective Rate
 RR::Float64 = 1/2 - 16/GG  # WiMAX compatibility offset
 # LDPC protocol: NR5G = NR-LDPC (5G); PEG = PEG; WiMAX = IEEE80216e;
-PROTOCOL::String = "NR5G"
+PROTOCOL::String = "WiMAX"
     LAMBDA = [0.21, 0.25, 0.25, 0.29, 0]
     RO = [1.0, 0, 0, 0, 0, 0]
 
@@ -158,3 +157,7 @@ include("setup.jl")
 if !TEST
     include("plot_or_save.jl")
 end
+
+### WiMAX: N takes values in {576,672,768,864,960,1056,1152,1248,1344,1440,1536,
+                                     # 1632,1728,1824,1920,2016,2112,2208,2304}.    
+                  # R takes values in {"1/2","2/3A","2/3B","3/4A","3/4B","5/6"}.

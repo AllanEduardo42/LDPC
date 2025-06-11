@@ -87,7 +87,8 @@ else
                             label=labels,
                             lw=2,
                             title=title,
-                            ylims=(lim,0)
+                            ylims=(lim,0),
+                            size = (700,500)
                         )
                     end
                 end

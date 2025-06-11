@@ -33,3 +33,19 @@ function
     return syndrome
 end
     
+function 
+    iszerosyndrome(
+        bitvector::Vector{Bool},
+        Nc::Vector{Vector{Int}}
+    )
+
+    @inbounds for ci in eachindex(Nc)
+        syn_ci = _calc_syndrome(bitvector,Nc[ci])
+        if syn_ci
+            return false
+        end
+    end
+
+    return true
+
+end

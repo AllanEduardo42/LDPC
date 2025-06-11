@@ -2,18 +2,17 @@ using DelimitedFiles
 using Plots
 
 SNR = [1.2, 1,4, 1.6, 1.8]
-# decays = collect(0.1:0.1:1.0)
 decays = [0.7, 0.8, 0.9, 1.0]
-lines = [:dash,:solid,:dashdot,:dot,:dash,:solid,:dashdot,:dot,:dash,:solid,:dashdot,:dot]
+lines = [:dashdot, :dot, :dash, :solid]
 FB = ["F","B"]
-maxiter = 10
+maxiter = 20
 
 plotlyjs()
-directory = "./Saved Data/RBP WiMAX (all decays)/"
+directory = "./Saved Data/RBP NR5G new/"
 lim = log10(1/maximum(1000*2^10))+1
 
 for j=1:2
-    title = FB[j]*"ER RBP WiMAX"
+    title = FB[j]*"ER RBP new"
     p = plot()
     for i in eachindex(decays)
         sdecay = string(decays[i])
@@ -26,7 +25,7 @@ for j=1:2
         labels = permutedims(labels)
         p = plot!(
             1:maxiter,
-            x,
+            log10.(x),
             xlabel="Iteration",
             label=labels,
             lw=2,

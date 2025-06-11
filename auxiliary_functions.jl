@@ -39,17 +39,17 @@ function
         signal::Vector{Float64},
         cword::Vector{Bool},
         G::Int,
-        twoZc::Int,
+        twoLs::Int,
         σ::Float64,
-        rgn_noise::AbstractRNG,
+        rgn::AbstractRNG,
         ::Nothing
     )
 
-    @fastmath begin
-        randn!(rgn_noise,signal)    # put the noise in the vector 'signal'
+    @inbounds @fastmath begin
+        randn!(rgn,signal)    # put the noise in the vector 'signal'
         lmul!(σ,signal)             # multiply by the standard deviation
         for g in 1:G
-            aux = 2*cword[twoZc+g] - 1  
+            aux = 2*cword[twoLs+g] - 1  
             signal[g] += aux            # sum the modulated signal
         end
     end
@@ -61,17 +61,17 @@ function
         signal::Vector{Float64},
         cword::Vector{Bool},
         G::Int,
-        twoZc::Int,
+        twoLs::Int,
         σ::Float64,
         ::AbstractRNG,
         noisetest::Vector{Float64}
     )
 
-    @fastmath begin
+    @fastmath @fastmath begin
         copy!(signal,noisetest)
         lmul!(σ,signal)
         for g in 1:G
-            aux = 2*cword[twoZc+g] - 1
+            aux = 2*cword[twoLs+g] - 1
             signal[g] += aux
         end
     end
