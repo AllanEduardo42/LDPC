@@ -21,7 +21,7 @@ function
         signs::Union{Vector{Bool},Nothing},
         phi::Union{Vector{Float64},Nothing},
         decayfactor::Float64,
-        num_edges::Int,
+        num_steps::Int,
         newLr::Matrix{Float64},
         Factors::Matrix{Float64},
         coords::Matrix{Int},
@@ -30,18 +30,20 @@ function
         local_residues::Union{Vector{Float64},Nothing},
         local_coords::Union{Matrix{Int},Nothing},
         listsizes::Vector{Int},
-        relative::Bool,
         rbp_not_converged::Bool
     )
 
-    @fastmath @inbounds for e in 1:num_edges
+    count = 0
+
+    # @fastmath @inbounds for e in 1:num_edges
+    @fastmath @inbounds while count < num_steps
 
         # display("e = $e")
 
         # 1) Find largest residue  and coordenates
         if residues[1] == 0.0
             init_list_RBP!(Lq,Lr,Nc,aux,signs,phi,newLr,Factors,inlist,
-                                            residues,coords,listsizes,relative)
+                                            residues,coords,listsizes)
             if residues[1] == 0.0
                 rbp_not_converged = false
                 break
@@ -75,11 +77,12 @@ function
                 A, B, C, D = calc_ABCD!(aux,signs,phi,Lq,ci,Nci)
                 for vj in Nci
                     if vj ≠ vjmax
+                        count += 1
                         newlr = calc_Lr(A,B,C,D,vj,aux,signs,phi)
                         li = LinearIndices(Lr)[ci,vj]
                         newLr[li] = newlr                                              
                         residue = calc_residue(newlr,Lr[li],Factors[li],
-                                                        relative,Lq[li])
+                                                                false,Lq[li])
                         update_local_list!(residues,coords,local_residues,
                             local_coords,listsizes,inlist,li,ci,vj,residue)
                     end
@@ -115,7 +118,6 @@ function
         local_residues::Union{Vector{Float64},Nothing},
         local_coords::Union{Matrix{Int},Nothing},
         listsizes::Vector{Int},
-        relative::Bool,
         rbp_not_converged::Bool
     )
 
@@ -126,7 +128,7 @@ function
         # 1) Find largest residue  and coordenates
         if residues[1] == 0.0
             init_list_RBP!(Lq,Lr,Nc,nothing,nothing,nothing,newLr,Factors,inlist,
-                                            residues,coords,listsizes,relative)
+                                            residues,coords,listsizes)
             if residues[1] == 0.0
                 rbp_not_converged = false
                 break
@@ -156,7 +158,7 @@ function
                         li = LinearIndices(Lr)[ci,vj]
                         newLr[li] = newlr
                         residue = calc_residue_raw(newlr,Lr[li],Factors[li],
-                                                        relative,Lq[li])
+                                                        false,Lq[li])
                         update_local_list!(residues,coords,local_residues,
                             local_coords,listsizes,inlist,li,ci,vj,residue)
                     end

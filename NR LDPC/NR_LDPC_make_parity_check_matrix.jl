@@ -22,25 +22,27 @@ function
 
     I_matrix = Matrix(I(Zc))
 
-    @inbounds for i = 1:m
-        for j = 1:n 
-            row_range = Zc*(i-1)+1 : Zc*i
-            col_range = Zc*(j-1)+1 : Zc*j
-            if E_H[i,j] != -1
-                H[row_range,col_range] = circshift(I_matrix,-E_H[i,j])
-            end  
-        end   
+    @inbounds begin
+        for i = 1:m
+            for j = 1:n 
+                row_range = Zc*(i-1)+1 : Zc*i
+                col_range = Zc*(j-1)+1 : Zc*j
+                if E_H[i,j] != -1
+                    H[row_range,col_range] = circshift(I_matrix,-E_H[i,j])
+                end  
+            end   
+        end
+
+        # Puncturing 
+        H = H[1:end-P,1:end-P]
+        H = [H[:,1:K_prime] H[:,K+1:end]]
+
+        J1 = cld(K_prime,Zc)
+        J2 = K÷Zc
+
+        E_H = E_H[1:end-P_Zc,1:end-P_Zc]
+        E_H = [E_H[:,1:J1] E_H[:,J2+1:end]]
     end
-
-    # Puncturing 
-    H = H[1:end-P,1:end-P]
-    H = [H[:,1:K_prime] H[:,K+1:end]]
-
-    J1 = cld(K_prime,Zc)
-    J2 = K÷Zc
-
-    E_H = E_H[1:end-P_Zc,1:end-P_Zc]
-    E_H = [E_H[:,1:J1] E_H[:,J2+1:end]]
 
     return H, E_H
 

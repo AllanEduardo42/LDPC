@@ -17,9 +17,9 @@ function
             )
         )
     end
-    if R == 1/2 - 16/N
+    if R == 1/2
         rate = "1/2"
-    elseif R == 2/3 - 16/N
+    elseif R == 2/3
         if mode == "A"
             rate = "2/3A"
         elseif mode == "B"
@@ -31,7 +31,7 @@ function
             )
             )
         end
-    elseif R == 3/4 - 16/N
+    elseif R == 3/4
         if mode == "A"
             rate = "3/4A"
         elseif mode == "B"
@@ -43,7 +43,7 @@ function
             )
             )
         end
-    elseif R == 5/6 - 16/N
+    elseif R == 5/6
         rate = "5/6"
     else
         throw(

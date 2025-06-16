@@ -12,7 +12,7 @@ directory = "./Saved Data/RBP NR5G relative new/"
 lim = log10(1/maximum(1000*2^10))+1
 
 for j=1:2
-    title = FB[j]*"ER RBP new Relative"
+    title = FB[j]*"ER RBP NR5G relative new"
     p = plot()
     for i in eachindex(decays)
         sdecay = string(decays[i])

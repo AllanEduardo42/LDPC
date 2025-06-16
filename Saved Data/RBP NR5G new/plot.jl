@@ -1,18 +1,18 @@
 using DelimitedFiles
 using Plots
 
-SNR = [1.2, 1,4, 1.6, 1.8]
-decays = [0.7, 0.8, 0.9, 1.0]
-lines = [:dashdot, :dot, :dash, :solid]
+SNR = [1.8]
+decays = [1.0]
+lines = [:solid]
 FB = ["F","B"]
-maxiter = 20
+maxiter = 10
 
 plotlyjs()
 directory = "./Saved Data/RBP NR5G new/"
 lim = log10(1/maximum(1000*2^10))+1
 
 for j=1:2
-    title = FB[j]*"ER RBP new"
+    title = FB[j]*"ER RBP NR5G new"
     p = plot()
     for i in eachindex(decays)
         sdecay = string(decays[i])

@@ -20,8 +20,7 @@ function
         inlist::Union{Matrix{Int},Matrix{Bool}},
         residues::Vector{Float64},
         coords::Matrix{Int},
-        listsizes::Vector{Int},
-        relative::Bool
+        listsizes::Vector{Int}
     )
     
     @fastmath @inbounds for ci in eachindex(Nc)
@@ -31,7 +30,7 @@ function
             li = LinearIndices(newLr)[ci,vj]
             newlr = calc_Lr(A,B,C,D,vj,aux,signs,phi)
             newLr[li] = newlr
-            residue = calc_residue(newLr[li],Lr[li],Factors[li],relative,Lq[li])
+            residue = calc_residue(newLr[li],Lr[li],Factors[li],false,Lq[li])
             add_residue!(inlist,residues,coords,residue,li,ci,vj,listsizes[1])
         end
     end
@@ -51,8 +50,7 @@ function
         inlist::Union{Matrix{Int},Matrix{Bool}},
         residues::Vector{Float64},
         coords::Matrix{Int},
-        listsizes::Vector{Int},
-        relative::Bool
+        listsizes::Vector{Int}
     )
 
     @fastmath @inbounds for ci in eachindex(Nc)
@@ -61,7 +59,7 @@ function
             li = LinearIndices(newLr)[ci,vj]
             newlr = calc_Lr(Nci,ci,vj,Lq)
             newLr[li] = newlr
-            residue = calc_residue_raw(newLr[li],Lr[li],Factors[li],relative,Lq[li])
+            residue = calc_residue_raw(newLr[li],Lr[li],Factors[li],false,Lq[li])
             add_residue!(inlist,residues,coords,residue,li,ci,vj,listsizes[1])
         end
     end

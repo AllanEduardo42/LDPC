@@ -41,7 +41,9 @@ function
         N_L = 1,
     )::Tuple{Int,Int,Float64,Vector{Bool},Int,nr_ldpc_data}
 
-    A = get_TBS(G,R)
+    A = get_TBS(G*R)
+
+    R = A/G
 
     B, g_CRC = get_CRC_poly(A)   
 
@@ -94,7 +96,7 @@ function
     end
 
     # Parity bit puncturing size
-    P = N - G÷C - K + K_prime
+    P = N - G÷C - (K - K_prime)
 
     if show_nr_par
         display("A = $A")

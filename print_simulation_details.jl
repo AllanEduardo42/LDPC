@@ -38,10 +38,9 @@ function
     Number of threads (multithreading): $NTHREADS
     Eb/No (dB): $ebn0
     Stop at zero syndrome ? $STOP"""
-    if mode == "RBP" || mode == "List-RBP" || mode == "VN-RBP" ||
-       mode == "Genius-RBP" || mode == "NW-RBP"
+    if mode == "RBP" || mode == "RBP relative" || mode == "List-RBP" || 
+       mode == "VN-RBP" || mode == "Genius-RBP" || mode == "NW-RBP"
         str *= "\nRBP decaying factor: $decay"
-        str *= "\nRelative residues: $RELATIVE"
     end
     if mode == "List-RBP"
         str *= "\nList 1 size: $(LISTSIZES[1])\nList 2 size: $(LISTSIZES[2])"

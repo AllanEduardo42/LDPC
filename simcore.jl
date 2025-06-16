@@ -49,7 +49,6 @@ function
         stop::Bool,                     # "true" if routine stops at zero symdrome
         γ::Float64,                     # RBP decay factor
         listsizes::Vector{Int},         # sizes of the list for List-RBP mode
-        relative::Bool,                 # if "true", uses relative residues for RBP
         rgn_seed::Int,                  # random seed to generate noise and message
         test::Bool,                     # if "true", perform test mode
         printtest::Bool;                # if "true", print test mode results
@@ -65,6 +64,13 @@ function
     # 2*LS in NR5G (determines the number of initial punctured bits)
     # = 0 otherwise
     twoLs = 0
+
+    if mode == "RBP relative"
+        relative = true
+        mode = "RBP"
+    else
+        relative = false
+    end
 
     # protocol constants
     if protocol == "WiMAX" || protocol == "NR5G"
@@ -83,8 +89,15 @@ function
     # number of edges in the graph
     num_edges = sum(H)
 
+    dv = num_edges/N
+    dc = num_edges/M
+
+    num_steps = ceil(Int,num_edges*(dv-1)*(dc-1))
+
+    display(num_steps)
+
     # transform EbN0 in standard deviations
-    variance = exp10.(-ebn0/10) / (2*(R+16/G))
+    variance = exp10.(-ebn0/10) / (2*R)
     stdev = sqrt.(variance)
 
     # Set the random seeds
@@ -312,16 +325,17 @@ function
         # 9) init the RBP methods
         if mode == "RBP" || mode == "VN-RBP-ALT"
             init_RBP!(Lq,Lr,Nc,aux,signs,phi,newLr,Factors,indices,residues,
-                                                                       relative)
+                                                                    relative)
         elseif mode == "List-RBP"
-            init_list_RBP!(Lq,Lr,Nc,aux,signs,phi,newLr,Factors,inlist,
-                                        residues,coords,listsizes,relative)
+            init_list_RBP!(Lq,Lr,Nc,aux,signs,phi,newLr,Factors,inlist,residues,
+                                                            coords,listsizes)
         elseif mode == "NW-RBP"
             init_NW_RBP!(Lq,Nc,aux,signs,phi,newLr,alpha)
         elseif mode == "VN-RBP"
             init_VN_RBP!(Lq,Nc,aux,signs,phi,Lr,newLr,alpha,Nv,mode2)
         elseif mode == "List-VN-RBP"
-            init_list_VN_RBP!(Lq,Nc,aux,signs,phi,Lr,newLr,alpha,Nv,inlist,listsizes,coords)
+            init_list_VN_RBP!(Lq,Nc,aux,signs,phi,Lr,newLr,alpha,Nv,inlist,
+                                                            listsizes,coords)
         end
 
         if mode == "VN-RBP-ALT"
@@ -385,7 +399,7 @@ function
                     signs,
                     phi,
                     γ,
-                    num_edges,
+                    num_steps,
                     newLr,
                     Factors,
                     coords,
@@ -408,7 +422,7 @@ function
                     signs,
                     phi,
                     γ,
-                    num_edges,
+                    num_steps,
                     newLr,
                     Factors,
                     coords,
@@ -417,7 +431,6 @@ function
                     local_residues,
                     local_coords,
                     listsizes,
-                    relative,
                     rbp_not_converged
                 )
                 # reset factors
@@ -434,7 +447,7 @@ function
                     signs,
                     phi,
                     γ,
-                    M,
+                    num_steps,
                     newLr,
                     Factors,
                     alpha,
@@ -454,7 +467,7 @@ function
                     signs,
                     phi,
                     γ,
-                    num_edges,
+                    num_steps,
                     newLr,
                     Factors,
                     alpha,

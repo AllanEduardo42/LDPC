@@ -33,8 +33,7 @@ if PROTOCOL == "NR5G"
 else
     NN = GG
     AA = round(Int,GG*RR)
-    KK, g_CRC = get_CRC_poly(AA)
-    _, G_CRC = get_CRC_poly(AA)  
+    KK, G_CRC = get_CRC_poly(AA)  
     if PROTOCOL == "PEG"     
         LIFTSIZE = 0
         E_H = [0 0]

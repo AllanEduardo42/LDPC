@@ -9,11 +9,11 @@ FB = ["F","B"]
 maxiter = 10
 
 plotlyjs()
-directory = "./Saved Data/RBP IEEE relative (all decays)/"
+directory = "./Saved Data/RBP WiMAX relative (all decays)/"
 lim = log10(1/maximum(1000*2^10))+1
 
 for j=1:2
-    title = FB[j]*"ER RBP IEEE relative"
+    title = FB[j]*"ER RBP WiMAX relative"
     p = plot()
     for i in eachindex(decays)
         sdecay = string(decays[i])

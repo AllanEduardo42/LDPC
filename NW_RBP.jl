@@ -19,14 +19,16 @@ function
         signs::Union{Vector{Bool},Nothing},
         phi::Union{Vector{Float64},Nothing},
         decayfactor::Float64,
-        M::Int,
+        num_steps::Int,
         newLr::Matrix{Float64},
         Factors::Vector{Float64},
         alpha::Vector{Float64},
         bp_not_converged::Bool
     )
 
-    @fastmath @inbounds for m in 1:M
+    count = 0
+
+    @fastmath @inbounds while count < num_steps
 
         # display("m = $m")
 
@@ -65,15 +67,14 @@ function
                     # calculate alpha
                     maxresidue = 0.0
                     for vj in Nci
-                        # if vj ≠ vk
-                            newlr = calc_Lr(A,B,C,D,vj,aux,signs,phi)
-                            li = LinearIndices(Lr)[ci,vj]
-                            newLr[li] = newlr
-                            residue = abs(newlr - Lr[li])*Factors[ci]
-                            if residue > maxresidue
-                                maxresidue = residue
-                            end
-                        # end
+                        count += 1
+                        newlr = calc_Lr(A,B,C,D,vj,aux,signs,phi)
+                        li = LinearIndices(Lr)[ci,vj]
+                        newLr[li] = newlr
+                        residue = abs(newlr - Lr[li])*Factors[ci]
+                        if residue > maxresidue
+                            maxresidue = residue
+                        end
                     end
                     alpha[ci] = maxresidue
                 end
@@ -97,14 +98,16 @@ function
         ::Nothing,
         ::Nothing,
         decayfactor::Float64,
-        M::Int,
+        num_steps::Int,
         newLr::Matrix{Float64},
         Factors::Vector{Float64},
         alpha::Vector{Float64},
         bp_not_converged::Bool
     )
 
-    @fastmath @inbounds for m in 1:M
+    count = 0
+
+    @fastmath @inbounds while count < num_steps
 
         # display("m = $m")
 
@@ -135,15 +138,14 @@ function
                     Nci = Nc[ci]
                     maxresidue = 0.0
                     for vj in Nci
-                        # if vj ≠ vk
-                            newlr = calc_Lr(Nci,ci,vj,Lq)
-                            li = LinearIndices(Lr)[ci,vj]
-                            newLr[li] = newlr
-                            residue = calc_residue_VN_NW_raw(newlr,Lr[li],Factors[ci])
-                            if residue > maxresidue
-                                maxresidue = residue
-                            end
-                        # end
+                        count += 1
+                        newlr = calc_Lr(Nci,ci,vj,Lq)
+                        li = LinearIndices(Lr)[ci,vj]
+                        newLr[li] = newlr
+                        residue = calc_residue_VN_NW_raw(newlr,Lr[li],Factors[ci])
+                        if residue > maxresidue
+                            maxresidue = residue
+                        end
                     end
                     alpha[ci] = maxresidue
                 end

@@ -5,8 +5,7 @@
 
 function 
     get_TBS(
-        G::Int,
-        R::Float64
+        Ninfo::Float64
     )
 
     TBS = [  24,   32,   40,   48,   56,   64,   72,   80,   88,   96,  104,  112,  
@@ -18,8 +17,6 @@ function
            2024, 2088, 2152, 2216, 2280, 2408, 2472, 2536, 2600, 2664, 2728, 2792, 
            2856, 2976, 3104, 3240, 3368, 3496, 3624, 3752, 3824]
 
-    Ninfo = G*R
-
     if Ninfo ≤ 3824
         n = max(3,floor(Int,log2(Ninfo)) - 6)
         Ninfo_prime = max(24,2^n*(Ninfo ÷ (2^n)))
@@ -27,15 +24,15 @@ function
         A = TBS[idx]
     else
         n = floor(Int,log2(Ninfo-24)) - 5
-        Ninfo_prime = max(3840,2^n*round(Int,(Ninfo-24)\(2^n)))
+        Ninfo_prime = max(3840,2^n*round(Int,(Ninfo-24)/(2^n)))
         if R ≤ 0.25
             C = cld(Ninfo_prime + 24,3816)
         elseif Ninfo_prime > 8424
-            C = cld(Ninfo_prime + 24,3424)
+            C = cld(Ninfo_prime + 24,8424)
         else
             C = 1
         end
-        A = 8*C*cld(Ninfo_prime+24,8*C)-24
+        A = 8*C*cld(Ninfo_prime + 24,8*C) - 24
     end
 
     return A

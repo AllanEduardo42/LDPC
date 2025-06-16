@@ -36,8 +36,8 @@ function
     sum_decoded = Array{Int,3}(undef,maxiter,K,nthreads)
     sum_ber = Array{Int,3}(undef,maxiter,K,nthreads)
     for k in 1:K
-        # stats = @timed Threads.@threads for i in 1:nthreads
-        stats = @timed for i in 1:nthreads
+        stats = @timed Threads.@threads for i in 1:nthreads
+        # stats = @timed for i in 1:nthreads
             x, y, z, w = simcore(
                                 AA,
                                 KK,
@@ -61,7 +61,6 @@ function
                                 STOP,
                                 decay,
                                 LISTSIZES,
-                                RELATIVE,
                                 RGN_SEEDS[i],
                                 TEST,
                                 PRIN
