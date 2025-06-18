@@ -42,8 +42,8 @@ SEED::Int = 1111
 
 ################################ CONTROL FLAGS #################################
 
-TEST::Bool = true
-PRIN::Bool = false
+TEST::Bool = false
+PRIN::Bool = true
 PROF::Bool = false
 STOP::Bool = false # stop simulation at zero syndrome (if true, BER curves are
 # not printed)
@@ -51,16 +51,16 @@ STOP::Bool = false # stop simulation at zero syndrome (if true, BER curves are
 ################################## PARAMETERS ##################################
 
 MAXITER::Int = 50
-# FACTORS = [0.7, 0.8, 0.9, 1.0]
-# FACTORS = collect(0.1:0.1:1.0)
 FACTORS = [0.8, 0.9, 1.0]
-EbN0 = [1.25]
+# FACTORS = collect(0.1:0.1:1.0)
+# FACTORS = [1.0]
+EbN0 = [2.5]
 # EbN0 = [1.2]
 TRIALS = [256000]
 # TRIALS = [128, 1280, 12800, 128000]
 
 # TEST
-MAXITER_TEST::Int = 4
+MAXITER_TEST::Int = 1
 EbN0_TEST::Float64 = 1.5
 TRIALS_TEST::Int = 1
 DECAY_TEST::Float64 = 1.0
@@ -145,15 +145,15 @@ MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
 
 # List sizes (min values = 4 and 2)
-LISTSIZES[1] = 32
+LISTSIZES[1] = 16
 LISTSIZES[2] = 2
 
 ######################## CODE LENGTH, RATE AND PROTOCOL ########################
 
 # Transmitted message length
-GG::Int = 2064
+GG::Int = 576
 # Effective Rate
-RR::Float64 = 1/3                       # WiMAX compatibility offset
+RR::Float64 = 1/2                       # WiMAX compatibility offset
 # LDPC protocol: NR5G = NR-LDPC (5G); PEG = PEG; WiMAX = IEEE80216e;
 PROTOCOL::String = "NR5G"
     LAMBDA = [0.21, 0.25, 0.25, 0.29, 0]

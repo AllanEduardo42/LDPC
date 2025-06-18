@@ -19,19 +19,16 @@ function
         signs::Union{Vector{Bool},Nothing},
         phi::Union{Vector{Float64},Nothing},
         decayfactor::Float64,
-        num_steps::Int,
+        num_reps::Int,
         newLr::Matrix{Float64},
         Factors::Matrix{Float64},
         coords::Matrix{Int},
         indices::Matrix{Int},
         residues::Vector{Float64},
-        relative::Bool,
         rbp_not_converged::Bool
     )
 
-    count = 0 
-
-    @fastmath @inbounds while count < num_steps
+    @fastmath @inbounds for e in 1:num_reps
 
         # display("### e = $e")
         max_edge = findmaxedge(residues)
@@ -55,32 +52,26 @@ function
             # 4) set maximum residue to zero
             residues[indices[li]] = 0.0
         end
-        # alpha[vjmax] = 0.0
 
         # 5) Calculate Ld of vjmax and bitvector[vjmax]
         Ld = calc_Ld(vjmax,Nvjmax,Lf,Lr)
         bitvector[vjmax] = signbit(Ld)
 
         for ci in Nvjmax
-            if ci ≠ cimax
-                # 6) update Nv messages Lq[ci,vjmax]
-                li = LinearIndices(Lq)[ci,vjmax]
-                Lq[li] = Ld - Lr[li]
-                # 7) calculate residues
-                Nci = Nc[ci]
-                # display("Nci = $Nci")    
-                A, B, C, D = calc_ABCD!(aux,signs,phi,Lq,ci,Nci)
-                for vj in Nci
-                    # display("vj = $vj")
-                    if vj ≠ vjmax
-                        count += 1
-                        newlr = calc_Lr(A,B,C,D,vj,aux,signs,phi)
-                        li = LinearIndices(Lr)[ci,vj]
-                        newLr[li] = newlr                                              
-                        residue = calc_residue(newlr,Lr[li],Factors[li],
-                                                        relative,Lq[li])
-                        residues[indices[li]] = residue*Factors[li]
-                    end
+            # 6) update Nv messages Lq[ci,vjmax]
+            li = LinearIndices(Lq)[ci,vjmax]
+            Lq[li] = Ld - Lr[li]
+            # 7) calculate residues
+            Nci = Nc[ci] 
+            A, B, C, D = calc_ABCD!(aux,signs,phi,Lq,ci,Nci)
+            for vj in Nci
+                if vj ≠ vjmax
+                    newlr = calc_Lr(A,B,C,D,vj,aux,signs,phi)
+                    li = LinearIndices(Lr)[ci,vj]
+                    newLr[li] = newlr                                              
+                    residue = calc_residue(newlr,Lr[li],Factors[li],
+                                                    false,Lq[li])
+                    residues[indices[li]] = residue*Factors[li]
                 end
             end
         end

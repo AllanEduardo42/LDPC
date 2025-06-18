@@ -15,8 +15,7 @@ function
         Lr::Matrix{Float64},
         newLr::Matrix{Float64},
         alpha::Vector{Float64},
-        Nv::Vector{Vector{Int}},
-        mode2::Bool
+        Nv::Vector{Vector{Int}}
     )
     
     @inbounds for ci in eachindex(Nc)
@@ -30,7 +29,7 @@ function
         end
     end
     @inbounds for vj in eachindex(Nv)
-        alpha[vj] = _calc_all_residues_VN(newLr,vj,Nv[vj],mode2)
+        alpha[vj] = _calc_all_residues_VN(newLr,vj,Nv[vj])
     end
 end
 
@@ -45,8 +44,7 @@ function
         Lr::Matrix{Float64},
         newLr::Matrix{Float64},
         alpha::Vector{Float64},
-        Nv::Vector{Vector{Int}},
-        mode2::Bool
+        Nv::Vector{Vector{Int}}
     )
     
     @inbounds for ci in eachindex(Nc)
@@ -59,7 +57,7 @@ function
         end
     end
     @inbounds for vj in eachindex(Nv)
-        alpha[vj] = _calc_all_residues_VN(newLr,vj,Nv[vj],mode2)
+        alpha[vj] = _calc_all_residues_VN(newLr,vj,Nv[vj])
     end
 end
 
@@ -67,19 +65,14 @@ function
     _calc_all_residues_VN(
         newLr::Matrix{Float64},
         vj::Int,
-        Nvj::Vector{Int},
-        mode2::Bool
+        Nvj::Vector{Int}
     )
 
     residue = 0.0   
     @inbounds @fastmath for ci in Nvj
-        if mode2
-            aux = abs(newLr[ci,vj])
-            if  aux > residue
-                residue = aux
-            end
-        else         
-            residue += newLr[ci,vj]
+        aux = abs(newLr[ci,vj])
+        if  aux > residue
+            residue = aux
         end
     end
 

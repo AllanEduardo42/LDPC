@@ -18,17 +18,14 @@ function
         signs::Union{Vector{Bool},Nothing},
         phi::Union{Vector{Float64},Nothing},
         decayfactor::Float64,
-        num_steps::Int,
+        num_reps::Int,
         newLr::Matrix{Float64},
         Factors::Vector{Float64},
         alpha::Vector{Float64},
-        rbp_not_converged::Bool,
-        mode2::Bool
+        rbp_not_converged::Bool
     )
 
-    count = 0 
-
-    @fastmath @inbounds while count < num_steps
+    @fastmath @inbounds for e in 1:num_reps
 
         # display("e = $e")
 
@@ -58,18 +55,13 @@ function
             A, B, C, D = calc_ABCD!(aux,signs,phi,Lq,ci,Nci)
             for vj in Nci
                 if vj ≠ vjmax
-                    count += 1
                     newlr = calc_Lr(A,B,C,D,vj,aux,signs,phi)
                     li = LinearIndices(newLr)[ci,vj]
                     newLr[li] = newlr
                     residue = abs(newlr - Lr[li])*Factors[vj]
-                    if mode2
-                        if residue > alpha[vj]
-                            alpha[vj] = residue
-                        end
-                    else
+                    if residue > alpha[vj]
                         alpha[vj] = residue
-                    end            
+                    end
                 end
             end
         end
@@ -91,16 +83,14 @@ function
         ::Nothing,
         ::Nothing,
         decayfactor::Float64,
-        num_steps::Int,
+        num_reps::Int,
         newLr::Matrix{Float64},
         Factors::Vector{Float64},
         alpha::Vector{Float64},
         rbp_not_converged::Bool
     )
 
-    count = 0 
-
-    @fastmath @inbounds while count < num_steps
+    @fastmath @inbounds for e in 1:num_reps
 
         # display("e = $e")
 
@@ -125,7 +115,6 @@ function
             Nci = Nc[ci]
             for vj in Nci
                 if vj ≠ vjmax
-                    count += 1
                     newlr = calc_Lr(Nci,ci,vj,Lq)
                     li = LinearIndices(Lr)[ci,vj]
                     newLr[li] = newlr

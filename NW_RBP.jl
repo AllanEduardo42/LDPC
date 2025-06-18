@@ -19,16 +19,14 @@ function
         signs::Union{Vector{Bool},Nothing},
         phi::Union{Vector{Float64},Nothing},
         decayfactor::Float64,
-        num_steps::Int,
+        num_reps::Int,
         newLr::Matrix{Float64},
         Factors::Vector{Float64},
         alpha::Vector{Float64},
         bp_not_converged::Bool
     )
 
-    count = 0
-
-    @fastmath @inbounds while count < num_steps
+    @fastmath @inbounds for m in 1:num_reps
 
         # display("m = $m")
 
@@ -67,7 +65,6 @@ function
                     # calculate alpha
                     maxresidue = 0.0
                     for vj in Nci
-                        count += 1
                         newlr = calc_Lr(A,B,C,D,vj,aux,signs,phi)
                         li = LinearIndices(Lr)[ci,vj]
                         newLr[li] = newlr
@@ -98,16 +95,14 @@ function
         ::Nothing,
         ::Nothing,
         decayfactor::Float64,
-        num_steps::Int,
+        num_reps::Int,
         newLr::Matrix{Float64},
         Factors::Vector{Float64},
         alpha::Vector{Float64},
         bp_not_converged::Bool
     )
 
-    count = 0
-
-    @fastmath @inbounds while count < num_steps
+    @fastmath @inbounds for m in 1:num_reps
 
         # display("m = $m")
 
@@ -138,7 +133,6 @@ function
                     Nci = Nc[ci]
                     maxresidue = 0.0
                     for vj in Nci
-                        count += 1
                         newlr = calc_Lr(Nci,ci,vj,Lq)
                         li = LinearIndices(Lr)[ci,vj]
                         newLr[li] = newlr

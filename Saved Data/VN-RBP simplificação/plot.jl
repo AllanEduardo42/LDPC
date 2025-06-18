@@ -1,22 +1,21 @@
 using DelimitedFiles
 using Plots
 
-EbNo = [1.5]
-decays = [0.8, 0.9, 1.0]
-lines = [:dot,:dash,:solid]
+EbNo = [2.0]
+decays = [1.0]
+lines = [:solid]
 colors = [1, 2, 3, 4, 5, 6]
 FB = ["F","B"]
 maxiter = 50
-# index = [1,2,2,1,2]
 
-modes = ["Flooding","RBP","RBP relative", "List-RBP","NW-RBP","VN-RBP" ]
+modes = ["Flooding","RBP","VN-RBP","VN-RBP-ALT"]
 
 plotlyjs()
-directory = "./Saved Data/Testes 2064 1|2 1.5/"
+directory = "./Saved Data/VN-RBP simplificação/"
 lim = log10(1/maximum(1000*2^10))+1
 
 for j=1:2
-    title = FB[j]*"ER NR5G (N = 2064, R = 1/2, Eb/N0 = 1.5dB)"
+    title = FB[j]*"ER NR5G (N = 1056, R = 1/2, Eb/N0 = 2.0)"
     p = plot()
     for k in eachindex(modes)
         if modes[k] == "Flooding"
@@ -32,7 +31,7 @@ for j=1:2
             labels = Vector{String}()
             if modes[k] == "Flooding"
                 push!(labels,"Flooding")
-                line = lines[3]
+                line = lines[1]
             else
                 push!(labels,modes[k]*" "*sdecays[i])
                 line = lines[i]

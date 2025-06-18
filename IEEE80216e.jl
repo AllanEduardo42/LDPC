@@ -133,7 +133,7 @@ function
         for i = 1:base_M
             for j = 1:base_N
                 if E_H[i,j] != -1
-                    H[(i-1)*Zf+1 : i*Zf,(j-1)*Zf+1 : j*Zf] = circshift(I_matrix,(0,E_H[i,j]))
+                    H[(i-1)*Zf+1 : i*Zf,(j-1)*Zf+1 : j*Zf] = circshift(I_matrix,-E_H[i,j])
                 end
             end
         end

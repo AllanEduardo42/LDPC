@@ -17,36 +17,33 @@ function add_residue!(
 
     @fastmath @inbounds if residue > residues[listsize]
 
-        if listsize > 1
-            if residue ≥ residues[1]
-                i = 1
-            else
-                d = listsize >> 1
-                i = d
-                while d > 1
-                    d >>= 1
-                    if residue ≥ residues[i]
-                        i -= d
-                    else
-                        i += d
-                    end
-                end
-                if residue < residues[i]
-                    i += 1
-                end
-            end
-
-            update_inlist!(inlist,coords,li)
-
-            for j=listsize:-1:i+1
-                residues[j] = residues[j-1]
-                coords[1,j] = coords[1,j-1]
-                coords[2,j] = coords[2,j-1]
-                coords[3,j] = coords[3,j-1]
-            end
-        else
+        if residue ≥ residues[1]
             i = 1
+        else
+            d = listsize >> 1
+            i = d
+            while d > 1
+                d >>= 1
+                if residue ≥ residues[i]
+                    i -= d
+                else
+                    i += d
+                end
+            end
+            if residue < residues[i]
+                i += 1
+            end
         end
+
+        update_inlist!(inlist,coords,li)
+
+        for j=listsize:-1:i+1
+            residues[j] = residues[j-1]
+            coords[1,j] = coords[1,j-1]
+            coords[2,j] = coords[2,j-1]
+            coords[3,j] = coords[3,j-1]
+        end
+
 
         coords[1,i] = ci
         coords[2,i] = vj

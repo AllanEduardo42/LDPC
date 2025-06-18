@@ -19,7 +19,7 @@ function
         signs::Union{Vector{Bool},Nothing},
         phi::Union{Vector{Float64},Nothing},
         decayfactor::Float64,
-        num_steps::Int,
+        num_reps::Int,
         newLr::Matrix{Float64},
         Factors::Matrix{Float64},
         coords::Matrix{Int},
@@ -29,9 +29,7 @@ function
         rbp_not_converged::Bool
     )
 
-    count = 0
-
-    @fastmath @inbounds while count < num_steps
+    @fastmath @inbounds for e in 1:num_reps
 
         # display("e = $e")
 
@@ -70,7 +68,6 @@ function
                 A, B, C, D = calc_ABCD!(aux,signs,phi,Lq,ci,Nci)
                 for vj in Nci
                     if vj ≠ vjmax
-                        count += 1
                         newlr = calc_Lr(A,B,C,D,vj,aux,signs,phi)
                         li = LinearIndices(Lr)[ci,vj]
                         newLr[li] = newlr                                              
@@ -99,7 +96,7 @@ function
         ::Nothing,
         ::Nothing,
         decayfactor::Float64,
-        num_steps::Int,
+        num_reps::Int,
         newLr::Matrix{Float64},
         Factors::Matrix{Float64},
         coords::Matrix{Int},
@@ -109,9 +106,7 @@ function
         rbp_not_converged::Bool
     )
 
-    count = 0
-
-    @fastmath @inbounds while count < num_steps
+    @fastmath @inbounds for e in 1:num_reps
 
         # display("e = $e")
 
@@ -142,7 +137,6 @@ function
                 Nci = Nc[ci]
                 for vj in Nci
                     if vj ≠ vjmax
-                        count += 1
                         newlr = calc_Lr(Nci,ci,vj,Lq)
                         li = LinearIndices(Lr)[ci,vj]
                         newLr[li] = newlr

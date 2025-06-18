@@ -89,13 +89,6 @@ function
     # number of edges in the graph
     num_edges = sum(H)
 
-    dv = num_edges/N
-    dc = num_edges/M
-
-    num_steps = ceil(Int,num_edges*(dv-1)*(dc-1))
-
-    display(num_steps)
-
     # transform EbN0 in standard deviations
     variance = exp10.(-ebn0/10) / (2*R)
     stdev = sqrt.(variance)
@@ -228,18 +221,6 @@ function
         Factors = ones(N)
         coords = Vector{Int}(undef,listsizes[1]+1)
         inlist = zeros(Bool,N)
-        if listsizes[2] == 1
-            local_residues = Vector{Float64}(undef,listsizes[1]+1)
-            local_coords = Vector{Int}(undef,listsizes[1]+1)
-        else
-            local_residues = Vector{Float64}(undef,listsizes[2]+1)
-            local_coords = Vector{Int}(undef,listsizes[2]+1)
-        end
-    end
-
-    if mode == "VN-RBP-ALT"
-        alpha = Vector{Float64}(undef,N)
-        ci_alpha = Vector{Int}(undef,N)
     end
 
 ################################## MAIN LOOP ###################################
@@ -266,7 +247,7 @@ function
         if test
             _gf2_mat_mult!(syndrome,H,cword,M,N)
             if !iszero(syndrome)
-                println("ENCODING ERROR")
+                throw(error("encoding error"))
             end
         end
 
@@ -290,10 +271,15 @@ function
             coords .= 0
             local_residues .= 0.0
             local_coords .= 0
-            if mode == "List-RBP"
-                resetmatrix!(inlist,Nv,false)
-            end
+            resetmatrix!(inlist,Nv,false)
         end
+
+        if mode == "List-VN-RBP"
+            alpha .= 0.0
+            coords .= 0
+            inlist .= false
+        end
+            
 
         # 5) init the LLR priors
         calc_Lf!(Lf,twoLs,signal,variance)
@@ -332,26 +318,10 @@ function
         elseif mode == "NW-RBP"
             init_NW_RBP!(Lq,Nc,aux,signs,phi,newLr,alpha)
         elseif mode == "VN-RBP"
-            init_VN_RBP!(Lq,Nc,aux,signs,phi,Lr,newLr,alpha,Nv,mode2)
+            init_VN_RBP!(Lq,Nc,aux,signs,phi,Lr,newLr,alpha,Nv)
         elseif mode == "List-VN-RBP"
-            init_list_VN_RBP!(Lq,Nc,aux,signs,phi,Lr,newLr,alpha,Nv,inlist,
-                                                            listsizes,coords)
-        end
-
-        if mode == "VN-RBP-ALT"
-            for vj in 1:N
-                alp = 0.0
-                ci_alp = 0
-                for ci in Nv[vj]
-                    residue = residues[indices[ci,vj]] 
-                    if residue > alp
-                        alp = residue
-                        ci_alp = ci
-                    end
-                end
-                alpha[vj] = alp
-                ci_alpha[vj] = ci_alp
-            end
+            init_list_VN_RBP!(Lq,Nc,Nv,aux,signs,phi,newLr,Factors,inlist,
+                                            alpha,coords,listsizes[1])
         end
   
         # 10) BP routine
@@ -399,7 +369,7 @@ function
                     signs,
                     phi,
                     γ,
-                    num_steps,
+                    num_edges,
                     newLr,
                     Factors,
                     coords,
@@ -422,7 +392,7 @@ function
                     signs,
                     phi,
                     γ,
-                    num_steps,
+                    num_edges,
                     newLr,
                     Factors,
                     coords,
@@ -447,7 +417,7 @@ function
                     signs,
                     phi,
                     γ,
-                    num_steps,
+                    M,
                     newLr,
                     Factors,
                     alpha,
@@ -467,12 +437,11 @@ function
                     signs,
                     phi,
                     γ,
-                    num_steps,
+                    num_edges-N,
                     newLr,
                     Factors,
                     alpha,
-                    rbp_not_converged,
-                    mode2
+                    rbp_not_converged
                     )
                 # reset factors
                 Factors .= 1.0
@@ -488,17 +457,15 @@ function
                     signs,
                     phi,
                     γ,
-                    num_edges,
+                    num_edges-N,
                     newLr,
                     Factors,
                     alpha,
-                    rbp_not_converged,
+                    coords,
                     inlist,
-                    local_residues,
-                    local_coords,
-                    listsizes,
-                    coords
-                )
+                    listsizes[1],
+                    rbp_not_converged
+                    )
                 # reset factors
                 Factors .= 1.0
             elseif mode == "VN-RBP-ALT"
@@ -513,16 +480,13 @@ function
                     signs,
                     phi,
                     γ,
-                    num_edges,
+                    num_edges-N,
                     newLr,
                     Factors,
                     coords,
                     indices,
                     residues,
-                    relative,
-                    rbp_not_converged,
-                    alpha,
-                    ci_alpha
+                    rbp_not_converged
                     )
                 # reset factors
                 resetmatrix!(Factors,Nv,1.0)
