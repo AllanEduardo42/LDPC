@@ -56,7 +56,7 @@ FACTORS = [0.8, 0.9, 1.0]
 # FACTORS = [1.0]
 EbN0 = [2.5]
 # EbN0 = [1.2]
-TRIALS = [256000]
+TRIALS = [25600]
 # TRIALS = [128, 1280, 12800, 128000]
 
 # TEST
@@ -91,41 +91,41 @@ MAXITERS[i] = MAXITER
 
 # LBP
 i += 1
-ACTIVE[i] = 0
+ACTIVE[i] = 1
 BPTYPES[i] = "FAST"
 MAXITERS[i] = MAXITER
 
 # RBP
 i += 1
-ACTIVE[i] = 1
+ACTIVE[i] = 0
 BPTYPES[i] = "FAST"
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
 
 # RBP relative
 i += 1
-ACTIVE[i] = 1
+ACTIVE[i] = 0
 BPTYPES[i] = "FAST"
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
 
 # List-RBP
 i += 1
-ACTIVE[i] = 1
+ACTIVE[i] = 0
 BPTYPES[i] = "FAST"
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
 
 # NW-RBP
 i += 1
-ACTIVE[i] = 1
+ACTIVE[i] = 0
 BPTYPES[i] = "FAST"
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
 
 # Variable Node RBP
 i += 1
-ACTIVE[i] = 1
+ACTIVE[i] = 0
 BPTYPES[i] = "FAST"
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
@@ -151,7 +151,7 @@ LISTSIZES[2] = 2
 ######################## CODE LENGTH, RATE AND PROTOCOL ########################
 
 # Transmitted message length
-GG::Int = 576
+GG::Int = 512
 # Effective Rate
 RR::Float64 = 1/2                       # WiMAX compatibility offset
 # LDPC protocol: NR5G = NR-LDPC (5G); PEG = PEG; WiMAX = IEEE80216e;
