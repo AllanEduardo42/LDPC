@@ -65,7 +65,7 @@ STR =
 """############################### LDPC parameters ################################
 LDPC Protocol: """
 if PROTOCOL == "NR5G"
-    STR *= "NR-LDPC (5G), Zc = $(NR_LDPC_DATA.Zc)"
+    STR *= "NR-LDPC (5G), Zc = $(NR_LDPC_DATA.Zc), BG = $(NR_LDPC_DATA.bg)"
 elseif PROTOCOL == "PEG"
     STR *= "PEG"
 elseif PROTOCOL == "WiMAX"
@@ -83,6 +83,7 @@ STR = """
 
 Graph girth = $GIRTH
 Effective rate = $(round(RR,digits=3))
+Code length = $GG
 """
 println(STR)
 if SAVE

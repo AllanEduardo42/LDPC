@@ -11,11 +11,13 @@ include("flooding.jl")
 include("LBP.jl")
 include("RBP.jl")
 include("List_RBP.jl")
+include("SVNF.jl")
 include("VN_RBP.jl")
 include("VN_RBP_alt.jl")
 include("List_VN_RBP.jl")
 include("NW_RBP.jl")
 include("./RBP functions/init_RBP.jl")
+include("./RBP functions/init_SVNF.jl")
 include("./RBP functions/init_list_RBP.jl")
 include("./RBP functions/init_NW_RBP.jl")
 include("./RBP functions/init_VN_RBP.jl")
@@ -174,7 +176,10 @@ function
     phi = (bptype == "TABL") ? lookupTable() : nothing
 
     # RBP preallocations
-    if mode == "RBP" || mode == "VN-RBP-ALT"
+    if mode == "SVNF"
+        newLr = Matrix{Float64}(undef,M,N)
+        residues = Matrix{Float64}(undef,M,N)
+    elseif mode == "RBP" || mode == "VN-RBP-ALT"
         newLr = Matrix{Float64}(undef,M,N)
         Factors = Matrix{Float64}(undef,M,N)
         resetmatrix!(Factors,Nv,1.0)
@@ -298,10 +303,10 @@ function
             println("### Iteration #0 ###")
             calc_syndrome!(syndrome,bitvector,Nc)
             biterror .= (bitvector .≠ cword)
-            print_test("Bit error",biterror)   
-            println("Bit error rate: $(sum(biterror))/$N")
             print_test("Syndrome",syndrome)  
             println("Syndrome rate: $(sum(syndrome))/$M")
+            print_test("Bit error",biterror)   
+            println("Bit error rate: $(sum(biterror))/$N")            
             println()
         end
         
@@ -312,6 +317,8 @@ function
         if mode == "RBP" || mode == "VN-RBP-ALT"
             init_RBP!(Lq,Lr,Nc,aux,signs,phi,newLr,Factors,indices,residues,
                                                                     relative)
+        elseif mode == "SVNF"
+            init_SVNF!(Lq,Lr,Nc,aux,signs,phi,newLr,residues)
         elseif mode == "List-RBP"
             init_list_RBP!(Lq,Lr,Nc,aux,signs,phi,newLr,Factors,inlist,residues,
                                                             coords,listsizes)
@@ -405,6 +412,24 @@ function
                 )
                 # reset factors
                 resetmatrix!(Factors,Nv,1.0)
+            elseif mode == "SVNF"
+                rbp_not_converged = SVNF!(
+                    bitvector,
+                    Lq,
+                    Lr,
+                    Lf,
+                    Nc,
+                    Nv,
+                    aux,
+                    signs,
+                    phi,
+                    N,
+                    num_edges,
+                    newLr,
+                    residues,
+                    rbp_not_converged,
+                    twoLs
+                )
             elseif mode == "NW-RBP"
                 rbp_not_converged = NW_RBP!(
                     bitvector,

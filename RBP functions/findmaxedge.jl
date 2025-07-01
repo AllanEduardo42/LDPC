@@ -5,7 +5,7 @@
 
 function
     findmaxedge(
-        residues::Vector{<:AbstractFloat}  
+        residues::Vector{Float64}  
     )
 
     max_edge = 0
@@ -21,3 +21,33 @@ function
     return max_edge
 
 end
+
+function
+    findmaxedge_SVNF(
+        residues::Matrix{Float64},
+        vj::Integer,
+        Nvj::Vector{Int},
+        Nc::Vector{Vector{Int}}
+    )
+
+    cimax = 0
+    vjmax = 0
+    maxresidue = 0.0
+    @fastmath @inbounds for ca in Nvj
+        Nca = Nc[ca]
+        for vk in Nca
+            if vk ≠ vj
+                residue = residues[ca,vk]
+                if residue > maxresidue
+                    maxresidue = residue
+                    cimax = ca
+                    vjmax = vk
+                end
+            end
+        end
+    end
+    
+    return cimax, vjmax
+
+end
+
