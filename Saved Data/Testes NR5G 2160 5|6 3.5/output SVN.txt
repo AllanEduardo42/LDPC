@@ -1,0 +1,19 @@
+############################### LDPC parameters ################################
+LDPC Protocol: NR-LDPC (5G), Zc = 88, BG = 1
+Parity Check Matrix: 520 x 2336
+
+Graph girth = 6
+Effective rate = 0.833
+Code length = 2160
+
+############################# Starting simulation ##############################
+
+Number of trials: [256000]
+Message passing protocol: SVNF (using LLR-SPA calculated by fast tanh)
+Maximum number of iterations: 50
+Number of threads (multithreading): 32
+Eb/No (dB): [3.5]
+Stop at zero syndrome ? false
+
+Elapsed 609.5 seconds (0.03% gc time, 20.76% compilation time)
+The End!

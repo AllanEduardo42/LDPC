@@ -81,7 +81,12 @@ function
         pLr = 1.0
         for vb in Nci
             if vb ≠ vj
-                pLr *= tanh(0.5*Lq[ci,vb])
+                lq = Lq[ci,vb]
+                if lq == 0.0
+                    return 0.0
+                else
+                    pLr *= tanh(0.5*lq)
+                end
             end
         end
         return 2*atanh(pLr)

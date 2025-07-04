@@ -10,8 +10,8 @@ end
 plotlyjs()
 
 FB = ["F","B"]
-markers = [:none, :none, :circle, :rect, :utriangle, :diamond, :cross]
-modes = ["Flooding","LBP","RBP","RBP relative", "List-RBP","NW-RBP","VN-RBP"]
+markers = [:none, :none, :dtriangle, :circle, :rect, :utriangle, :diamond, :cross]
+modes = ["Flooding","LBP","SVNF","RBP","RBP relative", "List-RBP","NW-RBP","VN-RBP"]
 directory = "./Saved Data/Testes $protocol $N $(R[1])|$(R[2]) $EbNo/"
 liminf = log10(1/iters)+1
 limsup = 0.1
@@ -20,7 +20,7 @@ for j=1:2
     title = FB[j]*"ER $protocol (N = $N, R = $(R[1])/$(R[2]), Eb/N0 = $(EbNo)dB)"
     p = plot()
     for k in eachindex(modes)
-        if modes[k] == "Flooding" || modes[k] == "LBP"
+        if modes[k] == "Flooding" || modes[k] == "LBP" || modes[k] == "SVNF"
             sdecays = [""]
             pad = ""
         else
@@ -35,6 +35,8 @@ for j=1:2
                 push!(labels,"Flooding")
             elseif modes[k] == "LBP"
                 push!(labels,"LBP")
+                elseif modes[k] == "SVNF"
+                push!(labels,"SVNF")
             elseif modes[k] == "List-RBP"
                 push!(labels,modes[k]*" (16,2), d = "*sdecays[i])
             else
@@ -54,6 +56,7 @@ for j=1:2
                     1:maxiter,
                     log10.(x),
                     xlabel="Iteration",
+                    ylabel="log (FER)",
                     label=labels,
                     lw=2,
                     ls=line,

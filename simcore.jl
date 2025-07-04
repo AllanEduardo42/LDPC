@@ -9,6 +9,7 @@ include("calc_Lf.jl")
 include("calc_syndrome.jl")
 include("flooding.jl")
 include("LBP.jl")
+include("VN_LBP.jl")
 include("RBP.jl")
 include("List_RBP.jl")
 include("SVNF.jl")
@@ -364,6 +365,14 @@ function
                     aux,
                     signs,
                     phi)
+            elseif mode == "VN-LBP"
+                VN_LBP!(
+                    bitvector,
+                    Lq,
+                    Lr,
+                    Lf,
+                    Nc,
+                    Nv)
             elseif mode == "RBP"
                 rbp_not_converged = RBP!(
                     bitvector,
