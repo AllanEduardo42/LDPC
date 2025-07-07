@@ -17,33 +17,32 @@ function
     )
 
     pLr = 1.0
-    no_zeros = true
-    vj0 = 0
+    count_zeros = 0
+    vj_notzero = 0
     @fastmath @inbounds for vj in Nci
         lq = Lq[ci,vj]
         if lq == 0.0 # Lr[ci,vj] = 0 for vj ≠ vj0
-            if no_zeros == false # Lr[ci,vj0] = 0
-                vj0 = 0
+            if count_zeros == 1 # Lr[ci,vj0] = 0
+                count_zeros = 2
                 break
             end
-            no_zeros = false
-            vj0 = vj
-            aux[vj] = 1.0 # s.t. Lr[ci,vj0] = 2*atanh(pLr)
+            count_zeros = 1
+            vj_notzero = vj
         else
             aux[vj] = tanh(0.5*lq)
+            pLr *= aux[vj]
         end
-        pLr *= aux[vj]
     end
     
-    return pLr, no_zeros, vj0, nothing
+    return pLr, count_zeros, vj_notzero, nothing
 end
 
 function 
     calc_Lr(
-        pLr::Float64,       #A
-        no_zeros::Bool,     #B
-        vj0::Int,           #C
-        ::Nothing,          #D
+        pLr::Float64,           #A
+        count_zeros::Int,       #B
+        vj_notzero::Int,        #C
+        ::Nothing,              #D
         vj::Int,
         aux::Vector{Float64},
         ::Nothing,
@@ -51,7 +50,7 @@ function
     )
 
     @fastmath @inbounds begin
-        if no_zeros
+        if count_zeros == 0
             x = pLr/aux[vj]
             if abs(x) < 1 # controls divergent values of Lr
                 return 2*atanh(x)
@@ -60,7 +59,7 @@ function
             else
                 return NINFFLOAT
             end
-        elseif vj == vj0
+        elseif count_zeros == 1 && vj_notzero == vj
             return 2*atanh(pLr)
         else
             return 0.0

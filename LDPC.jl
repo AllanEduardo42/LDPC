@@ -42,7 +42,7 @@ SEED::Int = 1111
 
 ################################ CONTROL FLAGS #################################
 
-TEST::Bool = false
+TEST::Bool = true
 PRIN::Bool = true
 PROF::Bool = false
 STOP::Bool = false # stop simulation at zero syndrome (if true, BER curves are
