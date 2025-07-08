@@ -14,7 +14,6 @@ function
         Lf::Vector{Float64},
         Nc::Vector{Vector{Int}},
         Nv::Vector{Vector{Int}},
-        aux::Vector{Float64},
         signs::Union{Vector{Bool},Nothing},
         phi::Union{Vector{Float64},Nothing}
     )
@@ -22,9 +21,10 @@ function
     # Lr update
     @inbounds for ci in eachindex(Nc)
         Nci = Nc[ci]
-        A, B, C, D = calc_ABCD!(aux,signs,phi,Lq,ci,Nci)
+        A, B, C, D = calc_ABCD!(Lq,ci,Nci,signs,phi)
         for vj in Nci
-            Lr[ci,vj] = calc_Lr(A,B,C,D,vj,aux,signs,phi)
+            li = LinearIndices(Lr)[ci,vj]
+            Lr[li] = calc_Lr(A,B,C,D,vj,Lq[li],signs,phi)
         end
     end
 
@@ -35,7 +35,7 @@ function
         bitvector[vj] = signbit(Ld)
         for ci in Nvj
             li = LinearIndices(Lq)[ci,vj]
-            Lq[li] = Ld - Lr[li]
+            Lq[li] = tanh(0.5*(Ld - Lr[li]))
         end        
     end
 end

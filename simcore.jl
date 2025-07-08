@@ -332,7 +332,6 @@ function
                     Lf,
                     Nc,
                     Nv,
-                    aux,
                     signs,
                     phi)
             elseif mode == "LBP"
