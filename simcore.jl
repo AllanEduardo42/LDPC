@@ -184,20 +184,21 @@ function
         newLr = Matrix{Float64}(undef,M,N)
         Factors = Matrix{Float64}(undef,M,N)
         resetmatrix!(Factors,Nv,1.0)
-        residues = Vector{Float64}(undef,num_edges)
-        coords = Matrix{Int}(undef,3,num_edges)
-        indices = Matrix{Int}(undef,M,N)
-        e = 0
-        for ci in eachindex(Nc)
-            for vj in Nc[ci]
-                e += 1
-                coords[1,e] = ci
-                coords[2,e] = vj
-                li = LinearIndices(indices)[ci,vj]
-                coords[3,e] = li
-                indices[li] = e
-            end
-        end
+        residues = Matrix{Float64}(undef,M,N)
+        alpha = Vector{Float64}(undef,M)
+        # coords = Matrix{Int}(undef,3,num_edges)
+        # indices = Matrix{Int}(undef,M,N)
+        # e = 0
+        # for ci in eachindex(Nc)
+        #     for vj in Nc[ci]
+        #         e += 1
+        #         coords[1,e] = ci
+        #         coords[2,e] = vj
+        #         li = LinearIndices(indices)[ci,vj]
+        #         coords[3,e] = li
+        #         indices[li] = e
+        #     end
+        # end
     elseif mode == "List-RBP"
         newLr = Matrix{Float64}(undef,M,N)
         residues = Vector{Float64}(undef,listsizes[1]+1)
@@ -316,7 +317,7 @@ function
 
         # 9) init the RBP methods
         if mode == "RBP" || mode == "VN-RBP-ALT"
-            init_RBP!(Lq,Lr,Nc,aux,signs,phi,newLr,Factors,indices,residues,
+            init_RBP!(Lq,Lr,Nc,aux,signs,phi,newLr,Factors,alpha,residues,
                                                                     relative)
         elseif mode == "SVNF"
             init_SVNF!(Lq,Lr,Nc,aux,signs,phi,newLr,residues)
@@ -388,8 +389,7 @@ function
                     num_edges,
                     newLr,
                     Factors,
-                    coords,
-                    indices,
+                    alpha,
                     residues,
                     relative,
                     rbp_not_converged

@@ -5,20 +5,40 @@
 
 function
     findmaxedge(
-        residues::Vector{Float64}  
+        residues::Matrix{Float64},
+        alpha::Vector{Float64},
+        Nc::Vector{Vector{Int}},
     )
 
-    max_edge = 0
-    maxresidue = 0.0
-    @fastmath @inbounds for edge in eachindex(residues)
-        residue = residues[edge]
-        if residue > maxresidue
-            maxresidue = residue
-            max_edge = edge
+    @fastmath @inbounds begin
+        cimax = 0
+        maxalp = 0.0
+        for ci in eachindex(alpha)
+            alp = alpha[ci]
+            if alp > maxalp
+                maxalp = alp
+                cimax = ci
+            end
+        end
+        vjmax = 0
+        maxresidue = 0.0
+        if cimax != 0
+            maxresidue2 = 0.0
+            for vj in Nc[cimax]            
+                residue = residues[cimax,vj]
+                if residue > maxresidue
+                    maxresidue2 = maxresidue
+                    maxresidue = residue
+                    vjmax = vj
+                elseif residue > maxresidue2
+                    maxresidue2 = residue
+                end
+            end
+            alpha[cimax] = maxresidue2
         end
     end
 
-    return max_edge
+    return cimax, vjmax
 
 end
 

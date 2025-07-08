@@ -22,9 +22,8 @@ function
         num_reps::Int,
         newLr::Matrix{Float64},
         Factors::Matrix{Float64},
-        coords::Matrix{Int},
-        indices::Matrix{Int},
-        residues::Vector{Float64},
+        alpha::Vector{Float64},
+        residues::Matrix{Float64},
         relative::Bool,
         rbp_not_converged::Bool
     )
@@ -34,15 +33,13 @@ function
         # display("e = $e")
 
         # 1) Find largest residue  and coordenates
-        max_edge = findmaxedge(residues)
-        if max_edge == 0.0
+        cimax, vjmax = findmaxedge(residues,alpha,Nc)
+        if cimax == 0.0
             rbp_not_converged = false
             break # i.e., BP has converged
-        else
-            cimax = coords[1,max_edge]
-            vjmax = coords[2,max_edge]
-            limax = coords[3,max_edge]
         end
+
+        limax = LinearIndices(Lr)[cimax,vjmax]
 
         # 2) Decay the RBP factor corresponding to the maximum residue
         Factors[limax] *= decayfactor
@@ -51,7 +48,7 @@ function
         RBP_update_Lr!(limax,Lr,newLr,cimax,vjmax,Nc[cimax],Lq,aux,signs,phi)
 
         # 4) set maximum residue to zero
-        residues[max_edge] = 0.0
+        residues[limax] = 0.0            
 
         # 5) Calculate Ld of vjmax and bitvector[vjmax]
         Nvjmax = Nv[vjmax]
@@ -59,6 +56,7 @@ function
         bitvector[vjmax] = signbit(Ld)
 
         for ci in Nvjmax
+            alp = residues[ci,vjmax]
             if ci ≠ cimax
                 # 6) update Nv messages Lq[ci,vjmax]
                 li = LinearIndices(Lq)[ci,vjmax]
@@ -73,10 +71,14 @@ function
                         newLr[li] = newlr                                              
                         residue = calc_residue(newlr,Lr[li],Factors[li],
                                                         relative,Lq[li])
-                        residues[indices[li]] = residue
+                        residues[li] = residue
+                        if residue > alp
+                            alp = residue
+                        end
                     end
                 end
-            end
+                alpha[ci] = alp
+            end            
         end
     end
 
