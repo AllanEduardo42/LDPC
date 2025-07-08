@@ -54,7 +54,10 @@ function
                         newlr = calc_Lr(Nci,ci,vj,Lq)
                         li = LinearIndices(Lr)[ci,vj]
                         newLr[li] = newlr
-                        alpha[vj] = calc_residue_VN_NW_raw(newlr,Lr[li],Factors[vj])
+                        residue = calc_residue_VN_NW_raw(newlr,Lr[li],Factors[vj])
+                        if residue > alpha[vj]
+                            alpha[vj] = residue
+                        end
                     end
                 end
             end

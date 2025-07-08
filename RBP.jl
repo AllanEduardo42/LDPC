@@ -80,6 +80,7 @@ function
             Ld = calc_Ld(vj,Nv[vj],Lf,Lr)
             bitvector[vj] = signbit(Ld)
         end
+        
     else
 
         for e in 1:num_reps

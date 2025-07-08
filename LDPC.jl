@@ -42,7 +42,7 @@ SEED::Int = 1111
 
 ################################ CONTROL FLAGS #################################
 
-TEST::Bool = false
+TEST::Bool = true
 PRIN::Bool = true
 PROF::Bool = false
 STOP::Bool = false # stop simulation at zero syndrome (if true, BER curves are
@@ -54,7 +54,7 @@ MAXITER::Int = 50
 # FACTORS = [0.7, 0.8, 0.9, 1.0]
 # FACTORS = collect(0.1:0.1:1.0)
 FACTORS = [1.0]
-EbN0 = [2.75]
+EbN0 = [2.5]
 TRIALS = [256000]
 # TRIALS = [128, 1280, 12800, 128000]
 
@@ -102,7 +102,7 @@ MAXITERS[i] = MAXITER
 
 # RBP
 i += 1
-ACTIVE[i] = 0
+ACTIVE[i] = 1
 BPTYPES[i] = "FAST"
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
@@ -137,7 +137,7 @@ DECAYS[i] = FACTORS
 # VN-RBP
 i += 1
 ACTIVE[i] = 1
-BPTYPES[i] = "FAST"
+BPTYPES[i] = "RAW"
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
 
@@ -162,7 +162,7 @@ LISTSIZES[2] = 2
 ######################## CODE LENGTH, RATE AND PROTOCOL ########################
 
 # Transmitted message length
-GG::Int = 512
+GG::Int = 576
 # Effective Rate
 RR::Float64 = 1/2                       # WiMAX compatibility offset
 # LDPC protocol: NR5G = NR-LDPC (5G); PEG = PEG; WiMAX = IEEE80216e;
