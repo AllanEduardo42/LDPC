@@ -15,7 +15,7 @@ function
         ::Nothing,
     )
 
-    pLr = 1.0
+    pLq = 1.0
     count_zeros = 0
     vj_notzero = 0
     @fastmath @inbounds for vj in Nci
@@ -28,16 +28,16 @@ function
             count_zeros = 1
             vj_notzero = vj
         else
-            pLr *= lq
+            pLq *= lq
         end
     end
     
-    return pLr, count_zeros, vj_notzero, nothing
+    return pLq, count_zeros, vj_notzero, nothing
 end
 
 function 
     calc_Lr(
-        pLr::Float64,           #A
+        pLq::Float64,           #A
         count_zeros::Int,       #B
         vj_notzero::Int,        #C
         ::Nothing,              #D
@@ -49,7 +49,7 @@ function
 
     @fastmath @inbounds begin
         if count_zeros == 0
-            x = pLr/lq
+            x = pLq/lq
             if abs(x) < 1 # controls divergent values of Lr
                 return 2*atanh(x)
             elseif x > 0
@@ -58,7 +58,7 @@ function
                 return NINFFLOAT
             end
         elseif count_zeros == 1 && vj_notzero == vj
-            return 2*atanh(pLr)
+            return 2*atanh(pLq)
         else
             return 0.0
         end
@@ -75,18 +75,18 @@ function
     )
 
     @fastmath @inbounds begin
-        pLr = 1.0
+        pLq = 1.0
         for vb in Nci
             if vb ≠ vj
                 lq = Lq[ci,vb]
                 if lq == 0.0
                     return 0.0
                 else
-                    pLr *= tanh(0.5*lq)
+                    pLq *= tanh(0.5*lq)
                 end
             end
         end
-        return 2*atanh(pLr)
+        return 2*atanh(pLq)
     end
 end
 
@@ -94,12 +94,11 @@ end
 ################ ALTERNATIVE TO HYPERBOLIC TANGENT USING TABLE ################
 function 
     calc_ABCD!(
-        aux::Vector{Float64},
-        signs::Vector{Bool},
-        phi::Vector{Float64},
         Lq::Matrix{Float64},
         ci::Int,
         Nci::Vector{Int},
+        signs::Vector{Bool},
+        phi::Vector{Float64}
     )
 
     sLr = 0.0
@@ -108,9 +107,8 @@ function
         lq = Lq[ci,vj]
         sig = signbit(lq)
         s ⊻= sig
-        aux[vj] = ϕ(abs(lq),phi)
         signs[vj] = sig
-        sLr += aux[vj] 
+        sLr += ϕ(abs(lq),phi) 
     end
 
     return sLr, s, nothing, nothing
@@ -123,13 +121,13 @@ function
         ::Nothing,          #C
         ::Nothing,          #D
         vj::Int,
-        aux::Vector{Float64},
+        lq::Float64,
         signs::Vector{Bool},
         phi::Vector{Float64}
     )
 
     @fastmath @inbounds begin
-        x = abs(sLr - aux[vj])
+        x = abs(sLr - lq)
         y = signs[vj] ⊻ s
         return (1 - 2*y)*ϕ(x,phi)
     end
@@ -138,12 +136,11 @@ end
 ################################### MIN SUM ###################################
 function 
     calc_ABCD!(
-        ::Vector{Float64},
-        signs::Vector{Bool},
-        ::Nothing,
         Lq::Matrix{Float64},
         ci::Int,
-        Nci::Vector{Int}
+        Nci::Vector{Int},
+        signs::Vector{Bool},
+        ::Nothing
     )
 
     @fastmath @inbounds begin
@@ -177,7 +174,7 @@ function
         vjmin::Int,
         minL2::Float64,
         vj::Int,
-        ::Vector{Float64},
+        ::Float64,
         signs::Vector{Bool},
         ::Nothing
     )

@@ -27,6 +27,7 @@ include("update_Lq.jl")
 include("update_Lr.jl")
 include("NR LDPC/NR_LDPC_functions.jl")
 include("encode_LDPC.jl")
+include("tanhLq.jl")
 
 function
     simcore(
@@ -159,15 +160,17 @@ function
     Lq = (bptype != "MKAY") ? Matrix{Float64}(undef,M,N) : Array{Float64,3}(undef,M,N,2)
     Lr = (bptype != "MKAY") ? Matrix{Float64}(undef,M,N) : Array{Float64,3}(undef,M,N,2)
 
-    # Set variables aux and signs depending on the BP type (for dispatching)
-    if bptype == "FAST" || bptype == "MKAY"
-        signs = nothing
-    elseif bptype == "TABL" 
+    # Set variables signs depending on the BP type (for dispatching)
+    if bptype == "TABL" || bptype == "MSUM"
         signs = Vector{Bool}(undef,N)
-    elseif bptype == "MSUM"
-        signs = Vector{Bool}(undef,N)
-    else # bytype == TANH
+        raw = false
+    else
         signs = nothing
+        if bptype == "RAW"
+            raw = true
+        else
+            raw = false
+        end
     end
 
     phi = (bptype == "TABL") ? lookupTable() : nothing
@@ -294,20 +297,20 @@ function
         end
         
         # 8) init the Lq matrix
-        init_Lq!(Lq,Lf,Nv)
+        init_Lq!(Lq,Lf,Nv,signs,raw)
 
         # 9) init the RBP methods
         if mode == "RBP" || mode == "VN-RBP-ALT"
-            init_RBP!(Lq,Lr,Nc,signs,phi,newLr,Factors,alpha,Residues,relative)
+            init_RBP!(Lq,Lr,Nc,signs,phi,newLr,Factors,alpha,Residues,relative,raw)
         elseif mode == "SVNF"
-            init_SVNF!(Lq,Lr,Nc,aux,signs,phi,newLr,Residues)
+            init_SVNF!(Lq,Lr,Nc,signs,phi,newLr,Residues)
         elseif mode == "List-RBP"
-            init_list_RBP!(Lq,Lr,Nc,aux,signs,phi,newLr,Factors,inlist,Residues,
-                                                            coords,listsizes)
+            init_list_RBP!(Lq,Lr,Nc,signs,phi,newLr,Factors,inlist,Residues,
+                                                            coords,listsizes,raw)
         elseif mode == "NW-RBP"
-            init_NW_RBP!(Lq,Nc,aux,signs,phi,newLr,alpha)
+            init_NW_RBP!(Lq,Nc,signs,phi,newLr,alpha,raw)
         elseif mode == "VN-RBP"
-            init_VN_RBP!(Lq,Nc,aux,signs,phi,Lr,newLr,alpha,Nv)
+            init_VN_RBP!(Lq,Nc,signs,phi,newLr,alpha,Nv,raw)
         elseif mode == "List-VN-RBP"
             init_list_VN_RBP!(Lq,Nc,Nv,aux,signs,phi,newLr,Factors,inlist,
                                             alpha,coords,listsizes[1])
@@ -333,7 +336,8 @@ function
                     Nc,
                     Nv,
                     signs,
-                    phi)
+                    phi,
+                    raw)
             elseif mode == "LBP"
                 LBP!(
                     bitvector,
@@ -342,7 +346,6 @@ function
                     Lf,
                     Nc,
                     Nv,
-                    aux,
                     signs,
                     phi)
             elseif mode == "VN-LBP"
@@ -370,7 +373,8 @@ function
                     alpha,
                     Residues,
                     relative,
-                    rbp_not_converged
+                    rbp_not_converged,
+                    raw
                     )
                 # reset factors
                 resetmatrix!(Factors,Nv,1.0)
@@ -382,7 +386,6 @@ function
                     Lf,
                     Nc,
                     Nv,
-                    aux,
                     signs,
                     phi,
                     γ,
@@ -395,7 +398,8 @@ function
                     local_residues,
                     local_coords,
                     listsizes,
-                    rbp_not_converged
+                    rbp_not_converged,
+                    raw
                 )
                 # reset factors
                 resetmatrix!(Factors,Nv,1.0)
@@ -407,7 +411,6 @@ function
                     Lf,
                     Nc,
                     Nv,
-                    aux,
                     signs,
                     phi,
                     N,
@@ -425,7 +428,6 @@ function
                     Lf,
                     Nc,
                     Nv,
-                    aux,
                     signs,
                     phi,
                     γ,
@@ -433,7 +435,8 @@ function
                     newLr,
                     Factors,
                     alpha,
-                    rbp_not_converged
+                    rbp_not_converged,
+                    raw
                 )
                 # reset factors
                 Factors .= 1.0
@@ -445,7 +448,6 @@ function
                     Lf,
                     Nc,
                     Nv,
-                    aux,
                     signs,
                     phi,
                     γ,
@@ -453,7 +455,8 @@ function
                     newLr,
                     Factors,
                     alpha,
-                    rbp_not_converged
+                    rbp_not_converged,
+                    raw
                     )
                 # reset factors
                 Factors .= 1.0

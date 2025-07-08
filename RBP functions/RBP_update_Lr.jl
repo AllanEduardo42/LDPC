@@ -45,7 +45,7 @@ function
                 if lq == 0.0
                     return 0.0
                 else
-                    pLr *= tanh(0.5*lq)
+                    pLr *= lq
                 end
             end
         end    

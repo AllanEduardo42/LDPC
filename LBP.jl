@@ -15,7 +15,6 @@ function
         Lf::Vector{Float64},
         Nc::Vector{Vector{Int}},
         Nv::Vector{Vector{Int}},
-        aux::Vector{Float64},
         signs::Union{Vector{Bool},Nothing},
         phi::Union{Vector{Float64},Nothing}
     )
@@ -25,14 +24,17 @@ function
         Nci = Nc[ci]     
         for vj in Nci # for every vj in Neighborhood(ci)
             Ld = calc_Ld(vj,Nv[vj],Lf,Lr)
-            Lq[ci,vj] = Ld - Lr[ci,vj]
+            Lq[ci,vj] = tanhLq(Ld - Lr[ci,vj],signs)
         end
         # Lr updates
-        A, B, C, D = calc_ABCD!(aux,signs,phi,Lq,ci,Nci)
+        A, B, C, D = calc_ABCD!(Lq,ci,Nci,signs,phi)
         for vj in Nci
             li = LinearIndices(Lr)[ci,vj]
-            Lr[li] = calc_Lr(A,B,C,D,vj,aux,signs,phi)
-            bitvector[vj] = signbit(Lr[li] + Lq[li])
+            Lr[li] = calc_Lr(A,B,C,D,vj,Lq[li],signs,phi)
         end
+    end
+    for vj in eachindex(Nv)
+        Ld = calc_Ld(vj,Nv[vj],Lf,Lr)
+        bitvector[vj] = signbit(Ld)
     end
 end

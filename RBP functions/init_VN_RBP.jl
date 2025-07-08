@@ -9,23 +9,32 @@ function
     init_VN_RBP!(
         Lq::Matrix{Float64},
         Nc::Vector{Vector{Int}},
-        aux::Vector{Float64},
         signs::Union{Vector{Bool},Nothing},
         phi::Union{Vector{Float64},Nothing},
-        Lr::Matrix{Float64},
         newLr::Matrix{Float64},
         alpha::Vector{Float64},
-        Nv::Vector{Vector{Int}}
+        Nv::Vector{Vector{Int}},
+        raw::Bool
     )
-    
-    @inbounds for ci in eachindex(Nc)
-        Nci = Nc[ci]
-        A, B, C, D = calc_ABCD!(aux,signs,phi,Lq,ci,Nci)
-        for vj in Nci
-            li = LinearIndices(Lr)[ci,vj]
-            newlr = calc_Lr(A,B,C,D,vj,aux,signs,phi)
-            newLr[li] = newlr
-            # Lr[li] = newlr
+
+    @inbounds if raw
+        for ci in eachindex(Nc)
+            Nci = Nc[ci]
+            for vj in Nci
+                li = LinearIndices(newLr)[ci,vj]
+                newlr = calc_Lr(Nci,ci,vj,Lq)
+                newLr[li] = newlr
+            end
+        end
+    else    
+        for ci in eachindex(Nc)
+            Nci = Nc[ci]
+            A, B, C, D = calc_ABCD!(Lq,ci,Nci,signs,phi)
+            for vj in Nci
+                li = LinearIndices(newLr)[ci,vj]
+                newlr = calc_Lr(A,B,C,D,vj,Lq[li],signs,phi)
+                newLr[li] = newlr
+            end
         end
     end
     @inbounds for vj in eachindex(Nv)

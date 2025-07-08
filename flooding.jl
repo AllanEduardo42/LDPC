@@ -15,65 +15,53 @@ function
         Nc::Vector{Vector{Int}},
         Nv::Vector{Vector{Int}},
         signs::Union{Vector{Bool},Nothing},
-        phi::Union{Vector{Float64},Nothing}
+        phi::Union{Vector{Float64},Nothing},
+        raw::Bool
     )
 
-    # Lr update
-    @inbounds for ci in eachindex(Nc)
-        Nci = Nc[ci]
-        A, B, C, D = calc_ABCD!(Lq,ci,Nci,signs,phi)
-        for vj in Nci
-            li = LinearIndices(Lr)[ci,vj]
-            Lr[li] = calc_Lr(A,B,C,D,vj,Lq[li],signs,phi)
+    if raw
+        # Lr update
+        @inbounds for ci in eachindex(Nc)
+            Nci = Nc[ci]
+            for vj in Nci
+                Lr[ci,vj] = calc_Lr(Nci,ci,vj,Lq)
+            end
         end
-    end
 
-    # Lq update
-    @fastmath @inbounds for vj in eachindex(Nv)
-        Nvj = Nv[vj]
-        Ld = calc_Ld(vj,Nvj,Lf,Lr)
-        bitvector[vj] = signbit(Ld)
-        for ci in Nvj
+        # Lq update
+        ci = 0
+        @fastmath @inbounds for vj in eachindex(Nv)
+            Nvj = Nv[vj]
+            for outer ci in Nvj
+                Lq[ci,vj] = calc_Lq(Nvj,ci,vj,Lr,Lf)
+            end
+            # get the last ci of the loop iteration to calc Ld
             li = LinearIndices(Lq)[ci,vj]
-            Lq[li] = tanh(0.5*(Ld - Lr[li]))
-        end        
-    end
-end
+            Ld = Lq[li] + Lr[li]
+            bitvector[vj] = signbit(Ld)
+        end   
+    else
+        # Lr update
+        @inbounds for ci in eachindex(Nc)
+            Nci = Nc[ci]
+            A, B, C, D = calc_ABCD!(Lq,ci,Nci,signs,phi)
+            for vj in Nci
+                li = LinearIndices(Lr)[ci,vj]
+                Lr[li] = calc_Lr(A,B,C,D,vj,Lq[li],signs,phi)
+            end
+        end
 
-# TANH
-function
-    flooding!(
-        bitvector::Vector{Bool},
-        Lq::Matrix{Float64},
-        Lr::Matrix{Float64},
-        Lf::Vector{Float64},
-        Nc::Vector{Vector{Int}},
-        Nv::Vector{Vector{Int}},
-        ::Nothing,
-        ::Nothing,
-        ::Nothing
-    )
-
-    # Lr update
-    @inbounds for ci in eachindex(Nc)
-        Nci = Nc[ci]
-        for vj in Nci
-            Lr[ci,vj] = calc_Lr(Nci,ci,vj,Lq)
+        # Lq update
+        @fastmath @inbounds for vj in eachindex(Nv)
+            Nvj = Nv[vj]
+            Ld = calc_Ld(vj,Nvj,Lf,Lr)
+            bitvector[vj] = signbit(Ld)
+            for ci in Nvj
+                li = LinearIndices(Lq)[ci,vj]
+                Lq[li] = tanhLq(Ld - Lr[li],signs)
+            end        
         end
     end
-
-    # Lq update
-    ci = 0
-    @fastmath @inbounds for vj in eachindex(Nv)
-        Nvj = Nv[vj]
-        for outer ci in Nvj
-            Lq[ci,vj] = calc_Lq(Nvj,ci,vj,Lr,Lf)
-        end
-        # get the last ci of the loop iteration to calc Ld
-        li = LinearIndices(Lq)[ci,vj]
-        Ld = Lq[li] + Lr[li]
-        bitvector[vj] = signbit(Ld)
-    end    
 end
 
 ### if mode == "MKAY"

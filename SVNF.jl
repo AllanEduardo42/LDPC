@@ -11,7 +11,6 @@ function
         Lf::Vector{Float64},
         Nc::Vector{Vector{Int}},
         Nv::Vector{Vector{Int}},
-        aux::Vector{Float64},
         signs::Union{Vector{Bool},Nothing},
         phi::Union{Vector{Float64},Nothing},
         N::Int,
@@ -48,7 +47,7 @@ function
                 # 3) update check to node message Lr[cimax,vjmax]
                 Ncimax = Nc[cimax]
                 limax = LinearIndices(Lr)[cimax,vjmax]
-                RBP_update_Lr!(limax,Lr,newLr,cimax,vjmax,Ncimax,Lq,aux,signs,phi)
+                RBP_update_Lr!(limax,Lr,newLr,cimax,vjmax,Ncimax,Lq,signs,phi)
                 count += 1
 
                 # 4) set maximum residue to zero
@@ -63,14 +62,14 @@ function
                     if ci ≠ cimax
                         # 6) update Nv messages Lq[ci,vjmax]
                         li = LinearIndices(Lq)[ci,vjmax]
-                        Lq[li] = Ld - Lr[li]
+                        Lq[li] = tanhLq(Ld - Lr[li],signs)
                         # 7) calculate residues
                         Nci = Nc[ci]    
-                        A, B, C, D = calc_ABCD!(aux,signs,phi,Lq,ci,Nci)
+                        A, B, C, D = calc_ABCD!(Lq,ci,Nci,signs,phi)
                         for vj in Nci
                             if vj ≠ vjmax
-                                newlr = calc_Lr(A,B,C,D,vj,aux,signs,phi)
                                 li = LinearIndices(Lr)[ci,vj]
+                                newlr = calc_Lr(A,B,C,D,vj,Lq[li],signs,phi)
                                 newLr[li] = newlr
                                 residues[li] = abs(newlr - Lr[li])
                             end

@@ -7,13 +7,19 @@ function
     init_Lq!(
         Lq::Matrix{Float64},
         Lf::Vector{Float64},
-        Nv::Vector{Vector{Int}}
+        Nv::Vector{Vector{Int}},
+        signs::Union{Vector{Bool},Nothing},
+        raw::Bool
     )
     
     @inbounds for vj in eachindex(Nv)
         aux = Lf[vj]
         for ci in Nv[vj]
-            Lq[ci,vj] = tanh(0.5*aux)
+            if raw
+                Lq[ci,vj] = aux
+            else
+                Lq[ci,vj] = tanhLq(aux,signs)
+            end
         end
     end
 end

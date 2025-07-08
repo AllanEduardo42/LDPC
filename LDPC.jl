@@ -71,7 +71,7 @@ NUM_MODES = length(MODES)
 ACTIVE = zeros(Bool,NUM_MODES)
 LISTSIZES = zeros(Int,4)
 
-# BP type: "MKAY", "TANH", "FAST", "TABL", "MSUM"
+# BP type: "MKAY", "RAW", "FAST", "TABL", "MSUM"
 BPTYPES = Vector{String}(undef,NUM_MODES)
 
 # maximum number of BP iterations
@@ -84,7 +84,7 @@ end
 
 i = 1
 # Flooding
-ACTIVE[i] = 1
+ACTIVE[i] = 0
 BPTYPES[i] = "FAST"
 MAXITERS[i] = MAXITER
 
@@ -136,7 +136,7 @@ DECAYS[i] = FACTORS
 
 # VN-RBP
 i += 1
-ACTIVE[i] = 0
+ACTIVE[i] = 1
 BPTYPES[i] = "FAST"
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
