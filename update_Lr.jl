@@ -29,8 +29,8 @@ function
             count_zeros = 1
             vj_notzero = vj
         else
-            aux[vj] = tanh(0.5*lq)
-            pLr *= aux[vj]
+            aux[vj] = lq
+            pLr *= lq
         end
     end
     

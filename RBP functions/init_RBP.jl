@@ -1,7 +1,7 @@
 ################################################################################
 # Allan Eduardo Feitosa
 # 3 Mar 2025
-# Calculate all residues
+# Calculate all Residues
 
 include("calc_residue.jl")
 
@@ -17,7 +17,7 @@ function
         newLr::Matrix{Float64},
         Factors::Matrix{Float64},        
         alpha::Vector{Float64},
-        residues::Matrix{Float64},
+        Residues::Matrix{Float64},
         relative::Bool
     )
     
@@ -30,7 +30,7 @@ function
             newlr = calc_Lr(A,B,C,D,vj,aux,signs,phi)
             newLr[li] = newlr
             residue = calc_residue(newLr[li],Lr[li],Factors[li],relative,Lq[li])
-            residues[li] = residue
+            Residues[li] = residue
             if residue > alp
                 alp = residue
             end
@@ -51,7 +51,7 @@ function
         newLr::Matrix{Float64},
         Factors::Matrix{Float64},        
         indices::Union{Matrix{Int},Matrix{Bool}},
-        residues::Vector{Float64},
+        Residues::Vector{Float64},
         relative::Bool
     )
 
@@ -62,7 +62,7 @@ function
             newlr = calc_Lr(Nci,ci,vj,Lq)
             newLr[li] = newlr
             residue = calc_residue_raw(newLr[li],Lr[li],Factors[li],relative,Lq[li])
-            residues[indices[li]] = residue
+            Residues[indices[li]] = residue
         end
     end
 end

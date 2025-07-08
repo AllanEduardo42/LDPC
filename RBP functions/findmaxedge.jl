@@ -5,7 +5,7 @@
 
 function
     findmaxedge(
-        residues::Matrix{Float64},
+        Residues::Matrix{Float64},
         alpha::Vector{Float64},
         Nc::Vector{Vector{Int}},
     )
@@ -20,31 +20,31 @@ function
                 cimax = ci
             end
         end
-        vjmax = 0
-        maxresidue = 0.0
-        if cimax != 0
+        
+        if cimax == 0
+            return 0, 0
+        else
+            vjmax = 0
+            maxresidue = 0.0
             maxresidue2 = 0.0
             for vj in Nc[cimax]            
-                residue = residues[cimax,vj]
+                residue = Residues[cimax,vj]
                 if residue > maxresidue
-                    maxresidue2 = maxresidue
-                    maxresidue = residue
+                    maxresidue2, maxresidue = maxresidue, residue
                     vjmax = vj
                 elseif residue > maxresidue2
                     maxresidue2 = residue
                 end
             end
             alpha[cimax] = maxresidue2
+            return cimax, vjmax
         end
     end
-
-    return cimax, vjmax
-
 end
 
 function
     findmaxedge_SVNF(
-        residues::Matrix{Float64},
+        Residues::Matrix{Float64},
         vj::Integer,
         Nvj::Vector{Int},
         Nc::Vector{Vector{Int}}
@@ -57,7 +57,7 @@ function
         Nca = Nc[ca]
         for vk in Nca
             if vk ≠ vj
-                residue = residues[ca,vk]
+                residue = Residues[ca,vk]
                 if residue > maxresidue
                     maxresidue = residue
                     cimax = ca

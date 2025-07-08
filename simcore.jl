@@ -179,29 +179,16 @@ function
     # RBP preallocations
     if mode == "SVNF"
         newLr = Matrix{Float64}(undef,M,N)
-        residues = Matrix{Float64}(undef,M,N)
+        Residues = Matrix{Float64}(undef,M,N)
     elseif mode == "RBP" || mode == "VN-RBP-ALT"
         newLr = Matrix{Float64}(undef,M,N)
         Factors = Matrix{Float64}(undef,M,N)
         resetmatrix!(Factors,Nv,1.0)
-        residues = Matrix{Float64}(undef,M,N)
+        Residues = Matrix{Float64}(undef,M,N)
         alpha = Vector{Float64}(undef,M)
-        # coords = Matrix{Int}(undef,3,num_edges)
-        # indices = Matrix{Int}(undef,M,N)
-        # e = 0
-        # for ci in eachindex(Nc)
-        #     for vj in Nc[ci]
-        #         e += 1
-        #         coords[1,e] = ci
-        #         coords[2,e] = vj
-        #         li = LinearIndices(indices)[ci,vj]
-        #         coords[3,e] = li
-        #         indices[li] = e
-        #     end
-        # end
     elseif mode == "List-RBP"
         newLr = Matrix{Float64}(undef,M,N)
-        residues = Vector{Float64}(undef,listsizes[1]+1)
+        Residues = Vector{Float64}(undef,listsizes[1]+1)
         Factors = Matrix{Float64}(undef,M,N)
         resetmatrix!(Factors,Nv,1.0)
         coords = Matrix{Int}(undef,3,listsizes[1]+1)
@@ -258,7 +245,6 @@ function
             end
         end
 
-
         # 3) sum the noise to the modulated cword to produce the received signal
         received_signal!(signal,cword,G,twoLs,stdev,rgn,noisetest)
 
@@ -274,7 +260,7 @@ function
         decoded .= false
         resetmatrix!(Lr,Nv,0.0)
         if mode == "List-RBP"
-            residues .= 0.0
+            Residues .= 0.0
             coords .= 0
             local_residues .= 0.0
             local_coords .= 0
@@ -285,8 +271,7 @@ function
             alpha .= 0.0
             coords .= 0
             inlist .= false
-        end
-            
+        end            
 
         # 5) init the LLR priors
         calc_Lf!(Lf,twoLs,signal,variance)
@@ -317,12 +302,12 @@ function
 
         # 9) init the RBP methods
         if mode == "RBP" || mode == "VN-RBP-ALT"
-            init_RBP!(Lq,Lr,Nc,aux,signs,phi,newLr,Factors,alpha,residues,
+            init_RBP!(Lq,Lr,Nc,aux,signs,phi,newLr,Factors,alpha,Residues,
                                                                     relative)
         elseif mode == "SVNF"
-            init_SVNF!(Lq,Lr,Nc,aux,signs,phi,newLr,residues)
+            init_SVNF!(Lq,Lr,Nc,aux,signs,phi,newLr,Residues)
         elseif mode == "List-RBP"
-            init_list_RBP!(Lq,Lr,Nc,aux,signs,phi,newLr,Factors,inlist,residues,
+            init_list_RBP!(Lq,Lr,Nc,aux,signs,phi,newLr,Factors,inlist,Residues,
                                                             coords,listsizes)
         elseif mode == "NW-RBP"
             init_NW_RBP!(Lq,Nc,aux,signs,phi,newLr,alpha)
@@ -390,7 +375,7 @@ function
                     newLr,
                     Factors,
                     alpha,
-                    residues,
+                    Residues,
                     relative,
                     rbp_not_converged
                     )
@@ -413,7 +398,7 @@ function
                     Factors,
                     coords,
                     inlist,
-                    residues,
+                    Residues,
                     local_residues,
                     local_coords,
                     listsizes,
@@ -435,7 +420,7 @@ function
                     N,
                     num_edges,
                     newLr,
-                    residues,
+                    Residues,
                     rbp_not_converged,
                     twoLs
                 )
@@ -519,7 +504,7 @@ function
                     Factors,
                     coords,
                     indices,
-                    residues,
+                    Residues,
                     rbp_not_converged
                     )
                 # reset factors
@@ -567,7 +552,7 @@ function
             end
         end
 
-        # if all the residues are zero
+        # if all the Residues are zero
         if !rbp_not_converged
             for i = iter+1:maxiter
                 decoded[i] = decoded[iter]

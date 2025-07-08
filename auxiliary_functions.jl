@@ -13,7 +13,7 @@ function
     @inbounds for vj in eachindex(Nv)
         aux = Lf[vj]
         for ci in Nv[vj]
-            Lq[ci,vj] = aux
+            Lq[ci,vj] = tanh(0.5*aux)
         end
     end
 end

@@ -23,7 +23,7 @@ function
         newLr::Matrix{Float64},
         Factors::Matrix{Float64},
         alpha::Vector{Float64},
-        residues::Matrix{Float64},
+        Residues::Matrix{Float64},
         relative::Bool,
         rbp_not_converged::Bool
     )
@@ -33,7 +33,7 @@ function
         # display("e = $e")
 
         # 1) Find largest residue  and coordenates
-        cimax, vjmax = findmaxedge(residues,alpha,Nc)
+        cimax, vjmax = findmaxedge(Residues,alpha,Nc)
         if cimax == 0.0
             rbp_not_converged = false
             break # i.e., BP has converged
@@ -48,7 +48,7 @@ function
         RBP_update_Lr!(limax,Lr,newLr,cimax,vjmax,Nc[cimax],Lq,aux,signs,phi)
 
         # 4) set maximum residue to zero
-        residues[limax] = 0.0            
+        Residues[limax] = 0.0            
 
         # 5) Calculate Ld of vjmax and bitvector[vjmax]
         Nvjmax = Nv[vjmax]
@@ -56,11 +56,11 @@ function
         bitvector[vjmax] = signbit(Ld)
 
         for ci in Nvjmax
-            alp = residues[ci,vjmax]
+            alp = Residues[ci,vjmax]
             if ci ≠ cimax
                 # 6) update Nv messages Lq[ci,vjmax]
                 li = LinearIndices(Lq)[ci,vjmax]
-                Lq[li] = Ld - Lr[li]
+                Lq[li] = tanh(0.5*(Ld - Lr[li]))
                 # 7) calculate residues
                 Nci = Nc[ci]    
                 A, B, C, D = calc_ABCD!(aux,signs,phi,Lq,ci,Nci)
@@ -71,7 +71,7 @@ function
                         newLr[li] = newlr                                              
                         residue = calc_residue(newlr,Lr[li],Factors[li],
                                                         relative,Lq[li])
-                        residues[li] = residue
+                        Residues[li] = residue
                         if residue > alp
                             alp = residue
                         end
@@ -103,7 +103,7 @@ function
         Factors::Matrix{Float64},
         coords::Matrix{Int},
         indices::Matrix{<:Integer},
-        residues::Vector{Float64},
+        Residues::Vector{Float64},
         relative::Bool,
         rbp_not_converged::Bool
     )
@@ -113,7 +113,7 @@ function
         # display("e = $e")
 
         # 1) Find largest residue  and coordenates
-        max_edge = findmaxedge(residues)
+        max_edge = findmaxedge(Residues)
         if max_edge == 0.0
             rbp_not_converged = false
             break # i.e., BP has converged
@@ -128,14 +128,14 @@ function
         # 3) update check to node message Lr[cnmax,vnmax]
         Lr[limax] = newLr[limax]
         # 4) set maximum residue to zero
-        residues[max_edge] = 0.0
+        Residues[max_edge] = 0.0
 
         Nvjmax = Nv[vjmax]
         for ci in Nvjmax
             if ci ≠ cimax
                 # 5) update Nv messages Lq[ci,vnmax]
                 Lq[ci,vjmax] = calc_Lq(Nvjmax,ci,vjmax,Lr,Lf)
-                # 6) calculate residues
+                # 6) calculate Residues
                 Nci = Nc[ci]
                 for vj in Nci
                     if vj ≠ vjmax
@@ -144,7 +144,7 @@ function
                         newLr[li] = newlr
                         residue = calc_residue_raw(newlr,Lr[li],Factors[li],
                                                    relative,Lq[li])
-                        residues[indices[li]] = residue
+                        Residues[indices[li]] = residue
                     end
                 end
             end
