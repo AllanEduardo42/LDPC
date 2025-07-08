@@ -161,16 +161,12 @@ function
 
     # Set variables aux and signs depending on the BP type (for dispatching)
     if bptype == "FAST" || bptype == "MKAY"
-        aux = Vector{Float64}(undef,N)
         signs = nothing
     elseif bptype == "TABL" 
-        aux = Vector{Float64}(undef,N)
         signs = Vector{Bool}(undef,N)
     elseif bptype == "MSUM"
-        aux = Vector{Float64}(undef,N)
         signs = Vector{Bool}(undef,N)
     else # bytype == TANH
-        aux = nothing
         signs = nothing
     end
 
@@ -302,8 +298,7 @@ function
 
         # 9) init the RBP methods
         if mode == "RBP" || mode == "VN-RBP-ALT"
-            init_RBP!(Lq,Lr,Nc,aux,signs,phi,newLr,Factors,alpha,Residues,
-                                                                    relative)
+            init_RBP!(Lq,Lr,Nc,signs,phi,newLr,Factors,alpha,Residues,relative)
         elseif mode == "SVNF"
             init_SVNF!(Lq,Lr,Nc,aux,signs,phi,newLr,Residues)
         elseif mode == "List-RBP"
@@ -367,7 +362,6 @@ function
                     Lf,
                     Nc,
                     Nv,
-                    aux,
                     signs,
                     phi,
                     γ,

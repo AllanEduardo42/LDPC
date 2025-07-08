@@ -15,7 +15,6 @@ function
         Lf::Vector{Float64},
         Nc::Vector{Vector{Int}},
         Nv::Vector{Vector{Int}},
-        aux::Vector{Float64},
         signs::Union{Vector{Bool},Nothing},
         phi::Union{Vector{Float64},Nothing},
         decayfactor::Float64,
@@ -45,7 +44,7 @@ function
         Factors[limax] *= decayfactor
 
         # 3) update check to node message Lr[cimax,vjmax]
-        RBP_update_Lr!(limax,Lr,newLr,cimax,vjmax,Nc[cimax],Lq,aux,signs,phi)
+        RBP_update_Lr!(limax,Lr,newLr,cimax,vjmax,Nc[cimax],Lq,signs,phi)
 
         # 4) set maximum residue to zero
         Residues[limax] = 0.0            
@@ -63,11 +62,11 @@ function
                 Lq[li] = tanh(0.5*(Ld - Lr[li]))
                 # 7) calculate residues
                 Nci = Nc[ci]    
-                A, B, C, D = calc_ABCD!(aux,signs,phi,Lq,ci,Nci)
+                A, B, C, D = calc_ABCD!(Lq,ci,Nci,signs,phi)
                 for vj in Nci
                     if vj ≠ vjmax
-                        newlr = calc_Lr(A,B,C,D,vj,aux,signs,phi)
                         li = LinearIndices(Lr)[ci,vj]
+                        newlr = calc_Lr(A,B,C,D,vj,Lq[li],signs,phi)                        
                         newLr[li] = newlr                                              
                         residue = calc_residue(newlr,Lr[li],Factors[li],
                                                         relative,Lq[li])

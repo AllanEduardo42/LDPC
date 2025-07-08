@@ -13,7 +13,6 @@ function
         ::Int,
         ::Vector{Int},
         ::Matrix{Float64},        
-        ::Vector{Float64},
         ::Union{Vector{Bool},Nothing},
         ::Union{Vector{Float64},Nothing}
     )
@@ -33,7 +32,6 @@ function
         vjmax::Int,
         Ncimax::Vector{Int},
         Lq::Matrix{Float64},     
-        ::Nothing,
         ::Vector{Bool},
         ::Nothing
     )

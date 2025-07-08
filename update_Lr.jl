@@ -8,12 +8,11 @@
 ####################### SPA USING FAST HYPERBOLIC TANGENT ######################
 function 
     calc_ABCD!(
-        aux::Vector{Float64},
-        ::Nothing,
-        ::Nothing,
         Lq::Matrix{Float64},
         ci::Int,
         Nci::Vector{Int},
+        ::Nothing,
+        ::Nothing,
     )
 
     pLr = 1.0
@@ -29,7 +28,6 @@ function
             count_zeros = 1
             vj_notzero = vj
         else
-            aux[vj] = lq
             pLr *= lq
         end
     end
@@ -44,14 +42,14 @@ function
         vj_notzero::Int,        #C
         ::Nothing,              #D
         vj::Int,
-        aux::Vector{Float64},
+        lq::Float64,
         ::Nothing,
         ::Nothing
     )
 
     @fastmath @inbounds begin
         if count_zeros == 0
-            x = pLr/aux[vj]
+            x = pLr/lq
             if abs(x) < 1 # controls divergent values of Lr
                 return 2*atanh(x)
             elseif x > 0
