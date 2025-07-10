@@ -29,7 +29,7 @@ function
                 li = LinearIndices(newLr)[ci,vj]
                 newlr = calc_Lr(Nci,ci,vj,Lq)
                 newLr[li] = newlr
-                residue = calc_residue_raw(newLr[li],Lr[li],Factors[li],relative,Lq[li])
+                residue = abs(newlr - Lr[li])
                 Residues[li] = residue
                 if residue > alp
                     alp = residue

@@ -36,13 +36,13 @@ function calc_Lq(
 )
 
     @fastmath @inbounds begin
-        Lq = Lf[vj]
+        lq = Lf[vj]
         for ca in Nvj
             if ca ≠ ci
-                Lq += Lr[ca,vj]
+                lq += Lr[ca,vj]
             end
         end
-        return Lq
+        return tanh(0.5*lq)
     end
 end
 

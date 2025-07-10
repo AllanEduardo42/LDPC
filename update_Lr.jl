@@ -73,7 +73,6 @@ function
         vj::Int,    
         Lq::Matrix{Float64}
     )
-
     @fastmath @inbounds begin
         pLq = 1.0
         for vb in Nci
@@ -82,11 +81,17 @@ function
                 if lq == 0.0
                     return 0.0
                 else
-                    pLq *= tanh(0.5*lq)
+                    pLq *= lq
                 end
             end
         end
-        return 2*atanh(pLq)
+        if abs(pLq) < 1.0
+            return 2*atanh(pLq)
+        elseif signbit(pLq)
+            return NINFFLOAT
+        else
+            return INFFLOAT
+        end
     end
 end
 

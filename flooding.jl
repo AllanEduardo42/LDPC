@@ -19,9 +19,9 @@ function
         raw::Bool
     )
 
-    if raw
+    @inbounds @fastmath if raw
         # Lr update
-        @inbounds for ci in eachindex(Nc)
+        for ci in eachindex(Nc)
             Nci = Nc[ci]
             for vj in Nci
                 Lr[ci,vj] = calc_Lr(Nci,ci,vj,Lq)
@@ -29,20 +29,18 @@ function
         end
 
         # Lq update
-        ci = 0
-        @fastmath @inbounds for vj in eachindex(Nv)
+        for vj in eachindex(Nv)
             Nvj = Nv[vj]
-            for outer ci in Nvj
-                Lq[ci,vj] = calc_Lq(Nvj,ci,vj,Lr,Lf)
-            end
-            # get the last ci of the loop iteration to calc Ld
-            li = LinearIndices(Lq)[ci,vj]
-            Ld = Lq[li] + Lr[li]
+            Ld = calc_Ld(vj,Nvj,Lf,Lr)
             bitvector[vj] = signbit(Ld)
-        end   
+            for ci in Nvj
+                li = LinearIndices(Lq)[ci,vj]
+                Lq[li] = tanh(0.5*(Ld - Lr[li]))
+            end
+        end 
     else
         # Lr update
-        @inbounds for ci in eachindex(Nc)
+        for ci in eachindex(Nc)
             Nci = Nc[ci]
             A, B, C, D = calc_ABCD!(Lq,ci,Nci,signs,phi)
             for vj in Nci
@@ -52,7 +50,7 @@ function
         end
 
         # Lq update
-        @fastmath @inbounds for vj in eachindex(Nv)
+        for vj in eachindex(Nv)
             Nvj = Nv[vj]
             Ld = calc_Ld(vj,Nvj,Lf,Lr)
             bitvector[vj] = signbit(Ld)

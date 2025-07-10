@@ -42,8 +42,8 @@ SEED::Int = 1111
 
 ################################ CONTROL FLAGS #################################
 
-TEST::Bool = true
-PRIN::Bool = true
+TEST::Bool = false
+PRIN::Bool = false
 PROF::Bool = false
 STOP::Bool = false # stop simulation at zero syndrome (if true, BER curves are
 # not printed)
@@ -59,7 +59,7 @@ TRIALS = [256000]
 # TRIALS = [128, 1280, 12800, 128000]
 
 # TEST
-MAXITER_TEST::Int = 1
+MAXITER_TEST::Int = 50
 EbN0_TEST::Float64 = 1.5
 TRIALS_TEST::Int = 1
 DECAY_TEST::Float64 = 1.0
@@ -84,8 +84,8 @@ end
 
 i = 1
 # Flooding
-ACTIVE[i] = 0
-BPTYPES[i] = "FAST"
+ACTIVE[i] = 1
+BPTYPES[i] = "RAW"
 MAXITERS[i] = MAXITER
 
 # LBP
@@ -102,8 +102,8 @@ MAXITERS[i] = MAXITER
 
 # RBP
 i += 1
-ACTIVE[i] = 1
-BPTYPES[i] = "FAST"
+ACTIVE[i] = 0
+BPTYPES[i] = "RAW"
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
 
@@ -136,7 +136,7 @@ DECAYS[i] = FACTORS
 
 # VN-RBP
 i += 1
-ACTIVE[i] = 1
+ACTIVE[i] = 0
 BPTYPES[i] = "RAW"
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS

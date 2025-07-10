@@ -33,6 +33,7 @@ function
     @inbounds begin
         residue = newlr - oldlr
         if isnan(residue)
+            display("sim")
             return 0.0
         else
             return _calc_residue(residue,oldlr,factor,relative,lq)

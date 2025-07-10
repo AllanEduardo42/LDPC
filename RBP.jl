@@ -51,11 +51,15 @@ function
             Residues[limax] = 0.0
 
             Nvjmax = Nv[vjmax]
+            Ld = calc_Ld(vjmax,Nvjmax,Lf,Lr)
+            bitvector[vjmax] = signbit(Ld)
+
             for ci in Nvjmax
                 alp = Residues[ci,vjmax]
                 if ci ≠ cimax
                     # 5) update Nv messages Lq[ci,vnmax]
-                    Lq[ci,vjmax] = calc_Lq(Nvjmax,ci,vjmax,Lr,Lf)
+                    li = LinearIndices(Lq)[ci,vjmax]
+                    Lq[li] = tanh(0.5*(Ld - Lr[li]))
                     # 6) calculate Residues
                     Nci = Nc[ci]
                     for vj in Nci
@@ -63,8 +67,7 @@ function
                             newlr = calc_Lr(Nci,ci,vj,Lq)
                             li = LinearIndices(Lr)[ci,vj]
                             newLr[li] = newlr
-                            residue = calc_residue_raw(newlr,Lr[li],Factors[li],
-                                                    relative,Lq[li])
+                            residue = abs(newlr - Lr[li])
                             Residues[li] = residue
                             if residue > alp
                                 alp = residue
@@ -75,12 +78,6 @@ function
                 end
             end
         end
-        # 7) update bitvector
-        for vj in eachindex(Nv)
-            Ld = calc_Ld(vj,Nv[vj],Lf,Lr)
-            bitvector[vj] = signbit(Ld)
-        end
-        
     else
 
         for e in 1:num_reps

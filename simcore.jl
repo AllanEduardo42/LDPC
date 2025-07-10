@@ -297,7 +297,7 @@ function
         end
         
         # 8) init the Lq matrix
-        init_Lq!(Lq,Lf,Nv,signs,raw)
+        init_Lq!(Lq,Lf,Nv,signs)
 
         # 9) init the RBP methods
         if mode == "RBP" || mode == "VN-RBP-ALT"
@@ -347,7 +347,8 @@ function
                     Nc,
                     Nv,
                     signs,
-                    phi)
+                    phi,
+                    raw)
             elseif mode == "VN-LBP"
                 VN_LBP!(
                     bitvector,

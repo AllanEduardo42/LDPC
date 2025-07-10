@@ -8,18 +8,13 @@ function
         Lq::Matrix{Float64},
         Lf::Vector{Float64},
         Nv::Vector{Vector{Int}},
-        signs::Union{Vector{Bool},Nothing},
-        raw::Bool
+        signs::Union{Vector{Bool},Nothing}
     )
     
     @inbounds for vj in eachindex(Nv)
         aux = Lf[vj]
         for ci in Nv[vj]
-            if raw
-                Lq[ci,vj] = aux
-            else
-                Lq[ci,vj] = tanhLq(aux,signs)
-            end
+            Lq[ci,vj] = tanhLq(aux,signs)
         end
     end
 end
