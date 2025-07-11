@@ -51,7 +51,7 @@ function
         trials::Int,                    # Number of trials
         maxiter::Int,                   # Maximum number of BP iterations
         stop::Bool,                     # "true" if routine stops at zero symdrome
-        γ::Float64,                     # RBP decay factor
+        decayfactor::Float64,                     # RBP decay factor
         listsizes::Vector{Int},         # sizes of the list for List-RBP mode
         rgn_seed::Int,                  # random seed to generate noise and message
         test::Bool,                     # if "true", perform test mode
@@ -163,14 +163,8 @@ function
     # Set variables signs depending on the BP type (for dispatching)
     if bptype == "TABL" || bptype == "MSUM"
         signs = Vector{Bool}(undef,N)
-        raw = false
     else
         signs = nothing
-        if bptype == "RAW"
-            raw = true
-        else
-            raw = false
-        end
     end
 
     phi = (bptype == "TABL") ? lookupTable() : nothing
@@ -205,9 +199,8 @@ function
         Factors = ones(M)   
     elseif mode == "VN-RBP"
         newLr = Matrix{Float64}(undef,M,N)
-        alpha =Vector{Float64}(undef,N)
+        alpha = Vector{Float64}(undef,N)
         Factors = ones(N)
-        mode2 = true
     elseif mode == "List-VN-RBP"
         newLr = Matrix{Float64}(undef,M,N)
         alpha = Vector{Float64}(undef,listsizes[1]+1)
@@ -301,16 +294,16 @@ function
 
         # 9) init the RBP methods
         if mode == "RBP" || mode == "VN-RBP-ALT"
-            init_RBP!(Lq,Lr,Nc,signs,phi,newLr,Factors,alpha,Residues,relative,raw)
-        elseif mode == "SVNF"
-            init_SVNF!(Lq,Lr,Nc,signs,phi,newLr,Residues)
+            init_RBP!(Lq,Lr,Nc,signs,phi,newLr,alpha,Residues)
         elseif mode == "List-RBP"
             init_list_RBP!(Lq,Lr,Nc,signs,phi,newLr,Factors,inlist,Residues,
-                                                            coords,listsizes,raw)
+                                                            coords,listsizes)
+        elseif mode == "SVNF"
+            init_SVNF!(Lq,Lr,Nc,signs,phi,newLr,Residues)        
         elseif mode == "NW-RBP"
-            init_NW_RBP!(Lq,Nc,signs,phi,newLr,alpha,raw)
+            init_NW_RBP!(Lq,Lr,Nc,signs,phi,newLr,alpha)
         elseif mode == "VN-RBP"
-            init_VN_RBP!(Lq,Nc,signs,phi,newLr,alpha,Nv,raw)
+            init_VN_RBP!(Lq,Nc,signs,phi,newLr,alpha,Nv)
         elseif mode == "List-VN-RBP"
             init_list_VN_RBP!(Lq,Nc,Nv,aux,signs,phi,newLr,Factors,inlist,
                                             alpha,coords,listsizes[1])
@@ -336,8 +329,8 @@ function
                     Nc,
                     Nv,
                     signs,
-                    phi,
-                    raw)
+                    phi
+                    )
             elseif mode == "LBP"
                 LBP!(
                     bitvector,
@@ -347,8 +340,8 @@ function
                     Nc,
                     Nv,
                     signs,
-                    phi,
-                    raw)
+                    phi
+                    )
             elseif mode == "VN-LBP"
                 VN_LBP!(
                     bitvector,
@@ -367,15 +360,13 @@ function
                     Nv,
                     signs,
                     phi,
-                    γ,
+                    decayfactor,
                     num_edges,
                     newLr,
-                    Factors,
                     alpha,
                     Residues,
-                    relative,
-                    rbp_not_converged,
-                    raw
+                    Factors,
+                    rbp_not_converged
                     )
                 # reset factors
                 resetmatrix!(Factors,Nv,1.0)
@@ -389,7 +380,7 @@ function
                     Nv,
                     signs,
                     phi,
-                    γ,
+                    decayfactor,
                     num_edges,
                     newLr,
                     Factors,
@@ -399,8 +390,7 @@ function
                     local_residues,
                     local_coords,
                     listsizes,
-                    rbp_not_converged,
-                    raw
+                    rbp_not_converged
                 )
                 # reset factors
                 resetmatrix!(Factors,Nv,1.0)
@@ -431,13 +421,12 @@ function
                     Nv,
                     signs,
                     phi,
-                    γ,
+                    decayfactor,
                     M,
                     newLr,
                     Factors,
                     alpha,
-                    rbp_not_converged,
-                    raw
+                    rbp_not_converged
                 )
                 # reset factors
                 Factors .= 1.0
@@ -451,13 +440,12 @@ function
                     Nv,
                     signs,
                     phi,
-                    γ,
+                    decayfactor,
                     num_edges-N,
                     newLr,
                     Factors,
                     alpha,
-                    rbp_not_converged,
-                    raw
+                    rbp_not_converged
                     )
                 # reset factors
                 Factors .= 1.0
@@ -472,7 +460,7 @@ function
                     aux,
                     signs,
                     phi,
-                    γ,
+                    decayfactor,
                     num_edges-N,
                     newLr,
                     Factors,
@@ -495,7 +483,7 @@ function
                     aux,
                     signs,
                     phi,
-                    γ,
+                    decayfactor,
                     num_edges-N,
                     newLr,
                     Factors,

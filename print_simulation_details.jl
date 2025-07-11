@@ -22,12 +22,8 @@ function
     Message passing protocol: $mode (using """
     if bptype == "MKAY"
         str *="Mckay's SPA method)"
-    elseif bptype == "RAW"
-        str *="LLR-SPA calculated by raw-tanh)"
-    elseif bptype == "FAST"
-        str *="LLR-SPA calculated by fast tanh)"
-    elseif bptype == "ALTN"
-        str *="LLR-SPA calculated by ϕ function)"
+    elseif bptype == "TANH"
+        str *="LLR-SPA calculated by tanh function)"
     elseif bptype == "TABL"
         str *="LLR-SPA precalculated in look-up table)"
     elseif bptype == "MSUM"
@@ -38,8 +34,7 @@ function
     Number of threads (multithreading): $NTHREADS
     Eb/No (dB): $ebn0
     Stop at zero syndrome ? $STOP"""
-    if mode == "RBP" || mode == "RBP relative" || mode == "List-RBP" || 
-       mode == "VN-RBP" || mode == "Genius-RBP" || mode == "NW-RBP"
+    if mode == "RBP" || mode == "List-RBP" || mode == "VN-RBP" || mode == "NW-RBP"
         str *= "\nRBP decaying factor: $decay"
     end
     if mode == "List-RBP"

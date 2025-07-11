@@ -30,8 +30,8 @@ end
 ################################## CONSTANTS ###################################
 
 const INF = typemax(Int64)
-const INFFLOAT = 1e3
-const NINFFLOAT = -INFFLOAT
+const MAXLR = 1e3
+const MINLR = -MAXLR
 const ALPHA = 0.7              # Min-Sum attenuation factor
 const TABLESIZE = 8192
 const TABLERANGE = 10
@@ -43,7 +43,7 @@ SEED::Int = 1111
 ################################ CONTROL FLAGS #################################
 
 TEST::Bool = false
-PRIN::Bool = false
+PRIN::Bool = true
 PROF::Bool = false
 STOP::Bool = false # stop simulation at zero syndrome (if true, BER curves are
 # not printed)
@@ -51,27 +51,27 @@ STOP::Bool = false # stop simulation at zero syndrome (if true, BER curves are
 ################################## PARAMETERS ##################################
 
 MAXITER::Int = 50
-# FACTORS = [0.7, 0.8, 0.9, 1.0]
+FACTORS = [0.7, 0.8, 0.9, 1.0]
 # FACTORS = collect(0.1:0.1:1.0)
 FACTORS = [1.0]
 EbN0 = [2.5]
-TRIALS = [256000]
+TRIALS = [25600]
 # TRIALS = [128, 1280, 12800, 128000]
 
 # TEST
-MAXITER_TEST::Int = 50
+MAXITER_TEST::Int = 1
 EbN0_TEST::Float64 = 1.5
 TRIALS_TEST::Int = 1
 DECAY_TEST::Float64 = 1.0
 
 ################################### SCHEDULE ###################################
 
-MODES = ["Flooding","LBP","VN-LBP","RBP","RBP relative","List-RBP","SVNF","NW-RBP","VN-RBP","VN-RBP-ALT","List-VN-RBP"]
+MODES = ["Flooding","LBP","VN-LBP","RBP","List-RBP","SVNF","NW-RBP","VN-RBP","VN-RBP-ALT","List-VN-RBP"]
 NUM_MODES = length(MODES)
 ACTIVE = zeros(Bool,NUM_MODES)
 LISTSIZES = zeros(Int,4)
 
-# BP type: "MKAY", "RAW", "FAST", "TABL", "MSUM"
+# BP type: "MKAY", "TANH", "TABL", "MSUM"
 BPTYPES = Vector{String}(undef,NUM_MODES)
 
 # maximum number of BP iterations
@@ -84,74 +84,67 @@ end
 
 i = 1
 # Flooding
-ACTIVE[i] = 1
-BPTYPES[i] = "RAW"
+ACTIVE[i] = 0
+BPTYPES[i] = "TANH"
 MAXITERS[i] = MAXITER
 
 # LBP
 i += 1
-ACTIVE[i] = 0
-BPTYPES[i] = "FAST"
+ACTIVE[i] = 1
+BPTYPES[i] = "TANH"
 MAXITERS[i] = MAXITER
 
 # VN-LBP
 i += 1
-ACTIVE[i] = 0
-BPTYPES[i] = "FAST"
+ACTIVE[i] = 1
+BPTYPES[i] = "TANH"
 MAXITERS[i] = MAXITER
 
 # RBP
 i += 1
 ACTIVE[i] = 0
-BPTYPES[i] = "RAW"
-MAXITERS[i] = MAXITER
-DECAYS[i] = FACTORS
-
-# RBP relative
-i += 1
-ACTIVE[i] = 0
-BPTYPES[i] = "FAST"
+BPTYPES[i] = "TANH"
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
 
 # List-RBP
 i += 1
 ACTIVE[i] = 0
-BPTYPES[i] = "FAST"
+BPTYPES[i] = "TANH"
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
 
 # SVNF
 i += 1
 ACTIVE[i] = 0
-BPTYPES[i] = "FAST"
+BPTYPES[i] = "TANH"
 MAXITERS[i] = MAXITER
 
 # NW-RBP
 i += 1
 ACTIVE[i] = 0
-BPTYPES[i] = "FAST"
+BPTYPES[i] = "TANH"
 MAXITERS[i] = MAXITER
-DECAYS[i] = FACTORS
+DECAYS[i] = [1.0]
 
 # VN-RBP
 i += 1
 ACTIVE[i] = 0
-BPTYPES[i] = "RAW"
+BPTYPES[i] = "TANH"
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
 
 # VN-RBP ALT
 i += 1
 ACTIVE[i] = 0
-BPTYPES[i] = "FAST"
+BPTYPES[i] = "TANH"
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
 
 # List VN-RBP
 i += 1
 ACTIVE[i] = 0
-BPTYPES[i] = "FAST"
+BPTYPES[i] = "TANH"
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
 
@@ -164,7 +157,7 @@ LISTSIZES[2] = 2
 # Transmitted message length
 GG::Int = 576
 # Effective Rate
-RR::Float64 = 1/2                       # WiMAX compatibility offset
+RR::Float64 = 1/3                       # WiMAX compatibility offset
 # LDPC protocol: NR5G = NR-LDPC (5G); PEG = PEG; WiMAX = IEEE80216e;
 PROTOCOL::String = "NR5G"
     LAMBDA = [0.21, 0.25, 0.25, 0.29, 0]

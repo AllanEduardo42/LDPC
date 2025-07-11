@@ -118,7 +118,8 @@ if TEST
                 # if MAXITER_TEST < 20
                 #     global MAXITER_TEST = 20
                 # end
-                @profview _,_ = prepare_simulation(
+                # @profview _,_ = prepare_simulation(
+                _,_ = prepare_simulation(
                                                 [EbN0_TEST],
                                                 MODES[i],
                                                 [TRIALS_TEST],

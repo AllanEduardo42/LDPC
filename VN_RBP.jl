@@ -21,99 +21,49 @@ function
         newLr::Matrix{Float64},
         Factors::Vector{Float64},
         alpha::Vector{Float64},
-        rbp_not_converged::Bool,
-        raw::Bool
+        rbp_not_converged::Bool
     )
 
-    @fastmath @inbounds if raw
-        for e in 1:num_reps
+    @fastmath @inbounds for e in 1:num_reps
 
-            # display("e = $e")
+        # display("e = $e")
 
-            vjmax = findmaxnode(alpha)
-            if vjmax == 0
-                rbp_not_converged = false
-                break # i.e., BP has converged
-            end
-            Factors[vjmax] *= decayfactor
-            alpha[vjmax] = 0.0
+        vjmax = findmaxnode(alpha)
+        if vjmax == 0
+            rbp_not_converged = false
+            break # i.e., BP has converged
+        end
+        Factors[vjmax] *= decayfactor
+        alpha[vjmax] = 0.0
 
-            Nvjmax = Nv[vjmax]
-            for ci in Nvjmax
-                li = LinearIndices(Lr)[ci,vjmax]
-                Lr[li] = newLr[li]
-            end 
+        Nvjmax = Nv[vjmax]
+        for ci in Nvjmax
+            li = LinearIndices(Lr)[ci,vjmax]
+            Lr[li] = newLr[li]
+        end 
 
-            for ci in Nvjmax
-                # 5) update Nv messages Lq[ci,vnmax]
-                Lq[ci,vjmax] = calc_Lq(Nvjmax,ci,vjmax,Lr,Lf)
-                # 6) calculate alpha
-                Nci = Nc[ci]
-                for vj in Nci
-                    if vj ≠ vjmax
-                        newlr = calc_Lr(Nci,ci,vj,Lq)
-                        li = LinearIndices(Lr)[ci,vj]
-                        newLr[li] = newlr
-                        residue = calc_residue_VN_NW_raw(newlr,Lr[li],Factors[vj])
-                        if residue > alpha[vj]
-                            alpha[vj] = residue
-                        end
-                    end
+        Ld = calc_Ld(vjmax,Nvjmax,Lf,Lr)
+        bitvector[vjmax] = signbit(Ld)
+
+        for ci in Nvjmax
+            # 5) update Nv messages Lq[ci,vnmax]
+            li = LinearIndices(Lq)[ci,vjmax]
+            Lq[li] = tanh(0.5*(Ld - Lr[li]))
+            # 6) calculate alpha
+            Nci = Nc[ci]
+            for vj in Nci
+                alp = alpha[vj]
+                if vj ≠ vjmax
+                    li = LinearIndices(Lr)[ci,vj]
+                    alp, _ = calc_residue!(Lq,Lr,newLr,li,ci,vj,Nci,Factors[vj],alp)
                 end
+                alpha[vj] = alp
             end
         end
-
-        # 7) update bitvector
-        for vj in eachindex(Nv)
-            Ld = calc_Ld(vj,Nv[vj],Lf,Lr)
-            bitvector[vj] = signbit(Ld)
-        end
+    end  
     
-    else
-
-        for e in 1:num_reps
-
-            # display("e = $e")
-
-            vjmax = findmaxnode(alpha)
-            if vjmax == 0
-                rbp_not_converged = false
-                break # i.e., BP has converged
-            end
-            Factors[vjmax] *= decayfactor
-            alpha[vjmax] = 0.0
-
-            Nvjmax = Nv[vjmax]
-            for ci in Nvjmax
-                li = LinearIndices(Lr)[ci,vjmax]
-                RBP_update_Lr!(li,Lr,newLr,ci,vjmax,Nc[ci],Lq,signs,phi)
-            end   
-            
-            Ld = calc_Ld(vjmax,Nvjmax,Lf,Lr)
-            bitvector[vjmax] = signbit(Ld)
-
-            for ci in Nvjmax
-                # update Nv messages Lq[ci,vjmax]
-                li = LinearIndices(Lq)[ci,vjmax]
-                Lq[li] = tanhLq(Ld - Lr[li],signs)
-                # calculate the new check to node messages
-                Nci = Nc[ci]
-                A, B, C, D = calc_ABCD!(Lq,ci,Nci,signs,phi)
-                for vj in Nci
-                    if vj ≠ vjmax
-                        li = LinearIndices(newLr)[ci,vj]
-                        newlr = calc_Lr(A,B,C,D,vj,Lq[li],signs,phi)
-                        newLr[li] = newlr
-                        residue = abs(newlr - Lr[li])*Factors[vj]
-                        if residue > alpha[vj]
-                            alpha[vj] = residue
-                        end
-                    end
-                end
-            end
-        end
-    end
-
     return rbp_not_converged
-
+    
 end
+
+        

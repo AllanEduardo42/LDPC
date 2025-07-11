@@ -29,7 +29,7 @@ function
         bitvector[vj] = signbit(Ld)
         for ci in Nvj # for every vj in Neighborhood(ci)
             li = LinearIndices(Lr)[ci,vj]
-            Lq[li] = Ld - Lr[li]
+            Lq[li] = tanh(0.5*(Ld - Lr[li]))
         end        
     end
 end

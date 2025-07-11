@@ -19,10 +19,9 @@ function
     
     @fastmath @inbounds for ci in eachindex(Nc)
         Nci = Nc[ci]
-        A, B, C, D = calc_ABCD!(Lq,ci,Nci,signs,phi)
         for vj in Nci
             li = LinearIndices(newLr)[ci,vj]
-            newlr = calc_Lr(A,B,C,D,vj,Lq[li],signs,phi)
+            newlr = calc_Lr(Nci,ci,vj,Lq)
             newLr[li] = newlr
             residues[li] = abs(newlr - Lr[li])
         end

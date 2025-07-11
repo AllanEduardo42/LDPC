@@ -7,66 +7,6 @@
 
 ####################### SPA USING FAST HYPERBOLIC TANGENT ######################
 function 
-    calc_ABCD!(
-        Lq::Matrix{Float64},
-        ci::Int,
-        Nci::Vector{Int},
-        ::Nothing,
-        ::Nothing,
-    )
-
-    pLq = 1.0
-    count_zeros = 0
-    vj_notzero = 0
-    @fastmath @inbounds for vj in Nci
-        lq = Lq[ci,vj]
-        if lq == 0.0 # Lr[ci,vj] = 0 for vj ≠ vj0
-            if count_zeros == 1 # Lr[ci,vj0] = 0
-                count_zeros = 2
-                break
-            end
-            count_zeros = 1
-            vj_notzero = vj
-        else
-            pLq *= lq
-        end
-    end
-    
-    return pLq, count_zeros, vj_notzero, nothing
-end
-
-function 
-    calc_Lr(
-        pLq::Float64,           #A
-        count_zeros::Int,       #B
-        vj_notzero::Int,        #C
-        ::Nothing,              #D
-        vj::Int,
-        lq::Float64,
-        ::Nothing,
-        ::Nothing
-    )
-
-    @fastmath @inbounds begin
-        if count_zeros == 0
-            x = pLq/lq
-            if abs(x) < 1 # controls divergent values of Lr
-                return 2*atanh(x)
-            elseif x > 0
-                return INFFLOAT
-            else
-                return NINFFLOAT
-            end
-        elseif count_zeros == 1 && vj_notzero == vj
-            return 2*atanh(pLq)
-        else
-            return 0.0
-        end
-    end
-end
-
-###################### SPA USING HYPERBOLIC TANGENT NO OPT #####################
-function 
     calc_Lr(
         Nci::Vector{Int},
         ci::Int,
@@ -88,13 +28,12 @@ function
         if abs(pLq) < 1.0
             return 2*atanh(pLq)
         elseif signbit(pLq)
-            return NINFFLOAT
+            return MINLR
         else
-            return INFFLOAT
+            return MAXLR
         end
     end
 end
-
 
 ################ ALTERNATIVE TO HYPERBOLIC TANGENT USING TABLE ################
 function 

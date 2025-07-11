@@ -19,15 +19,16 @@ function
         residues::Matrix{Float64},
         rbp_not_converged::Bool,
         twoLS::Int
-        )
+    )
 
     count = 0
     count_zeros = 0
+
     @fastmath @inbounds while count < num_edges
     
         for n in 0:N-1
 
-            vj = rem(n + twoLS,N) + 1
+            vj = rem(n + twoLS,N) + 1   # jump to non_punctured nodes
 
             # display("vj = $vj")
 
@@ -37,23 +38,17 @@ function
             if cimax ≠ 0
                 count_zeros = 0
                 rbp_not_converged = true
-                #     rbp_not_converged = false
-                #     break # i.e., BP has converged
-                # end
 
-                # 2) Decay the RBP factor corresponding to the maximum residue
-                # Factors[limax] *= decayfactor
-
-                # 3) update check to node message Lr[cimax,vjmax]
+                # 2) update check to node message Lr[cimax,vjmax]
                 Ncimax = Nc[cimax]
                 limax = LinearIndices(Lr)[cimax,vjmax]
                 RBP_update_Lr!(limax,Lr,newLr,cimax,vjmax,Ncimax,Lq,signs,phi)
                 count += 1
 
-                # 4) set maximum residue to zero
+                # 3) set maximum residue to zero
                 residues[limax] = 0.0
 
-                # 5) Calculate Ld of vjmax and bitvector[vjmax]
+                # 4) Calculate Ld of vjmax and bitvector[vjmax]
                 Nvjmax = Nv[vjmax]
                 Ld = calc_Ld(vjmax,Nvjmax,Lf,Lr)
                 bitvector[vjmax] = signbit(Ld)
@@ -62,14 +57,13 @@ function
                     if ci ≠ cimax
                         # 6) update Nv messages Lq[ci,vjmax]
                         li = LinearIndices(Lq)[ci,vjmax]
-                        Lq[li] = tanhLq(Ld - Lr[li],signs)
+                        Lq[li] = tanh(0.5*(Ld - Lr[li]))
                         # 7) calculate residues
                         Nci = Nc[ci]    
-                        A, B, C, D = calc_ABCD!(Lq,ci,Nci,signs,phi)
                         for vj in Nci
                             if vj ≠ vjmax
                                 li = LinearIndices(Lr)[ci,vj]
-                                newlr = calc_Lr(A,B,C,D,vj,Lq[li],signs,phi)
+                                newlr = calc_Lr(Nci,ci,vj,Lq)
                                 newLr[li] = newlr
                                 residues[li] = abs(newlr - Lr[li])
                             end
