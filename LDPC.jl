@@ -51,11 +51,11 @@ STOP::Bool = false # stop simulation at zero syndrome (if true, BER curves are
 ################################## PARAMETERS ##################################
 
 MAXITER::Int = 50
-FACTORS = [0.7, 0.8, 0.9, 1.0]
+# FACTORS = [0.7, 0.8, 0.9, 1.0]
 # FACTORS = collect(0.1:0.1:1.0)
 FACTORS = [1.0]
 EbN0 = [2.5]
-TRIALS = [25600]
+TRIALS = [51200]
 # TRIALS = [128, 1280, 12800, 128000]
 
 # TEST
@@ -66,7 +66,7 @@ DECAY_TEST::Float64 = 1.0
 
 ################################### SCHEDULE ###################################
 
-MODES = ["Flooding","LBP","VN-LBP","RBP","List-RBP","SVNF","NW-RBP","VN-RBP","VN-RBP-ALT","List-VN-RBP"]
+MODES = ["Flooding","LBP","VN-LBP","RBP","List-RBP","SVNF","NW-RBP","VN-RBP","LD-RBP","FB-RBP","List-VN-RBP"]
 NUM_MODES = length(MODES)
 ACTIVE = zeros(Bool,NUM_MODES)
 LISTSIZES = zeros(Int,4)
@@ -90,19 +90,19 @@ MAXITERS[i] = MAXITER
 
 # LBP
 i += 1
-ACTIVE[i] = 1
+ACTIVE[i] = 0
 BPTYPES[i] = "TANH"
 MAXITERS[i] = MAXITER
 
 # VN-LBP
 i += 1
-ACTIVE[i] = 1
+ACTIVE[i] = 0
 BPTYPES[i] = "TANH"
 MAXITERS[i] = MAXITER
 
 # RBP
 i += 1
-ACTIVE[i] = 0
+ACTIVE[i] = 1
 BPTYPES[i] = "TANH"
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
@@ -125,7 +125,7 @@ i += 1
 ACTIVE[i] = 0
 BPTYPES[i] = "TANH"
 MAXITERS[i] = MAXITER
-DECAYS[i] = [1.0]
+# DECAYS[i] = [1.0]
 
 # VN-RBP
 i += 1
@@ -134,7 +134,14 @@ BPTYPES[i] = "TANH"
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
 
-# VN-RBP ALT
+# LD-RBP
+i += 1
+ACTIVE[i] = 0
+BPTYPES[i] = "TANH"
+MAXITERS[i] = MAXITER
+DECAYS[i] = FACTORS
+
+# FB-RBP
 i += 1
 ACTIVE[i] = 0
 BPTYPES[i] = "TANH"
@@ -157,7 +164,7 @@ LISTSIZES[2] = 2
 # Transmitted message length
 GG::Int = 576
 # Effective Rate
-RR::Float64 = 1/3                       # WiMAX compatibility offset
+RR::Float64 = 1/2                       # WiMAX compatibility offset
 # LDPC protocol: NR5G = NR-LDPC (5G); PEG = PEG; WiMAX = IEEE80216e;
 PROTOCOL::String = "NR5G"
     LAMBDA = [0.21, 0.25, 0.25, 0.29, 0]

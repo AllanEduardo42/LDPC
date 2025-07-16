@@ -17,10 +17,10 @@ function
         Nv::Vector{Vector{Int}},
         signs::Union{Vector{Bool},Nothing},
         phi::Union{Vector{Float64},Nothing},
-        decayfactor::Float64,
+        # decayfactor::Float64,
         num_reps::Int,
         newLr::Matrix{Float64},
-        Factors::Vector{Float64},
+        # Factors::Vector{Float64},
         alpha::Vector{Float64},
         bp_not_converged::Bool
     )
@@ -41,7 +41,7 @@ function
         alpha[cimax] = 0.0
 
         # 3) Decay the maximum alpha
-        Factors[cimax] *= decayfactor
+        # Factors[cimax] *= decayfactor
     
         for vk in Nc[cimax]
             # 4) update check to node messages Lr[cimax,vnmax]
@@ -60,7 +60,7 @@ function
                     Nci = Nc[ci]
                     for vj in Nci
                         li = LinearIndices(Lr)[ci,vj]
-                        alp, _ = calc_residue!(Lq,Lr,newLr,li,ci,vj,Nci,Factors[ci],alp)
+                        alp, _ = calc_residue!(Lq,Lr,newLr,li,ci,vj,Nci,1.0,alp)
                     end
                     alpha[ci] = alp
                 end

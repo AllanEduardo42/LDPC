@@ -1,0 +1,104 @@
+############################### LDPC parameters ################################
+LDPC Protocol: NR-LDPC (5G), Zc = 112, BG = 2
+Parity Check Matrix: 1240 x 2288
+
+Graph girth = 6
+Effective rate = 0.5
+Code length = 2064
+
+############################# Starting simulation ##############################
+
+Number of trials: [256000]
+Message passing protocol: Flooding (using LLR-SPA calculated by tanh function)
+Maximum number of iterations: 50
+Number of threads (multithreading): 32
+Eb/No (dB): [1.5]
+Stop at zero syndrome ? false
+
+Elapsed 117.6 seconds (0.13% gc time, 76.93% compilation time)
+############################# Starting simulation ##############################
+
+Number of trials: [256000]
+Message passing protocol: LBP (using LLR-SPA calculated by tanh function)
+Maximum number of iterations: 50
+Number of threads (multithreading): 32
+Eb/No (dB): [1.5]
+Stop at zero syndrome ? false
+
+Elapsed 72.0 seconds (0.23% gc time, 4.45% compilation time)
+############################# Starting simulation ##############################
+
+Number of trials: [256000]
+Message passing protocol: RBP (using LLR-SPA calculated by tanh function)
+Maximum number of iterations: 50
+Number of threads (multithreading): 32
+Eb/No (dB): [1.5]
+Stop at zero syndrome ? false
+RBP decaying factor: 0.85
+
+Elapsed 1052.0 seconds (0.02% gc time, 0.51% compilation time)
+############################# Starting simulation ##############################
+
+Number of trials: [256000]
+Message passing protocol: List-RBP (using LLR-SPA calculated by tanh function)
+Maximum number of iterations: 50
+Number of threads (multithreading): 32
+Eb/No (dB): [1.5]
+Stop at zero syndrome ? false
+RBP decaying factor: 0.85
+List 1 size: 16
+List 2 size: 2
+
+Elapsed 887.7 seconds (0.03% gc time, 0.87% compilation time)
+############################# Starting simulation ##############################
+
+Number of trials: [256000]
+Message passing protocol: SVNF (using LLR-SPA calculated by tanh function)
+Maximum number of iterations: 50
+Number of threads (multithreading): 32
+Eb/No (dB): [1.5]
+Stop at zero syndrome ? false
+
+Elapsed 855.6 seconds (0.01% gc time, 0.48% compilation time)
+############################# Starting simulation ##############################
+
+Number of trials: [256000]
+Message passing protocol: NW-RBP (using LLR-SPA calculated by tanh function)
+Maximum number of iterations: 50
+Number of threads (multithreading): 32
+Eb/No (dB): [1.5]
+Stop at zero syndrome ? false
+
+Elapsed 1122.9 seconds (0.01% gc time, 0.35% compilation time)
+############################# Starting simulation ##############################
+
+Number of trials: [256000]
+Message passing protocol: VN-RBP (using LLR-SPA calculated by tanh function)
+Maximum number of iterations: 50
+Number of threads (multithreading): 32
+Eb/No (dB): [1.5]
+Stop at zero syndrome ? false
+RBP decaying factor: 0.85
+
+Elapsed 518.6 seconds (0.04% gc time, 0.73% compilation time)
+############################# Starting simulation ##############################
+
+Number of trials: [256000]
+Message passing protocol: LD-RBP (using LLR-SPA calculated by tanh function)
+Maximum number of iterations: 50
+Number of threads (multithreading): 32
+Eb/No (dB): [1.5]
+Stop at zero syndrome ? false
+
+Elapsed 3.6 seconds (1.57% gc time, 0.0% compilation time)
+############################# Starting simulation ##############################
+
+Number of trials: [256000]
+Message passing protocol: FB-RBP (using LLR-SPA calculated by tanh function)
+Maximum number of iterations: 50
+Number of threads (multithreading): 32
+Eb/No (dB): [1.5]
+Stop at zero syndrome ? false
+
+Elapsed 1008.5 seconds (0.02% gc time, 0.6% compilation time)
+The End!

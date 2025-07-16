@@ -34,7 +34,7 @@ function
     Number of threads (multithreading): $NTHREADS
     Eb/No (dB): $ebn0
     Stop at zero syndrome ? $STOP"""
-    if mode == "RBP" || mode == "List-RBP" || mode == "VN-RBP" || mode == "NW-RBP"
+    if mode == "RBP" || mode == "List-RBP" || mode == "VN-RBP"
         str *= "\nRBP decaying factor: $decay"
     end
     if mode == "List-RBP"
