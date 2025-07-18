@@ -1,8 +1,8 @@
 N = 2064
-R = [1,4]
-iters = 256000
+R = [1,2]
+iters = 512000
 maxiter = 50
-EbNo = 1.2
+EbNo = 1.5
 protocol = "NR5G"
 
 using DelimitedFiles
@@ -18,25 +18,17 @@ plotlyjs()
 
 FB = ["F","B"]
 markers = [:none, :none, :dtriangle, :circle, :rect, :utriangle, :diamond, :cross,:star5]
-modes = ["Flooding","LBP","NW-RBP","RBP","List-RBP","SVNF","FB-RBP","VN-RBP"]
-directory = "./Saved Data/Testes FB $protocol $N $(R[1])|$(R[2]) $EbNo/"
-liminf = -4.5
+modes = ["RBP","E-RBP","FB-RBP","VN-RBP"]
+directory = "./Saved Data/Testes EFB $protocol $N $(R[1])|$(R[2]) $EbNo/"
+liminf = -3.5
 limsup = 0.1
 
 for j=1:2
     title = FB[j]*"ER $protocol (N = $N, R = $(R[1])/$(R[2]), Eb/N0 = $(EbNo)dB)"
     p = plot()
     for k in eachindex(modes)
-        if modes[k] == "RBP" || modes[k] == "VN-RBP" || modes[k] == "FB-RBP"
-            str = modes[k]*" 0.85"
-            labels = modes[k]*" (d = 0.85)"
-        elseif modes[k] == "List-RBP"
-            str = modes[k]*" 0.85"
-            labels = modes[k]*" (16,2) (d = 0.85)"
-        else
-            str = modes[k]
-            labels = modes[k]
-        end
+        str = modes[k]*" 1.0"
+        labels = modes[k]
         x = readdlm(directory*FB[j]*"ER_"*str*".txt",'\t',Float64,'\n')
         x = x[1:maxiter,:]
         line = :solid

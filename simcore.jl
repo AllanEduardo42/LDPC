@@ -12,6 +12,8 @@ include("LBP.jl")
 include("VN_LBP.jl")
 include("RBP.jl")
 include("FB_RBP.jl")
+include("E_RBP.jl")
+include("E_NV_RBP.jl")
 include("List_RBP.jl")
 include("SVNF.jl")
 include("VN_RBP.jl")
@@ -175,7 +177,7 @@ function
     if mode == "SVNF"
         newLr = Matrix{Float64}(undef,M,N)
         Residues = Matrix{Float64}(undef,M,N)
-    elseif mode == "RBP" || mode == "FB-RBP"
+    elseif mode == "RBP" || mode == "FB-RBP" || mode == "E-RBP" || mode == "E-RBP"
         newLr = Matrix{Float64}(undef,M,N)
         Factors = Matrix{Float64}(undef,M,N)
         resetmatrix!(Factors,Nv,1.0)
@@ -295,7 +297,7 @@ function
         init_Lq!(Lq,Lf,Nv,signs)
 
         # 9) init the RBP methods
-        if mode == "RBP" || mode == "FB-RBP"
+        if mode == "RBP" || mode == "FB-RBP" || mode == "E-RBP"
             init_RBP!(Lq,Lr,Nc,signs,phi,newLr,alpha,Residues)
         elseif mode == "List-RBP"
             init_list_RBP!(Lq,Lr,Nc,signs,phi,newLr,Factors,inlist,Residues,
@@ -385,12 +387,40 @@ function
                     signs,
                     phi,
                     decayfactor,
-                    num_edges,
+                    num_edges-N,
                     newLr,
                     alpha,
                     Residues,
                     Factors,
                     rbp_not_converged
+                    )
+                # reset factors
+                resetmatrix!(Factors,Nv,1.0)
+             elseif mode == "E-RBP"
+                if iter > 4
+                    flag = true
+                    num_steps = num_edges - N
+                else
+                    flag = false
+                    num_steps = num_edges
+                end
+                rbp_not_converged = E_RBP!(
+                    bitvector,
+                    Lq,
+                    Lr,
+                    Lf,
+                    Nc,
+                    Nv,
+                    signs,
+                    phi,
+                    decayfactor,
+                    num_steps,
+                    newLr,
+                    alpha,
+                    Residues,
+                    Factors,
+                    rbp_not_converged,
+                    flag
                     )
                 # reset factors
                 resetmatrix!(Factors,Nv,1.0)

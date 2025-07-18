@@ -18,21 +18,21 @@ plotlyjs()
 
 FB = ["F","B"]
 markers = [:none, :none, :dtriangle, :circle, :rect, :utriangle, :diamond, :cross,:star5]
-modes = ["Flooding","LBP","NW-RBP","RBP","List-RBP","SVNF","FB-RBP","VN-RBP","LD-RBP"]
+modes = ["Flooding","LBP","NW-RBP","RBP","List-RBP","SVNF","FB-RBP","VN-RBP"]
 directory = "./Saved Data/Testes FB $protocol $N $(R[1])|$(R[2]) $EbNo/"
-liminf = -4
+liminf = -3.5
 limsup = 0.1
 
 for j=1:2
     title = FB[j]*"ER $protocol (N = $N, R = $(R[1])/$(R[2]), Eb/N0 = $(EbNo)dB)"
     p = plot()
     for k in eachindex(modes)
-        if modes[k] == "RBP" || modes[k] == "VN-RBP" || modes[k] == "FB-RBP" || modes[k] == "LD-RBP"
+        if modes[k] == "RBP" || modes[k] == "VN-RBP" || modes[k] == "FB-RBP"
             str = modes[k]*" 0.85"
-            labels = modes[k]*" (d = 0.9)"
+            labels = modes[k]*" (d = 0.85)"
         elseif modes[k] == "List-RBP"
             str = modes[k]*" 0.85"
-            labels = modes[k]*" (16,2) (d = 0.9)"
+            labels = modes[k]*" (16,2) (d = 0.85)"
         else
             str = modes[k]
             labels = modes[k]

@@ -22,7 +22,7 @@ FB = ["F","B"]
 markers = [:none, :none, :dtriangle, :circle, :rect, :utriangle, :diamond, :cross]
 modes = ["Flooding","LBP","NW-RBP","RBP","List-RBP","SVNF","FB-RBP","VN-RBP"]
 directory = "./Saved Data/Testes FB $protocol $N $(R[1])|$(R[2]) $EbNo/"
-liminf = -5
+liminf = -4.5
 limsup = 0.1
 
 for j=1:2
@@ -31,10 +31,10 @@ for j=1:2
     for k in eachindex(modes)
         if modes[k] == "RBP" || modes[k] == "VN-RBP" || modes[k] == "FB-RBP"
             str = modes[k]*" 0.85"
-            labels = modes[k]*" (d = 0.9)"
+            labels = modes[k]*" (d = 0.85)"
         elseif modes[k] == "List-RBP"
             str = modes[k]*" 0.85"
-            labels = modes[k]*" (16,2) (d = 0.9)"
+            labels = modes[k]*" (16,2) (d = 0.85)"
         else
             str = modes[k]
             labels = modes[k]

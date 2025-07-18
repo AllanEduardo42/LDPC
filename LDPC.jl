@@ -42,7 +42,7 @@ SEED::Int = 1111
 
 ################################ CONTROL FLAGS #################################
 
-TEST::Bool = false
+TEST::Bool = true
 PRIN::Bool = true
 PROF::Bool = false
 STOP::Bool = false # stop simulation at zero syndrome (if true, BER curves are
@@ -66,7 +66,7 @@ DECAY_TEST::Float64 = 1.0
 
 ################################### SCHEDULE ###################################
 
-MODES = ["Flooding","LBP","VN-LBP","RBP","List-RBP","SVNF","NW-RBP","VN-RBP","LD-RBP","FB-RBP","List-VN-RBP"]
+MODES = ["Flooding","LBP","VN-LBP","RBP","List-RBP","SVNF","NW-RBP","VN-RBP","LD-RBP","FB-RBP","E-RBP","E-VN-RBP","List-VN-RBP"]
 NUM_MODES = length(MODES)
 ACTIVE = zeros(Bool,NUM_MODES)
 LISTSIZES = zeros(Int,4)
@@ -142,6 +142,20 @@ MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
 
 # FB-RBP
+i += 1
+ACTIVE[i] = 0
+BPTYPES[i] = "TANH"
+MAXITERS[i] = MAXITER
+DECAYS[i] = FACTORS
+
+# E-RBP
+i += 1
+ACTIVE[i] = 0
+BPTYPES[i] = "TANH"
+MAXITERS[i] = MAXITER
+DECAYS[i] = FACTORS
+
+# E-VN-RBP
 i += 1
 ACTIVE[i] = 0
 BPTYPES[i] = "TANH"
