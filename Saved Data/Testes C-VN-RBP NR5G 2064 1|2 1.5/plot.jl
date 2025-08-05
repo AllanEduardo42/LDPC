@@ -17,9 +17,9 @@ end
 plotlyjs()
 
 FB = ["F","B"]
-markers = [:none, :none, :dtriangle, :circle, :rect, :utriangle, :diamond, :cross,:star5]
-modes = ["RBP","E-RBP","FB-RBP","VN-RBP"]
-directory = "./Saved Data/Testes EFB $protocol $N $(R[1])|$(R[2]) $EbNo/"
+markers = [:none, :none, :none, :none, :dtriangle, :circle, :rect, :utriangle, :diamond, :cross, :star5, :hexagon]
+modes = ["Flooding","LBP","RBP 1.0","NW-RBP","SVNF","List-RBP (16,2) 1.0","C-RBP 1.0","TW-RBP 1.0","C-VN-RBP 3 1.0","C-VN-RBP 4 1.0","C-VN-RBP 5 1.0","VN-RBP 1.0"]
+directory = "./Saved Data/Testes C-VN-RBP $protocol $N $(R[1])|$(R[2]) $EbNo/"
 liminf = -3.5
 limsup = 0.1
 
@@ -27,7 +27,7 @@ for j=1:2
     title = FB[j]*"ER $protocol (N = $N, R = $(R[1])/$(R[2]), Eb/N0 = $(EbNo)dB)"
     p = plot()
     for k in eachindex(modes)
-        str = modes[k]*" 1.0"
+        str = modes[k]
         labels = modes[k]
         x = readdlm(directory*FB[j]*"ER_"*str*".txt",'\t',Float64,'\n')
         x = x[1:maxiter,:]

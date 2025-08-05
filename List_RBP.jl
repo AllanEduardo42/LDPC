@@ -36,10 +36,10 @@ function
 
         # display("e = $e")
 
-        # 1) Find largest residue  and coordenates
+        # 1) Find largest residue and coordenates
         if residues[1] == 0.0
             init_list_RBP!(Lq,Lr,Nc,nothing,nothing,newLr,Factors,inlist,
-                                            residues,coords,listsizes)
+                                            residues,coords,listsizes[1])
             if residues[1] == 0.0
                 rbp_not_converged = false
                 break

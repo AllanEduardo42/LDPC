@@ -23,7 +23,10 @@ function
         alpha::Vector{Float64},
         Residues::Matrix{Float64},
         Factors::Matrix{Float64},
-        rbp_not_converged::Bool
+        rbp_not_converged::Bool,
+        two_ways::Bool,
+        correction::Bool,
+        switch_C_VN::Bool
     )
     
     @fastmath @inbounds for e in 1:num_reps
@@ -37,24 +40,35 @@ function
             break # i.e., BP has converged
         end
 
-        limax = LinearIndices(Lr)[cimax,vjmax]
-
-        # 2) Decay the RBP factor corresponding to the maximum residue
-        Factors[limax] *= decayfactor
-        # 3) update check to node message Lr[cnmax,vnmax]
-        Lr[limax] = newLr[limax]
-        # 4) set maximum residue to zero
-        Residues[limax] = 0.0
-
         Nvjmax = Nv[vjmax]
+        if correction
+            for ci in Nvjmax
+                li = LinearIndices(Lr)[ci,vjmax]
+                # 2) Decay the RBP factor corresponding to the maximum residue
+                Factors[li] *= decayfactor
+                # 3) update check to node message Lr[cnmax,vnmax]
+                Lr[li] = newLr[li]
+                # 4) set maximum residue to zero
+                Residues[li] = 0.0
+            end
+        else
+            limax = LinearIndices(Lr)[cimax,vjmax]
+            # 2) Decay the RBP factor corresponding to the maximum residue
+            Factors[limax] *= decayfactor
+            # 3) update check to node message Lr[cnmax,vnmax]
+            Lr[limax] = newLr[limax]
+            # 4) set maximum residue to zero
+            Residues[limax] = 0.0
+        end       
+
         Ld = calc_Ld(vjmax,Nvjmax,Lf,Lr)
         bitvector[vjmax] = signbit(Ld)
 
         for ci in Nvjmax
-            alp = Residues[ci,vjmax]
-            if ci ≠ cimax
+            if switch_C_VN || ci ≠ cimax
                 # 5) update Nv messages Lq[ci,vnmax]
                 li = LinearIndices(Lq)[ci,vjmax]
+                alp = Residues[li]
                 Lq[li] = tanh(0.5*(Ld - Lr[li]))
                 # 6) calculate Residues
                 Nci = Nc[ci]
@@ -67,6 +81,31 @@ function
                 end
                 alpha[ci] = alp
             end
+        end
+
+        if two_ways
+            if !correction
+                for ci in Nvjmax
+                    if ci ≠ cimax
+                        li = LinearIndices(Lr)[ci,vjmax]
+                        Lr[li] = newLr[li]
+                    end
+                end
+            end
+            alp = 0.0
+            # 5) update Nv messages Lq[cimax,vnmax]
+            li = LinearIndices(Lq)[cimax,vjmax]
+            Lq[li] = tanh(0.5*(Ld - Lr[li]))
+            # 6) calculate Residues
+            Ncimax = Nc[cimax]
+            for vj in Ncimax
+                if vj ≠ vjmax
+                    li = LinearIndices(Lr)[cimax,vj]
+                    alp, residue = calc_residue!(Lq,Lr,newLr,li,cimax,vj,Ncimax,Factors[li],alp)
+                    Residues[li] = residue
+                end
+            end
+            alpha[cimax] = alp
         end
     end
 

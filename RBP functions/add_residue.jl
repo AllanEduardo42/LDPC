@@ -65,9 +65,7 @@ function update_inlist!(
             inlist[last] = false
         end
         inlist[li] = true
-
     end
-
 end
 
 function update_inlist!(

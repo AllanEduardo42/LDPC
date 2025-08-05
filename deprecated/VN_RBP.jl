@@ -1,10 +1,9 @@
 ################################################################################
 # Allan Eduardo Feitosa
-# 07 Apr 2025
-# RBP and List-RBP Algorithm with residual decaying factor
+# 31 Mar 2025
+# RBP Sum-Product Algorithm with residual decaying factor
 
-include("./RBP functions/RBP_update_Lr.jl")
-include("./RBP functions/findmaxedge.jl")
+include("./RBP functions/findmaxnode.jl")
 include("./RBP functions/calc_residue.jl")
 
 function
@@ -20,33 +19,28 @@ function
         decayfactor::Float64,
         num_reps::Int,
         newLr::Matrix{Float64},
+        Factors::Vector{Float64},
         alpha::Vector{Float64},
-        Residues::Matrix{Float64},
-        Factors::Matrix{Float64},
         rbp_not_converged::Bool
     )
-    
+
     @fastmath @inbounds for e in 1:num_reps
 
         # display("e = $e")
 
-        # 1) Find largest residue  and coordenates
-        cimax, vjmax = findmaxedge(Residues,alpha,Nc)
-        if cimax == 0.0
+        vjmax = findmaxnode(alpha)
+        if vjmax == 0
             rbp_not_converged = false
             break # i.e., BP has converged
         end
+        Factors[vjmax] *= decayfactor
+        alpha[vjmax] = 0.0
 
         Nvjmax = Nv[vjmax]
         for ci in Nvjmax
             li = LinearIndices(Lr)[ci,vjmax]
-            # 2) Decay the RBP factor corresponding to the maximum residue
-            Factors[li] *= decayfactor
-            # 3) update check to node message Lr[cnmax,vnmax]
             Lr[li] = newLr[li]
-            # 4) set maximum residue to zero
-            Residues[li] = 0.0
-        end
+        end 
 
         Ld = calc_Ld(vjmax,Nvjmax,Lf,Lr)
         bitvector[vjmax] = signbit(Ld)
@@ -54,20 +48,22 @@ function
         for ci in Nvjmax
             # 5) update Nv messages Lq[ci,vnmax]
             li = LinearIndices(Lq)[ci,vjmax]
-            alp = Residues[li]
             Lq[li] = tanh(0.5*(Ld - Lr[li]))
-            # 6) calculate Residues
+            # 6) calculate alpha
             Nci = Nc[ci]
             for vj in Nci
+                alp = alpha[vj]
                 if vj ≠ vjmax
                     li = LinearIndices(Lr)[ci,vj]
-                    alp, residue = calc_residue!(Lq,Lr,newLr,li,ci,vj,Nci,Factors[li],alp)
-                    Residues[li] = residue
+                    alp, _ = calc_residue!(Lq,Lr,newLr,li,ci,vj,Nci,Factors[vj],alp)
                 end
+                alpha[vj] = alp
             end
-            alpha[ci] = alp
         end
-    end
-
+    end  
+    
     return rbp_not_converged
+    
 end
+
+        

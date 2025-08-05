@@ -11,20 +11,17 @@ include("flooding.jl")
 include("LBP.jl")
 include("VN_LBP.jl")
 include("RBP.jl")
-include("FB_RBP.jl")
-include("E_RBP.jl")
 include("E_NV_RBP.jl")
 include("List_RBP.jl")
+include("List_VN_RBP.jl")
 include("SVNF.jl")
 include("VN_RBP.jl")
 include("LD_RBP.jl")
-include("List_VN_RBP.jl")
 include("NW_RBP.jl")
 include("./RBP functions/init_RBP.jl")
 include("./RBP functions/init_SVNF.jl")
 include("./RBP functions/init_list_RBP.jl")
 include("./RBP functions/init_NW_RBP.jl")
-include("./RBP functions/init_VN_RBP.jl")
 include("./RBP functions/init_LD_RBP.jl")
 include("./RBP functions/init_list_VN_RBP.jl")
 include("update_Lq.jl")
@@ -173,44 +170,64 @@ function
 
     phi = (bptype == "TABL") ? lookupTable() : nothing
 
-    # RBP preallocations
-    if mode == "SVNF"
+############################### RBP PREALLOCATIONS #############################
+    
+    LIST = mode == "List-RBP" || mode == "List-VN-RBP"
+    RBP_mode = mode[end-2:end] == "RBP" || mode == "SVNF"
+    if RBP_mode
         newLr = Matrix{Float64}(undef,M,N)
-        Residues = Matrix{Float64}(undef,M,N)
-    elseif mode == "RBP" || mode == "FB-RBP" || mode == "E-RBP" || mode == "E-RBP"
-        newLr = Matrix{Float64}(undef,M,N)
-        Factors = Matrix{Float64}(undef,M,N)
-        resetmatrix!(Factors,Nv,1.0)
-        Residues = Matrix{Float64}(undef,M,N)
-        alpha = Vector{Float64}(undef,M)
-    elseif mode == "List-RBP"
-        newLr = Matrix{Float64}(undef,M,N)
-        Residues = Vector{Float64}(undef,listsizes[1]+1)
-        Factors = Matrix{Float64}(undef,M,N)
-        resetmatrix!(Factors,Nv,1.0)
-        coords = Matrix{Int}(undef,3,listsizes[1]+1)
-        inlist = Matrix{Bool}(undef,M,N)
-        if listsizes[2] == 1
-            local_residues = Vector{Float64}(undef,listsizes[1]+1)
-            local_coords =  Matrix{Int}(undef,3,listsizes[1]+1)
-        else
-            local_residues = Vector{Float64}(undef,listsizes[2]+1)
-            local_coords = Matrix{Int}(undef,3,listsizes[2]+1)
+        NOT_SVNF = mode ≠ "SVNF"
+        NOT_NW = mode ≠ "NW-RBP"
+        if NOT_SVNF
+            alpha = Vector{Float64}(undef,M)
         end
-    elseif mode == "NW-RBP"
-        newLr = Matrix{Float64}(undef,M,N)
-        alpha = Vector{Float64}(undef,M)
-        # Factors = ones(M)   
-    elseif mode == "VN-RBP" || mode == "LD-RBP"
-        newLr = Matrix{Float64}(undef,M,N)
-        alpha = Vector{Float64}(undef,N)
-        Factors = ones(N)
-    elseif mode == "List-VN-RBP"
-        newLr = Matrix{Float64}(undef,M,N)
-        alpha = Vector{Float64}(undef,listsizes[1]+1)
-        Factors = ones(N)
-        coords = Vector{Int}(undef,listsizes[1]+1)
-        inlist = zeros(Bool,N)
+        if NOT_SVNF && NOT_NW
+            Factors = Matrix{Float64}(undef,M,N)
+            resetmatrix!(Factors,Nv,1.0)
+        end
+        if NOT_NW && !LIST
+            Residues = Matrix{Float64}(undef,M,N)
+        end   
+        switch_C_VN = false  
+        if mode == "TW-RBP" 
+            num_reps = num_edges - N
+            two_ways = true
+            correction = false
+            C_VN = false      
+        elseif mode == "C-RBP"
+            num_reps = num_edges
+            two_ways = false
+            correction = true
+            C_VN = false                     
+        elseif mode == "C-VN-RBP"  
+            num_reps = num_edges
+            two_ways = false
+            correction = true
+            C_VN = true
+        elseif mode == "RBP"
+            num_reps = num_edges
+            two_ways = false
+            correction = false
+            C_VN = false
+        end
+        if LIST
+            Residues = Vector{Float64}(undef,listsizes[1]+1)
+            Residues[end] = 0.0
+            coords = Matrix{Int}(undef,3,listsizes[1]+1)
+            inlist = Matrix{Bool}(undef,M,N)
+            sorted = Vector{Int}(undef,listsizes[1])
+            if listsizes[2] == 1
+                local_residues = Vector{Float64}(undef,listsizes[1]+1)
+                local_coords =  Matrix{Int}(undef,3,listsizes[1]+1)
+            else
+                local_residues = Vector{Float64}(undef,listsizes[2]+1)
+                local_coords = Matrix{Int}(undef,3,listsizes[2]+1)
+            end            
+        end       
+    # elseif mode == "LD-RBP"
+    #     newLr = Matrix{Float64}(undef,M,N)
+    #     alpha = Vector{Float64}(undef,N)
+    #     Factors = ones(N)
     end
 
 ################################## MAIN LOOP ###################################
@@ -255,19 +272,15 @@ function
         syndrome .= true
         decoded .= false
         resetmatrix!(Lr,Nv,0.0)
-        if mode == "List-RBP"
+        if LIST
             Residues .= 0.0
             coords .= 0
-            local_residues .= 0.0
-            local_coords .= 0
             resetmatrix!(inlist,Nv,false)
-        end
-
-        if mode == "List-VN-RBP"
-            alpha .= 0.0
-            coords .= 0
-            inlist .= false
-        end            
+            if mode == "List-RBP"
+                local_residues .= 0.0
+                local_coords .= 0
+            end
+        end          
 
         # 5) init the LLR priors
         calc_Lf!(Lf,twoLs,signal,variance)
@@ -297,22 +310,17 @@ function
         init_Lq!(Lq,Lf,Nv,signs)
 
         # 9) init the RBP methods
-        if mode == "RBP" || mode == "FB-RBP" || mode == "E-RBP"
+        if mode == "RBP" || mode == "TW-RBP" || mode == "C-RBP" || mode == "VN-RBP" || mode == "C-VN-RBP"
             init_RBP!(Lq,Lr,Nc,signs,phi,newLr,alpha,Residues)
-        elseif mode == "List-RBP"
+        elseif LIST
             init_list_RBP!(Lq,Lr,Nc,signs,phi,newLr,Factors,inlist,Residues,
-                                                            coords,listsizes)
+                                                            coords,listsizes[1])
         elseif mode == "SVNF"
             init_SVNF!(Lq,Lr,Nc,signs,phi,newLr,Residues)        
         elseif mode == "NW-RBP"
             init_NW_RBP!(Lq,Lr,Nc,signs,phi,newLr,alpha)
-        elseif mode == "VN-RBP"
-            init_VN_RBP!(Lq,Nc,signs,phi,newLr,alpha,Nv)
         elseif mode == "LD-RBP"
             init_LD_RBP!(Lq,Nc,signs,phi,newLr,alpha,Nv)
-        elseif mode == "List-VN-RBP"
-            init_list_VN_RBP!(Lq,Nc,Nv,aux,signs,phi,newLr,Factors,inlist,
-                                            alpha,coords,listsizes[1])
         end
   
         # 10) BP routine
@@ -356,7 +364,12 @@ function
                     Lf,
                     Nc,
                     Nv)
-            elseif mode == "RBP"
+            elseif mode == "RBP" || mode == "TW-RBP" || mode == "C-RBP" || mode == "C-VN-RBP"
+                if C_VN && iter > 4
+                    num_reps -= N
+                    switch_C_VN = true
+                    C_VN = false
+                end
                 rbp_not_converged = RBP!(
                     bitvector,
                     Lq,
@@ -367,17 +380,20 @@ function
                     signs,
                     phi,
                     decayfactor,
-                    num_edges,
+                    num_reps,
                     newLr,
                     alpha,
                     Residues,
                     Factors,
-                    rbp_not_converged
+                    rbp_not_converged,
+                    two_ways,
+                    correction,
+                    switch_C_VN
                     )
                 # reset factors
                 resetmatrix!(Factors,Nv,1.0)
-            elseif mode == "FB-RBP"
-                rbp_not_converged = FB_RBP!(
+            elseif mode == "VN-RBP"
+                rbp_not_converged = VN_RBP!(
                     bitvector,
                     Lq,
                     Lr,
@@ -393,34 +409,6 @@ function
                     Residues,
                     Factors,
                     rbp_not_converged
-                    )
-                # reset factors
-                resetmatrix!(Factors,Nv,1.0)
-             elseif mode == "E-RBP"
-                if iter > 4
-                    flag = true
-                    num_steps = num_edges - N
-                else
-                    flag = false
-                    num_steps = num_edges
-                end
-                rbp_not_converged = E_RBP!(
-                    bitvector,
-                    Lq,
-                    Lr,
-                    Lf,
-                    Nc,
-                    Nv,
-                    signs,
-                    phi,
-                    decayfactor,
-                    num_steps,
-                    newLr,
-                    alpha,
-                    Residues,
-                    Factors,
-                    rbp_not_converged,
-                    flag
                     )
                 # reset factors
                 resetmatrix!(Factors,Nv,1.0)
@@ -484,25 +472,6 @@ function
                 )
                 # reset factors
                 # Factors .= 1.0
-            elseif mode == "VN-RBP"
-                rbp_not_converged = VN_RBP!(
-                    bitvector,
-                    Lq,
-                    Lr,
-                    Lf,
-                    Nc,
-                    Nv,
-                    signs,
-                    phi,
-                    decayfactor,
-                    num_edges-N,
-                    newLr,
-                    Factors,
-                    alpha,
-                    rbp_not_converged
-                    )
-                # reset factors
-                Factors .= 1.0
             elseif mode == "List-VN-RBP"
                 rbp_not_converged = List_VN_RBP!(
                     bitvector,
@@ -511,15 +480,15 @@ function
                     Lf,
                     Nc,
                     Nv,
-                    aux,
                     signs,
                     phi,
                     decayfactor,
                     num_edges-N,
                     newLr,
+                    Residues,
                     Factors,
-                    alpha,
                     coords,
+                    sorted,
                     inlist,
                     listsizes[1],
                     rbp_not_converged
@@ -600,6 +569,12 @@ function
         for i=1:maxiter
             sum_ber[i] += ber[i]
             sum_decoded[i] += decoded[i]
+        end
+
+        if mode == "C-VN-RBP"
+            switch_C_VN = false
+            C_VN = true
+            num_reps = num_edges
         end
     end
 

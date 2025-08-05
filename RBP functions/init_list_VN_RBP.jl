@@ -3,7 +3,6 @@ function
         Lq::Matrix{Float64},
         Nc::Vector{Vector{Int}},
         Nv::Vector{Vector{Int}},
-        aux::Vector{Float64},
         signs::Union{Vector{Bool},Nothing},
         phi::Union{Vector{Float64},Nothing},
         newLr::Matrix{Float64},
@@ -16,15 +15,20 @@ function
     
     @inbounds for ci in eachindex(Nc)
         Nci = Nc[ci]
-        A, B, C, D = calc_ABCD!(aux,signs,phi,Lq,ci,Nci)
         for vj in Nci
             li = LinearIndices(newLr)[ci,vj]
-            newlr = calc_Lr(A,B,C,D,vj,aux,signs,phi)
+            newlr = calc_Lr(Nci,ci,vj,Lq)
             newLr[li] = newlr
         end
     end
     @inbounds for vj in eachindex(Nv)
-        alp = _calc_all_residues_VN(newLr,vj,Nv[vj])
+        alp = 0.0
+        for ci in Nv[vj]
+            residue = abs(newLr[ci,vj])
+            if residue > alp
+                alp = residue
+            end
+        end
         alp *= Factors[vj]
         add_list_VN!(alp,alpha,listsize,inlist,coords,vj)
     end
