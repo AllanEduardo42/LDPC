@@ -54,7 +54,7 @@ MAXITER::Int = 50
 # FACTORS = [0.7, 0.8, 0.9, 1.0]
 # FACTORS = collect(0.1:0.1:1.0)
 FACTORS = [0.85, 1.0]
-EbN0 = [1.5]
+EbN0 = [2.5]
 TRIALS = [1024000]
 # TRIALS = [128, 1280, 12800, 128000]
 
@@ -176,7 +176,7 @@ LISTSIZES[2] = 2
 ######################## CODE LENGTH, RATE AND PROTOCOL ########################
 
 # Transmitted message length
-GG::Int = 2064
+GG::Int = 576
 # Effective Rate
 RR::Float64 = 1/2                       # WiMAX compatibility offset
 # LDPC protocol: NR5G = NR-LDPC (5G); PEG = PEG; WiMAX = IEEE80216e;
