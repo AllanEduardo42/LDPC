@@ -25,8 +25,8 @@ function
         coords::Matrix{Int},
         inlist::Matrix{Bool},
         listsize::Int,
-        listsize2::Int,
-        rbp_not_converged::Bool
+        rbp_not_converged::Bool;
+        listsize2=listsize
     )
     
     @fastmath @inbounds for e in 1:num_reps
@@ -43,7 +43,7 @@ function
                 for vj in Nc[ci]
                     li = LinearIndices(Residues)[ci,vj]
                     residue = Residues[li]
-                    add_residue!(inlist,residues,coords,residue,li,ci,vj,listsize,listsize2)
+                    add_residue!(inlist,residues,coords,residue,li,ci,vj,listsize)
                 end
             end
             if residues[1] == 0.0
@@ -85,7 +85,7 @@ function
                     residue = abs(newlr - Lr[li])*Factors[li]
                     Residues[li] = residue
                     remove_list_VN(inlist,li,listsize,coords,residues)
-                    add_residue!(inlist,residues,coords,residue,li,ci,vj,listsize,listsize2)
+                    add_residue!(inlist,residues,coords,residue,li,ci,vj,listsize)
                 end
             end
         end

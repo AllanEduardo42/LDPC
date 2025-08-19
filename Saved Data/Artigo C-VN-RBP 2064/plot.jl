@@ -1,7 +1,7 @@
 N = 2064
 R = [1,2]
 iters = 1024000
-maxiter = 50
+maxiter = 10
 EbNo = 1.5
 protocol = "NR5G"
 
@@ -15,24 +15,17 @@ function save_pdf(p, filename)
     PlotlyJS.savefig(Plots.plotlyjs_syncplot(p), filename*".pdf", width=width, height=height)
 end
 
-# plotlyjs()
-gr()
+plotlyjs()
+# gr()
 
 FB = ["F","B"]
 # markers = [:none, :none, :dtriangle, :circle, :rect, :utriangle, :diamond, :cross, :star5, :hexagon]
-modes_markers = ["Flooding"             :none            
-                 "LBP"                  :none
-                 "RBP 0.85"             :dtriangle
-                #  "RBP 1.0"              :dtriangle
-                 "NW-RBP"               :circle
-                 "SVNF"                 :rect
-                 "List-RBP (16,2) 0.85" :utriangle
-                #  "List-RBP (16,2) 1.0"  :utriangle
-                 "VN-RBP 0.85"          :diamond 
-                 "C-VN-RBP 0.85 3"      :star5
+modes_markers = ["VN-RBP 0.85"          :none 
+                 "C-VN-RBP 0.85 3"      :none
+                 "C-VN-RBP 0.85 no-opt"      :none
                  ]
                  
-directory = "./Saved Data/Artigo 2064/"
+directory = "./Saved Data/Artigo C-VN-RBP 2064/"
 liminf = 10^(-4)
 limsup = 1
 
@@ -76,9 +69,9 @@ for j=1:2
     end
     display(p)
     # save_pdf(p,directory*"/$(FB[j])ER")
-    Plots.pdf(p,directory*"/$(FB[j])ER")
+    # Plots.pdf(p,directory*"/$(FB[j])ER")
     global liminf = 10^(-5)
-    global limsup = 10^(-1)
+    global limsup = 10^(-2)
 end
 
 

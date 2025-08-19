@@ -231,9 +231,6 @@ function
 
     @inbounds for trial in 1:trials
 
-        listsize = 2
-        listsize2 = 2
-
         # 1) generate the random message
         generate_message!(msg,rgn,msgtest)
 
@@ -315,7 +312,7 @@ function
             init_RBP!(Lq,Lr,Nc,signs,phi,newLr,alpha,Residues)
         elseif LIST
             init_list_RBP!(Lq,Lr,Nc,signs,phi,newLr,Factors,inlist,Residues,
-                                                residues,coords,listsize)
+                                                residues,coords,listsizes[1])
         elseif mode == "SVNF"
             init_SVNF!(Lq,Lr,Nc,signs,phi,newLr,Residues)        
         elseif mode == "NW-RBP"
@@ -366,8 +363,9 @@ function
                     Nc,
                     Nv)
             elseif mode == "RBP" || mode == "TW-RBP" || mode == "C-RBP" || mode == "C-VN-RBP"
-                if C_VN && iter ≥ 5
+                if C_VN && iter ≥ 3
                     switch_C_VN = true
+                    num_reps -= N
                 end
                 rbp_not_converged = RBP!(
                     bitvector,
@@ -393,7 +391,7 @@ function
                 resetmatrix!(Factors,Nv,1.0)
                 if C_VN && switch_C_VN
                     C_VN = false
-                    num_reps -= N
+                    # num_reps -= N
                 end
             elseif mode == "VN-RBP"
                 rbp_not_converged = VN_RBP!(
@@ -477,10 +475,10 @@ function
                 # reset factors
                 # Factors .= 1.0
             elseif mode == "List-VN-RBP"
-                if listsize < listsizes[1]
-                    listsize = 2^iter
-                    listsize2 = listsize
-                end
+                # if listsize < listsizes[1]
+                #     listsize = 2
+                #     listsize2 = listsize
+                # end
                 rbp_not_converged = List_VN_RBP!(
                     bitvector,
                     Lq,
@@ -498,9 +496,9 @@ function
                     Factors,
                     coords,
                     inlist,
-                    listsize,
-                    listsize2,
-                    rbp_not_converged
+                    listsizes[1],
+                    rbp_not_converged;
+                    # listsize2
                     )
                 # reset factors
                 Factors .= 1.0

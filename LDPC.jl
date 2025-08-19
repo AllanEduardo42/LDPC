@@ -53,8 +53,8 @@ STOP::Bool = false # stop simulation at zero syndrome (if true, BER curves are
 MAXITER::Int = 50
 # FACTORS = [0.7, 0.8, 0.9, 1.0]
 # FACTORS = collect(0.1:0.1:1.0)
-FACTORS = [0.85, 1.0]
-EbN0 = [2.5]
+FACTORS = [0.85]
+EbN0 = [1.5]
 TRIALS = [1024000]
 # TRIALS = [128, 1280, 12800, 128000]
 
@@ -84,13 +84,13 @@ end
 
 i = 1
 # Flooding
-ACTIVE[i] = 1
+ACTIVE[i] = 0
 BPTYPES[i] = "TANH"
 MAXITERS[i] = MAXITER
 
 # LBP
 i += 1
-ACTIVE[i] = 1
+ACTIVE[i] = 0
 BPTYPES[i] = "TANH"
 MAXITERS[i] = MAXITER
 
@@ -102,34 +102,34 @@ MAXITERS[i] = MAXITER
 
 # RBP
 i += 1
-ACTIVE[i] = 1
+ACTIVE[i] = 0
 BPTYPES[i] = "TANH"
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
 
 # List-RBP
 i += 1
-ACTIVE[i] = 1
+ACTIVE[i] = 0
 BPTYPES[i] = "TANH"
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
 
 # SVNF
 i += 1
-ACTIVE[i] = 1
+ACTIVE[i] = 0
 BPTYPES[i] = "TANH"
 MAXITERS[i] = MAXITER
 
 # NW-RBP
 i += 1
-ACTIVE[i] = 1
+ACTIVE[i] = 0
 BPTYPES[i] = "TANH"
 MAXITERS[i] = MAXITER
 # DECAYS[i] = [1.0]
 
 # VN-RBP
 i += 1
-ACTIVE[i] = 1
+ACTIVE[i] = 0
 BPTYPES[i] = "TANH"
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
@@ -157,7 +157,7 @@ DECAYS[i] = FACTORS
 
 # C-VN-RBP
 i += 1
-ACTIVE[i] = 0
+ACTIVE[i] = 1
 BPTYPES[i] = "TANH"
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
@@ -170,13 +170,13 @@ MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
 
 # List sizes (min values = 4 and 2)
-LISTSIZES[1] = 16
+LISTSIZES[1] = 2
 LISTSIZES[2] = 2
 
 ######################## CODE LENGTH, RATE AND PROTOCOL ########################
 
 # Transmitted message length
-GG::Int = 576
+GG::Int = 2064
 # Effective Rate
 RR::Float64 = 1/2                       # WiMAX compatibility offset
 # LDPC protocol: NR5G = NR-LDPC (5G); PEG = PEG; WiMAX = IEEE80216e;
