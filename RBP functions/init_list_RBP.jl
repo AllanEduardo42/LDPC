@@ -17,9 +17,11 @@ function
         newLr::Matrix{Float64},
         Factors::Matrix{Float64},        
         inlist::Matrix{Bool},
+        Residues::Matrix{Float64},
         residues::Vector{Float64},
         coords::Matrix{Int},
-        listsize::Int
+        listsize::Int;
+        listsize2=listsize
     )
 
     @fastmath @inbounds for ci in eachindex(Nc)
@@ -29,6 +31,7 @@ function
             newlr = calc_Lr(Nci,ci,vj,Lq)
             newLr[li] = newlr
             residue = abs(newlr - Lr[li])*Factors[li]
+            Residues[li] = residue
             add_residue!(inlist,residues,coords,residue,li,ci,vj,listsize)
         end
     end

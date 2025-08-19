@@ -25,7 +25,7 @@ function
         Factors::Matrix{Float64},
         rbp_not_converged::Bool,
         two_ways::Bool,
-        correction::Bool,
+        consensus::Bool,
         switch_C_VN::Bool
     )
     
@@ -41,7 +41,7 @@ function
         end
 
         Nvjmax = Nv[vjmax]
-        if correction
+        if consensus
             for ci in Nvjmax
                 li = LinearIndices(Lr)[ci,vjmax]
                 # 2) Decay the RBP factor corresponding to the maximum residue
@@ -65,7 +65,7 @@ function
         bitvector[vjmax] = signbit(Ld)
 
         for ci in Nvjmax
-            if switch_C_VN || ci ≠ cimax
+            if ci ≠ cimax
                 # 5) update Nv messages Lq[ci,vnmax]
                 li = LinearIndices(Lq)[ci,vjmax]
                 alp = Residues[li]
@@ -83,8 +83,8 @@ function
             end
         end
 
-        if two_ways
-            if !correction
+        if two_ways || switch_C_VN
+            if !consensus
                 for ci in Nvjmax
                     if ci ≠ cimax
                         li = LinearIndices(Lr)[ci,vjmax]

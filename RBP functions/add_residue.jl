@@ -12,7 +12,8 @@ function add_residue!(
         li::Int,
         ci::Int,
         vj::Int,
-        listsize::Int
+        listsize::Int;
+        listsize2=listsize
     )
 
     @fastmath @inbounds if residue > residues[listsize]
@@ -20,7 +21,7 @@ function add_residue!(
         if residue ≥ residues[1]
             i = 1
         else
-            d = listsize >> 1
+            d = listsize2 >> 1
             i = d
             while d > 1
                 d >>= 1
@@ -35,7 +36,7 @@ function add_residue!(
             end
         end
 
-        update_inlist!(inlist,coords,li)
+        update_inlist!(inlist,coords,li,listsize)
 
         for j=listsize:-1:i+1
             residues[j] = residues[j-1]
@@ -56,11 +57,12 @@ end
 function update_inlist!(
     inlist::Matrix{Bool},
     coords::Matrix{Int},
-    li::Int
+    li::Int,
+    listsize::Int
 )
 
     @inbounds begin
-        last = coords[3,end-1]
+        last = coords[3,listsize]
         if last ≠ 0
             inlist[last] = false
         end
@@ -71,6 +73,7 @@ end
 function update_inlist!(
     ::Nothing,
     ::Matrix{Int},
+    ::Int,
     ::Int
 )
 

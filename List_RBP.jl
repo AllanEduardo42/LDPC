@@ -25,6 +25,7 @@ function
         Factors::Matrix{Float64},
         coords::Matrix{Int},
         inlist::Matrix{Bool},
+        Residues::Matrix{Float64},
         residues::Vector{Float64},
         local_residues::Union{Vector{Float64},Nothing},
         local_coords::Union{Matrix{Int},Nothing},
@@ -36,10 +37,15 @@ function
 
         # display("e = $e")
 
-        # 1) Find largest residue and coordenates
+       # 1) Find largest residue and coordenates
         if residues[1] == 0.0
-            init_list_RBP!(Lq,Lr,Nc,nothing,nothing,newLr,Factors,inlist,
-                                            residues,coords,listsizes[1])
+            for ci in eachindex(Nc)
+                for vj in Nc[ci]
+                    li = LinearIndices(Residues)[ci,vj]
+                    residue = Residues[li]
+                    add_residue!(inlist,residues,coords,residue,li,ci,vj,listsizes[1])
+                end
+            end
             if residues[1] == 0.0
                 rbp_not_converged = false
                 break
@@ -54,6 +60,7 @@ function
         # 3) update check to node message Lr[cnmax,vnmax]
         Lr[limax] = newLr[limax]
         # 4) set maximum residue to zero
+        Residues[limax] = 0.0
         remove_residue!(limax,listsizes[1],residues,coords,inlist,1)
 
         Nvjmax = Nv[vjmax]
@@ -73,6 +80,7 @@ function
                         li = LinearIndices(Lr)[ci,vj]
                         newLr[li] = newlr
                         residue = abs(newlr - Lr[li])*Factors[li]
+                        Residues[li] = residue
                         update_local_list!(residues,coords,local_residues,
                             local_coords,listsizes,inlist,li,ci,vj,residue)
                     end
