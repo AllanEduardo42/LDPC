@@ -15,14 +15,14 @@ function save_pdf(p, filename)
     PlotlyJS.savefig(Plots.plotlyjs_syncplot(p), filename*".pdf", width=width, height=height)
 end
 
-plotlyjs()
-# gr()
+# plotlyjs()
+gr()
 
 FB = ["F","B"]
 # markers = [:none, :none, :dtriangle, :circle, :rect, :utriangle, :diamond, :cross, :star5, :hexagon]
-modes_markers = ["VN-RBP 0.85"          :none 
-                 "C-VN-RBP 0.85"        :none
-                 "C-VN-RBP 0.85 no-opt" :none
+modes_markers = ["VN-RBP 0.85"          :circle 
+                 "C-VN-RBP 0.85"        :diamond
+                 "C-VN-RBP 0.85 no-opt" :utriangle
                  ]
 directory = "./Saved Data/Artigo C-VN-RBP 576/"
 liminf = 10^(-3)
@@ -63,7 +63,8 @@ for j=1:2
             markershape = modes_markers[k,2],
             left_margin=3Plots.mm,
             bottom_margin=3Plots.mm,
-            top_margin=3Plots.mm
+            top_margin=3Plots.mm,
+            xticks=([1,2,3,4,5,6,7,8])
         )
     end
     display(p)
