@@ -69,7 +69,7 @@ for j=1:2
     end
     display(p)
     # save_pdf(p,directory*"/$(FB[j])ER")
-    # Plots.pdf(p,directory*"/$(FB[j])ER")
+    Plots.pdf(p,directory*"/$(FB[j])ER")
     global liminf = 10^(-4)
     global limsup = 10^(-2)
 end
