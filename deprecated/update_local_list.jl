@@ -3,15 +3,16 @@
 # 2 Mar 2025
 # Update the local list of residues for the List-RBP algorithm
 
-include("add_residue.jl")
+include("add_to_list.jl")
+include("remove_from_list.jl")
 
 # List-RBP
 function
     update_local_list!(
-        residues::Vector{Float64},
+        list::Vector{Float64},
         coords::Matrix{Int},
-        localresidues::Vector{Float64},
-        localcoords::Matrix{Int},
+        local_list::Vector{Float64},
+        local_coords::Matrix{Int},
         listsizes::Vector{Int},
         inlist::Matrix{Bool},
         li::Int,
@@ -33,12 +34,10 @@ function
             # if pos == 0
             #     throw(error("($(coords[1,i]),$(coords[1,i])) is registered as being on the list, but it's not."))
             # end
-            # remove from list
-            inlist[li] = false
-            remove_residue!(li,listsizes[1],residues,coords,inlist,pos)
+            remove_from_list!(li,listsizes[1],list,coords,inlist,pos)
         end                
 
-        add_residue!(nothing,localresidues,localcoords,residue,li,ci,vj,listsizes[2])
+        add_to_list!(nothing,local_list,local_coords,residue,li,ci,vj,listsizes[2])
 
     end
 

@@ -1,14 +1,12 @@
 ################################################################################
 # Allan Eduardo Feitosa
 # 3 Mar 2025
-# Calculate all residues
 
-include("calc_residue.jl")
-include("add_residue.jl")
+include("../RBP functions/calc_residue.jl")
+include("add_to_list.jl")
 
-# FAST, TABL and MSUM
 function
-    init_list_RBP!(
+    init_list!(
         Lq::Matrix{Float64},
         Lr::Matrix{Float64},
         Nc::Vector{Vector{Int}},
@@ -18,7 +16,7 @@ function
         Factors::Matrix{Float64},        
         inlist::Matrix{Bool},
         Residues::Matrix{Float64},
-        residues::Vector{Float64},
+        list::Vector{Float64},
         coords::Matrix{Int},
         listsize::Int;
         listsize2=listsize
@@ -32,7 +30,7 @@ function
             newLr[li] = newlr
             residue = abs(newlr - Lr[li])*Factors[li]
             Residues[li] = residue
-            add_residue!(inlist,residues,coords,residue,li,ci,vj,listsize)
+            add_to_list!(inlist,list,coords,residue,li,ci,vj,listsize)
         end
     end
 end

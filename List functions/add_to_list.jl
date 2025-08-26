@@ -4,34 +4,33 @@
 # Add the residue
 
 # List-RBP
-function add_residue!(
+function add_to_list!(
         inlist::Union{Matrix{Bool},Nothing},
-        residues::Vector{Float64},
+        list::Vector{Float64},
         coords::Matrix{Int},
         residue::Float64,
         li::Int,
         ci::Int,
         vj::Int,
-        listsize::Int;
-        listsize2=listsize
+        listsize::Int
     )
 
-    @fastmath @inbounds if residue > residues[listsize]
+    @fastmath @inbounds if residue > list[listsize]
 
-        if residue ≥ residues[1]
+        if residue ≥ list[1]
             i = 1
         else
-            d = listsize2 >> 1
+            d = listsize >> 1
             i = d
             while d > 1
                 d >>= 1
-                if residue ≥ residues[i]
+                if residue ≥ list[i]
                     i -= d
                 else
                     i += d
                 end
             end
-            if residue < residues[i]
+            if residue < list[i]
                 i += 1
             end
         end
@@ -39,7 +38,7 @@ function add_residue!(
         update_inlist!(inlist,coords,li,listsize)
 
         for j=listsize:-1:i+1
-            residues[j] = residues[j-1]
+            list[j] = list[j-1]
             coords[1,j] = coords[1,j-1]
             coords[2,j] = coords[2,j-1]
             coords[3,j] = coords[3,j-1]
@@ -49,7 +48,7 @@ function add_residue!(
         coords[1,i] = ci
         coords[2,i] = vj
         coords[3,i] = li
-        residues[i] = residue        
+        list[i] = residue        
     end
 end
 
@@ -61,7 +60,7 @@ function update_inlist!(
     listsize::Int
 )
 
-    @inbounds begin
+     begin
         last = coords[3,listsize]
         if last ≠ 0
             inlist[last] = false

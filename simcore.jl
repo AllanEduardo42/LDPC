@@ -18,12 +18,11 @@ include("SVNF.jl")
 include("VN_RBP.jl")
 include("LD_RBP.jl")
 include("NW_RBP.jl")
+include("./List functions/init_list.jl")
 include("./RBP functions/init_RBP.jl")
 include("./RBP functions/init_SVNF.jl")
-include("./RBP functions/init_list_RBP.jl")
 include("./RBP functions/init_NW_RBP.jl")
 include("./RBP functions/init_LD_RBP.jl")
-include("./RBP functions/init_list_VN_RBP.jl")
 include("update_Lq.jl")
 include("update_Lr.jl")
 include("NR LDPC/NR_LDPC_functions.jl")
@@ -209,16 +208,15 @@ function
             C_VN = false
         end
         if LIST
-            residues = Vector{Float64}(undef,listsizes[1]+1)
-            residues[end] = 0.0
-            coords = Matrix{Int}(undef,3,listsizes[1]+1)
+            listsize = listsizes[1]
+            list = Vector{Float64}(undef,listsize+1)
+            list[end] = 0.0
+            coords = Matrix{Int}(undef,3,listsize+1)
             inlist = zeros(Bool,M,N)
-            if listsizes[2] == 1
-                local_residues = Vector{Float64}(undef,listsizes[1]+1)
-                local_coords =  Matrix{Int}(undef,3,listsizes[1]+1)
-            else
-                local_residues = Vector{Float64}(undef,listsizes[2]+1)
-                local_coords = Matrix{Int}(undef,3,listsizes[2]+1)
+            if mode == "List-RBP"
+                listsize2 = listsizes[2]
+                local_list = Vector{Float64}(undef,listsize2+1)
+                local_coords = Matrix{Int}(undef,3,listsize2+1)
             end            
         end       
     # elseif mode == "LD-RBP"
@@ -227,9 +225,15 @@ function
     #     Factors = ones(N)
     end
 
+    
+
 ################################## MAIN LOOP ###################################
 
     @inbounds for trial in 1:trials
+
+        if mode == "List-VN-RBP"
+            listsize = 2
+        end
 
         # 1) generate the random message
         generate_message!(msg,rgn,msgtest)
@@ -271,11 +275,11 @@ function
         resetmatrix!(Lr,Nv,0.0)
 
         if LIST
-            residues .= 0.0
+            list .= 0.0
             coords .= 0
             resetmatrix!(inlist,Nv,false)
             if mode == "List-RBP"
-                local_residues .= 0.0
+                local_list .= 0.0
                 local_coords .= 0
             end
         end
@@ -311,8 +315,8 @@ function
         if mode == "RBP" || mode == "TW-RBP" || mode == "C-RBP" || mode == "VN-RBP" || mode == "C-VN-RBP"
             init_RBP!(Lq,Lr,Nc,signs,phi,newLr,alpha,Residues)
         elseif LIST
-            init_list_RBP!(Lq,Lr,Nc,signs,phi,newLr,Factors,inlist,Residues,
-                                                residues,coords,listsizes[1])
+            init_list!(Lq,Lr,Nc,signs,phi,newLr,Factors,inlist,Residues,list,
+                                                                coords,listsize)
         elseif mode == "SVNF"
             init_SVNF!(Lq,Lr,Nc,signs,phi,newLr,Residues)        
         elseif mode == "NW-RBP"
@@ -363,8 +367,9 @@ function
                     Nc,
                     Nv)
             elseif mode == "RBP" || mode == "TW-RBP" || mode == "C-RBP" || mode == "C-VN-RBP"
-                if C_VN && iter ≥ 3
+                if C_VN && iter ≥ 4
                     switch_C_VN = true
+                    C_VN = false
                     num_reps -= N
                 end
                 rbp_not_converged = RBP!(
@@ -389,10 +394,6 @@ function
                     )
                 # reset factors
                 resetmatrix!(Factors,Nv,1.0)
-                if C_VN && switch_C_VN
-                    C_VN = false
-                    # num_reps -= N
-                end
             elseif mode == "VN-RBP"
                 rbp_not_converged = VN_RBP!(
                     bitvector,
@@ -430,10 +431,11 @@ function
                     coords,
                     inlist,
                     Residues,
-                    residues,
-                    local_residues,
+                    list,
+                    local_list,
                     local_coords,
-                    listsizes,
+                    listsize,
+                    listsize2,
                     rbp_not_converged
                 )
                 # reset factors
@@ -475,10 +477,10 @@ function
                 # reset factors
                 # Factors .= 1.0
             elseif mode == "List-VN-RBP"
-                # if listsize < listsizes[1]
-                #     listsize = 2
-                #     listsize2 = listsize
-                # end
+                if listsize < listsizes[1]
+                    listsize = 2^(cld(iter,2)+1)
+                    # listsize2 = listsize
+                end
                 rbp_not_converged = List_VN_RBP!(
                     bitvector,
                     Lq,
@@ -492,16 +494,15 @@ function
                     num_edges-N,
                     newLr,
                     Residues,
-                    residues,
+                    list,
                     Factors,
                     coords,
                     inlist,
-                    listsizes[1],
-                    rbp_not_converged;
-                    # listsize2
+                    listsize,
+                    rbp_not_converged
                     )
                 # reset factors
-                Factors .= 1.0
+                resetmatrix!(Factors,Nv,1.0)
             elseif mode == "LD-RBP"
                rbp_not_converged = LD_RBP!(
                     bitvector,

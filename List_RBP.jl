@@ -4,10 +4,11 @@
 # RBP and List-RBP Algorithm with residual decaying factor
 
 include("./RBP functions/RBP_update_Lr.jl")
-include("./RBP functions/update_local_list.jl")
-include("./RBP functions/update_global_list.jl")
-include("./RBP functions/remove_residue!.jl")
 include("./RBP functions/calc_residue.jl")
+include("./List functions/update_main_list.jl")
+include("./List functions/add_to_list.jl")
+include("./List functions/remove_from_list.jl")
+include("./List functions/find_list_pos.jl")
 
 function
     List_RBP!(
@@ -26,10 +27,11 @@ function
         coords::Matrix{Int},
         inlist::Matrix{Bool},
         Residues::Matrix{Float64},
-        residues::Vector{Float64},
-        local_residues::Union{Vector{Float64},Nothing},
+        list::Vector{Float64},
+        local_list::Union{Vector{Float64},Nothing},
         local_coords::Union{Matrix{Int},Nothing},
-        listsizes::Vector{Int},
+        listsize::Int,
+        listsize2::Int,
         rbp_not_converged::Bool
     )
 
@@ -38,15 +40,19 @@ function
         # display("e = $e")
 
        # 1) Find largest residue and coordenates
-        if residues[1] == 0.0
+
+       # if max residue is equal to zero, refill the list
+        if list[1] == 0.0
             for ci in eachindex(Nc)
                 for vj in Nc[ci]
                     li = LinearIndices(Residues)[ci,vj]
                     residue = Residues[li]
-                    add_residue!(inlist,residues,coords,residue,li,ci,vj,listsizes[1])
+                    # add residue to main list
+                    add_to_list!(inlist,list,coords,residue,li,ci,vj,listsize)
                 end
             end
-            if residues[1] == 0.0
+            # if max residue is still zero, List-RBP has converged
+            if list[1] == 0.0
                 rbp_not_converged = false
                 break
             end
@@ -61,7 +67,7 @@ function
         Lr[limax] = newLr[limax]
         # 4) set maximum residue to zero
         Residues[limax] = 0.0
-        remove_residue!(limax,listsizes[1],residues,coords,inlist,1)
+        remove_from_list!(limax,listsize,list,coords,inlist,1)
 
         Nvjmax = Nv[vjmax]
         Ld = calc_Ld(vjmax,Nvjmax,Lf,Lr)
@@ -81,14 +87,20 @@ function
                         newLr[li] = newlr
                         residue = abs(newlr - Lr[li])*Factors[li]
                         Residues[li] = residue
-                        update_local_list!(residues,coords,local_residues,
-                            local_coords,listsizes,inlist,li,ci,vj,residue)
+                        # if egde "li" is on the main list, find position and remove
+                        if inlist[li]
+                            pos = find_list_pos(li,listsize,coords)
+                            remove_from_list!(li,listsize,list,coords,inlist,pos)
+                        end
+                        # add residue to local list
+                        add_to_list!(nothing,local_list,local_coords,residue,li,
+                                                                ci,vj,listsize2)
                     end
                 end
             end
         end
-        update_global_list!(residues,coords,local_residues,local_coords,listsizes,
-                                                                    inlist)
+        update_main_list!(list,coords,local_list,local_coords,listsize,listsize2,
+                                                                         inlist)
     end
 
     return rbp_not_converged

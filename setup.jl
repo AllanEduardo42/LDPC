@@ -138,10 +138,10 @@ if TEST
         end
     end
 else
-    if STOP
-        FER_LABELS = Vector{String}()
-        FERMAX = Vector{Vector{<:AbstractFloat}}()
-    end
+
+    LABELS = Vector{String}()
+    FERMAX = Vector{Vector{<:AbstractFloat}}()
+    BERMAX = Vector{Vector{<:AbstractFloat}}()
     FER = Dict()
     BER = Dict()
     for i in eachindex(ACTIVE)
@@ -159,10 +159,9 @@ else
                                         MAXITERS[i],
                                         BPTYPES[i],
                                         decay)
-                if STOP
-                    push!(FER_LABELS,mode*" ($(BPTYPES[i]))")
-                    push!(FERMAX,FER[mode][MAXITERS[i],:])
-                end
+                push!(LABELS,mode)
+                push!(FERMAX,log10.(FER[mode][MAXITERS[i],:]))
+                push!(BERMAX,log10.(BER[mode][MAXITERS[i],:]))
             end
         end
     end
