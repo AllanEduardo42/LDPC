@@ -53,10 +53,12 @@ STOP::Bool = false # stop simulation at zero syndrome (if true, BER curves are
 MAXITER::Int = 10
 # FACTORS = [0.7, 0.8, 0.9, 1.0]
 # FACTORS = collect(0.1:0.1:1.0)
-FACTORS = [1.0]
+FACTORS = [0.85]
 EbN0 = [1.0, 1.5, 2.0, 2.5, 3.0]
+# EbN0 = [3.5]
 # TRIALS = [1024, 10240, 102400]
-TRIALS = [32, 64, 320, 32000, 640000]
+TRIALS = [128, 1280, 12800, 128000, 1280000]
+# TRIALS = [12800000]
 
 # TEST
 MAXITER_TEST::Int = 1
@@ -66,7 +68,7 @@ DECAY_TEST::Float64 = 1.0
 
 ################################### SCHEDULE ###################################
 
-MODES = ["Flooding","LBP","VN-LBP","RBP","List-RBP","SVNF","NW-RBP","VN-RBP","LD-RBP","TW-RBP","C-RBP","C-VN-RBP","List-VN-RBP"]
+MODES = ["Flooding","LBP","VN-LBP","RBP","NW-RBP","SVNF","List-RBP","VN-RBP","LD-RBP","TW-RBP","C-RBP","C-VN-RBP","List-VN-RBP"]
 NUM_MODES = length(MODES)
 ACTIVE = zeros(Bool,NUM_MODES)
 LISTSIZES = zeros(Int,4)
@@ -84,13 +86,13 @@ end
 
 i = 1
 # Flooding
-ACTIVE[i] = 1
+ACTIVE[i] = 0
 BPTYPES[i] = "TANH"
 MAXITERS[i] = MAXITER
 
 # LBP
 i += 1
-ACTIVE[i] = 1
+ACTIVE[i] = 0
 BPTYPES[i] = "TANH"
 MAXITERS[i] = MAXITER
 
@@ -102,34 +104,34 @@ MAXITERS[i] = MAXITER
 
 # RBP
 i += 1
-ACTIVE[i] = 1
+ACTIVE[i] = 0
 BPTYPES[i] = "TANH"
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
-
-# List-RBP
-i += 1
-ACTIVE[i] = 1
-BPTYPES[i] = "TANH"
-MAXITERS[i] = MAXITER
-DECAYS[i] = FACTORS
-
-# SVNF
-i += 1
-ACTIVE[i] = 1
-BPTYPES[i] = "TANH"
-MAXITERS[i] = MAXITER
 
 # NW-RBP
 i += 1
-ACTIVE[i] = 1
+ACTIVE[i] = 0
 BPTYPES[i] = "TANH"
 MAXITERS[i] = MAXITER
 # DECAYS[i] = [1.0]
 
+# SVNF
+i += 1
+ACTIVE[i] = 0
+BPTYPES[i] = "TANH"
+MAXITERS[i] = MAXITER
+
+# List-RBP
+i += 1
+ACTIVE[i] = 0
+BPTYPES[i] = "TANH"
+MAXITERS[i] = MAXITER
+DECAYS[i] = FACTORS
+
 # VN-RBP
 i += 1
-ACTIVE[i] = 1
+ACTIVE[i] = 0
 BPTYPES[i] = "TANH"
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
@@ -150,14 +152,14 @@ DECAYS[i] = FACTORS
 
 # C-RBP
 i += 1
-ACTIVE[i] = 0
+ACTIVE[i] = 1
 BPTYPES[i] = "TANH"
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
 
 # C-VN-RBP
 i += 1
-ACTIVE[i] = 1
+ACTIVE[i] = 0
 BPTYPES[i] = "TANH"
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS

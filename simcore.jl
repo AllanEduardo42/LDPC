@@ -367,7 +367,7 @@ function
                     Nc,
                     Nv)
             elseif mode == "RBP" || mode == "TW-RBP" || mode == "C-RBP" || mode == "C-VN-RBP"
-                if C_VN && iter ≥ 4
+                if C_VN && iter ≥ 3
                     switch_C_VN = true
                     C_VN = false
                     num_reps -= N
