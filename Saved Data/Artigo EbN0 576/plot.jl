@@ -20,16 +20,27 @@ gr()
 
 FB = ["F","B"]
 # markers = [:none, :none, :dtriangle, :circle, :rect, :utriangle, :diamond, :cross, :star5, :hexagon]
-modes_markers = [
-                # "Flooding"             :none            
-                #  "LBP"                  :none
-                #  "RBP 0.85"             :dtriangle
-                #  "NW-RBP"               :circle
-                #  "SVNF"                 :rect 
-                #  "List-RBP 0.85"        :utriangle
-                 "VN-RBP 0.85"          :diamond 
-                #  "C-RBP 0.85"           :star5
-                 "C-VN-RBP 0.85"        :cross 
+# modes_markers = [
+#                 "Flooding"             :none            
+#                  "LBP"                  :none
+#                  "RD-RBP 0.85"             :dtriangle
+#                  "NW-RBP"               :circle
+#                  "SVNF"                 :rect 
+#                  "List-RBP 0.85"        :utriangle
+#                  "C&R-RBP 0.85"          :diamond 
+#                  "C-RBP 0.85"           :star5
+#                 #  "C&DR-RBP 0.85"        :cross 
+#                  ]
+modes_markers = ["Flooding"             :none            
+                 "LBP"                  :none
+                #  "RBP"                  :dtriangle
+                 "RD-RBP 0.85"          :utriangle                 
+                 "NW-RBP"               :diamond
+                 "SVNF"                 :circle
+                 "List-RBP (16,2) 0.85" :cross
+                #  "List-RBP (16,2) 1.0"  :utriangle
+                 "C&R-RBP 0.85"          :rect
+                #  "C-VN-RBP 0.85 no-opt"        :star5
                  ]
 directory = "./Saved Data/Artigo EbN0 576/"
 # liminf = -5
@@ -54,65 +65,83 @@ for j=1:2
             end
             line = :solid
             # labels = permutedims(labels)
-            p = plot!(
-                1:maxiter,
-                # log10.(x),
-                x,
-                xlabel="Iteration",
-                ylabel=FB[j]*"ER",
-                label=labels,
-                lw=3,
-                ls=line,
-                # title=title,
-                # ylims=(liminf,limsup),
-                # xlim=(1,maxiter),
-                minorgrid=true,
-                yscale=:log10,
-                color=k,
-                markersize=5,
-                guidefontsize=20,
-                tickfontsize=15,
-                # legend_title = "(Algorithm, best decay factor)",
-                # legend_title_font_pointsize = 10,
-                legend_font_pointsize = 15,
-                # legend = :outertopright,
-                size = 1.5 .*(600,400),
-                markershape = modes_markers[k,2],
-                left_margin=3Plots.mm,
-                bottom_margin=3Plots.mm,
-                top_margin=3Plots.mm
-            )
+            # p = plot!(
+            #     1:maxiter,
+            #     # log10.(x),
+            #     x,
+            #     xlabel="Iteration",
+            #     ylabel=FB[j]*"ER",
+            #     label=labels,
+            #     lw=3,
+            #     ls=line,
+            #     # title=title,
+            #     # ylims=(liminf,limsup),
+            #     # xlim=(1,maxiter),
+            #     minorgrid=true,
+            #     yscale=:log10,
+            #     color=k,
+            #     markersize=5,
+            #     guidefontsize=20,
+            #     tickfontsize=15,
+            #     # legend_title = "(Algorithm, best decay factor)",
+            #     # legend_title_font_pointsize = 10,
+            #     legend_font_pointsize = 15,
+            #     # legend = :outertopright,
+            #     size = 1.5 .*(600,400),
+            #     markershape = modes_markers[k,2],
+            #     left_margin=3Plots.mm,
+            #     bottom_margin=3Plots.mm,
+            #     top_margin=3Plots.mm
+            # )
         end
-        display(p)
+        # display(p)
         # save_pdf(p,directory*"/$(FB[j])ER")
-        Plots.pdf(p,directory*"/$(FB[j])ER_"*"$(EbN0[ebn0])dB.pdf")
+        # Plots.pdf(p,directory*"/$(FB[j])ER_"*"$(EbN0[ebn0])dB.pdf")
     end
 end
 
+colors = [1, 2, 4, 5, 6, 18, 7]
+
 # FER x EbN0
 PLOT = plot(
-    EbN0,log10.(FERMAX),
+    EbN0,FERMAX,
+    minorgrid=true,
+    minorgridalpha=0.05,
+    yscale=:log10,
+    ylabel="FER",
     xlabel="EbN0 (dB)",
+    ylims=(10^(-6),1),
+    color=colors',
     label=permutedims(modes_markers[:,1]),
     markershape=permutedims(modes_markers[:,2]),
-    lw=2,
-    title="FER x EbN0 (Iter = 10, N = $N, R = $(R[1])/$(R[2]))",
+    lw=2.5,
+    markersize=5,
+    markerstrokewidth = 0.25,
+    guidefontsize=15,
+    tickfontsize=12,
+    legend_font_pointsize = 10,
+    fontfamily="Computer Modern",
     size = 1.5 .*(600,400),
-    # ylims=(-5,0)
+    left_margin=3Plots.mm,
+    framestyle=:box
 )
 display(PLOT)
 # BER x EbN0
-PLOT = plot(
-    EbN0,log10.(BERMAX),
-    xlabel="EbN0 (dB)",
-    label=permutedims(modes_markers[:,1]),
-    markershape=permutedims(modes_markers[:,2]),
-    lw=2,
-    title="BER x EbN0 (Iter = 10, N = $N, R = $(R[1])/$(R[2]))",
-    size = 1.5 .*(600,400),
-    # ylims=(-6,-1)
-)
-display(PLOT)
+# PLOT = plot(
+#     EbN0,BERMAX,
+#     minorgrid=true,
+#     yscale=:log10,
+#     xlabel="EbN0 (dB)",
+#     ylims=(10^(-8),0.1),
+#     label=permutedims(modes_markers[:,1]),
+#     markershape=permutedims(modes_markers[:,2]),
+#     lw=2,
+#     # title="BER x EbN0 (Iter = 10, N = $N, R = $(R[1])/$(R[2]))",
+#     size = 1.5 .*(600,400),
+#     # ylims=(-6,-1)
+# )
+# display(PLOT)
+Plots.pdf(PLOT,directory*"/FER_dB.pdf")
 
 
 
