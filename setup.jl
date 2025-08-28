@@ -14,6 +14,12 @@ include("make_VN_CN_lists.jl")
 include("print_simulation_details.jl")
 include("prepare_simulation.jl")
 
+if ACTIVE_ALL
+    for i in eachindex(ACTIVE)
+        ACTIVE[i] = true
+    end
+end
+
 ############################# PARITY-CHECK MATRIX #############################
 if PROTOCOL == "NR5G"
     H1::Matrix{Bool} = [false false]
@@ -138,30 +144,35 @@ if TEST
         end
     end
 else
-
-    LABELS = Vector{String}()
-    FERMAX = Vector{Vector{<:AbstractFloat}}()
-    BERMAX = Vector{Vector{<:AbstractFloat}}()
     FER = Dict()
     BER = Dict()
     for i in eachindex(ACTIVE)
         if ACTIVE[i]
+            mode = MODES[i]
+            if mode == "List-RBP"
+                mode *= " ($(LISTSIZES[1]),$(LISTSIZES[2]))"
+            end
             for decay in DECAYS[i]
                 if decay != 0.0
-                    mode = MODES[i]*" $decay"
-                else
-                    mode = MODES[i]
+                    mode *= " $decay"
                 end
-                FER[mode], BER[mode] = prepare_simulation(
+                fer, ber = prepare_simulation(
                                         EbN0,
                                         MODES[i],
                                         TRIALS,
                                         MAXITERS[i],
                                         BPTYPES[i],
                                         decay)
-                push!(LABELS,mode)
-                push!(FERMAX,log10.(FER[mode][MAXITERS[i],:]))
-                push!(BERMAX,log10.(BER[mode][MAXITERS[i],:]))
+                if SAVE
+                    open("./Saved Data/"*NOW*"/FER_"*mode*".txt","w") do io
+                            writedlm(io,fer)
+                    end
+                    open("./Saved Data/"*NOW*"/BER_"*mode*".txt","w") do io
+                            writedlm(io,ber)
+                    end
+                end
+                FER[mode] = fer
+                BER[mode] = ber
             end
         end
     end

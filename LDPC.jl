@@ -50,15 +50,15 @@ STOP::Bool = false # stop simulation at zero syndrome (if true, BER curves are
 
 ################################## PARAMETERS ##################################
 
-MAXITER::Int = 10
+MAXITER::Int = 50
 # FACTORS = [0.7, 0.8, 0.9, 1.0]
 # FACTORS = collect(0.1:0.1:1.0)
-FACTORS = [1.0]
+FACTORS = [0.85]
 # EbN0 = [1.0, 1.5, 2.0, 2.5, 3.0]
-EbN0 = [2.5]
+EbN0 = [2.0, 2.5, 3.0]
 # TRIALS = [1024, 10240, 102400]
 # TRIALS = [128, 1280, 12800, 128000, 1280000]
-TRIALS = [1024000]
+TRIALS = [1024, 10240, 102400]
 
 # TEST
 MAXITER_TEST::Int = 1
@@ -68,7 +68,8 @@ DECAY_TEST::Float64 = 1.0
 
 ################################### SCHEDULE ###################################
 
-MODES = ["Flooding","LBP","VN-LBP","RBP","NW-RBP","SVNF","List-RBP","VN-RBP","LD-RBP","TW-RBP","C-RBP","C-VN-RBP","List-VN-RBP"]
+MODES = ["Flooding","LBP","RBP","RD-RBP","NW-RBP","SVNF","List-RBP","C&R-RBP","R-RBP","C-RBP","C&DR-RBP"]
+MARKERS = [:none, :none, :dtriangle, :circle, :rect, :utriangle, :diamond, :cross, :star5, :hexagon]
 NUM_MODES = length(MODES)
 ACTIVE = zeros(Bool,NUM_MODES)
 LISTSIZES = zeros(Int,4)
@@ -84,27 +85,29 @@ for i in 1:NUM_MODES
     DECAYS[i] = [0.0]
 end
 
+ACTIVE_ALL = false
+
 i = 1
 # Flooding
-ACTIVE[i] = 0
+ACTIVE[i] = 1
 BPTYPES[i] = "TANH"
 MAXITERS[i] = MAXITER
 
 # LBP
 i += 1
-ACTIVE[i] = 0
-BPTYPES[i] = "TANH"
-MAXITERS[i] = MAXITER
-
-# VN-LBP
-i += 1
-ACTIVE[i] = 0
+ACTIVE[i] = 1
 BPTYPES[i] = "TANH"
 MAXITERS[i] = MAXITER
 
 # RBP
 i += 1
-ACTIVE[i] = 1
+ACTIVE[i] = 0
+BPTYPES[i] = "TANH"
+MAXITERS[i] = MAXITER
+
+# RD-RBP
+i += 1
+ACTIVE[i] = 0
 BPTYPES[i] = "TANH"
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
@@ -129,21 +132,14 @@ BPTYPES[i] = "TANH"
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
 
-# VN-RBP
+# C&R-RBP
 i += 1
 ACTIVE[i] = 0
 BPTYPES[i] = "TANH"
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
 
-# LD-RBP
-i += 1
-ACTIVE[i] = 0
-BPTYPES[i] = "TANH"
-MAXITERS[i] = MAXITER
-DECAYS[i] = FACTORS
-
-# TW-RBP
+# R-RBP
 i += 1
 ACTIVE[i] = 0
 BPTYPES[i] = "TANH"
@@ -157,19 +153,19 @@ BPTYPES[i] = "TANH"
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
 
-# C-VN-RBP
+# C&DR-RBP
 i += 1
 ACTIVE[i] = 0
 BPTYPES[i] = "TANH"
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
 
-# List VN-RBP
-i += 1
-ACTIVE[i] = 0
-BPTYPES[i] = "TANH"
-MAXITERS[i] = MAXITER
-DECAYS[i] = FACTORS
+# List C&R-RBP
+# i += 1
+# ACTIVE[i] = 0
+# BPTYPES[i] = "TANH"
+# MAXITERS[i] = MAXITER
+# DECAYS[i] = FACTORS
 
 # List sizes (min values = 4 and 2)
 LISTSIZES[1] = 16
@@ -187,8 +183,8 @@ PROTOCOL::String = "NR5G"
     RO = [1.0, 0, 0, 0, 0, 0]
 
 include("setup.jl")
-if !TEST
-    include("plot_or_save.jl")
+if !TEST && !SAVE
+    include("plot_results.jl")
 end
 
 ### WiMAX: N takes values in {576,672,768,864,960,1056,1152,1248,1344,1440,1536,

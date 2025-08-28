@@ -15,8 +15,8 @@ function save_pdf(p, filename)
     PlotlyJS.savefig(Plots.plotlyjs_syncplot(p), filename*".pdf", width=width, height=height)
 end
 
-# plotlyjs()
-gr()
+plotlyjs()
+# gr()
 
 FB = ["F","B"]
 # markers = [:none, :none, :dtriangle, :circle, :rect, :utriangle, :diamond, :cross, :star5, :hexagon]
@@ -27,15 +27,15 @@ modes_markers = ["Flooding"             :none
                  "NW-RBP"               :diamond
                  "SVNF"                 :circle
                  "List-RBP (16,2) 0.85" :cross
-                #  "List-RBP (16,2) 1.0"  :utriangle
-                 "C&R-RBP 0.85"          :rect
-                #  "C-VN-RBP 0.85 no-opt"        :star5
+                 "C&R-RBP 0.85"         :rect
+                 "C-RBP 0.85"           :star5
+                 "C&DR-RBP 0.85"        :star5
                  ]
 directory = "./Saved Data/Artigo 576/"
 liminf = 10^(-4)
 limsup = 1.2
 
-colors = [1, 2, 3, 4, 5, 6, 18, 7]
+colors = [1, 2, 3, 4, 5, 6, 18, 7, 8, 9]
 
 p1 = plot()
 p2 = plot()

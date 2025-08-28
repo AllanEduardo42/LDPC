@@ -24,7 +24,7 @@ function
         Residues::Matrix{Float64},
         Factors::Matrix{Float64},
         rbp_not_converged::Bool,
-        two_ways::Bool,
+        _return::Bool,
         consensus::Bool,
         switch_C_VN::Bool
     )
@@ -83,7 +83,7 @@ function
             end
         end
 
-        if two_ways || switch_C_VN
+        if _return || switch_C_VN
             if !consensus
                 for ci in Nvjmax
                     if ci ≠ cimax

@@ -20,17 +20,6 @@ gr()
 
 FB = ["F","B"]
 # markers = [:none, :none, :dtriangle, :circle, :rect, :utriangle, :diamond, :cross, :star5, :hexagon]
-# modes_markers = [
-#                 "Flooding"             :none            
-#                  "LBP"                  :none
-#                  "RD-RBP 0.85"             :dtriangle
-#                  "NW-RBP"               :circle
-#                  "SVNF"                 :rect 
-#                  "List-RBP 0.85"        :utriangle
-#                  "C&R-RBP 0.85"          :diamond 
-#                  "C-RBP 0.85"           :star5
-#                 #  "C&DR-RBP 0.85"        :cross 
-#                  ]
 modes_markers = ["Flooding"             :none            
                  "LBP"                  :none
                 #  "RBP"                  :dtriangle
@@ -55,7 +44,6 @@ for j=1:2
         p = plot()
         for k in axes(modes_markers,1)
             str = modes_markers[k,1]
-            labels = modes_markers[k,1]
             x = readdlm(directory*FB[j]*"ER_"*str*".txt",'\t',Float64,'\n')
             x = x[1:maxiter,ebn0]
             if j == 1
@@ -64,37 +52,36 @@ for j=1:2
                 BERMAX[ebn0,k] = x[maxiter]
             end
             line = :solid
-            # labels = permutedims(labels)
-            # p = plot!(
-            #     1:maxiter,
-            #     # log10.(x),
-            #     x,
-            #     xlabel="Iteration",
-            #     ylabel=FB[j]*"ER",
-            #     label=labels,
-            #     lw=3,
-            #     ls=line,
-            #     # title=title,
-            #     # ylims=(liminf,limsup),
-            #     # xlim=(1,maxiter),
-            #     minorgrid=true,
-            #     yscale=:log10,
-            #     color=k,
-            #     markersize=5,
-            #     guidefontsize=20,
-            #     tickfontsize=15,
-            #     # legend_title = "(Algorithm, best decay factor)",
-            #     # legend_title_font_pointsize = 10,
-            #     legend_font_pointsize = 15,
-            #     # legend = :outertopright,
-            #     size = 1.5 .*(600,400),
-            #     markershape = modes_markers[k,2],
-            #     left_margin=3Plots.mm,
-            #     bottom_margin=3Plots.mm,
-            #     top_margin=3Plots.mm
-            # )
+            p = plot!(
+                1:maxiter,
+                # log10.(x),
+                x,
+                xlabel="Iteration",
+                ylabel=FB[j]*"ER",
+                label=modes_markers[k,1],
+                lw=3,
+                ls=line,
+                # title=title,
+                # ylims=(liminf,limsup),
+                # xlim=(1,maxiter),
+                minorgrid=true,
+                yscale=:log10,
+                color=k,
+                markersize=5,
+                guidefontsize=20,
+                tickfontsize=15,
+                # legend_title = "(Algorithm, best decay factor)",
+                # legend_title_font_pointsize = 10,
+                legend_font_pointsize = 15,
+                # legend = :outertopright,
+                size = 1.5 .*(600,400),
+                markershape = modes_markers[k,2],
+                left_margin=3Plots.mm,
+                bottom_margin=3Plots.mm,
+                top_margin=3Plots.mm
+            )
         end
-        # display(p)
+        display(p)
         # save_pdf(p,directory*"/$(FB[j])ER")
         # Plots.pdf(p,directory*"/$(FB[j])ER_"*"$(EbN0[ebn0])dB.pdf")
     end
@@ -141,7 +128,7 @@ display(PLOT)
 #     # ylims=(-6,-1)
 # )
 # display(PLOT)
-Plots.pdf(PLOT,directory*"/FER_dB.pdf")
+# Plots.pdf(PLOT,directory*"/FER_dB.pdf")
 
 
 

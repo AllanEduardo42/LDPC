@@ -8,7 +8,7 @@ include("./RBP functions/findmaxedge.jl")
 include("./RBP functions/calc_residue.jl")
 
 function
-    VN_RBP!(
+    C_R_RBP!(
         bitvector::Vector{Bool},
         Lq::Matrix{Float64},
         Lr::Matrix{Float64},
