@@ -53,12 +53,12 @@ STOP::Bool = false # stop simulation at zero syndrome (if true, BER curves are
 MAXITER::Int = 10
 # FACTORS = [0.7, 0.8, 0.9, 1.0]
 # FACTORS = collect(0.1:0.1:1.0)
-FACTORS = [0.85]
-EbN0 = [1.0, 1.5, 2.0, 2.5, 3.0]
-# EbN0 = [3.5]
+FACTORS = [1.0]
+# EbN0 = [1.0, 1.5, 2.0, 2.5, 3.0]
+EbN0 = [2.5]
 # TRIALS = [1024, 10240, 102400]
-TRIALS = [128, 1280, 12800, 128000, 1280000]
-# TRIALS = [12800000]
+# TRIALS = [128, 1280, 12800, 128000, 1280000]
+TRIALS = [1024000]
 
 # TEST
 MAXITER_TEST::Int = 1
@@ -104,7 +104,7 @@ MAXITERS[i] = MAXITER
 
 # RBP
 i += 1
-ACTIVE[i] = 0
+ACTIVE[i] = 1
 BPTYPES[i] = "TANH"
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
@@ -152,7 +152,7 @@ DECAYS[i] = FACTORS
 
 # C-RBP
 i += 1
-ACTIVE[i] = 1
+ACTIVE[i] = 0
 BPTYPES[i] = "TANH"
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
