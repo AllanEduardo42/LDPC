@@ -17,10 +17,8 @@ function
         Nv::Vector{Vector{Int}},
         signs::Union{Vector{Bool},Nothing},
         phi::Union{Vector{Float64},Nothing},
-        # decayfactor::Float64,
         num_reps::Int,
         newLr::Matrix{Float64},
-        # Factors::Vector{Float64},
         alpha::Vector{Float64},
         bp_not_converged::Bool
     )
@@ -39,9 +37,6 @@ function
 
         # 2) Set maximum alpha to zero
         alpha[cimax] = 0.0
-
-        # 3) Decay the maximum alpha
-        # Factors[cimax] *= decayfactor
     
         for vk in Nc[cimax]
             # 4) update check to node messages Lr[cimax,vnmax]

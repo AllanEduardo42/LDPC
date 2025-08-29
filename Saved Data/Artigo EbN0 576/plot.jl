@@ -29,7 +29,7 @@ modes_markers = ["Flooding"             :none
                  "List-RBP (16,2) 0.85" :cross
                 #  "List-RBP (16,2) 1.0"  :utriangle
                  "C&R-RBP 0.85"          :rect
-                #  "C-VN-RBP 0.85 no-opt"        :star5
+                 "C&DR-RBP 0.85"        :star5
                  ]
 directory = "./Saved Data/Artigo EbN0 576/"
 # liminf = -5

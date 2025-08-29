@@ -438,8 +438,6 @@ function
                     alpha,
                     rbp_not_converged
                 )
-                # reset factors
-                # Factors .= 1.0
             elseif mode == "List-C&N-RBP"
                 if listsize < listsizes[1]
                     listsize = 2^(cld(iter,2)+1)
