@@ -22,9 +22,8 @@ function
         Residues::Matrix{Float64},
         Factors::Matrix{Float64},
         rbp_not_converged::Bool,
-        _return::Bool,
         consensus::Bool,
-        switch_CR::Bool,
+        switch_R::Bool,
         msum_factor::Union{Float64,Nothing},
         msum2::Bool
     )
@@ -53,29 +52,22 @@ function
         bitvector[vjmax] = signbit(Ld)
 
         for ci in Nvjmax
-            # if ci ≠ cimax
+            if ci ≠ cimax || switch_R
                 # 5) update Nv messages Lq[ci,vnmax]
                 li = LinearIndices(Lq)[ci,vjmax]
                 alp = Residues[li]
-                RBP_core!(Lq,Ld,Lr,newLr,alpha,msum_factor,Residues,Factors,Nc,
-                    alp,li,ci,vjmax)
-            # end
-        end
-
-        if _return || switch_CR
-            # if !consensus
-            #     for ci in Nvjmax
-            #         if ci ≠ cimax
-            #             li = LinearIndices(Lr)[ci,vjmax]
-            #             Lr[li] = newLr[li]
-            #         end
-            #     end
-            # end
-            alp = 0.0
-            # 5) update Nv messages Lq[cimax,vnmax]
-            limax = LinearIndices(Lq)[cimax,vjmax]
-            RBP_core!(Lq,Ld,Lr,newLr,alpha,msum_factor,Residues,Factors,Nc,alp,
-                limax,cimax,vjmax)
+                Lq[li] = tanhLq(Ld - Lr[li],msum_factor)
+                # 6) calculate Residues
+                Nci = Nc[ci]
+                for vj in Nci
+                    if vj ≠ vjmax
+                        li = LinearIndices(Lr)[ci,vj]
+                        alp, residue = calc_residue!(Lq,Lr,newLr,li,ci,vj,Nci,Factors[li],alp,msum_factor)
+                        Residues[li] = residue
+                    end
+                end
+                alpha[ci] = alp
+            end
         end
     end
 
@@ -107,36 +99,6 @@ function
     end
     # 4) set maximum residue to zero
     Residues[li] = 0.0
-end
-
-function 
-    RBP_core!(
-        Lq::Matrix{Float64},
-        Ld::Float64,
-        Lr::Matrix{Float64},
-        newLr::Matrix{Float64},
-        alpha::Vector{Float64},
-        msum_factor::Union{Float64,Nothing},
-        Residues::Matrix{Float64},
-        Factors::Matrix{Float64},
-        Nc::Vector{Vector{Int}},
-        alp::Float64,
-        li::Int,
-        ci::Int,
-        vjmax::Int
-    )
-
-    Lq[li] = tanhLq(Ld - Lr[li],msum_factor)
-    # 6) calculate Residues
-    Nci = Nc[ci]
-    for vj in Nci
-        if vj ≠ vjmax
-            li = LinearIndices(Lr)[ci,vj]
-            alp, residue = calc_residue!(Lq,Lr,newLr,li,ci,vj,Nci,Factors[li],alp,msum_factor)
-            Residues[li] = residue
-        end
-    end
-    alpha[ci] = alp
 end
 
 

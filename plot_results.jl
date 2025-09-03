@@ -25,36 +25,41 @@ if !STOP
                     if mode == "List-RBP"
                         mode *= " ($(LISTSIZES[1]),$(LISTSIZES[2]))"
                     end
-                    for decay in DECAYS[i]
+                    for bptype in BPTYPES[i]
                         mode2 = mode
-                        if decay != 0.0
-                            mode2 *= " $decay"
+                        if bptype != "TANH"
+                            mode2 *= " ($bptype)"
                         end
-                        labels = Vector{String}()
-                        push!(LABELS,mode2)
-                        if FB[j] == "F"
-                            y = log10.(FER[mode2][:,k])
-                            lim = log10(LIMFER[k])
-                        else
-                            y = log10.(BER[mode2][:,k])
-                            lim = log10(LIMBER[k])
+                        for decay in DECAYS[i]
+                            if decay != 0.0
+                                mode2 *= " $decay"
+                            end
+                            labels = Vector{String}()
+                            push!(LABELS,mode2)
+                            if FB[j] == "F"
+                                y = log10.(FER[mode2][:,k])
+                                lim = log10(LIMFER[k])
+                            else
+                                y = log10.(BER[mode2][:,k])
+                                lim = log10(LIMBER[k])
+                            end
+                            x = 1:MAXITERS[i]
+                            if j == 1
+                                FERMAX[k,i] = y[MAXITER]
+                            else
+                                BERMAX[k,i] = y[MAXITER]
+                            end
+                            p = plot!(
+                                x,
+                                y,
+                                xlabel="Iteration",
+                                label=mode2,
+                                lw=2,
+                                title=title,
+                                ylims=(lim,0),
+                                size = (700,500)
+                            )
                         end
-                        x = 1:MAXITERS[i]
-                        if j == 1
-                            FERMAX[k,i] = y[MAXITER]
-                        else
-                            BERMAX[k,i] = y[MAXITER]
-                        end
-                        p = plot!(
-                            x,
-                            y,
-                            xlabel="Iteration",
-                            label=mode2,
-                            lw=2,
-                            title=title,
-                            ylims=(lim,0),
-                            size = (700,500)
-                        )
                     end
                 end
             end

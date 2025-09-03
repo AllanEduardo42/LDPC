@@ -152,28 +152,33 @@ else
             if mode1 == "List-RBP"
                 mode1 *= " ($(LISTSIZES[1]),$(LISTSIZES[2]))"
             end
-            for decay in DECAYS[i]
+            for bptype in BPTYPES[i]
                 mode2 = mode1
-                if decay != 0.0
-                    mode2 *= " $decay"
+                if bptype != "TANH"
+                    mode2 *= " ($bptype)"
                 end
-                fer, ber = prepare_simulation(
-                                        EbN0,
-                                        MODES[i],
-                                        TRIALS,
-                                        MAXITERS[i],
-                                        BPTYPES[i],
-                                        decay)
-                if SAVE
-                    open("./Saved Data/"*NOW*"/FER_"*mode2*".txt","w") do io
-                            writedlm(io,fer)
+                for decay in DECAYS[i]
+                    if decay != 0.0
+                        mode2 *= " $decay"
                     end
-                    open("./Saved Data/"*NOW*"/BER_"*mode2*".txt","w") do io
-                            writedlm(io,ber)
+                    fer, ber = prepare_simulation(
+                                            EbN0,
+                                            MODES[i],
+                                            TRIALS,
+                                            MAXITERS[i],
+                                            bptype,
+                                            decay)
+                    if SAVE
+                        open("./Saved Data/"*NOW*"/FER_"*mode2*".txt","w") do io
+                                writedlm(io,fer)
+                        end
+                        open("./Saved Data/"*NOW*"/BER_"*mode2*".txt","w") do io
+                                writedlm(io,ber)
+                        end
                     end
+                    FER[mode2] = fer
+                    BER[mode2] = ber
                 end
-                FER[mode2] = fer
-                BER[mode2] = ber
             end
         end
     end

@@ -58,7 +58,7 @@ STOP::Bool = false # stop simulation at zero syndrome (if true, BER curves are
 MAXITER::Int = 50
 # FACTORS = [0.7, 0.8, 0.9, 1.0]
 MSFACTORS = collect(0.9:0.01:1.0) 
-FACTORS = [1.0]
+FACTORS = [0.85]
 # EbN0 = [1.0, 1.5, 2.0, 2.5, 3.0]
 EbN0 = [2.5]
 # TRIALS = [1024, 10240, 102400]
@@ -73,14 +73,14 @@ DECAY_TEST::Float64 = 1.0
 
 ################################### SCHEDULE ###################################
 
-MODES = ["Flooding","LBP","RBP","MSUM-RBP","MSUM2-RBP","RD-RBP","NW-RBP","SVNF","List-RBP","C&R-RBP","MS-C&R-RBP","MS2-C&R-RBP","R-RBP","C-RBP","C&DR-RBP"]
+MODES = ["Flooding","LBP","RBP","RD-RBP","NW-RBP","SVNF","List-RBP","C&R-RBP","C-RBP","C&DR-RBP"]
 MARKERS = [:none, :none, :dtriangle, :circle, :rect, :utriangle, :diamond, :cross, :star5, :hexagon]
 NUM_MODES = length(MODES)
 ACTIVE = zeros(Bool,NUM_MODES)
 LISTSIZES = zeros(Int,4)
 
-# BP type: "MKAY", "TANH", "TABL", "MSUM"
-BPTYPES = Vector{String}(undef,NUM_MODES)
+# BP type: "MKAY", "TANH", "TABL", "MSUM", "MSUM2"
+BPTYPES = Vector{Vector{String}}(undef,NUM_MODES)
 
 # maximum number of BP iterations
 MAXITERS = zeros(Int,NUM_MODES)
@@ -95,107 +95,67 @@ ACTIVE_ALL = false
 i = 1
 # Flooding
 ACTIVE[i] = 0
-BPTYPES[i] = "TANH"
+BPTYPES[i] = ["TANH"]
 MAXITERS[i] = MAXITER
 
 # LBP
 i += 1
 ACTIVE[i] = 0
-BPTYPES[i] = "TANH"
+BPTYPES[i] = ["TANH"]
 MAXITERS[i] = MAXITER
 
 # RBP
 i += 1
-ACTIVE[i] = 1
-BPTYPES[i] = "TANH"
-MAXITERS[i] = MAXITER
-
-# MSUM-RBP
-i += 1
 ACTIVE[i] = 0
-BPTYPES[i] = "MSUM"
-MAXITERS[i] = MAXITER
-
-# MSUM2-RBP
-i += 1
-ACTIVE[i] = 0
-BPTYPES[i] = "MSUM"
+BPTYPES[i] = ["TANH","MSUM","MSUM2"]
 MAXITERS[i] = MAXITER
 
 # RD-RBP
 i += 1
 ACTIVE[i] = 0
-BPTYPES[i] = "TANH"
+BPTYPES[i] = ["TANH"]
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
 
 # NW-RBP
 i += 1
 ACTIVE[i] = 0
-BPTYPES[i] = "TANH"
+BPTYPES[i] = ["TANH"]
 MAXITERS[i] = MAXITER
 
 # SVNF
 i += 1
 ACTIVE[i] = 0
-BPTYPES[i] = "TANH"
+BPTYPES[i] = ["TANH"]
 MAXITERS[i] = MAXITER
 
 # List-RBP
 i += 1
 ACTIVE[i] = 0
-BPTYPES[i] = "TANH"
+BPTYPES[i] = ["TANH"]
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
 
 # C&R-RBP
 i += 1
-ACTIVE[i] = 0
-BPTYPES[i] = "TANH"
-MAXITERS[i] = MAXITER
-DECAYS[i] = FACTORS
-
-# MS-C&R-RBP
-i += 1
-ACTIVE[i] = 0
-BPTYPES[i] = "MSUM"
-MAXITERS[i] = MAXITER
-DECAYS[i] = FACTORS
-
-# MS2-C&R-RBP
-i += 1
-ACTIVE[i] = 0
-BPTYPES[i] = "MSUM"
-MAXITERS[i] = MAXITER
-DECAYS[i] = FACTORS
-
-# R-RBP
-i += 1
 ACTIVE[i] = 1
-BPTYPES[i] = "TANH"
+BPTYPES[i] = ["TANH","MSUM","MSUM2"]
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
 
 # C-RBP
 i += 1
-ACTIVE[i] = 1
-BPTYPES[i] = "TANH"
+ACTIVE[i] = 0
+BPTYPES[i] = ["TANH"]
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
 
 # C&DR-RBP
 i += 1
 ACTIVE[i] = 0
-BPTYPES[i] = "TANH"
+BPTYPES[i] = ["TANH"]
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
-
-# List C&R-RBP
-# i += 1
-# ACTIVE[i] = 0
-# BPTYPES[i] = "TANH"
-# MAXITERS[i] = MAXITER
-# DECAYS[i] = FACTORS
 
 # List sizes (min values = 4 and 2)
 LISTSIZES[1] = 16

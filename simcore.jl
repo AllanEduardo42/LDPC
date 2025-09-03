@@ -12,9 +12,7 @@ include("LBP.jl")
 include("RBP.jl")
 include("E_NV_RBP.jl")
 include("List_RBP.jl")
-include("List_VN_RBP.jl")
 include("SVNF.jl")
-include("C&R_RBP.jl")
 include("NW_RBP.jl")
 include("./List functions/init_list.jl")
 include("./RBP functions/init_RBP.jl")
@@ -152,19 +150,13 @@ function
     #     signs = nothing
     # end
     
+    MSUM2 = false
     if bptype == "MSUM"
-        MSUM2 = mode == "MSUM2-RBP" || mode == "MS2-C&R-RBP"
-        if MSUM2
-            msum_factor = ALPHA2
-            # msum_factor = decayfactor
-            # decayfactor = 1.0
-        else
-            msum_factor = ALPHA
-            # msum_factor = decayfactor
-            # decayfactor = 1.0
-        end
+        msum_factor = ALPHA
+    elseif bptype == "MSUM2"
+        MSUM2 = true
+        msum_factor = ALPHA2
     else
-        MSUM2 = false
         msum_factor = nothing
     end
 
@@ -172,40 +164,37 @@ function
 
 ############################### RBP PREALLOCATIONS #############################
     
-    LIST = mode == "List-RBP" || mode == "List-C&R-RBP"
-    RBP_mode = mode[end-2:end] == "RBP" || mode == "SVNF"    
-    if RBP_mode
+    LIST = mode == "List-RBP"
+    RBP = mode[end-2:end] == "RBP" || mode == "SVNF"    
+    RBP_routine = mode == "RBP" || mode == "RD-RBP" || mode == "C-RBP" || mode == "C&R-RBP" || mode == "C&DR-RBP" 
+
+    if RBP
         newLr = Matrix{Float64}(undef,M,N)
         Residues = Matrix{Float64}(undef,M,N)
-        alpha = Vector{Float64}(undef,M)
-        NOT_SVNF = mode ≠ "SVNF"
-        NOT_NW = mode ≠ "NW-RBP"        
-        if NOT_SVNF && NOT_NW
+        alpha = Vector{Float64}(undef,M)     
+        if mode ≠ "SVNF" && mode ≠ "NW-RBP" 
             Factors = Matrix{Float64}(undef,M,N)
             resetmatrix!(Factors,Nv,1.0)
         end 
-        switch_C_R = false  
-        if mode == "R-RBP" 
-            num_reps = num_edges - N
-            _return = true
-            consensus = false
-            C_R = false      
-        elseif mode == "C-RBP"
-            num_reps = num_edges
-            _return = false
-            consensus = true
-            C_R = false                     
+
+        switch_R = false   
+        C_DR = false
+        consensus = true 
+        num_reps = num_edges 
+
+        if mode == "C&R-RBP"  
+            num_reps = num_edges-N 
+            switch_R = true                 
         elseif mode == "C&DR-RBP"  
-            num_reps = num_edges
-            _return = false
-            consensus = true
-            C_R = true
-        elseif mode == "RBP" || mode == "MSUM-RBP" || mode == "MSUM2-RBP" || mode == "RD-RBP"
-            num_reps = num_edges
-            _return = false
-            consensus = false
-            C_R = false
+            C_DR = true
+        elseif mode == "RBP"  || mode == "RD-RBP"
+            consensus = false 
         end
+
+        if mode == "RBP"
+            decayfactor = 1.0
+        end  
+
         if LIST
             listsize = listsizes[1]
             list = Vector{Float64}(undef,listsize+1)
@@ -223,10 +212,6 @@ function
 ################################## MAIN LOOP ###################################
 
     @inbounds for trial in 1:trials
-
-        if mode == "List-C&R-RBP"
-            listsize = 2
-        end
 
         # 1) generate the random message
         generate_message!(msg,rgn,msgtest)
@@ -308,7 +293,7 @@ function
         if LIST
             init_list!(Lq,Lr,Nc,signs,phi,newLr,Factors,inlist,Residues,list,
                                                                 coords,listsize)
-        elseif RBP_mode
+        elseif RBP
             init_RBP!(Lq,Lr,Nc,phi,newLr,alpha,Residues,msum_factor)     
         end
   
@@ -345,15 +330,12 @@ function
                     signs,
                     phi
                     )
-            elseif mode == "RBP" || mode == "MSUM-RBP" || mode == "MSUM2-RBP" || mode == "RD-RBP" || mode == "R-RBP" || mode == "C-RBP" || mode == "C&DR-RBP"
-                if C_R && iter ≥ 3
-                    switch_C_R = true
-                    C_R = false
+            elseif RBP_routine
+                if C_DR && iter ≥ 3
+                    switch_R = true
+                    C_DR = false
                     num_reps -= N
-                end
-                if mode == "RBP" || mode == "MSUM-RBP" || MSUM2
-                    decayfactor = 1.0
-                end               
+                end             
                 rbp_not_converged = RBP!(
                     bitvector,
                     Lq,
@@ -369,30 +351,8 @@ function
                     Residues,
                     Factors,
                     rbp_not_converged,
-                    _return,
                     consensus,
-                    switch_C_R,
-                    msum_factor,
-                    MSUM2
-                    )
-                # reset factors
-                resetmatrix!(Factors,Nv,1.0)
-            elseif mode == "C&R-RBP" || mode == "MS-C&R-RBP" || mode == "MS2-C&R-RBP"
-                rbp_not_converged = C_R_RBP!(
-                    bitvector,
-                    Lq,
-                    Lr,
-                    Lf,
-                    Nc,
-                    Nv,
-                    phi,
-                    decayfactor,
-                    num_edges-N,
-                    newLr,
-                    alpha,
-                    Residues,
-                    Factors,
-                    rbp_not_converged,
+                    switch_R,
                     msum_factor,
                     MSUM2
                     )
@@ -456,33 +416,6 @@ function
                     alpha,
                     rbp_not_converged
                 )
-            elseif mode == "List-C&N-RBP"
-                if listsize < listsizes[1]
-                    listsize = 2^(cld(iter,2)+1)
-                    # listsize2 = listsize
-                end
-                rbp_not_converged = List_VN_RBP!(
-                    bitvector,
-                    Lq,
-                    Lr,
-                    Lf,
-                    Nc,
-                    Nv,
-                    signs,
-                    phi,
-                    decayfactor,
-                    num_edges-N,
-                    newLr,
-                    Residues,
-                    list,
-                    Factors,
-                    coords,
-                    inlist,
-                    listsize,
-                    rbp_not_converged
-                    )
-                # reset factors
-                resetmatrix!(Factors,Nv,1.0)
             end            
 
             for vj in 1:N
@@ -526,6 +459,13 @@ function
             end
         end
 
+        # reset for C&DR-RBP
+        if mode == "C&DR-RBP"
+            switch_R = false
+            C_DR = true
+            num_reps = num_edges
+        end
+
         # if all the Residues are zero
         if !rbp_not_converged
             for i = iter+1:maxiter
@@ -538,12 +478,6 @@ function
         for i=1:maxiter
             sum_ber[i] += ber[i]
             sum_decoded[i] += decoded[i]
-        end
-
-        if mode == "C&DR-RBP"
-            switch_C_R = false
-            C_R = true
-            num_reps = num_edges
         end
     end
 

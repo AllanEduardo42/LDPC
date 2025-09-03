@@ -1,10 +1,11 @@
 ################################################################################
 # Allan Eduardo Feitosa
-# 31 Mar 2025
+# 05 Ago 2025
 # RBP Sum-Product Algorithm with residual decaying factor
 
 include("./RBP functions/findmaxnode.jl")
 include("./RBP functions/calc_residue.jl")
+include("./List functions/find_list_pos.jl")
 
 function
     List_VN_RBP!(
@@ -19,80 +20,79 @@ function
         decayfactor::Float64,
         num_reps::Int,
         newLr::Matrix{Float64},
-        Factors::Vector{Float64},
-        alpha::Vector{Float64},
-        coords::Vector{Int},
-        inlist::Vector{Bool},
+        Residues::Matrix{Float64},
+        list::Vector{Float64},
+        Factors::Matrix{Float64},
+        coords::Matrix{Int},
+        inlist::Matrix{Bool},
         listsize::Int,
         rbp_not_converged::Bool
     )
-
+    
     @fastmath @inbounds for e in 1:num_reps
 
-        if alpha[1] == 0.0
-            init_list_VN_RBP!(Lq,Nc,Nv,newLr,Factors,inlist,
-                                                        alpha,coords,listsize)
-            if alpha[1] == 0.0
+        # # display("e = $e")
+
+        # # display(sum(inlist))
+
+        # # display([residues coords'])
+
+        # if max residue is equal to zero, refill the list
+        if list[1] == 0.0
+            for ci in eachindex(Nc)
+                for vj in Nc[ci]
+                    li = LinearIndices(Residues)[ci,vj]
+                    residue = Residues[li]
+                    # add residue to main list
+                    add_to_list!(inlist,list,coords,residue,li,ci,vj,listsize)
+                end
+            end
+            # if max residue is still zero, List-RBP has converged
+            if list[1] == 0.0
                 rbp_not_converged = false
                 break
             end
         end
-        vjmax = coords[1]
-        inlist[vjmax] = false
-
-        # update the list
-        for i in 1:listsize
-            alpha[i] = alpha[i+1]
-            coords[i] = coords[i+1]
-        end 
-
-        Factors[vjmax] *= decayfactor        
-
+        
+        vjmax = coords[2,1]
+              
         Nvjmax = Nv[vjmax]
         for ci in Nvjmax
             li = LinearIndices(Lr)[ci,vjmax]
+            # 2) Decay the RBP factor corresponding to the maximum residue
+            Factors[li] *= decayfactor
+            # 3) update check to node message Lr[cnmax,vnmax]
             Lr[li] = newLr[li]
-        end   
-        
+            # 4) remove from list
+            Residues[li] = 0.0
+            if inlist[li]
+                pos = find_list_pos(li,listsize,coords)
+                remove_from_list!(li,listsize,list,coords,inlist,pos)
+            end
+        end
+
         Ld = calc_Ld(vjmax,Nvjmax,Lf,Lr)
         bitvector[vjmax] = signbit(Ld)
 
         for ci in Nvjmax
-            # update Nv messages Lq[ci,vjmax]
+            # 5) update Nv messages Lq[ci,vnmax]
             li = LinearIndices(Lq)[ci,vjmax]
             Lq[li] = tanh(0.5*(Ld - Lr[li]))
-            # calculate the new check to node messages
+            # 6) calculate residues
             Nci = Nc[ci]
             for vj in Nci
                 if vj ≠ vjmax
                     li = LinearIndices(Lr)[ci,vj]
                     newlr = calc_Lr(Nci,ci,vj,Lq)
+                    li = LinearIndices(Lr)[ci,vj]
                     newLr[li] = newlr
-                    residue = abs(newlr - Lr[li])*Factors[vj]
-                    if inlist[vj]
-                        pos = 0
-                        for i = 1:listsize
-                            if coords[i] == vj
-                                pos = i
-                                break
-                            end
-                        end
-                        if pos == 0
-                            throw(error("($(coords[1,i]),$(coords[1,i])) is registered as being on the list, but it's not."))
-                        end
-                        if residue > alpha[pos]
-                            # remove from list
-                            inlist[vj] = false
-                            # update the list
-                            for i in pos:listsize
-                                alpha[i] = alpha[i+1]
-                                coords[i] = coords[i+1]
-                            end
-                            add_list_VN!(residue,alpha,listsize,inlist,coords,vj)
-                        end
-                    else
-                        add_list_VN!(residue,alpha,listsize,inlist,coords,vj)
-                    end                     
+                    residue = abs(newlr - Lr[li])*Factors[li]
+                    Residues[li] = residue
+                    if inlist[li]
+                        pos = find_list_pos(li,listsize,coords)
+                        remove_from_list!(li,listsize,list,coords,inlist,pos)
+                    end
+                    add_to_list!(inlist,list,coords,residue,li,ci,vj,listsize)
                 end
             end
         end
@@ -102,46 +102,114 @@ function
 
 end
 
-function 
-    add_list_VN!(
-        residue::Float64,
-        alpha::Vector{Float64},
-        listsize::Int,
-        inlist::Vector{Bool},
-        coords::Vector{Int},
-        vj::Int
-    )
+# function
+#     List_VN_RBP!(
+#         bitvector::Vector{Bool},
+#         Lq::Matrix{Float64},
+#         Lr::Matrix{Float64},
+#         Lf::Vector{Float64},
+#         Nc::Vector{Vector{Int}},
+#         Nv::Vector{Vector{Int}},
+#         signs::Union{Vector{Bool},Nothing},
+#         phi::Union{Vector{Float64},Nothing},
+#         decayfactor::Float64,
+#         num_reps::Int,
+#         newLr::Matrix{Float64},
+#         Factors::Matrix{Float64},
+#         coords::Matrix{Int},
+#         inlist::Matrix{Bool},
+#         Residues::Matrix{Float64},
+#         list::Vector{Float64},
+#         local_list::Union{Vector{Float64},Nothing},
+#         local_coords::Union{Matrix{Int},Nothing},
+#         listsize::Int,
+#         listsize2::Int,
+#         rbp_not_converged::Bool
+#     )
+    
+#     @fastmath @inbounds for e in 1:num_reps
 
-    if residue > alpha[listsize]
-        if residue ≥ alpha[1]
-            i = 1
-        else
-            d = listsize >> 1
-            i = d
-            while d > 1
-                d >>= 1
-                if residue ≥ alpha[i]
-                    i -= d
-                else
-                    i += d
-                end
-            end
-            if residue < alpha[i]
-                i += 1
-            end
-        end
+#         # display("e = $e")
 
-        last = coords[end-1]
-        if last ≠ 0
-            inlist[last] = false
-        end
-        inlist[vj] = true
+#         # display(sum(inlist))
 
-        for j=listsize:-1:i+1
-            alpha[j] = alpha[j-1]
-            coords[j] = coords[j-1]
-        end
-        coords[i] = vj
-        alpha[i] = residue        
-    end
-end
+#         # display([list coords'])
+
+#         # if max residue is equal to zero, refill the list
+#         if list[1] == 0.0
+#             for ci in eachindex(Nc)
+#                 for vj in Nc[ci]
+#                     li = LinearIndices(Residues)[ci,vj]
+#                     residue = Residues[li]
+#                     # add residue to main list
+#                     add_to_list!(inlist,list,coords,residue,li,ci,vj,listsize)
+#                 end
+#             end
+#             # if max residue is still zero, List-RBP has converged
+#             if list[1] == 0.0
+#                 rbp_not_converged = false
+#                 break
+#             end
+#         end
+        
+#         vjmax = coords[2,1]
+              
+#         Nvjmax = Nv[vjmax]
+#         for ci in Nvjmax
+#             li = LinearIndices(Lr)[ci,vjmax]
+#             # 2) Decay the RBP factor corresponding to the maximum residue
+#             Factors[li] *= decayfactor
+#             # 3) update check to node message Lr[cnmax,vnmax]
+#             Lr[li] = newLr[li]
+#             # 4) remove from list
+#             Residues[li] = 0.0
+#             if inlist[li]
+#                 # display("$li is on the list")
+#                 pos = find_list_pos(li,listsize,coords)
+#                 remove_from_list!(li,listsize,list,coords,inlist,pos)
+#             end
+#         end
+
+#         # display([list coords'])
+
+#         Ld = calc_Ld(vjmax,Nvjmax,Lf,Lr)
+#         bitvector[vjmax] = signbit(Ld)
+
+#         # display([local_list local_coords'])
+
+#         for ci in Nvjmax
+#             # 5) update Nv messages Lq[ci,vnmax]
+#             li = LinearIndices(Lq)[ci,vjmax]
+#             Lq[li] = tanh(0.5*(Ld - Lr[li]))
+#             # 6) calculate residues
+#             Nci = Nc[ci]
+#             for vj in Nci
+#                 if vj ≠ vjmax
+#                     li = LinearIndices(Lr)[ci,vj]
+#                     newlr = calc_Lr(Nci,ci,vj,Lq)
+#                     li = LinearIndices(Lr)[ci,vj]
+#                     newLr[li] = newlr
+#                     residue = abs(newlr - Lr[li])*Factors[li]
+#                     Residues[li] = residue
+#                     if inlist[li]
+#                         # display("$li is on the local list")
+#                         pos = find_list_pos(li,listsize,coords)
+#                         remove_from_list!(li,listsize,list,coords,inlist,pos)
+#                     end
+#                     # add residue to local list
+#                     add_to_list!(nothing,local_list,local_coords,residue,li,ci,vj,
+#                                                                         listsize2)
+#                 end
+#             end
+#         end
+#         # display([local_list local_coords'])
+#         # display([list coords'])
+#         update_main_list!(list,coords,local_list,local_coords,listsize,listsize2,
+#                                                                     inlist)
+
+#         # display([list coords'])
+#     end
+
+#     return rbp_not_converged
+
+# end
