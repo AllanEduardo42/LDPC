@@ -1,15 +1,15 @@
 function 
     tanhLq(
-        Lq::Float64,
-        ::Vector{Bool}
+        arg::Float64,
+        ::Float64
     )
-    return Lq
+    return arg
 end
 
 function 
     tanhLq(
-        Lq::Float64,
+        arg::Float64,
         ::Nothing
     )
-    return tanh(0.5*Lq)
+    return tanh(0.5*arg)
 end

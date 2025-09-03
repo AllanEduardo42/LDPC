@@ -5,7 +5,6 @@
 
 include("./RBP functions/findmaxnode.jl")
 include("./RBP functions/calc_residue.jl")
-include("./RBP functions/RBP_update_Lr.jl")
 
 function
     NW_RBP!(

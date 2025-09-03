@@ -4,6 +4,9 @@
 # Vertical update and MAP estimate of the LLR based Sum-Product Algorithm (with
 # "Inf" restriction)
 
+
+include("tanhLq.jl")
+
 ############################ SPA USING LLRs METHOD #############################
 
 function 

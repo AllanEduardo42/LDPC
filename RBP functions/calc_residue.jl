@@ -13,11 +13,12 @@ function
         vj::Int,
         Nci::Vector{Int},
         factor::Float64,
-        alp::Float64
+        alp::Float64,
+        msum_factor::Union{Float64,Nothing}
     )
 
     oldlr = Lr[li]
-    newlr = calc_Lr(Nci,ci,vj,Lq)
+    newlr = calc_Lr(Nci,ci,vj,Lq,msum_factor)
     newLr[li] = newlr
     residue = abs(newlr - oldlr)*factor
     if residue > alp

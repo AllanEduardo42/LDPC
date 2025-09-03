@@ -26,16 +26,17 @@ if !STOP
                         mode *= " ($(LISTSIZES[1]),$(LISTSIZES[2]))"
                     end
                     for decay in DECAYS[i]
+                        mode2 = mode
                         if decay != 0.0
-                            mode *= " $decay"
+                            mode2 *= " $decay"
                         end
                         labels = Vector{String}()
-                        push!(LABELS,mode)
+                        push!(LABELS,mode2)
                         if FB[j] == "F"
-                            y = log10.(FER[mode][:,k])
+                            y = log10.(FER[mode2][:,k])
                             lim = log10(LIMFER[k])
                         else
-                            y = log10.(BER[mode][:,k])
+                            y = log10.(BER[mode2][:,k])
                             lim = log10(LIMBER[k])
                         end
                         x = 1:MAXITERS[i]
@@ -48,7 +49,7 @@ if !STOP
                             x,
                             y,
                             xlabel="Iteration",
-                            label=mode,
+                            label=mode2,
                             lw=2,
                             title=title,
                             ylims=(lim,0),

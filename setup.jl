@@ -148,13 +148,14 @@ else
     BER = Dict()
     for i in eachindex(ACTIVE)
         if ACTIVE[i]
-            mode = MODES[i]
-            if mode == "List-RBP"
-                mode *= " ($(LISTSIZES[1]),$(LISTSIZES[2]))"
+            mode1 = MODES[i]
+            if mode1 == "List-RBP"
+                mode1 *= " ($(LISTSIZES[1]),$(LISTSIZES[2]))"
             end
             for decay in DECAYS[i]
+                mode2 = mode1
                 if decay != 0.0
-                    mode *= " $decay"
+                    mode2 *= " $decay"
                 end
                 fer, ber = prepare_simulation(
                                         EbN0,
@@ -164,15 +165,15 @@ else
                                         BPTYPES[i],
                                         decay)
                 if SAVE
-                    open("./Saved Data/"*NOW*"/FER_"*mode*".txt","w") do io
+                    open("./Saved Data/"*NOW*"/FER_"*mode2*".txt","w") do io
                             writedlm(io,fer)
                     end
-                    open("./Saved Data/"*NOW*"/BER_"*mode*".txt","w") do io
+                    open("./Saved Data/"*NOW*"/BER_"*mode2*".txt","w") do io
                             writedlm(io,ber)
                     end
                 end
-                FER[mode] = fer
-                BER[mode] = ber
+                FER[mode2] = fer
+                BER[mode2] = ber
             end
         end
     end

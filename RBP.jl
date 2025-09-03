@@ -3,7 +3,6 @@
 # 07 Apr 2025
 # RBP and List-RBP Algorithm with residual decaying factor
 
-include("./RBP functions/RBP_update_Lr.jl")
 include("./RBP functions/findmaxedge.jl")
 include("./RBP functions/calc_residue.jl")
 
@@ -15,7 +14,6 @@ function
         Lf::Vector{Float64},
         Nc::Vector{Vector{Int}},
         Nv::Vector{Vector{Int}},
-        signs::Union{Vector{Bool},Nothing},
         phi::Union{Vector{Float64},Nothing},
         decayfactor::Float64,
         num_reps::Int,
@@ -26,7 +24,9 @@ function
         rbp_not_converged::Bool,
         _return::Bool,
         consensus::Bool,
-        switch_C_VN::Bool
+        switch_CR::Bool,
+        msum_factor::Union{Float64,Nothing},
+        msum2::Bool
     )
     
     @fastmath @inbounds for e in 1:num_reps
@@ -43,72 +43,100 @@ function
         Nvjmax = Nv[vjmax]
         if consensus
             for ci in Nvjmax
-                li = LinearIndices(Lr)[ci,vjmax]
-                # 2) Decay the RBP factor corresponding to the maximum residue
-                Factors[li] *= decayfactor
-                # 3) update check to node message Lr[cnmax,vnmax]
-                Lr[li] = newLr[li]
-                # 4) set maximum residue to zero
-                Residues[li] = 0.0
+                RBP_update_Lr!(Lr,newLr,Lq,Residues,Factors,decayfactor,Nc,ci,vjmax,msum2)
             end
         else
-            limax = LinearIndices(Lr)[cimax,vjmax]
-            # 2) Decay the RBP factor corresponding to the maximum residue
-            Factors[limax] *= decayfactor
-            # 3) update check to node message Lr[cnmax,vnmax]
-            Lr[limax] = newLr[limax]
-            # 4) set maximum residue to zero
-            Residues[limax] = 0.0
-        end       
+            RBP_update_Lr!(Lr,newLr,Lq,Residues,Factors,decayfactor,Nc,cimax,vjmax,msum2)
+        end    
 
         Ld = calc_Ld(vjmax,Nvjmax,Lf,Lr)
         bitvector[vjmax] = signbit(Ld)
 
         for ci in Nvjmax
-            if ci ≠ cimax
+            # if ci ≠ cimax
                 # 5) update Nv messages Lq[ci,vnmax]
                 li = LinearIndices(Lq)[ci,vjmax]
                 alp = Residues[li]
-                Lq[li] = tanh(0.5*(Ld - Lr[li]))
-                # 6) calculate Residues
-                Nci = Nc[ci]
-                for vj in Nci
-                    if vj ≠ vjmax
-                        li = LinearIndices(Lr)[ci,vj]
-                        alp, residue = calc_residue!(Lq,Lr,newLr,li,ci,vj,Nci,Factors[li],alp)
-                        Residues[li] = residue
-                    end
-                end
-                alpha[ci] = alp
-            end
+                RBP_core!(Lq,Ld,Lr,newLr,alpha,msum_factor,Residues,Factors,Nc,
+                    alp,li,ci,vjmax)
+            # end
         end
 
-        if _return || switch_C_VN
-            if !consensus
-                for ci in Nvjmax
-                    if ci ≠ cimax
-                        li = LinearIndices(Lr)[ci,vjmax]
-                        Lr[li] = newLr[li]
-                    end
-                end
-            end
+        if _return || switch_CR
+            # if !consensus
+            #     for ci in Nvjmax
+            #         if ci ≠ cimax
+            #             li = LinearIndices(Lr)[ci,vjmax]
+            #             Lr[li] = newLr[li]
+            #         end
+            #     end
+            # end
             alp = 0.0
             # 5) update Nv messages Lq[cimax,vnmax]
-            li = LinearIndices(Lq)[cimax,vjmax]
-            Lq[li] = tanh(0.5*(Ld - Lr[li]))
-            # 6) calculate Residues
-            Ncimax = Nc[cimax]
-            for vj in Ncimax
-                if vj ≠ vjmax
-                    li = LinearIndices(Lr)[cimax,vj]
-                    alp, residue = calc_residue!(Lq,Lr,newLr,li,cimax,vj,Ncimax,Factors[li],alp)
-                    Residues[li] = residue
-                end
-            end
-            alpha[cimax] = alp
+            limax = LinearIndices(Lq)[cimax,vjmax]
+            RBP_core!(Lq,Ld,Lr,newLr,alpha,msum_factor,Residues,Factors,Nc,alp,
+                limax,cimax,vjmax)
         end
     end
 
     return rbp_not_converged
 end
+
+function 
+    RBP_update_Lr!(
+        Lr::Matrix{Float64},
+        newLr::Matrix{Float64},
+        Lq::Matrix{Float64},
+        Residues::Matrix{Float64},
+        Factors::Matrix{Float64},
+        decayfactor::Float64,
+        Nc::Vector{Vector{Int}},
+        ci::Int,
+        vjmax::Int,
+        msum2::Bool
+    )
+
+    li = LinearIndices(Lr)[ci,vjmax]
+    # 2) Decay the RBP factor corresponding to the maximum residue
+    Factors[li] *= decayfactor
+    # 3) update check to node message Lr[ci,vjmax]
+    if msum2
+        Lr[li] = calc_Lr_no_opt(Nc[ci],ci,vjmax,Lq)
+    else
+        Lr[li] = newLr[li]
+    end
+    # 4) set maximum residue to zero
+    Residues[li] = 0.0
+end
+
+function 
+    RBP_core!(
+        Lq::Matrix{Float64},
+        Ld::Float64,
+        Lr::Matrix{Float64},
+        newLr::Matrix{Float64},
+        alpha::Vector{Float64},
+        msum_factor::Union{Float64,Nothing},
+        Residues::Matrix{Float64},
+        Factors::Matrix{Float64},
+        Nc::Vector{Vector{Int}},
+        alp::Float64,
+        li::Int,
+        ci::Int,
+        vjmax::Int
+    )
+
+    Lq[li] = tanhLq(Ld - Lr[li],msum_factor)
+    # 6) calculate Residues
+    Nci = Nc[ci]
+    for vj in Nci
+        if vj ≠ vjmax
+            li = LinearIndices(Lr)[ci,vj]
+            alp, residue = calc_residue!(Lq,Lr,newLr,li,ci,vj,Nci,Factors[li],alp,msum_factor)
+            Residues[li] = residue
+        end
+    end
+    alpha[ci] = alp
+end
+
 

@@ -14,8 +14,8 @@ function
         Lf::Vector{Float64},
         Nc::Vector{Vector{Int}},
         Nv::Vector{Vector{Int}},
-        signs::Union{Vector{Bool},Nothing},
-        phi::Union{Vector{Float64},Nothing}
+        phi::Union{Vector{Float64},Nothing},
+        msum_factor::Union{Float64,Nothing}
     )
 
     @inbounds @fastmath begin
@@ -24,7 +24,7 @@ function
         for ci in eachindex(Nc)
             Nci = Nc[ci]
             for vj in Nci
-                Lr[ci,vj] = calc_Lr(Nci,ci,vj,Lq)
+                Lr[ci,vj] = calc_Lr(Nci,ci,vj,Lq,msum_factor)
             end
         end
 
@@ -35,7 +35,7 @@ function
             bitvector[vj] = signbit(Ld)
             for ci in Nvj
                 li = LinearIndices(Lq)[ci,vj]
-                Lq[li] = tanh(0.5*(Ld - Lr[li]))
+                Lq[li] = tanhLq(Ld - Lr[li],msum_factor)
             end
         end 
     end

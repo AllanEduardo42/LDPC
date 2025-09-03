@@ -3,7 +3,6 @@
 # 07 Apr 2025
 # RBP and List-RBP Algorithm with residual decaying factor
 
-include("./RBP functions/RBP_update_Lr.jl")
 include("./RBP functions/calc_residue.jl")
 include("./List functions/update_main_list.jl")
 include("./List functions/add_to_list.jl")

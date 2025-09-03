@@ -146,10 +146,26 @@ function
     Lr = (bptype != "MKAY") ? Matrix{Float64}(undef,M,N) : Array{Float64,3}(undef,M,N,2)
 
     # Set variables signs depending on the BP type (for dispatching)
-    if bptype == "TABL" || bptype == "MSUM"
-        signs = Vector{Bool}(undef,N)
+    # if bptype == "TABL" || bptype == "MSUM"
+    #     signs = Vector{Bool}(undef,N)
+    # else
+    #     signs = nothing
+    # end
+    
+    if bptype == "MSUM"
+        MSUM2 = mode == "MSUM2-RBP" || mode == "MS2-C&R-RBP"
+        if MSUM2
+            msum_factor = ALPHA2
+            # msum_factor = decayfactor
+            # decayfactor = 1.0
+        else
+            msum_factor = ALPHA
+            # msum_factor = decayfactor
+            # decayfactor = 1.0
+        end
     else
-        signs = nothing
+        MSUM2 = false
+        msum_factor = nothing
     end
 
     phi = (bptype == "TABL") ? lookupTable() : nothing
@@ -157,7 +173,7 @@ function
 ############################### RBP PREALLOCATIONS #############################
     
     LIST = mode == "List-RBP" || mode == "List-C&R-RBP"
-    RBP_mode = mode[end-2:end] == "RBP" || mode == "SVNF"
+    RBP_mode = mode[end-2:end] == "RBP" || mode == "SVNF"    
     if RBP_mode
         newLr = Matrix{Float64}(undef,M,N)
         Residues = Matrix{Float64}(undef,M,N)
@@ -184,7 +200,7 @@ function
             _return = false
             consensus = true
             C_R = true
-        elseif mode == "RBP" || mode == "RD-RBP"
+        elseif mode == "RBP" || mode == "MSUM-RBP" || mode == "MSUM2-RBP" || mode == "RD-RBP"
             num_reps = num_edges
             _return = false
             consensus = false
@@ -286,14 +302,14 @@ function
         end
         
         # 8) init the Lq matrix
-        init_Lq!(Lq,Lf,Nv,signs)
+        init_Lq!(Lq,Lf,Nv,msum_factor)
 
         # 9) init the RBP methods
         if LIST
             init_list!(Lq,Lr,Nc,signs,phi,newLr,Factors,inlist,Residues,list,
                                                                 coords,listsize)
         elseif RBP_mode
-            init_RBP!(Lq,Lr,Nc,signs,phi,newLr,alpha,Residues)     
+            init_RBP!(Lq,Lr,Nc,phi,newLr,alpha,Residues,msum_factor)     
         end
   
         # 10) BP routine
@@ -315,8 +331,8 @@ function
                     Lf,
                     Nc,
                     Nv,
-                    signs,
-                    phi
+                    phi,
+                    msum_factor
                     )
             elseif mode == "LBP"
                 LBP!(
@@ -329,15 +345,15 @@ function
                     signs,
                     phi
                     )
-            elseif mode == "RBP" || mode == "RD-RBP" || mode == "R-RBP" || mode == "C-RBP" || mode == "C&DR-RBP"
+            elseif mode == "RBP" || mode == "MSUM-RBP" || mode == "MSUM2-RBP" || mode == "RD-RBP" || mode == "R-RBP" || mode == "C-RBP" || mode == "C&DR-RBP"
                 if C_R && iter ≥ 3
                     switch_C_R = true
                     C_R = false
                     num_reps -= N
                 end
-                if mode == "RBP"
+                if mode == "RBP" || mode == "MSUM-RBP" || MSUM2
                     decayfactor = 1.0
-                end
+                end               
                 rbp_not_converged = RBP!(
                     bitvector,
                     Lq,
@@ -345,7 +361,6 @@ function
                     Lf,
                     Nc,
                     Nv,
-                    signs,
                     phi,
                     decayfactor,
                     num_reps,
@@ -356,11 +371,13 @@ function
                     rbp_not_converged,
                     _return,
                     consensus,
-                    switch_C_R
+                    switch_C_R,
+                    msum_factor,
+                    MSUM2
                     )
                 # reset factors
                 resetmatrix!(Factors,Nv,1.0)
-            elseif mode == "C&R-RBP"
+            elseif mode == "C&R-RBP" || mode == "MS-C&R-RBP" || mode == "MS2-C&R-RBP"
                 rbp_not_converged = C_R_RBP!(
                     bitvector,
                     Lq,
@@ -368,7 +385,6 @@ function
                     Lf,
                     Nc,
                     Nv,
-                    signs,
                     phi,
                     decayfactor,
                     num_edges-N,
@@ -376,7 +392,9 @@ function
                     alpha,
                     Residues,
                     Factors,
-                    rbp_not_converged
+                    rbp_not_converged,
+                    msum_factor,
+                    MSUM2
                     )
                 # reset factors
                 resetmatrix!(Factors,Nv,1.0)

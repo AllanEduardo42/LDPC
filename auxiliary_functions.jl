@@ -8,13 +8,12 @@ function
         Lq::Matrix{Float64},
         Lf::Vector{Float64},
         Nv::Vector{Vector{Int}},
-        signs::Union{Vector{Bool},Nothing}
+        msum_factor::Union{Float64,Nothing}
     )
     
     @inbounds for vj in eachindex(Nv)
-        aux = Lf[vj]
         for ci in Nv[vj]
-            Lq[ci,vj] = tanhLq(aux,signs)
+            Lq[ci,vj] = tanhLq(Lf[vj],msum_factor)
         end
     end
 end

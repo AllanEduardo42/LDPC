@@ -1,9 +1,8 @@
 ################################################################################
 # Allan Eduardo Feitosa
-# 26 set 2024
-# Horizontal update of the LLR
-# There are 4 different methods for SPA: Mckay, tanh, fast tanh and table
-
+# 2 set 2025
+# C2V Update
+# There are 4 different methods for SPA: Mckay, tanh, minsum and table
 
 ####################### SPA USING FAST HYPERBOLIC TANGENT ######################
 function 
@@ -11,8 +10,10 @@ function
         Nci::Vector{Int},
         ci::Int,
         vj::Int,    
-        Lq::Matrix{Float64}
+        Lq::Matrix{Float64},
+        ::Nothing
     )
+    
     @fastmath @inbounds begin
         pLq = 1.0
         for vb in Nci
@@ -31,6 +32,67 @@ function
             return MINLR
         else
             return MAXLR
+        end
+    end
+end
+
+function 
+    calc_Lr_no_opt(
+        Nci::Vector{Int},
+        ci::Int,
+        vj::Int,    
+        Lq::Matrix{Float64}
+    )
+    @fastmath @inbounds begin
+        pLq = 1.0
+        for vb in Nci
+            if vb ≠ vj
+                lq = Lq[ci,vb]
+                if lq == 0.0
+                    return 0.0
+                else
+                    pLq *= tanh(0.5*lq)
+                end
+            end
+        end
+        if abs(pLq) < 1.0
+            return 2*atanh(pLq)
+        elseif signbit(pLq)
+            return MINLR
+        else
+            return MAXLR
+        end
+    end
+end
+
+############################### SPA USING MIN-SUM ##############################
+function 
+    calc_Lr(
+        Nci::Vector{Int},
+        ci::Int,
+        vj::Int,    
+        Lq::Matrix{Float64},
+        msum_factor::Float64
+    )
+
+    @fastmath @inbounds begin
+        s = false
+        minL = MAXLR
+        for vb in Nci
+            if vb ≠ vj
+                lq = Lq[ci,vb]
+                sig = signbit(lq)
+                s ⊻= sig
+                β = abs(lq)
+                if β < minL
+                    minL = β
+                end
+            end
+        end
+        if s
+            return -minL*msum_factor
+        else
+            return minL*msum_factor
         end
     end
 end
@@ -76,70 +138,6 @@ function
         return (1 - 2*y)*ϕ(x,phi)
     end
 end
-
-################################### MIN SUM ###################################
-function 
-    calc_ABCD!(
-        Lq::Matrix{Float64},
-        ci::Int,
-        Nci::Vector{Int},
-        signs::Vector{Bool},
-        ::Nothing
-    )
-
-    @fastmath @inbounds begin
-        s = false
-        minL = INFFLOAT
-        minL2 = INFFLOAT
-        vjmin = Nci[1]
-        for vj in Nci
-            lq = Lq[ci,vj]
-            sig = signbit(lq)
-            s ⊻= sig
-            β = abs(lq)
-            signs[vj] = sig
-            if β < minL
-                vjmin = vj
-                minL, minL2 = β, minL
-            elseif β < minL2
-                minL2 = β
-            end
-        end
-    end
-
-    return minL*ALPHA, s, vjmin, minL2*ALPHA
-
-end
-
-function 
-    calc_Lr(
-        minL::Float64,
-        s::Bool,
-        vjmin::Int,
-        minL2::Float64,
-        vj::Int,
-        ::Float64,
-        signs::Vector{Bool},
-        ::Nothing
-    )
-
-    @fastmath @inbounds begin
-        if signs[vj] ⊻ s
-            if vj ≠ vjmin
-                return -minL
-            else
-                return -minL2
-            end
-        else
-            if vj ≠ vjmin
-                return minL
-            else
-                return minL2
-            end
-        end
-    end
-end
-
 
 ########################### SPA USING MKAY's METHOD ############################
 function
