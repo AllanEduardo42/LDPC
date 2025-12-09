@@ -71,3 +71,42 @@ function
 
 end
 
+function
+    findmaxedge_VC(
+        Residues::Matrix{Float64},
+        alpha::Vector{Float64},
+        Nv::Vector{Vector{Int}},
+    )
+
+    @fastmath @inbounds begin
+        vjmax = 0
+        maxalp = 0.0
+        for vj in eachindex(alpha)
+            alp = alpha[vj]
+            if alp > maxalp
+                maxalp = alp
+                vjmax = vj
+            end
+        end
+        
+        if vjmax == 0
+            return 0, 0
+        else
+            cimax = 0
+            maxresidue = 0.0
+            maxresidue2 = 0.0
+            for ci in Nv[vjmax]            
+                residue = Residues[ci,vjmax]
+                if residue > maxresidue
+                    maxresidue2, maxresidue = maxresidue, residue
+                    cimax = ci
+                elseif residue > maxresidue2
+                    maxresidue2 = residue
+                end
+            end
+            alpha[vjmax] = maxresidue2
+            return cimax, vjmax
+        end
+    end
+end
+

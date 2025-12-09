@@ -116,36 +116,39 @@ if TEST
     LQM = Dict()
     for i in eachindex(ACTIVE)
         if ACTIVE[i]
-            if PROF
-                global PRIN = false
-                # if TRIALS_TEST < 1000
-                #     global TRIALS_TEST = 1000
-                # end
-                # if MAXITER_TEST < 20
-                #     global MAXITER_TEST = 20
-                # end
-                # @profview _,_ = prepare_simulation(
-                _,_ = prepare_simulation(
-                                                [EbN0_TEST],
-                                                MODES[i],
-                                                [TRIALS_TEST],
-                                                MAXITER_TEST,
-                                                BPTYPES[i],
-                                                DECAY_TEST)
-            else
-            LRM[MODES[i]], LQM[MODES[i]] = prepare_simulation(
-                                                [EbN0_TEST],
-                                                MODES[i],
-                                                [TRIALS_TEST],
-                                                MAXITER_TEST,
-                                                BPTYPES[i],
-                                                DECAY_TEST)
+            for bptype in BPTYPES[i]
+                if PROF
+                    global PRIN = false
+                    # if TRIALS_TEST < 1000
+                    #     global TRIALS_TEST = 1000
+                    # end
+                    # if MAXITER_TEST < 20
+                    #     global MAXITER_TEST = 20
+                    # end
+                    # @profview _,_ = prepare_simulation(
+                    _,_ = prepare_simulation(
+                                                    [EbN0_TEST],
+                                                    MODES[i],
+                                                    [TRIALS_TEST],
+                                                    MAXITER_TEST,
+                                                    bptype,
+                                                    DECAY_TEST)
+                else
+                LRM[MODES[i]], LQM[MODES[i]] = prepare_simulation(
+                                                    [EbN0_TEST],
+                                                    MODES[i],
+                                                    [TRIALS_TEST],
+                                                    MAXITER_TEST,
+                                                    bptype,
+                                                    DECAY_TEST)
+                end
             end
         end
     end
 else
     FER = Dict()
     BER = Dict()
+    Prob_Greediness = Dict()
     for i in eachindex(ACTIVE)
         if ACTIVE[i]
             mode1 = MODES[i]
@@ -161,7 +164,7 @@ else
                     if decay != 0.0
                         mode2 *= " $decay"
                     end
-                    fer, ber = prepare_simulation(
+                    fer, ber, prob_greediness = prepare_simulation(
                                             EbN0,
                                             MODES[i],
                                             TRIALS,
@@ -178,6 +181,7 @@ else
                     end
                     FER[mode2] = fer
                     BER[mode2] = ber
+                    Prob_Greediness[mode2] = prob_greediness
                 end
             end
         end

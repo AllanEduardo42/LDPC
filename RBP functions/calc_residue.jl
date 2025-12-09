@@ -27,3 +27,18 @@ function
 
     return alp, residue
 end
+
+function 
+    calc_residue_lq!(
+        newlq::Float64,
+        oldlq::Float64,
+        alp::Float64
+    )
+
+    residue = abs(newlq - oldlq)
+    if residue > alp
+        alp = residue
+    end
+
+    return alp, residue
+end

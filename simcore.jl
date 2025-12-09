@@ -10,6 +10,7 @@ include("calc_syndrome.jl")
 include("flooding.jl")
 include("LBP.jl")
 include("RBP.jl")
+include("VC-RBP.jl")
 include("E_NV_RBP.jl")
 include("List_RBP.jl")
 include("SVNF.jl")
@@ -117,10 +118,7 @@ function
     ber = Vector{Int}(undef,maxiter)
 
     # estimate
-    bitvector = Vector{Bool}(undef,N)
-
-    # syndrome
-    syndrome = Vector{Bool}(undef,M)
+    bitvector = Vector{Bool}(undef,N)    
 
     # prior llr (if mode == "MKAY" it is just the prior probabilities)
     Lf = (bptype != "MKAY") ? Vector{Float64}(undef,N) : Matrix{Float64}(undef,N,2)
@@ -165,13 +163,19 @@ function
 ############################### RBP PREALLOCATIONS #############################
     
     LIST = mode == "List-RBP"
-    RBP = mode[end-2:end] == "RBP" || mode == "SVNF"    
+    RBP = mode[end-2:end] == "RBP" || mode == "SVNF" 
     RBP_routine = mode == "RBP" || mode == "RD-RBP" || mode == "C-RBP" || mode == "C&R-RBP" || mode == "C&DR-RBP" 
 
     if RBP
+        # greediness = zeros(Int,N)
+        # Greediness = zeros(Int,maxiter,num_edges+1)
         newLr = Matrix{Float64}(undef,M,N)
         Residues = Matrix{Float64}(undef,M,N)
-        alpha = Vector{Float64}(undef,M)     
+        if mode != "VC-RBP"
+            alpha = Vector{Float64}(undef,M)    
+        else
+            alpha = Vector{Float64}(undef,N)    
+        end
         if mode ≠ "SVNF" && mode ≠ "NW-RBP" 
             Factors = Matrix{Float64}(undef,M,N)
             resetmatrix!(Factors,Nv,1.0)
@@ -231,6 +235,7 @@ function
         end
         # verify the encoding
         if test
+            syndrome = Vector{Bool}(undef,M)
             _gf2_mat_mult!(syndrome,H,cword,M,N)
             if !iszero(syndrome)
                 throw(error("encoding error"))
@@ -248,7 +253,9 @@ function
         end
         
         # 4) reset simulation variables
-        syndrome .= true
+        if test
+            syndrome .= true
+        end
         decoded .= false
         resetmatrix!(Lr,Nv,0.0)
 
@@ -293,8 +300,21 @@ function
         if LIST
             init_list!(Lq,Lr,Nc,signs,phi,newLr,Factors,inlist,Residues,list,
                                                                 coords,listsize)
-        elseif RBP
-            init_RBP!(Lq,Lr,Nc,phi,newLr,alpha,Residues,msum_factor)     
+        elseif RBP && mode != "VC-RBP"
+            init_RBP!(Lq,Lr,Nc,phi,newLr,alpha,Residues,msum_factor)  
+        elseif mode == "VC-RBP"
+            for vj in eachindex(Nv)
+                alp = 0.0
+                for ci in Nv[vj]
+                    li = LinearIndices(Lq)[ci,vj]
+                    residue = abs(Lq[li])
+                    if residue > alp
+                        alp = residue
+                    end
+                    Residues[li] = residue
+                end
+                alpha[vj] = alp
+            end
         end
   
         # 10) BP routine
@@ -354,7 +374,8 @@ function
                     consensus,
                     switch_R,
                     msum_factor,
-                    MSUM2
+                    MSUM2,
+                    # greediness
                     )
                 # reset factors
                 resetmatrix!(Factors,Nv,1.0)
@@ -416,11 +437,34 @@ function
                     alpha,
                     rbp_not_converged
                 )
+            elseif mode == "VC-RBP"
+                rbp_not_converged = VC_RBP!(
+                    bitvector,
+                    Lq,
+                    Lr,
+                    Lf,
+                    Nc,
+                    Nv,
+                    phi,
+                    num_reps,
+                    alpha,
+                    Residues,
+                    rbp_not_converged,
+                    msum_factor
+                    # greediness
+                )
             end            
 
             for vj in 1:N
                 biterror[vj] = bitvector[vj] ≠ cword[vj]
             end
+
+            # if RBP
+            #     for vj in N
+            #         greedy = greediness[vj]
+            #         Greediness[iter, greedy + 1] += 1
+            #     end
+            # end
             
             # print info if in test mode
             if test

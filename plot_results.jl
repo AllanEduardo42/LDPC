@@ -34,8 +34,9 @@ if !STOP
                             if decay != 0.0
                                 mode2 *= " $decay"
                             end
-                            labels = Vector{String}()
-                            push!(LABELS,mode2)
+                            if j == 1 && k == 1
+                                push!(LABELS,mode2)
+                            end
                             if FB[j] == "F"
                                 y = log10.(FER[mode2][:,k])
                                 lim = log10(LIMFER[k])
@@ -66,6 +67,34 @@ if !STOP
             display(p)
         end
     end
+    # if GREEDNESS
+    #     for iter = 1:MAXITER
+    #         p = plot() 
+    #         for i in eachindex(ACTIVE)
+    #             if ACTIVE[i]                
+    #                 mode = MODES[i]
+    #                 for decay in DECAYS[i]
+    #                     if decay != 0.0
+    #                         mode *= " $decay"
+    #                     end                    
+    #                     x = 0:20
+    #                     y = Prob_Greediness[mode][iter,:,:]
+    #                     S = sum(y)
+    #                     p = plot!(
+    #                         x,
+    #                         y[1:21]/S,
+    #                         # xlabel="Iteration",
+    #                         label=mode*" (i = $iter)",
+    #                         lw=2,
+    #                         # title=title,
+    #                         size = (700,500)
+    #                     )
+    #                 end
+    #             end
+    #         end
+    #         display(p)
+    #     end
+    # end
 end
 
 LABELS = permutedims(LABELS)
@@ -77,8 +106,10 @@ if length(EbN0) > 1
     # FER x EbN0
     for j=1:2
         p = plot()
+        count = 0
         for i in eachindex(ACTIVE)
             if ACTIVE[i]
+                count += 1
                 if j == 1
                     y = FERMAX[:,i]
                 else
@@ -86,7 +117,7 @@ if length(EbN0) > 1
                 end
                 p = plot!(
                     EbN0,y,
-                    label=LABELS,
+                    label=LABELS[count],
                     lw=2,
                     title=FB[j]*TITLE,
                     size = (700,500)

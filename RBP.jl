@@ -25,8 +25,11 @@ function
         consensus::Bool,
         switch_R::Bool,
         msum_factor::Union{Float64,Nothing},
-        msum2::Bool
+        msum2::Bool,
+        # greediness::Vector{Int}
     )
+
+    # greediness .= 0
     
     @fastmath @inbounds for e in 1:num_reps
 
@@ -34,6 +37,7 @@ function
 
         # 1) Find largest residue  and coordenates
         cimax, vjmax = findmaxedge(Residues,alpha,Nc)
+        # greediness[vjmax] += 1
         if cimax == 0.0
             rbp_not_converged = false
             break # i.e., BP has converged

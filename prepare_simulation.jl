@@ -33,6 +33,7 @@ function
         K = length(ebn0) 
         nthreads = NTHREADS
     end
+    sum_greediness = Array{Int,4}(undef,maxiter,sum(HH)+1,K,nthreads)
     sum_decoded = Array{Int,3}(undef,maxiter,K,nthreads)
     sum_ber = Array{Int,3}(undef,maxiter,K,nthreads)
     for k in 1:K
@@ -71,6 +72,9 @@ function
             else
                 sum_decoded[:,k,i] = z
                 sum_ber[:,k,i] = w
+                # if mode[end-2:end] == "RBP"
+                #     sum_greediness[:,:,k,i] = v
+                # end
             end
         end
         str = """Elapsed $(round(stats.time;digits=1)) seconds ($(round(stats.gctime/stats.time*100;digits=2))% gc time, $(round(stats.compile_time/stats.time*100,digits=2))% compilation time)"""
@@ -94,6 +98,12 @@ function
             Ber[:,k] ./= (NN*trials[k])
         end
 
+        prob_greediness = zeros(maxiter,sum(HH)+1,K)
+        prob_greediness .= sum(sum_greediness,dims=4)
+        for k = 1:K
+            prob_greediness[:,:,k] ./= trials[k]
+        end
+
         println()
 
         lowerfer = 1/maximum(trials)
@@ -101,6 +111,6 @@ function
         replace!(x-> x < lowerfer ? lowerfer : x, Fer)
         replace!(x-> x < lowerber ? lowerber : x, Ber)
 
-        return Fer, Ber
+        return Fer, Ber, prob_greediness
     end
 end
