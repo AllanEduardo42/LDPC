@@ -55,26 +55,26 @@ STOP::Bool = false # stop simulation at zero syndrome (if true, BER curves are
 
 ################################## PARAMETERS ##################################
 
-MAXITER::Int = 10
+MAXITER::Int = 5
 # FACTORS = [0.7, 0.8, 0.9, 1.0]
 # MSFACTORS = collect(0.9:0.01:1.0) 
 FACTORS = [1.0]
-EbN0 = [1.0, 1.5, 2.0, 2.5, 3.0]
-# EbN0 = [2.5]
+# EbN0 = [1.0, 1.5, 2.0, 2.5, 3.0]
+EbN0 = [2.0]
 # TRIALS = [1024, 10240, 102400]
-TRIALS = [128, 1280, 12800, 128000, 128000]
-# TRIALS = [12800]
+# TRIALS = [128, 1280, 12800, 128000, 128000]
+TRIALS = [12800]
 
 # TEST
-MAXITER_TEST::Int = 1
-EbN0_TEST::Float64 = 1.0
-TRIALS_TEST::Int = 1
+MAXITER_TEST::Int = 10
+EbN0_TEST::Float64 = 2.0
+TRIALS_TEST::Int = 100
 DECAY_TEST::Float64 = 1.0
 
 ################################### SCHEDULE ###################################
 
 MODES = ["Flooding","LBP","RBP","RD-RBP","NW-RBP","SVNF","List-RBP","C&R-RBP",
-         "C-RBP","C&DR-RBP","VC-RBP"]
+         "C-RBP","C&DR-RBP","VC-RBP","OV-RBP"]
 MARKERS = [:none, :none, :dtriangle, :circle, :rect, :utriangle, :diamond, 
            :cross, :star5, :hexagon, :none]
 NUM_MODES = length(MODES)
@@ -121,7 +121,7 @@ DECAYS[i] = FACTORS
 
 # NW-RBP
 i += 1
-ACTIVE[i] = 0
+ACTIVE[i] = 1
 BPTYPES[i] = ["TANH"]
 MAXITERS[i] = MAXITER
 
@@ -160,6 +160,13 @@ MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
 
 # VC-RBP
+i += 1
+ACTIVE[i] = 0
+BPTYPES[i] = ["TANH"]
+MAXITERS[i] = MAXITER
+DECAYS[i] = FACTORS
+
+# OV-RBP
 i += 1
 ACTIVE[i] = 1
 BPTYPES[i] = ["TANH"]

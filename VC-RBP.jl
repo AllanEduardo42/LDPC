@@ -44,7 +44,7 @@ function
         Ncimax = Nc[cimax]        
         for vj in Ncimax
             if vj ≠ vjmax
-                # 5) update Nv messages Lq[ci,vnmax]
+                # 5) update messages Lr[cimax, vj]
                 li = LinearIndices(Lr)[cimax,vj]
                 alp = Residues[li]
                 Lr[li] = calc_Lr(Ncimax,cimax,vj,Lq,msum_factor)

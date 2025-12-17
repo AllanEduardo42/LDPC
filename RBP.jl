@@ -43,6 +43,7 @@ function
             break # i.e., BP has converged
         end
 
+        #2), 3), 4) C2V update
         Nvjmax = Nv[vjmax]
         if consensus
             for ci in Nvjmax

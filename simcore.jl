@@ -11,6 +11,7 @@ include("flooding.jl")
 include("LBP.jl")
 include("RBP.jl")
 include("VC-RBP.jl")
+include("OV-RBP.jl")
 include("E_NV_RBP.jl")
 include("List_RBP.jl")
 include("SVNF.jl")
@@ -170,7 +171,16 @@ function
         # greediness = zeros(Int,N)
         # Greediness = zeros(Int,maxiter,num_edges+1)
         newLr = Matrix{Float64}(undef,M,N)
-        Residues = Matrix{Float64}(undef,M,N)
+        if mode != "OV-RBP"
+            Residues = Matrix{Float64}(undef,M,N)
+        else
+            newLv = zeros(N)
+            Lv = Vector{Float64}(undef,N)
+            C = Vector{Bool}(undef,N)
+            upc = zeros(Int,N)
+            Residues = Vector{Float64}(undef,N)
+        end
+
         if mode != "VC-RBP"
             alpha = Vector{Float64}(undef,M)    
         else
@@ -300,7 +310,7 @@ function
         if LIST
             init_list!(Lq,Lr,Nc,signs,phi,newLr,Factors,inlist,Residues,list,
                                                                 coords,listsize)
-        elseif RBP && mode != "VC-RBP"
+        elseif RBP && mode != "VC-RBP" && mode != "OV-RBP"
             init_RBP!(Lq,Lr,Nc,phi,newLr,alpha,Residues,msum_factor)  
         elseif mode == "VC-RBP"
             for vj in eachindex(Nv)
@@ -315,6 +325,43 @@ function
                 end
                 alpha[vj] = alp
             end
+        elseif mode == "OV-RBP"
+            for ci in eachindex(Nc)
+                Nci = Nc[ci]
+                for vj in Nci
+                    newLr[ci,vj] = calc_Lr(Nci,ci,vj,Lq,msum_factor) 
+                end
+            end
+            size_C = 0
+            C .= false
+            for vj in eachindex(Nv)
+                Nvj = Nv[vj]
+                oldlv = Lf[vj]
+                newlv = calc_Ld(vj,Nvj,Lf,newLr)
+                newLv[vj] = newlv
+                Residues[vj] = abs(oldlv - newlv)
+                Lv[vj] = oldlv
+                if sign(oldlv)*sign(newlv) < 0
+                    size_C += 1
+                    C[vj] = true
+                end
+            end
+
+            max_upc = 0
+            for vj in eachindex(Nv)
+                if C[vj]
+                    count = 0
+                    for ci in Nv[vj]
+                        if _calc_syndrome(bitvector,Nc[ci])
+                            count += 1
+                        end
+                    end
+                    if count > max_upc
+                        max_upc = count
+                    end
+                    upc[vj] = count
+                end
+            end                  
         end
   
         # 10) BP routine
@@ -347,8 +394,8 @@ function
                     Lf,
                     Nc,
                     Nv,
-                    signs,
-                    phi
+                    phi,
+                    msum_factor
                     )
             elseif RBP_routine
                 if C_DR && iter ≥ 3
@@ -430,12 +477,12 @@ function
                     Lf,
                     Nc,
                     Nv,
-                    signs,
                     phi,
                     M,
                     newLr,
                     alpha,
-                    rbp_not_converged
+                    rbp_not_converged,
+                    msum_factor
                 )
             elseif mode == "VC-RBP"
                 rbp_not_converged = VC_RBP!(
@@ -451,6 +498,28 @@ function
                     Residues,
                     rbp_not_converged,
                     msum_factor
+                    # greediness
+                )
+             elseif mode == "OV-RBP"
+                rbp_not_converged, max_upc, size_C = OV_RBP!(
+                    bitvector,
+                    Lq,
+                    Lr,
+                    newLr,
+                    Lf,
+                    Nc,
+                    Nv,
+                    phi,
+                    N,
+                    Residues,
+                    rbp_not_converged,
+                    msum_factor,
+                    newLv,
+                    Lv,
+                    C,
+                    upc,
+                    max_upc,
+                    size_C
                     # greediness
                 )
             end            

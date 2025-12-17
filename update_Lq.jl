@@ -36,7 +36,7 @@ function calc_Lq(
     vj::Int,
     Lr::Matrix{Float64},
     Lf::Vector{Float64}
-)
+)::Float64
 
     @fastmath @inbounds begin
         lq = Lf[vj]

@@ -15,8 +15,8 @@ function
         Lf::Vector{Float64},
         Nc::Vector{Vector{Int}},
         Nv::Vector{Vector{Int}},
-        signs::Union{Vector{Bool},Nothing},
-        phi::Union{Vector{Float64},Nothing}
+        phi::Union{Vector{Float64},Nothing},
+        msum_factor::Union{Float64,Nothing}
     )
 
     @fastmath @inbounds for ci in eachindex(Nc)
@@ -27,7 +27,7 @@ function
         end
         # Lr updates
         for vj in Nci
-            Lr[ci,vj] = calc_Lr(Nci,ci,vj,Lq)
+            Lr[ci,vj] = calc_Lr(Nci,ci,vj,Lq,msum_factor)
         end
     end
     for vj in eachindex(Nv)
