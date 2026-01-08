@@ -2,7 +2,7 @@ function
     print_simulation_details(
         test::Bool,
         trials::Vector{Int},
-        mode::String,
+        algorithm::String,
         bptype::String,
         maxiter::Int,
         ebn0::Vector{Float64},
@@ -10,7 +10,7 @@ function
     )
     if test
         str =
-        """###################### Starting simulation (Testing mode) ######################
+        """###################### Starting simulation (Testing algorithm) ######################
         """
 
     else
@@ -19,7 +19,7 @@ function
         """
     end
     str *= """\nNumber of trials: $trials
-    Message passing protocol: $mode (using """
+    Message passing protocol: $algorithm (using """
     if bptype == "MKAY"
         str *="Mckay's SPA method)"
     elseif bptype == "TANH"
@@ -37,7 +37,7 @@ function
     if decay != 0.0
         str *= "\nResidual decaying factor: $decay"
     end
-    if mode == "List-RBP"
+    if algorithm == "List-RBP"
         str *= "\nList 1 size: $(LISTSIZES[1])\nList 2 size: $(LISTSIZES[2])"
     end
     str *= "\n"

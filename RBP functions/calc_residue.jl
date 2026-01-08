@@ -17,12 +17,16 @@ function
         msum_factor::Union{Float64,Nothing}
     )
 
-    oldlr = Lr[li]
-    newlr = calc_Lr(Nci,ci,vj,Lq,msum_factor)
-    newLr[li] = newlr
-    residue = abs(newlr - oldlr)*factor
-    if residue > alp
-        alp = residue
+    # begin
+    @inbounds begin
+
+        oldlr = Lr[li]
+        newlr = calc_Lr(Nci,ci,vj,Lq,msum_factor)
+        newLr[li] = newlr
+        residue = abs(newlr - oldlr)*factor
+        if residue > alp
+            alp = residue
+        end
     end
 
     return alp, residue

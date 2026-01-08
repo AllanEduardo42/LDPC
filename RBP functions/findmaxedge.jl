@@ -7,9 +7,10 @@ function
     findmaxedge(
         Residues::Matrix{Float64},
         alpha::Vector{Float64},
-        Nc::Vector{Vector{Int}},
+        Nc::Vector{Vector{Int}}
     )
 
+    # begin
     @fastmath @inbounds begin
         cimax = 0
         maxalp = 0.0

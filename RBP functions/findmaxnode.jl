@@ -5,19 +5,19 @@
 
 function
     findmaxnode(
-        residues::Vector{Float64}        
+        alpha::Vector{Float64}        
     )
 
-    nmax = 0
-    maxresidue = 0.0
-    @inbounds @fastmath for e in eachindex(residues)
-        residue = residues[e]
-        if residue > maxresidue
-            maxresidue = residue
-            nmax = e
+    cimax = 0
+    max_alp = 0.0
+    @inbounds @fastmath for e in eachindex(alpha)
+        alp = alpha[e]
+        if alp > max_alp
+            max_alp = alp
+            cimax = e
         end
     end
 
-    return nmax
+    return cimax
 
 end

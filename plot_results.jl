@@ -3,6 +3,9 @@
 # 28 ago 2025
 # Plot the results of the LDPC simulation
 
+MARKERS = [:none,:none,:none,:dtriangle,:circle,:rect,:utriangle,:diamond,:cross,
+           :star5,:hexagon,:none]
+
 plotlyjs()
 # gr()
 
@@ -13,88 +16,58 @@ LABELS = Vector{String}()
 FERMAX = zeros(length(EbN0),NUM_MODES)
 BERMAX = zeros(length(EbN0),NUM_MODES)
 
-if !STOP  
-    FB = ["F","B"]        
-    for j=1:2          
-        for k in eachindex(EbN0)  
-            p = plot()      
-            title = FB[j]*"ER $PROTOCOL (G = $GG, R = $(Rational(RR)), Eb/N0 = $(EbN0[k])dB)"      
-            for i in eachindex(ACTIVE)
-                if ACTIVE[i]
-                    mode = MODES[i]
-                    if mode == "List-RBP"
-                        mode *= " ($(LISTSIZES[1]),$(LISTSIZES[2]))"
+ 
+FB = ["F","B"]        
+for j=1:2          
+    for k in eachindex(EbN0)  
+        p = plot()      
+        title = FB[j]*"ER $PROTOCOL (G = $GG, R = $(Rational(RR)), Eb/N0 = $(EbN0[k])dB)"      
+        for i in eachindex(ACTIVE)
+            if ACTIVE[i]
+                algo = ALGORITHMS[i]
+                if algo == "List-RBP"
+                    algo *= " ($(LISTSIZES[1]),$(LISTSIZES[2]))"
+                end
+                for bptype in BPTYPES[i]
+                    if bptype != "TANH"
+                        algo *= " ($bptype)"
                     end
-                    for bptype in BPTYPES[i]
-                        mode2 = mode
-                        if bptype != "TANH"
-                            mode2 *= " ($bptype)"
+                    for decay in DECAYS[i]
+                        if decay != 0.0
+                            algo *= " $decay"
                         end
-                        for decay in DECAYS[i]
-                            if decay != 0.0
-                                mode2 *= " $decay"
-                            end
-                            if j == 1 && k == 1
-                                push!(LABELS,mode2)
-                            end
-                            if FB[j] == "F"
-                                y = log10.(FER[mode2][:,k])
-                                lim = log10(LIMFER[k])
-                            else
-                                y = log10.(BER[mode2][:,k])
-                                lim = log10(LIMBER[k])
-                            end
-                            x = 1:MAXITERS[i]
-                            if j == 1
-                                FERMAX[k,i] = y[MAXITER]
-                            else
-                                BERMAX[k,i] = y[MAXITER]
-                            end
-                            p = plot!(
-                                x,
-                                y,
-                                xlabel="Iteration",
-                                label=mode2,
-                                lw=2,
-                                title=title,
-                                ylims=(lim,0),
-                                size = (700,500)
-                            )
+                        if j == 1 && k == 1
+                            push!(LABELS,algo)
                         end
+                        if FB[j] == "F"
+                            y = log10.(FER[algo][:,k])
+                            lim = log10(LIMFER[k])
+                        else
+                            y = log10.(BER[algo][:,k])
+                            lim = log10(LIMBER[k])
+                        end
+                        x = 1:MAXITERS[i]
+                        if j == 1
+                            FERMAX[k,i] = y[MAXITER]
+                        else
+                            BERMAX[k,i] = y[MAXITER]
+                        end
+                        p = plot!(
+                            x,
+                            y,
+                            xlabel="Iteration",
+                            label=algo,
+                            lw=2,
+                            title=title,
+                            ylims=(lim,0),
+                            size = (700,500)
+                        )
                     end
                 end
             end
-            display(p)
         end
+        display(p)
     end
-    # if GREEDNESS
-    #     for iter = 1:MAXITER
-    #         p = plot() 
-    #         for i in eachindex(ACTIVE)
-    #             if ACTIVE[i]                
-    #                 mode = MODES[i]
-    #                 for decay in DECAYS[i]
-    #                     if decay != 0.0
-    #                         mode *= " $decay"
-    #                     end                    
-    #                     x = 0:20
-    #                     y = Prob_Greediness[mode][iter,:,:]
-    #                     S = sum(y)
-    #                     p = plot!(
-    #                         x,
-    #                         y[1:21]/S,
-    #                         # xlabel="Iteration",
-    #                         label=mode*" (i = $iter)",
-    #                         lw=2,
-    #                         # title=title,
-    #                         size = (700,500)
-    #                     )
-    #                 end
-    #             end
-    #         end
-    #         display(p)
-    #     end
-    # end
 end
 
 LABELS = permutedims(LABELS)

@@ -15,11 +15,12 @@ function
         Nc::Vector{Vector{Int}},
         Nv::Vector{Vector{Int}},
         phi::Union{Vector{Float64},Nothing},
+        msum_factor::Union{Float64,Nothing},
+        msum2::Bool,
         num_reps::Int,
         newLr::Matrix{Float64},
         alpha::Vector{Float64},
-        bp_not_converged::Bool,
-        msum_factor::Union{Float64,Nothing}
+        bp_not_converged::Bool        
     )
 
     @fastmath @inbounds for m in 1:num_reps

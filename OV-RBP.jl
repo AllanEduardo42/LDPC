@@ -8,11 +8,12 @@ function
         Nc::Vector{Vector{Int}},
         Nv::Vector{Vector{Int}},
         phi::Union{Vector{Float64},Nothing},
+        msum_factor::Union{Float64,Nothing},
+        msum2::Bool,
         num_reps::Int,
+        newLv::Vector{Float64},
         Residues::Vector{Float64},
         rbp_not_converged::Bool,
-        msum_factor::Union{Float64,Nothing},
-        newLv::Vector{Float64},
         Lv::Vector{Float64},
         C::Vector{Bool},
         upc::Vector{Int},
@@ -22,19 +23,23 @@ function
 
     @fastmath @inbounds for e in 1:num_reps
 
+        # println()
         # display("e = $e")
+        # display("P = $max_upc")
 
         # Dynamic selection
 
         vjmax = 0
         maxresidue = 0.0
         
-        if sum(C) > 0
+        if size_C > 0 # if C is not empty
 
-            for vj in eachindex(upc)
+            for vj in eachindex(upc)    # find vjmax in C1, if C1 is not empty
                 if upc[vj] == max_upc
                     if C[vj]
+                        # print("$vj ")
                         residue = Residues[vj] 
+                        # println("residue = $residue")
                         if residue > maxresidue
                             maxresidue = residue
                             vjmax = vj
@@ -42,17 +47,10 @@ function
                     end
                 end
             end
+            # println()
 
-            if vjmax == 0 # C i
-                max_upc = 0
-                for p in upc
-                    if p > max_upc
-                        max_upc = p
-                    end
-                end
-                if max_upc == 0
-                    max_upc = 1
-                end    
+            if vjmax == 0 # if C1 is empty, find vjmax in C2   
+                # display("C2")
                 for vj in eachindex(Nv)
                     if C[vj]
                         residue = Residues[vj]
@@ -61,9 +59,16 @@ function
                             vjmax = vj 
                         end
                     end
-                end  
+                end 
+                # Find new maximum number of unsatisfied paity check equations
+                max_upc = 1
+                for p in upc
+                    if p > max_upc
+                        max_upc = p
+                    end
+                end
             end
-        else
+        else # if C is empty
             for vj in eachindex(Nv)
                 residue = Residues[vj]
                 if residue > maxresidue
@@ -73,8 +78,10 @@ function
             end
         end
 
+        # display("vjmax = $vjmax")
+        # display("maxresidue = $maxresidue")
+
         if vjmax == 0
-            # # display("bp")
             rbp_not_converged = false
             break # i.e., BP has converged
         end
@@ -94,11 +101,8 @@ function
             size_C -= 1
             upc[vjmax] = 0
             oldlv = Lv[vjmax]
-            newlvOsc = oldlv + newLv[vjmax]
-            # if sign(oldlv)*sign(newlvOsc) < 0 
-            #     C[vjmax] = true
-            # end
-            Lv[vjmax] = newlvOsc
+            Lv[vjmax] = oldlv + newLv[vjmax]
+            # Lv[vjmax] = newLv[vjmax]
         else
             Lv[vjmax] = newLv[vjmax]
         end
@@ -123,8 +127,8 @@ function
                     if C[vj]
                         C[vj] = false
                         size_C -= 1
+                        upc[vj] = 0
                     end
-                    upc[vj] = 0
                     li = LinearIndices(Lr)[ci,vj]
                     newLr[li] = calc_Lr(Nci,ci,vj,Lq,msum_factor)
                     oldlv = Lv[vj]
@@ -134,11 +138,13 @@ function
                     if sign(oldlv)*sign(newlv) < 0
                         C[vj] = true
                         size_C += 1
+                        count = 0
                         for cii in Nv[vj]
                             if _calc_syndrome(bitvector,Nc[cii])
-                                upc[vj] += 1
+                                count += 1
                             end
                         end
+                        upc[vj] = count
                     end
                 end
             end

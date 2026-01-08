@@ -35,7 +35,7 @@ function
             bitvector[vj] = signbit(Ld)
             for ci in Nvj
                 li = LinearIndices(Lq)[ci,vj]
-                Lq[li] = tanhLq(Ld - Lr[li],msum_factor)
+                Lq[li] = tanhLq(Ld,Lr[li],msum_factor)
             end
         end 
     end

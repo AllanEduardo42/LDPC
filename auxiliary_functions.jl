@@ -13,7 +13,7 @@ function
     
     @inbounds for vj in eachindex(Nv)
         for ci in Nv[vj]
-            Lq[ci,vj] = tanhLq(Lf[vj],msum_factor)
+            Lq[ci,vj] = tanhLq(Lf[vj],0.0,msum_factor)
         end
     end
 end

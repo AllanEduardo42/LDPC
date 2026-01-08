@@ -15,22 +15,20 @@ function
         Nc::Vector{Vector{Int}},
         Nv::Vector{Vector{Int}},
         phi::Union{Vector{Float64},Nothing},
-        decayfactor::Float64,
+        msum_factor::Union{Float64,Nothing},
+        msum2::Bool,
         num_reps::Int,
         newLr::Matrix{Float64},
-        alpha::Vector{Float64},
         Residues::Matrix{Float64},
+        alpha::Vector{Float64},
+        decayfactor::Float64,
         Factors::Matrix{Float64},
         rbp_not_converged::Bool,
         consensus::Bool,
-        switch_R::Bool,
-        msum_factor::Union{Float64,Nothing},
-        msum2::Bool,
-        # greediness::Vector{Int}
+        switch_R::Bool
     )
-
-    # greediness .= 0
     
+    # for e in 1:num_reps
     @fastmath @inbounds for e in 1:num_reps
 
         # display("e = $e")
@@ -39,6 +37,8 @@ function
         cimax, vjmax = findmaxedge(Residues,alpha,Nc)
         # greediness[vjmax] += 1
         if cimax == 0.0
+            display(maximum(Residues[HH]))
+            display(maximum(alpha))
             rbp_not_converged = false
             break # i.e., BP has converged
         end
@@ -61,7 +61,7 @@ function
                 # 5) update Nv messages Lq[ci,vnmax]
                 li = LinearIndices(Lq)[ci,vjmax]
                 alp = Residues[li]
-                Lq[li] = tanhLq(Ld - Lr[li],msum_factor)
+                Lq[li] = tanhLq(Ld,Lr[li],msum_factor)
                 # 6) calculate Residues
                 Nci = Nc[ci]
                 for vj in Nci
@@ -93,17 +93,20 @@ function
         msum2::Bool
     )
 
-    li = LinearIndices(Lr)[ci,vjmax]
-    # 2) Decay the RBP factor corresponding to the maximum residue
-    Factors[li] *= decayfactor
-    # 3) update check to node message Lr[ci,vjmax]
-    if msum2
-        Lr[li] = calc_Lr_no_opt(Nc[ci],ci,vjmax,Lq)
-    else
-        Lr[li] = newLr[li]
+    # begin
+    @fastmath @inbounds begin
+        li = LinearIndices(Lr)[ci,vjmax]
+        # 2) Decay the RBP factor corresponding to the maximum residue
+        Factors[li] *= decayfactor
+        # 3) update check to node message Lr[ci,vjmax]
+        if msum2
+            Lr[li] = calc_Lr_no_opt(Nc[ci],ci,vjmax,Lq)
+        else
+            Lr[li] = newLr[li]
+        end
+        # 4) set maximum residue to zero
+        Residues[li] = 0.0
     end
-    # 4) set maximum residue to zero
-    Residues[li] = 0.0
 end
 
 

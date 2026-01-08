@@ -6,7 +6,7 @@
 include("calc_residue.jl")
 
 function
-    init_RBP!(
+    init_residues!(
         Lq::Matrix{Float64},
         Lr::Matrix{Float64},
         Nc::Vector{Vector{Int}},
@@ -17,6 +17,7 @@ function
         msum_factor::Union{Float64,Nothing}
     )
 
+    # for ci in eachindex(Nc)
     @fastmath @inbounds for ci in eachindex(Nc)
         Nci = Nc[ci]
         alp = 0.0

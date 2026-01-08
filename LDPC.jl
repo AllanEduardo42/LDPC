@@ -47,39 +47,62 @@ SEED::Int = 1111
 
 ################################ CONTROL FLAGS #################################
 
-TEST::Bool = false
+TEST::Bool = true
 PRIN::Bool = true
 PROF::Bool = false
-STOP::Bool = false # stop simulation at zero syndrome (if true, BER curves are
+STOP::Bool = true # stop simulation at zero syndrome (if true, BER curves are
 # not printed)
+
+############################### TEST PARAMETERS ################################
+
+# TEST
+### Maximum number of BP iterations
+MAXITER_TEST::Int = 1
+### EbN0
+EbN0_TEST::Float64 = 2.0
+### Number of Monte Carlo Trials
+TRIALS_TEST::Int = 1
+### Residual Decay factors
+DECAY_TEST::Float64 = 1.0
 
 ################################## PARAMETERS ##################################
 
-MAXITER::Int = 5
-# FACTORS = [0.7, 0.8, 0.9, 1.0]
-# MSFACTORS = collect(0.9:0.01:1.0) 
-FACTORS = [1.0]
+### Maximum number of BP iterations
+MAXITER::Int = 50
+
+### EbN0
+# EbN0 = [1.0]
+EbN0 = [1.0, 1.5, 2.0, 2.5]
 # EbN0 = [1.0, 1.5, 2.0, 2.5, 3.0]
-EbN0 = [2.0]
-# TRIALS = [1024, 10240, 102400]
-# TRIALS = [128, 1280, 12800, 128000, 128000]
-TRIALS = [12800]
 
-# TEST
-MAXITER_TEST::Int = 10
-EbN0_TEST::Float64 = 2.0
-TRIALS_TEST::Int = 100
-DECAY_TEST::Float64 = 1.0
+### Number of Monte Carlo Trials
+# TRIALS = [1280]
+TRIALS = [128, 1280, 12800, 128000]
+# TRIALS = [128, 1280, 12800, 128000, 1280000]
 
-################################### SCHEDULE ###################################
+### Residual Decay factors
+FACTORS = [1.0]
+# FACTORS = [0.7, 0.8, 0.9, 1.0]
 
-MODES = ["Flooding","LBP","RBP","RD-RBP","NW-RBP","SVNF","List-RBP","C&R-RBP",
-         "C-RBP","C&DR-RBP","VC-RBP","OV-RBP"]
-MARKERS = [:none, :none, :dtriangle, :circle, :rect, :utriangle, :diamond, 
-           :cross, :star5, :hexagon, :none]
-NUM_MODES = length(MODES)
+############################### LDPC ALGORITHMS ################################
+
+ALGORITHMS = ["Flooding",        # Flooding
+              "LBP",             # Layered Believe Propagation
+              "RBP",             # Residual Believe Propagation
+              "RD-RBP",          # Residual Decay RBP
+              "NW-RBP",          # Node Wise RBP
+              "SVNF",            # Silent Variable Node Free RBP
+              "D-SVNF",          # Dynamic SVNF
+              "List-RBP",        # List RBP
+              "C-RBP",           # Consensus RBP
+              "C&R-RBP",         # Consensus & Return RBP
+              "C&DR-RBP",        # Consensus & Delayed Return RBP
+              "VC-RBP",          # Variable to Check RBP
+              "OV-RBP"           # Oscillating Variable Node RBP
+              ]
+
+NUM_MODES = length(ALGORITHMS)
 ACTIVE = zeros(Bool,NUM_MODES)
-LISTSIZES = zeros(Int,4)
 
 # BP type: "MKAY", "TANH", "TABL", "MSUM", "MSUM2"
 BPTYPES = Vector{Vector{String}}(undef,NUM_MODES)
@@ -92,11 +115,12 @@ for i in 1:NUM_MODES
     DECAYS[i] = [0.0]
 end
 
+### Flag to activate all algorithms
 ACTIVE_ALL = false
 
 i = 1
 # Flooding
-ACTIVE[i] = 1
+ACTIVE[i] = 0
 BPTYPES[i] = ["TANH"]
 MAXITERS[i] = MAXITER
 
@@ -108,7 +132,7 @@ MAXITERS[i] = MAXITER
 
 # RBP
 i += 1
-ACTIVE[i] = 1
+ACTIVE[i] = 0
 BPTYPES[i] = ["TANH"]
 MAXITERS[i] = MAXITER
 
@@ -121,11 +145,17 @@ DECAYS[i] = FACTORS
 
 # NW-RBP
 i += 1
-ACTIVE[i] = 1
+ACTIVE[i] = 0
 BPTYPES[i] = ["TANH"]
 MAXITERS[i] = MAXITER
 
 # SVNF
+i += 1
+ACTIVE[i] = 0
+BPTYPES[i] = ["TANH"]
+MAXITERS[i] = MAXITER
+
+# D-SVNF
 i += 1
 ACTIVE[i] = 0
 BPTYPES[i] = ["TANH"]
@@ -137,15 +167,19 @@ ACTIVE[i] = 0
 BPTYPES[i] = ["TANH"]
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
+# List sizes (min values = 4 and 2)
+LISTSIZES = zeros(Int,2)
+LISTSIZES[1] = 16
+LISTSIZES[2] = 2
 
-# C&R-RBP
+# C-RBP
 i += 1
 ACTIVE[i] = 0
 BPTYPES[i] = ["TANH"]
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
 
-# C-RBP
+# C&R-RBP
 i += 1
 ACTIVE[i] = 0
 BPTYPES[i] = ["TANH"]
@@ -161,21 +195,17 @@ DECAYS[i] = FACTORS
 
 # VC-RBP
 i += 1
-ACTIVE[i] = 0
+ACTIVE[i] = 1
 BPTYPES[i] = ["TANH"]
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
 
 # OV-RBP
 i += 1
-ACTIVE[i] = 1
+ACTIVE[i] = 0
 BPTYPES[i] = ["TANH"]
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
-
-# List sizes (min values = 4 and 2)
-LISTSIZES[1] = 16
-LISTSIZES[2] = 2
 
 ######################## CODE LENGTH, RATE AND PROTOCOL ########################
 
@@ -187,11 +217,6 @@ RR::Float64 = 1/2                       # WiMAX compatibility offset
 PROTOCOL::String = "WiMAX"
     LAMBDA = [0.21, 0.25, 0.25, 0.29, 0]
     RO = [1.0, 0, 0, 0, 0, 0]
-
-include("setup.jl")
-if !TEST && !SAVE
-    include("plot_results.jl")
-end
 
 ### WiMAX: N takes values in {576,672,768,864,960,1056,1152,1248,1344,1440,1536,
                                      # 1632,1728,1824,1920,2016,2112,2208,2304}.    
@@ -206,3 +231,11 @@ end
 #    1288, 1320, 1352, 1416, 1480, 1544, 1608, 1672, 1736, 1800, 1864, 1928,  
 #    2024, 2088, 2152, 2216, 2280, 2408, 2472, 2536, 2600, 2664, 2728, 2792, 
 #    2856, 2976, 3104, 3240, 3368, 3496, 3624, 3752, 3824]
+
+#################################### SETUP #####################################
+include("setup.jl")
+
+################################# PLOT RESULTS #################################
+if !TEST && !SAVE
+    include("plot_results.jl")
+end

@@ -15,12 +15,12 @@ function
         Nc::Vector{Vector{Int}},
         Nv::Vector{Vector{Int}},
         phi::Union{Vector{Float64},Nothing},
-        num_reps::Int,
-        alpha::Vector{Float64},
-        Residues::Matrix{Float64},
-        rbp_not_converged::Bool,
         msum_factor::Union{Float64,Nothing},
-        # greediness::Vector{Int}
+        msum2::Bool,
+        num_reps::Int,
+        Residues::Matrix{Float64},
+        alpha::Vector{Float64},        
+        rbp_not_converged::Bool
     )
 
     # greediness .= 0

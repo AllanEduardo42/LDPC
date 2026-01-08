@@ -17,6 +17,7 @@ function
         Lr::Matrix{Float64}
     )
 
+    # begin
     @fastmath @inbounds begin
         Ld = Lf[vj]
         for ci in Nvj

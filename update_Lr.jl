@@ -14,7 +14,7 @@ function
         ::Nothing
     )
     
-    @fastmath @inbounds begin
+    @inbounds begin
         pLq = 1.0
         for vb in Nci
             if vb ≠ vj

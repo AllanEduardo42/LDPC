@@ -17,21 +17,22 @@ function
         Lf::Vector{Float64},
         Nc::Vector{Vector{Int}},
         Nv::Vector{Vector{Int}},
-        signs::Union{Vector{Bool},Nothing},
         phi::Union{Vector{Float64},Nothing},
-        decayfactor::Float64,
+        msum_factor::Union{Float64,Nothing},
+        msum2::Bool,
         num_reps::Int,
         newLr::Matrix{Float64},
-        Factors::Matrix{Float64},
-        coords::Matrix{Int},
-        inlist::Matrix{Bool},
         Residues::Matrix{Float64},
+        decayfactor::Float64,
+        Factors::Matrix{Float64},
+        rbp_not_converged::Bool,
+        coords::Matrix{Int},
+        inlist::Matrix{Bool},        
         list::Vector{Float64},
         local_list::Union{Vector{Float64},Nothing},
         local_coords::Union{Matrix{Int},Nothing},
         listsize::Int,
-        listsize2::Int,
-        rbp_not_converged::Bool
+        listsize2::Int        
     )
 
     @fastmath @inbounds for e in 1:num_reps
@@ -76,12 +77,12 @@ function
             if ci ≠ cimax
                 # 5) update Nv messages Lq[ci,vnmax]
                 li = LinearIndices(Lq)[ci,vjmax]
-                Lq[li] = tanh(0.5*(Ld - Lr[li]))
+                Lq[li] = tanhLq(Ld,Lr[li],msum_factor)
                 # 6) calculate residues
                 Nci = Nc[ci]
                 for vj in Nci
                     if vj ≠ vjmax
-                        newlr = calc_Lr(Nci,ci,vj,Lq)
+                        newlr = calc_Lr(Nci,ci,vj,Lq,msum_factor)
                         li = LinearIndices(Lr)[ci,vj]
                         newLr[li] = newlr
                         residue = abs(newlr - Lr[li])*Factors[li]

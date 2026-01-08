@@ -9,19 +9,19 @@ include("print_simulation_details.jl")
 function 
     prepare_simulation(
         ebn0::Vector{Float64},
-        mode::String,
+        algorithm::String,
         trials::Vector{Int},
         maxiter::Integer,
         bptype::String,
         decay::Float64
     )
 
-    if bptype == "MKAY" && mode ≠ "Flooding"
+    if bptype == "MKAY" && algorithm ≠ "Flooding"
         throw(error(lazy"The McKay method is only supported for Flooding"))
     end
 
 ########################### PRINT SIMULATION DETAILS ###########################
-    print_simulation_details(TEST,trials,mode,bptype,maxiter,ebn0,decay)
+    print_simulation_details(TEST,trials,algorithm,bptype,maxiter,ebn0,decay)
 
 ################################ MULTITHREADING ################################   
     Lr = Matrix{Float64}(undef,MM,NN)
@@ -55,7 +55,7 @@ function
                                 E_H,
                                 PROTOCOL,
                                 LIFTSIZE,
-                                mode,
+                                algorithm,
                                 bptype,
                                 trials[k]÷NTHREADS,
                                 maxiter,
@@ -72,9 +72,6 @@ function
             else
                 sum_decoded[:,k,i] = z
                 sum_ber[:,k,i] = w
-                # if mode[end-2:end] == "RBP"
-                #     sum_greediness[:,:,k,i] = v
-                # end
             end
         end
         str = """Elapsed $(round(stats.time;digits=1)) seconds ($(round(stats.gctime/stats.time*100;digits=2))% gc time, $(round(stats.compile_time/stats.time*100,digits=2))% compilation time)"""

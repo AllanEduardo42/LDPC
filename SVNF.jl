@@ -1,7 +1,7 @@
 ################################################################################
 # Allan Eduardo Feitosa
 # 27 Jun 2025
-# SVNF Algorithm with residual decaying factor
+# SVNF Algorithm
 
 function
     SVNF!( 
@@ -11,42 +11,51 @@ function
         Lf::Vector{Float64},
         Nc::Vector{Vector{Int}},
         Nv::Vector{Vector{Int}},
-        signs::Union{Vector{Bool},Nothing},
         phi::Union{Vector{Float64},Nothing},
-        N::Int,
-        num_edges::Int,
+        msum_factor::Union{Float64,Nothing},
+        msum2::Bool,
+        num_reps::Int,
         newLr::Matrix{Float64},
-        residues::Matrix{Float64},
+        Residues::Matrix{Float64},
         rbp_not_converged::Bool,
-        twoLS::Int
+        twoLS::Int,
+        N::Int      
     )
 
     count = 0
     count_zeros = 0
 
-    @fastmath @inbounds while count < num_edges
-    
-        for n in 0:N-1
+    @inbounds while count < num_reps
 
-            vj = rem(n + twoLS,N) + 1   # jump to non_punctured nodes
+        # display("count = $count")
+    
+        for vn in 0:N-1
+
+            # count += 1
+
+            vj = rem(vn + twoLS,N) + 1   # jump to non_punctured nodes
 
             # display("vj = $vj")
 
             # 1) Find largest residue  and coordenates
             Nvj = Nv[vj]
-            cimax, vjmax = findmaxedge_SVNF(residues,vj,Nvj,Nc)
+            cimax, vjmax = findmaxedge_SVNF(Residues,vj,Nvj,Nc)
             if cimax ≠ 0
                 count_zeros = 0
-                rbp_not_converged = true
 
                 # 2) update check to node message Lr[cimax,vjmax]
                 Ncimax = Nc[cimax]
                 limax = LinearIndices(Lr)[cimax,vjmax]
-                RBP_update_Lr!(limax,Lr,newLr,cimax,vjmax,Ncimax,Lq,signs,phi)
+                if msum2
+                    Lr[limax] = calc_Lr_no_opt(Ncimax,cimax,vjmax,Lq)
+                else
+                    Lr[limax] = newLr[limax]
+                end
+                
                 count += 1
-
+                
                 # 3) set maximum residue to zero
-                residues[limax] = 0.0
+                Residues[limax] = 0.0
 
                 # 4) Calculate Ld of vjmax and bitvector[vjmax]
                 Nvjmax = Nv[vjmax]
@@ -57,23 +66,23 @@ function
                     if ci ≠ cimax
                         # 6) update Nv messages Lq[ci,vjmax]
                         li = LinearIndices(Lq)[ci,vjmax]
-                        Lq[li] = tanh(0.5*(Ld - Lr[li]))
-                        # 7) calculate residues
+                        Lq[li] = tanhLq(Ld,Lr[li],msum_factor)
+                        # 7) calculate Residues
                         Nci = Nc[ci]    
                         for vj in Nci
                             if vj ≠ vjmax
                                 li = LinearIndices(Lr)[ci,vj]
-                                newlr = calc_Lr(Nci,ci,vj,Lq)
+                                newlr = calc_Lr(Nci,ci,vj,Lq,msum_factor)
                                 newLr[li] = newlr
-                                residues[li] = abs(newlr - Lr[li])
+                                Residues[li] = abs(newlr - Lr[li])
                             end
                         end
                     end
                 end
             else
-                count_zeros += 1                
+                count_zeros += 1        
             end
-            if count > num_edges
+            if count > num_reps
                 break
             end
         end

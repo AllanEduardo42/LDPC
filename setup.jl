@@ -3,7 +3,7 @@
 # 26 mai 2025
 # Setup of the LDPC simulation
 
-############################## ) INCLUDED FILES ###############################
+################################ INCLUDED FILES ################################
 
 include("NR LDPC/NR_LDPC_parameters.jl")
 include("IEEE80216e.jl")
@@ -110,7 +110,7 @@ for i in 1:NTHREADS
     RGN_SEEDS[i] = SEED + i - 1
 end
 
-################################## SIMULATION ##################################
+############################## PREPARE SIMULATION ##############################
 if TEST
     LRM = Dict()
     LQM = Dict()
@@ -128,15 +128,15 @@ if TEST
                     @profview _,_ = prepare_simulation(
                     #_,_ = prepare_simulation(
                                                     [EbN0_TEST],
-                                                    MODES[i],
+                                                    ALGORITHMS[i],
                                                     [TRIALS_TEST],
                                                     MAXITER_TEST,
                                                     bptype,
                                                     DECAY_TEST)
                 else
-                LRM[MODES[i]], LQM[MODES[i]] = prepare_simulation(
+                LRM[ALGORITHMS[i]], LQM[ALGORITHMS[i]] = prepare_simulation(
                                                     [EbN0_TEST],
-                                                    MODES[i],
+                                                    ALGORITHMS[i],
                                                     [TRIALS_TEST],
                                                     MAXITER_TEST,
                                                     bptype,
@@ -148,40 +148,37 @@ if TEST
 else
     FER = Dict()
     BER = Dict()
-    Prob_Greediness = Dict()
     for i in eachindex(ACTIVE)
         if ACTIVE[i]
-            mode1 = MODES[i]
-            if mode1 == "List-RBP"
-                mode1 *= " ($(LISTSIZES[1]),$(LISTSIZES[2]))"
+            algo = ALGORITHMS[i]
+            if algo == "List-RBP"
+                algo *= " ($(LISTSIZES[1]),$(LISTSIZES[2]))"
             end
             for bptype in BPTYPES[i]
-                mode2 = mode1
                 if bptype != "TANH"
-                    mode2 *= " ($bptype)"
+                    algo *= " ($bptype)"
                 end
                 for decay in DECAYS[i]
                     if decay != 0.0
-                        mode2 *= " $decay"
+                        algo *= " $decay"
                     end
                     fer, ber, prob_greediness = prepare_simulation(
                                             EbN0,
-                                            MODES[i],
+                                            ALGORITHMS[i],
                                             TRIALS,
                                             MAXITERS[i],
                                             bptype,
                                             decay)
                     if SAVE
-                        open("./Saved Data/"*NOW*"/FER_"*mode2*".txt","w") do io
+                        open("./Saved Data/"*NOW*"/FER_"*algo*".txt","w") do io
                                 writedlm(io,fer)
                         end
-                        open("./Saved Data/"*NOW*"/BER_"*mode2*".txt","w") do io
+                        open("./Saved Data/"*NOW*"/BER_"*algo*".txt","w") do io
                                 writedlm(io,ber)
                         end
                     end
-                    FER[mode2] = fer
-                    BER[mode2] = ber
-                    Prob_Greediness[mode2] = prob_greediness
+                    FER[algo] = fer
+                    BER[algo] = ber
                 end
             end
         end
