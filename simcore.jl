@@ -243,7 +243,8 @@ function
         Residues = Matrix{Float64}(undef,M,N)
         alpha = Vector{Float64}(undef,N) 
     elseif algorithm == "OV-RBP"
-        num_reps = N    
+        num_reps = N 
+        newLr = Matrix{Float64}(undef,M,N)   
         newLv = zeros(N)
         Residues = Vector{Float64}(undef,N)
         Lv = Vector{Float64}(undef,N)
@@ -562,7 +563,6 @@ function
                     bitvector,
                     Lq,
                     Lr,
-                    newLr,
                     Lf,
                     Nc,
                     Nv,
@@ -570,11 +570,11 @@ function
                     msum_factor,
                     msum2,
                     num_reps,
+                    newLr,
                     Residues,
-                    rbp_not_converged,
-                    
-                    newLv,
+                    rbp_not_converged,                    
                     Lv,
+                    newLv,
                     C,
                     upc,
                     max_upc,

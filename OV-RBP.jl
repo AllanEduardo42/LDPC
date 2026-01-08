@@ -3,7 +3,6 @@ function
         bitvector::Vector{Bool},
         Lq::Matrix{Float64},
         Lr::Matrix{Float64},
-        newLr::Matrix{Float64},
         Lf::Vector{Float64},
         Nc::Vector{Vector{Int}},
         Nv::Vector{Vector{Int}},
@@ -11,10 +10,11 @@ function
         msum_factor::Union{Float64,Nothing},
         msum2::Bool,
         num_reps::Int,
-        newLv::Vector{Float64},
+        newLr::Matrix{Float64},
         Residues::Vector{Float64},
         rbp_not_converged::Bool,
         Lv::Vector{Float64},
+        newLv::Vector{Float64},
         C::Vector{Bool},
         upc::Vector{Int},
         max_upc::Int,
@@ -115,7 +115,7 @@ function
 
         for ci in Nvjmax
             li = LinearIndices(Lr)[ci,vjmax]
-            Lq[li] = tanhLq(Lv[vjmax] - Lr[li],msum_factor)
+            Lq[li] = tanhLq(Lv[vjmax],Lr[li],msum_factor)
         end
 
         # Lv

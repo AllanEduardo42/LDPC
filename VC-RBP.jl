@@ -59,7 +59,7 @@ function
                         oldlq = 2*atanh(Lq[li])
                         alp, residue = calc_residue_lq!(newlq,oldlq,alp)
                         Residues[li] = residue
-                        Lq[li] = tanhLq(newlq,msum_factor)
+                        Lq[li] = tanhLq(newlq,0.0,msum_factor)
                     end
                 end
                 alpha[vj] = alp
