@@ -16,7 +16,11 @@ include("prepare_simulation.jl")
 
 if ACTIVE_ALL
     for i in eachindex(ACTIVE)
-        ACTIVE[i] = true
+        if ACTIVE[i]
+            ACTIVE[i] = false
+        else
+            ACTIVE[i] = true
+        end
     end
 end
 
@@ -119,12 +123,6 @@ if TEST
             for bptype in BPTYPES[i]
                 if PROF
                     global PRIN = false
-                    # if TRIALS_TEST < 1000
-                    #     global TRIALS_TEST = 1000
-                    # end
-                    # if MAXITER_TEST < 20
-                    #     global MAXITER_TEST = 20
-                    # end
                     @profview _,_ = prepare_simulation(
                     #_,_ = prepare_simulation(
                                                     [EbN0_TEST],
@@ -162,7 +160,7 @@ else
                     if decay != 0.0
                         algo *= " $decay"
                     end
-                    fer, ber, prob_greediness = prepare_simulation(
+                    fer, ber = prepare_simulation(
                                             EbN0,
                                             ALGORITHMS[i],
                                             TRIALS,

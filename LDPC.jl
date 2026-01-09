@@ -47,7 +47,7 @@ SEED::Int = 1111
 
 ################################ CONTROL FLAGS #################################
 
-TEST::Bool = true
+TEST::Bool = false
 PRIN::Bool = true
 PROF::Bool = false
 STOP::Bool = true # stop simulation at zero syndrome (if true, BER curves are
@@ -55,11 +55,10 @@ STOP::Bool = true # stop simulation at zero syndrome (if true, BER curves are
 
 ############################### TEST PARAMETERS ################################
 
-# TEST
 ### Maximum number of BP iterations
 MAXITER_TEST::Int = 1
 ### EbN0
-EbN0_TEST::Float64 = 2.0
+EbN0_TEST::Float64 = 1.0
 ### Number of Monte Carlo Trials
 TRIALS_TEST::Int = 1
 ### Residual Decay factors
@@ -71,13 +70,13 @@ DECAY_TEST::Float64 = 1.0
 MAXITER::Int = 50
 
 ### EbN0
-# EbN0 = [1.0]
-EbN0 = [1.0, 1.5, 2.0, 2.5]
+EbN0 = [2.0]
+# EbN0 = [1.0, 1.5, 2.0, 2.5]
 # EbN0 = [1.0, 1.5, 2.0, 2.5, 3.0]
 
 ### Number of Monte Carlo Trials
-# TRIALS = [1280]
-TRIALS = [128, 1280, 12800, 128000]
+TRIALS = [12800]
+# TRIALS = [128, 1280, 12800, 128000]
 # TRIALS = [128, 1280, 12800, 128000, 1280000]
 
 ### Residual Decay factors
@@ -116,7 +115,7 @@ for i in 1:NUM_MODES
 end
 
 ### Flag to activate all algorithms
-ACTIVE_ALL = false
+ACTIVE_ALL = true
 
 i = 1
 # Flooding
@@ -163,7 +162,7 @@ MAXITERS[i] = MAXITER
 
 # List-RBP
 i += 1
-ACTIVE[i] = 0
+ACTIVE[i] = 1
 BPTYPES[i] = ["TANH"]
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
@@ -202,7 +201,7 @@ DECAYS[i] = FACTORS
 
 # OV-RBP
 i += 1
-ACTIVE[i] = 1
+ACTIVE[i] = 0
 BPTYPES[i] = ["TANH"]
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS

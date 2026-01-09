@@ -57,7 +57,7 @@ function
         printtest::Bool;                # if "true", print test algorithm results
         msgtest=nothing,                # for testing specific msg
         noisetest=nothing               # for testing specific noise
-    )::Tuple{Matrix{Float64},Matrix{Float64},Vector{Int},Vector{Int}}
+    )::Tuple{Union{Matrix{Float64},Nothing},Union{Matrix{Float64},Nothing},Vector{Int},Vector{Int}}
     
 ################################## CONSTANTS ###################################
 
@@ -142,13 +142,6 @@ function
     # if algorithm == "MKAY" the are different matrices for bit = 0 and bit = 1
     Lq = (bptype != "MKAY") ? Matrix{Float64}(undef,M,N) : Array{Float64,3}(undef,M,N,2)
     Lr = (bptype != "MKAY") ? Matrix{Float64}(undef,M,N) : Array{Float64,3}(undef,M,N,2)
-
-    # Set variables signs depending on the BP type (for dispatching)
-    # if bptype == "TABL" || bptype == "MSUM"
-    #     signs = Vector{Bool}(undef,N)
-    # else
-    #     signs = nothing
-    # end
     
     msum2 = false
     if bptype == "MSUM"
@@ -164,97 +157,82 @@ function
 
 ############################### RBP PREALLOCATIONS #############################
     
-    # RBP based algorithms
+    # RBP switchs 
+    RBP_based = algorithm != "Flooding" && algorithm != "LBP"
 
-    RBP_routine = algorithm == "RBP" || algorithm == "RD-RBP" || algorithm == "C-RBP" || algorithm == "C&R-RBP" || algorithm == "C&DR-RBP" 
+    if RBP_based
 
-    Factors = nothing
+        # Consensus
+        RBP_consensus = algorithm == "C-RBP"    || 
+                        algorithm == "C&R-RBP"  ||
+                        algorithm == "C&DR-RBP" 
 
-    if algorithm == "RBP" || algorithm == "RD-RBP"
-        RBP_routine = true
+        # Algorithms that used the RBP residual decay strategy
+        RBP_decay = algorithm == "RD-RBP"   || 
+                    algorithm == "List-RBP" || 
+                    RBP_consensus
+
+        # Algorithm that uses the same RBP routine ("RBP.jl")
+        RBP_routine = algorithm == "RBP"      || 
+                      algorithm == "RD-RBP"   || 
+                      RBP_consensus
+
+        # Algorithms that uses the default RBP initialization
+        RBP_init = RBP_routine || algorithm == "NW-RBP" || algorithm == "SVNF" 
+
+        # Variables common to all RBP based algorithms
+        newLr = Matrix{Float64}(undef,M,N)
+        if algorithm != "OV-RBP"
+            Residues = Matrix{Float64}(undef,M,N)
+        else
+            Residues = Vector{Float64}(undef,N)
+        end
+
+        if RBP_decay
+            Factors = Matrix{Float64}(undef,M,N)
+        else
+            Factors = nothing
+        end
+
+        if RBP_init
+            alpha = Vector{Float64}(undef,M)
+        end
+
+        # default number of loop repetitions
         num_reps = num_edges
-        newLr = Matrix{Float64}(undef,M,N)
-        Residues = Matrix{Float64}(undef,M,N)
-        alpha = Vector{Float64}(undef,M)
-        Factors = Matrix{Float64}(undef,M,N)
-        consensus = false
-        switch_R = false
-        C_DR = false
-    elseif algorithm == "NW-RBP"
-        num_reps = M
-        newLr = Matrix{Float64}(undef,M,N)
-        Residues = Matrix{Float64}(undef,M,N)
-        alpha = Vector{Float64}(undef,M)
-    elseif algorithm == "SVNF"
-        num_reps = num_edges
-        newLr = Matrix{Float64}(undef,M,N)
-        Residues = Matrix{Float64}(undef,M,N)
-        alpha = Vector{Float64}(undef,M)
-    elseif algorithm == "D-SVNF"
-        num_reps = num_edges
-        newLr = Matrix{Float64}(undef,M,N)
-        Residues = Matrix{Float64}(undef,M,N)
-        u = zeros(Bool,N)    
-    elseif algorithm == "List-RBP"
-        num_reps = num_edges
-        newLr = Matrix{Float64}(undef,M,N)
-        Residues = Matrix{Float64}(undef,M,N)
-        Factors = Matrix{Float64}(undef,M,N)
-        listsize = listsizes[1]
-        list = Vector{Float64}(undef,listsize+1)
-        list[end] = 0.0
-        coords = Matrix{Int}(undef,3,listsize+1)
-        inlist = zeros(Bool,M,N)
-        listsize2 = listsizes[2]
-        local_list = Vector{Float64}(undef,listsize2+1)
-        local_coords = Matrix{Int}(undef,3,listsize2+1)
-    elseif algorithm == "C-RBP"
-        RBP_routine = true
-        num_reps = num_edges
-        newLr = Matrix{Float64}(undef,M,N)
-        Residues = Matrix{Float64}(undef,M,N)
-        alpha = Vector{Float64}(undef,M)
-        Factors = Matrix{Float64}(undef,M,N)
-        consensus = true
-        switch_R = false
-        C_DR = false
-    elseif algorithm == "C&R-RBP"
-        RBP_routine = true
-        num_reps = num_edges - N 
-        newLr = Matrix{Float64}(undef,M,N)
-        Residues = Matrix{Float64}(undef,M,N)
-        alpha = Vector{Float64}(undef,M)
-        Factors = Matrix{Float64}(undef,M,N)
-        consensus = true
-        switch_R = true
-        C_DR = false
-    elseif algorithm == "C&DR-RBP"
-        RBP_routine = true
-        num_reps = num_edges
-        newLr = Matrix{Float64}(undef,M,N)
-        Residues = Matrix{Float64}(undef,M,N)
-        alpha = Vector{Float64}(undef,M)
-        Factors = Matrix{Float64}(undef,M,N)
-        consensus = true
-        switch_R = false
-        C_DR = true
-    elseif algorithm == "VC-RBP"
-        num_reps = num_edges
-        Residues = Matrix{Float64}(undef,M,N)
-        alpha = Vector{Float64}(undef,N) 
-    elseif algorithm == "OV-RBP"
-        num_reps = N 
-        newLr = Matrix{Float64}(undef,M,N)   
-        newLv = zeros(N)
-        Residues = Vector{Float64}(undef,N)
-        Lv = Vector{Float64}(undef,N)
-        C = Vector{Bool}(undef,N)
-        upc = zeros(Int,N)
+
+        if RBP_routine  
+            switch_R = false            # switch Return
+            switch_C_DR = false         # switch Consensus & Return
+            if algorithm == "C&R-RBP"
+                num_reps -= N
+                switch_R = true
+            elseif algorithm == "C&DR-RBP"
+                switch_C_DR = true
+            end
+        elseif algorithm == "NW-RBP"
+            num_reps = M
+        elseif algorithm == "D-SVNF"
+            u = zeros(Bool,N)    
+        elseif algorithm == "List-RBP"
+            listsize = listsizes[1]
+            list = Vector{Float64}(undef,listsize+1)
+            list[end] = 0.0
+            coords = Matrix{Int}(undef,3,listsize+1)
+            inlist = zeros(Bool,M,N)
+            listsize2 = listsizes[2]
+            local_list = Vector{Float64}(undef,listsize2+1)
+            local_coords = Matrix{Int}(undef,3,listsize2+1)
+        elseif algorithm == "VC-RBP"
+            alpha = Vector{Float64}(undef,N) 
+        elseif algorithm == "OV-RBP"
+            num_reps = N   
+            newLv = zeros(N)
+            Lv = Vector{Float64}(undef,N)
+            C = Vector{Bool}(undef,N)
+            upc = zeros(Int,N)
+        end
     end
-
-    if algorithm == "RBP"
-        decayfactor = 1.0
-    end  
 
 ################################## MAIN LOOP ###################################
     
@@ -303,17 +281,6 @@ function
         decoded .= false
         resetmatrix!(Lr,Nv,0.0)
 
-        if algorithm == "List-RBP"
-            list .= 0.0
-            coords .= 0
-            local_list .= 0.0
-            local_coords .= 0
-        end
-
-        if Factors !== nothing
-            resetmatrix!(Factors,Nv,1.0)
-        end
-
         ### 5) init the LLR priors
         calc_Lf!(Lf,twoLs,signal,variance)
         if bptype == "TABL"
@@ -324,6 +291,9 @@ function
         for i in eachindex(bitvector)
             bitvector[i] = signbit(Lf[i])
         end
+
+        ### 6) init the Lq matrix
+        init_Lq!(Lq,Lf,Nv,msum_factor)
         
         # print info if in test algorithm
         if test && printtest
@@ -337,66 +307,76 @@ function
             println("Bit error rate: $(sum(biterror))/$N")            
             println()
         end
-        
-        ### 6) init the Lq matrix
-        init_Lq!(Lq,Lf,Nv,msum_factor)
 
         ### 7) init the RBP methods
-        if algorithm == "List-RBP"
-            init_list!(Lq,Lr,Nc,phi,msum_factor,newLr,Factors,inlist,Residues,list,
-                                                                coords,listsize)  
-        elseif algorithm == "VC-RBP"
-            for vj in eachindex(Nv)
-                alp = 0.0
-                for ci in Nv[vj]
-                    li = LinearIndices(Lq)[ci,vj]
-                    residue = abs(Lq[li])
-                    if residue > alp
-                        alp = residue
-                    end
-                    Residues[li] = residue
-                end
-                alpha[vj] = alp
-            end
-        elseif algorithm == "OV-RBP"
-            for ci in eachindex(Nc)
-                Nci = Nc[ci]
-                for vj in Nci
-                    newLr[ci,vj] = calc_Lr(Nci,ci,vj,Lq,msum_factor) 
-                end
-            end
-            size_C = 0
-            C .= false
-            for vj in eachindex(Nv)
-                Nvj = Nv[vj]
-                oldlv = Lf[vj]
-                newlv = calc_Ld(vj,Nvj,Lf,newLr)
-                newLv[vj] = newlv
-                Residues[vj] = abs(oldlv - newlv)
-                Lv[vj] = oldlv
-                if sign(oldlv)*sign(newlv) < 0
-                    size_C += 1
-                    C[vj] = true
-                end
+        if RBP_based
+
+            if RBP_decay
+                resetmatrix!(Factors,Nv,1.0)
             end
 
-            max_upc = 0
-            for vj in eachindex(Nv)
-                if C[vj]
-                    count = 0
+            if RBP_init
+                init_residues!(Lq,Lr,Nc,phi,newLr,alpha,Residues,msum_factor)
+            elseif algorithm == "List-RBP"
+                list .= 0.0
+                coords .= 0
+                local_list .= 0.0
+                local_coords .= 0
+                init_list!(Lq,Lr,Nc,phi,msum_factor,newLr,Factors,inlist,Residues,list,
+                                                                    coords,listsize)  
+            elseif algorithm == "VC-RBP"
+                for vj in eachindex(Nv)
+                    alp = 0.0
                     for ci in Nv[vj]
-                        if _calc_syndrome(bitvector,Nc[ci])
-                            count += 1
+                        li = LinearIndices(Lq)[ci,vj]
+                        residue = abs(Lq[li])
+                        if residue > alp
+                            alp = residue
                         end
+                        Residues[li] = residue
                     end
-                    if count > max_upc
-                        max_upc = count
-                    end
-                    upc[vj] = count
+                    alpha[vj] = alp
                 end
-            end    
-        elseif algorithm != "Flooding" && algorithm != "LBP" && algorithm != "D-SVNF"
-            init_residues!(Lq,Lr,Nc,phi,newLr,alpha,Residues,msum_factor)                   
+            elseif algorithm == "OV-RBP"
+                for ci in eachindex(Nc)
+                    Nci = Nc[ci]
+                    for vj in Nci
+                        newLr[ci,vj] = calc_Lr(Nci,ci,vj,Lq,msum_factor) 
+                    end
+                end
+                size_C = 0
+                C .= false
+                for vj in eachindex(Nv)
+                    Nvj = Nv[vj]
+                    oldlv = Lf[vj]
+                    newlv = calc_Ld(vj,Nvj,Lf,newLr)
+                    newLv[vj] = newlv
+                    Residues[vj] = abs(oldlv - newlv)
+                    Lv[vj] = oldlv
+                    if sign(oldlv)*sign(newlv) < 0
+                        size_C += 1
+                        C[vj] = true
+                    end
+                end
+
+                max_upc = 0
+                for vj in eachindex(Nv)
+                    if C[vj]
+                        count = 0
+                        for ci in Nv[vj]
+                            if _calc_syndrome(bitvector,Nc[ci])
+                                count += 1
+                            end
+                        end
+                        if count > max_upc
+                            max_upc = count
+                        end
+                        upc[vj] = count
+                    end
+                end    
+            else
+                # D-SVNF                
+            end
         end
   
         ### 8) BP routine
@@ -412,7 +392,159 @@ function
                 println("### Iteration #$iter ###")
             end
     
-            if algorithm == "Flooding"
+            if RBP_based
+                if RBP_routine
+                    if switch_C_DR && iter ≥ 3
+                        switch_R = true
+                        switch_C_DR = false
+                        num_reps -= N
+                    end             
+                    rbp_not_converged = RBP!(
+                        bitvector,
+                        Lq,
+                        Lr,
+                        Lf,
+                        Nc,
+                        Nv,
+                        phi,
+                        msum_factor,
+                        msum2,
+                        num_reps,
+                        newLr,
+                        Residues,
+                        alpha,
+                        RBP_decay,
+                        decayfactor,
+                        Factors,
+                        rbp_not_converged,
+                        RBP_consensus,
+                        switch_R
+                        )
+                elseif algorithm == "NW-RBP"
+                    rbp_not_converged = NW_RBP!(
+                        bitvector,
+                        Lq,
+                        Lr,
+                        Lf,
+                        Nc,
+                        Nv,
+                        phi,
+                        msum_factor,
+                        msum2,
+                        num_reps,
+                        newLr,
+                        alpha,
+                        rbp_not_converged                    
+                    )
+                elseif algorithm == "SVNF"
+                    rbp_not_converged = SVNF!(
+                        bitvector,
+                        Lq,
+                        Lr,
+                        Lf,
+                        Nc,
+                        Nv,
+                        phi,
+                        msum_factor,
+                        msum2,
+                        num_reps,
+                        newLr,
+                        Residues,
+                        rbp_not_converged,
+                        twoLs,
+                        N
+                    )
+                elseif algorithm == "D-SVNF"
+                    rbp_not_converged = D_SVNF!(
+                        bitvector,
+                        Lq,
+                        Lr,
+                        Lf,
+                        Nc,
+                        Nv,
+                        phi,
+                        msum_factor,
+                        msum2,
+                        num_reps,
+                        newLr,
+                        Residues,
+                        rbp_not_converged,
+                        twoLs,
+                        N,
+                        u
+                    )
+                elseif algorithm == "List-RBP"
+                    rbp_not_converged = List_RBP!(
+                        bitvector,
+                        Lq,
+                        Lr,
+                        Lf,
+                        Nc,
+                        Nv,
+                        phi,
+                        msum_factor,
+                        msum2,
+                        num_reps,
+                        newLr,
+                        Residues,
+                        decayfactor,
+                        Factors,
+                        rbp_not_converged,
+                        coords,
+                        inlist,
+                        list,
+                        local_list,
+                        local_coords,
+                        listsize,
+                        listsize2
+                    )
+                elseif algorithm == "VC-RBP"
+                    rbp_not_converged = VC_RBP!(
+                        bitvector,
+                        Lq,
+                        Lr,
+                        Lf,
+                        Nc,
+                        Nv,
+                        phi,
+                        msum_factor,
+                        msum2,
+                        num_reps,
+                        Residues,
+                        alpha,                    
+                        rbp_not_converged
+                    )
+                elseif algorithm == "OV-RBP"
+                    rbp_not_converged, max_upc, size_C = OV_RBP!(
+                        bitvector,
+                        Lq,
+                        Lr,
+                        Lf,
+                        Nc,
+                        Nv,
+                        phi,
+                        msum_factor,
+                        msum2,
+                        num_reps,
+                        newLr,
+                        Residues,
+                        rbp_not_converged,                    
+                        Lv,
+                        newLv,
+                        C,
+                        upc,
+                        max_upc,
+                        size_C
+                    )
+                else
+                    throw(error(lazy"Invalid RBP-based Algorithm"))  
+                end
+
+                # Reset Factors
+                if RBP_decay
+                    resetmatrix!(Factors,Nv,1.0)
+                end
+            elseif algorithm == "Flooding"
                 flooding!(
                     bitvector,
                     Lq,
@@ -434,158 +566,13 @@ function
                     phi,
                     msum_factor
                     )
-            elseif RBP_routine
-                if C_DR && iter ≥ 3
-                    switch_R = true
-                    C_DR = false
-                    num_reps -= N
-                end             
-                rbp_not_converged = RBP!(
-                    bitvector,
-                    Lq,
-                    Lr,
-                    Lf,
-                    Nc,
-                    Nv,
-                    phi,
-                    msum_factor,
-                    msum2,
-                    num_reps,
-                    newLr,
-                    Residues,
-                    alpha,
-                    decayfactor,
-                    Factors,
-                    rbp_not_converged,
-                    consensus,
-                    switch_R
-                    )
-                # reset factors
-                resetmatrix!(Factors,Nv,1.0)
-            elseif algorithm == "NW-RBP"
-                rbp_not_converged = NW_RBP!(
-                    bitvector,
-                    Lq,
-                    Lr,
-                    Lf,
-                    Nc,
-                    Nv,
-                    phi,
-                    msum_factor,
-                    msum2,
-                    num_reps,
-                    newLr,
-                    alpha,
-                    rbp_not_converged                    
-                )
-            elseif algorithm == "SVNF"
-                rbp_not_converged = SVNF!(
-                    bitvector,
-                    Lq,
-                    Lr,
-                    Lf,
-                    Nc,
-                    Nv,
-                    phi,
-                    msum_factor,
-                    msum2,
-                    num_reps,
-                    newLr,
-                    Residues,
-                    rbp_not_converged,
-                    twoLs,
-                    N
-                )
-            elseif algorithm == "D-SVNF"
-                rbp_not_converged = D_SVNF!(
-                    bitvector,
-                    Lq,
-                    Lr,
-                    Lf,
-                    Nc,
-                    Nv,
-                    phi,
-                    msum_factor,
-                    msum2,
-                    num_reps,
-                    newLr,
-                    Residues,
-                    rbp_not_converged,
-                    twoLs,
-                    N,
-                    u
-                )
-            elseif algorithm == "List-RBP"
-                rbp_not_converged = List_RBP!(
-                    bitvector,
-                    Lq,
-                    Lr,
-                    Lf,
-                    Nc,
-                    Nv,
-                    phi,
-                    msum_factor,
-                    msum2,
-                    num_reps,
-                    newLr,
-                    Residues,
-                    decayfactor,
-                    Factors,
-                    rbp_not_converged,
-                    coords,
-                    inlist,
-                    list,
-                    local_list,
-                    local_coords,
-                    listsize,
-                    listsize2
-                )
-                # reset factors
-                resetmatrix!(Factors,Nv,1.0)
-            elseif algorithm == "VC-RBP"
-                rbp_not_converged = VC_RBP!(
-                    bitvector,
-                    Lq,
-                    Lr,
-                    Lf,
-                    Nc,
-                    Nv,
-                    phi,
-                    msum_factor,
-                    msum2,
-                    num_reps,
-                    Residues,
-                    alpha,                    
-                    rbp_not_converged
-                )
-             elseif algorithm == "OV-RBP"
-                rbp_not_converged, max_upc, size_C = OV_RBP!(
-                    bitvector,
-                    Lq,
-                    Lr,
-                    Lf,
-                    Nc,
-                    Nv,
-                    phi,
-                    msum_factor,
-                    msum2,
-                    num_reps,
-                    newLr,
-                    Residues,
-                    rbp_not_converged,                    
-                    Lv,
-                    newLv,
-                    C,
-                    upc,
-                    max_upc,
-                    size_C
-                )
             end            
 
             # Evalute the bit error vector
             for vj in 1:N
                 biterror[vj] = bitvector[vj] ≠ cword[vj]
             end
+            # Evaluate BER
             ber[iter] = sum(biterror)
 
             # print info if in test algorithm
@@ -631,19 +618,11 @@ function
         # reset for C&DR-RBP
         if algorithm == "C&DR-RBP"
             switch_R = false
-            C_DR = true
+            switch_C_DR = true
             num_reps = num_edges
         end
 
-        # # if all the Residues are zero
-        # if !rbp_not_converged
-        #     for i = iter+1:maxiter
-        #         decoded[i] = decoded[iter]
-        #         ber[i] = ber[iter]
-        #     end
-        # end
-
-        ### 9) bit error rate
+        ###  bit error rate
         for i=1:maxiter
             sum_ber[i] += ber[i]
             sum_decoded[i] += decoded[i]
@@ -664,6 +643,10 @@ function
         Lq = retq
     end
 
-    return Lr, Lq, sum_decoded, sum_ber
+    if test
+        return Lr, Lq, sum_decoded, sum_ber
+    else
+        return nothing, nothing, sum_decoded, sum_ber
+    end
 
 end
