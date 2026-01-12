@@ -47,7 +47,7 @@ SEED::Int = 1111
 
 ################################ CONTROL FLAGS #################################
 
-TEST::Bool = false
+TEST::Bool = true
 PRIN::Bool = true
 PROF::Bool = false
 STOP::Bool = true # stop simulation at zero syndrome (if true, BER curves are
@@ -56,7 +56,7 @@ STOP::Bool = true # stop simulation at zero syndrome (if true, BER curves are
 ############################### TEST PARAMETERS ################################
 
 ### Maximum number of BP iterations
-MAXITER_TEST::Int = 1
+MAXITER_TEST::Int = 10
 ### EbN0
 EbN0_TEST::Float64 = 2.0
 ### Number of Monte Carlo Trials
@@ -97,7 +97,8 @@ ALGORITHMS = ["Flooding",        # Flooding
               "C&R-RBP",         # Consensus & Return RBP
               "C&DR-RBP",        # Consensus & Delayed Return RBP
               "VC-RBP",          # Variable to Check RBP
-              "OV-RBP"           # Oscillating Variable Node RBP
+              "OV-RBP",          # Oscillating Variable Node RBP
+              "RPD"              # Reliability Profile Dynamic
               ]
 
 NUM_MODES = length(ALGORITHMS)
@@ -150,13 +151,13 @@ MAXITERS[i] = MAXITER
 
 # SVNF
 i += 1
-ACTIVE[i] = 1
+ACTIVE[i] = 0
 BPTYPES[i] = ["TANH"]
 MAXITERS[i] = MAXITER
 
 # D-SVNF
 i += 1
-ACTIVE[i] = 1
+ACTIVE[i] = 0
 BPTYPES[i] = ["TANH"]
 MAXITERS[i] = MAXITER
 
@@ -204,10 +205,16 @@ ACTIVE[i] = 0
 BPTYPES[i] = ["TANH"]
 MAXITERS[i] = MAXITER
 
+# RPD
+i += 1
+ACTIVE[i] = 1
+BPTYPES[i] = ["TANH"]
+MAXITERS[i] = MAXITER
+
 ######################## CODE LENGTH, RATE AND PROTOCOL ########################
 
 # Transmitted message length
-GG::Int = 1152
+GG::Int = 576
 # Effective Rate
 RR::Float64 = 1/2                       # WiMAX compatibility offset
 # LDPC protocol: NR5G = NR-LDPC (5G); PEG = PEG; WiMAX = IEEE80216e;

@@ -17,6 +17,7 @@ include("List_RBP.jl")
 include("SVNF.jl")
 include("D-SVNF.jl")
 include("NW_RBP.jl")
+include("RPD.jl")
 include("./List functions/init_list.jl")
 include("./RBP functions/init_RBP.jl")
 include("./RBP functions/init_SVNF.jl")
@@ -155,10 +156,20 @@ function
 
     phi = (bptype == "TABL") ? lookupTable() : nothing
 
+    if algorithm == "RPD" || test
+        syndrome = Vector{Bool}(undef,M)
+    end
+
+    if algorithm == "RPD"
+        f = Vector{Int}(undef,N)
+        oldLr = Matrix{Float64}(undef,M,N)
+    end
+
+
 ############################### RBP PREALLOCATIONS #############################
     
     # RBP switchs 
-    RBP_based = algorithm != "Flooding" && algorithm != "LBP"
+    RBP_based = algorithm != "Flooding" && algorithm != "LBP" && algorithm != "RPD"
 
     if RBP_based
 
@@ -257,7 +268,6 @@ function
         end
         # if in test algorithm, verify the encoding
         if test
-            syndrome = Vector{Bool}(undef,M)
             _gf2_mat_mult!(syndrome,H,cword,M,N)
             if !iszero(syndrome)
                 throw(error("encoding error"))
@@ -293,8 +303,11 @@ function
         end
 
         ### 6) init the Lq matrix
-        init_Lq!(Lq,Lf,Nv,msum_factor)
-        
+        if algorithm == "RPD"
+            init_Lq!(Lq,Lf,Nv,0.0)
+        else
+            init_Lq!(Lq,Lf,Nv,0.0)
+        end
         # print info if in test algorithm
         if test && printtest
             println()
@@ -565,6 +578,20 @@ function
                     phi,
                     msum_factor
                     )
+            elseif algorithm == "RPD"
+                RPD!(
+                    bitvector,
+                    Lq,
+                    Lr,
+                    Lf,
+                    Nc,
+                    Nv,
+                    phi,
+                    msum_factor,
+                    oldLr,
+                    syndrome,
+                    f
+                )
             end            
 
             # Evalute the bit error vector
