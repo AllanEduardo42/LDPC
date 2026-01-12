@@ -37,7 +37,7 @@ function
 
     @fastmath @inbounds for e in 1:num_reps
 
-        # display("e = $e")
+    # display("e = $e")
 
        # 1) Find largest residue and coordenates
 
@@ -82,8 +82,8 @@ function
                 Nci = Nc[ci]
                 for vj in Nci
                     if vj ≠ vjmax
-                        newlr = calc_Lr(Nci,ci,vj,Lq,msum_factor)
                         li = LinearIndices(Lr)[ci,vj]
+                        newlr = calc_Lr(Nci,ci,vj,Lq,msum_factor)
                         newLr[li] = newlr
                         residue = abs(newlr - Lr[li])*Factors[li]
                         Residues[li] = residue

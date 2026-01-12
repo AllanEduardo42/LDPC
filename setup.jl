@@ -114,23 +114,32 @@ for i in 1:NTHREADS
     RGN_SEEDS[i] = SEED + i - 1
 end
 
+if PROF
+    
+end
+
+
 ############################## PREPARE SIMULATION ##############################
 if TEST
     LRM = Dict()
     LQM = Dict()
     for i in eachindex(ACTIVE)
         if ACTIVE[i]
+            if DECAYS[i][1] == 0.0
+                global DECAY_TEST = 0.0
+            end
             for bptype in BPTYPES[i]
                 if PROF
                     global PRIN = false
-                    @profview _,_ = prepare_simulation(
-                    #_,_ = prepare_simulation(
-                                                    [EbN0_TEST],
-                                                    ALGORITHMS[i],
-                                                    [TRIALS_TEST],
-                                                    MAXITER_TEST,
-                                                    bptype,
-                                                    DECAY_TEST)
+                    # evaluate expr for profile view
+                    prog = "@profview (prepare_simulation([EbN0_TEST],
+                            ALGORITHMS[i],
+                            [TRIALS_TEST],
+                            MAXITER_TEST,
+                            bptype,
+                            DECAY_TEST))"
+                    expr = Meta.parse(prog)
+                    eval(expr)
                 else
                 LRM[ALGORITHMS[i]], LQM[ALGORITHMS[i]] = prepare_simulation(
                                                     [EbN0_TEST],

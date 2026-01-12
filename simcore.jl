@@ -469,7 +469,6 @@ function
                         newLr,
                         Residues,
                         rbp_not_converged,
-                        twoLs,
                         N,
                         u
                     )

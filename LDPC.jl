@@ -58,7 +58,7 @@ STOP::Bool = true # stop simulation at zero syndrome (if true, BER curves are
 ### Maximum number of BP iterations
 MAXITER_TEST::Int = 1
 ### EbN0
-EbN0_TEST::Float64 = 1.0
+EbN0_TEST::Float64 = 2.0
 ### Number of Monte Carlo Trials
 TRIALS_TEST::Int = 1
 ### Residual Decay factors
@@ -70,12 +70,12 @@ DECAY_TEST::Float64 = 1.0
 MAXITER::Int = 50
 
 ### EbN0
-EbN0 = [2.0]
+EbN0 = [2.25]
 # EbN0 = [1.0, 1.5, 2.0, 2.5]
 # EbN0 = [1.0, 1.5, 2.0, 2.5, 3.0]
 
 ### Number of Monte Carlo Trials
-TRIALS = [12800]
+TRIALS = [12_800_000]
 # TRIALS = [128, 1280, 12800, 128000]
 # TRIALS = [128, 1280, 12800, 128000, 1280000]
 
@@ -115,7 +115,7 @@ for i in 1:NUM_MODES
 end
 
 ### Flag to activate all algorithms
-ACTIVE_ALL = true
+ACTIVE_ALL = false
 
 i = 1
 # Flooding
@@ -150,19 +150,19 @@ MAXITERS[i] = MAXITER
 
 # SVNF
 i += 1
-ACTIVE[i] = 0
+ACTIVE[i] = 1
 BPTYPES[i] = ["TANH"]
 MAXITERS[i] = MAXITER
 
 # D-SVNF
 i += 1
-ACTIVE[i] = 0
+ACTIVE[i] = 1
 BPTYPES[i] = ["TANH"]
 MAXITERS[i] = MAXITER
 
 # List-RBP
 i += 1
-ACTIVE[i] = 1
+ACTIVE[i] = 0
 BPTYPES[i] = ["TANH"]
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
@@ -197,19 +197,17 @@ i += 1
 ACTIVE[i] = 0
 BPTYPES[i] = ["TANH"]
 MAXITERS[i] = MAXITER
-DECAYS[i] = FACTORS
 
 # OV-RBP
 i += 1
 ACTIVE[i] = 0
 BPTYPES[i] = ["TANH"]
 MAXITERS[i] = MAXITER
-DECAYS[i] = FACTORS
 
 ######################## CODE LENGTH, RATE AND PROTOCOL ########################
 
 # Transmitted message length
-GG::Int = 576
+GG::Int = 1152
 # Effective Rate
 RR::Float64 = 1/2                       # WiMAX compatibility offset
 # LDPC protocol: NR5G = NR-LDPC (5G); PEG = PEG; WiMAX = IEEE80216e;
