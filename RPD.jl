@@ -40,31 +40,43 @@ function
         for ci in Nvjmax
             li = LinearIndices(Lq)[ci,vjmax]
             # V2C update
-            Ld = calc_Ld(vjmax,Nvjmax,Lf,Lr)
-            Lq[li] = Ld
+            lq = Lf[vjmax]
             for ca in Nvjmax
-                if ca < ci
-                    Lq[li] -= Lr[ca,vjmax]
-                elseif ca > ci
-                    Lq[li] -= oldLr[ca,vjmax]
+                # if ca < ci
+                #     Lq[li] -= Lr[ca,vjmax]
+                # elseif ca > ci
+                #     Lq[li] -= oldLr[ca,vjmax]
+                # end
+                if ca ≠ ci
+                    lq -= Lr[ca,vjmax]
                 end
             end
+            Lq[li] = lq
             # C2V update
             prod = 1.0
             Nci = Nc[ci]
             for vb in Nci
                 if vb ≠ vjmax
-                    prod *= tanh(Lq[ci,vb])
+                    prod *= tanh(Lq[ci,vb]/2)
                 end
             end
-            Lr[li] = prod
+            # oldLr[li] = Lr[li]
+            if abs(prod) < 1.0
+                Lr[li] = 2*atanh(prod)
+            elseif signbit(prod)
+                Lr[li] = MINLR
+            else
+                Lr[li] = MAXLR
+            end
             # APP
+            lf = Lf[vjmax]
             for ca in Nvjmax
                 if ca ≠ ci
-                    Ld += Lr[ca,vjmax]
+                    lf += Lr[ca,vjmax]
                 end
             end
-            bitvector[vjmax] = signbit(Ld)
+            Lf[vjmax] = lf
+            bitvector[vjmax] = signbit(Lf[vjmax])
         end
     end
 end

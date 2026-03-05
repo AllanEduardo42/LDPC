@@ -1,0 +1,236 @@
+############################### LDPC parameters ################################
+LDPC Protocol: IEEE80216e (WiMAX)
+Parity Check Matrix: 288 x 576
+
+Graph girth = 6
+Effective rate = 0.5
+Code length = 576
+
+############################# Starting simulation ##############################
+
+Number of trials: [1280000]
+Message passing protocol: RD-RBP (using LLR-SPA calculated by tanh function)
+Maximum number of iterations: 30
+Number of threads (multithreading): 32
+Eb/No (dB): [2.5]
+Stop at zero syndrome ? true
+Residual decaying factor: 0.7
+
+Elapsed 181.8 seconds (0.04% gc time, 38.5% compilation time)
+############################# Starting simulation ##############################
+
+Number of trials: [1280000]
+Message passing protocol: RD-RBP (using LLR-SPA calculated by tanh function)
+Maximum number of iterations: 30
+Number of threads (multithreading): 32
+Eb/No (dB): [2.5]
+Stop at zero syndrome ? true
+Residual decaying factor: 0.8
+
+Elapsed 180.2 seconds (0.08% gc time, 0.0% compilation time)
+############################# Starting simulation ##############################
+
+Number of trials: [1280000]
+Message passing protocol: RD-RBP (using LLR-SPA calculated by tanh function)
+Maximum number of iterations: 30
+Number of threads (multithreading): 32
+Eb/No (dB): [2.5]
+Stop at zero syndrome ? true
+Residual decaying factor: 0.9
+
+Elapsed 179.7 seconds (0.04% gc time, 0.0% compilation time)
+############################# Starting simulation ##############################
+
+Number of trials: [1280000]
+Message passing protocol: RD-RBP (using LLR-SPA calculated by tanh function)
+Maximum number of iterations: 30
+Number of threads (multithreading): 32
+Eb/No (dB): [2.5]
+Stop at zero syndrome ? true
+Residual decaying factor: 1.0
+
+Elapsed 181.9 seconds (0.07% gc time, 0.0% compilation time)
+############################# Starting simulation ##############################
+
+Number of trials: [1280000]
+Message passing protocol: List-RBP (using LLR-SPA calculated by tanh function)
+Maximum number of iterations: 30
+Number of threads (multithreading): 32
+Eb/No (dB): [2.5]
+Stop at zero syndrome ? true
+Residual decaying factor: 0.7
+List 1 size: 16
+List 2 size: 2
+
+Elapsed 452.2 seconds (21.36% gc time, 0.95% compilation time)
+############################# Starting simulation ##############################
+
+Number of trials: [1280000]
+Message passing protocol: List-RBP (using LLR-SPA calculated by tanh function)
+Maximum number of iterations: 30
+Number of threads (multithreading): 32
+Eb/No (dB): [2.5]
+Stop at zero syndrome ? true
+Residual decaying factor: 0.8
+List 1 size: 16
+List 2 size: 2
+
+Elapsed 440.8 seconds (22.82% gc time, 0.0% compilation time)
+############################# Starting simulation ##############################
+
+Number of trials: [1280000]
+Message passing protocol: List-RBP (using LLR-SPA calculated by tanh function)
+Maximum number of iterations: 30
+Number of threads (multithreading): 32
+Eb/No (dB): [2.5]
+Stop at zero syndrome ? true
+Residual decaying factor: 0.9
+List 1 size: 16
+List 2 size: 2
+
+Elapsed 425.1 seconds (22.72% gc time, 0.0% compilation time)
+############################# Starting simulation ##############################
+
+Number of trials: [1280000]
+Message passing protocol: List-RBP (using LLR-SPA calculated by tanh function)
+Maximum number of iterations: 30
+Number of threads (multithreading): 32
+Eb/No (dB): [2.5]
+Stop at zero syndrome ? true
+Residual decaying factor: 1.0
+List 1 size: 16
+List 2 size: 2
+
+Elapsed 413.7 seconds (22.73% gc time, 0.0% compilation time)
+############################# Starting simulation ##############################
+
+Number of trials: [1280000]
+Message passing protocol: C-RBP (using LLR-SPA calculated by tanh function)
+Maximum number of iterations: 30
+Number of threads (multithreading): 32
+Eb/No (dB): [2.5]
+Stop at zero syndrome ? true
+Residual decaying factor: 0.7
+
+Elapsed 118.4 seconds (0.01% gc time, 0.0% compilation time)
+############################# Starting simulation ##############################
+
+Number of trials: [1280000]
+Message passing protocol: C-RBP (using LLR-SPA calculated by tanh function)
+Maximum number of iterations: 30
+Number of threads (multithreading): 32
+Eb/No (dB): [2.5]
+Stop at zero syndrome ? true
+Residual decaying factor: 0.8
+
+Elapsed 119.0 seconds (0.15% gc time, 0.0% compilation time)
+############################# Starting simulation ##############################
+
+Number of trials: [1280000]
+Message passing protocol: C-RBP (using LLR-SPA calculated by tanh function)
+Maximum number of iterations: 30
+Number of threads (multithreading): 32
+Eb/No (dB): [2.5]
+Stop at zero syndrome ? true
+Residual decaying factor: 0.9
+
+Elapsed 119.7 seconds (0.1% gc time, 0.0% compilation time)
+############################# Starting simulation ##############################
+
+Number of trials: [1280000]
+Message passing protocol: C-RBP (using LLR-SPA calculated by tanh function)
+Maximum number of iterations: 30
+Number of threads (multithreading): 32
+Eb/No (dB): [2.5]
+Stop at zero syndrome ? true
+Residual decaying factor: 1.0
+
+Elapsed 126.6 seconds (0.09% gc time, 0.0% compilation time)
+############################# Starting simulation ##############################
+
+Number of trials: [1280000]
+Message passing protocol: C&R-RBP (using LLR-SPA calculated by tanh function)
+Maximum number of iterations: 30
+Number of threads (multithreading): 32
+Eb/No (dB): [2.5]
+Stop at zero syndrome ? true
+Residual decaying factor: 0.7
+
+Elapsed 119.3 seconds (0.11% gc time, 0.0% compilation time)
+############################# Starting simulation ##############################
+
+Number of trials: [1280000]
+Message passing protocol: C&R-RBP (using LLR-SPA calculated by tanh function)
+Maximum number of iterations: 30
+Number of threads (multithreading): 32
+Eb/No (dB): [2.5]
+Stop at zero syndrome ? true
+Residual decaying factor: 0.8
+
+Elapsed 138.6 seconds (0.09% gc time, 0.0% compilation time)
+############################# Starting simulation ##############################
+
+Number of trials: [1280000]
+Message passing protocol: C&R-RBP (using LLR-SPA calculated by tanh function)
+Maximum number of iterations: 30
+Number of threads (multithreading): 32
+Eb/No (dB): [2.5]
+Stop at zero syndrome ? true
+Residual decaying factor: 0.9
+
+Elapsed 174.4 seconds (0.07% gc time, 0.0% compilation time)
+############################# Starting simulation ##############################
+
+Number of trials: [1280000]
+Message passing protocol: C&R-RBP (using LLR-SPA calculated by tanh function)
+Maximum number of iterations: 30
+Number of threads (multithreading): 32
+Eb/No (dB): [2.5]
+Stop at zero syndrome ? true
+Residual decaying factor: 1.0
+
+Elapsed 202.2 seconds (0.06% gc time, 0.0% compilation time)
+############################# Starting simulation ##############################
+
+Number of trials: [1280000]
+Message passing protocol: C&DR-RBP (using LLR-SPA calculated by tanh function)
+Maximum number of iterations: 30
+Number of threads (multithreading): 32
+Eb/No (dB): [2.5]
+Stop at zero syndrome ? true
+Residual decaying factor: 0.7
+
+Elapsed 118.7 seconds (0.1% gc time, 0.0% compilation time)
+############################# Starting simulation ##############################
+
+Number of trials: [1280000]
+Message passing protocol: C&DR-RBP (using LLR-SPA calculated by tanh function)
+Maximum number of iterations: 30
+Number of threads (multithreading): 32
+Eb/No (dB): [2.5]
+Stop at zero syndrome ? true
+Residual decaying factor: 0.8
+
+Elapsed 118.1 seconds (0.1% gc time, 0.0% compilation time)
+############################# Starting simulation ##############################
+
+Number of trials: [1280000]
+Message passing protocol: C&DR-RBP (using LLR-SPA calculated by tanh function)
+Maximum number of iterations: 30
+Number of threads (multithreading): 32
+Eb/No (dB): [2.5]
+Stop at zero syndrome ? true
+Residual decaying factor: 0.9
+
+Elapsed 120.7 seconds (0.11% gc time, 0.0% compilation time)
+############################# Starting simulation ##############################
+
+Number of trials: [1280000]
+Message passing protocol: C&DR-RBP (using LLR-SPA calculated by tanh function)
+Maximum number of iterations: 30
+Number of threads (multithreading): 32
+Eb/No (dB): [2.5]
+Stop at zero syndrome ? true
+Residual decaying factor: 1.0
+
+Elapsed 125.9 seconds (0.07% gc time, 0.0% compilation time)

@@ -1,0 +1,28 @@
+############################### LDPC parameters ################################
+LDPC Protocol: IEEE80216e (WiMAX)
+Parity Check Matrix: 576 x 1152
+
+Graph girth = 6
+Effective rate = 0.5
+Code length = 1152
+
+############################# Starting simulation ##############################
+
+Number of trials: [12800000]
+Message passing protocol: SVNF (using LLR-SPA calculated by tanh function)
+Maximum number of iterations: 50
+Number of threads (multithreading): 32
+Eb/No (dB): [2.25]
+Stop at zero syndrome ? true
+
+Elapsed 3891.9 seconds (2.69% gc time, 1.42% compilation time)
+############################# Starting simulation ##############################
+
+Number of trials: [12800000]
+Message passing protocol: D-SVNF (using LLR-SPA calculated by tanh function)
+Maximum number of iterations: 50
+Number of threads (multithreading): 32
+Eb/No (dB): [2.25]
+Stop at zero syndrome ? true
+
+Elapsed 4663.8 seconds (13.65% gc time, 0.07% compilation time)

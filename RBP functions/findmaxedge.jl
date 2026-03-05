@@ -111,3 +111,46 @@ function
     end
 end
 
+function
+    findmaxedge_UBP(
+        Residues::Matrix{Float64},
+        alpha::Vector{Float64},
+        Nc::Vector{Vector{Int}},
+        UBP::Vector{Bool}
+    )
+
+    # begin
+    @fastmath @inbounds begin
+        cimax = 0
+        maxalp = 0.0
+        for ci in eachindex(alpha)
+            if UBP[ci] == true
+                alp = alpha[ci]
+                if alp > maxalp
+                    maxalp = alp
+                    cimax = ci
+                end
+            end
+        end
+        
+        if cimax == 0
+            return 0, 0
+        else
+            vjmax = 0
+            maxresidue = 0.0
+            maxresidue2 = 0.0
+            for vj in Nc[cimax]            
+                residue = Residues[cimax,vj]
+                if residue > maxresidue
+                    maxresidue2, maxresidue = maxresidue, residue
+                    vjmax = vj
+                elseif residue > maxresidue2
+                    maxresidue2 = residue
+                end
+            end
+            alpha[cimax] = maxresidue2
+            return cimax, vjmax
+        end
+    end
+end
+

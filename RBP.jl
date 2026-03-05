@@ -1,7 +1,7 @@
 ################################################################################
 # Allan Eduardo Feitosa
 # 07 Apr 2025
-# RBP and List-RBP Algorithm with residual decaying factor
+# RBP, RD-RBP, C&R-RBP and C&DR-RBP Algorithms
 
 include("./RBP functions/findmaxedge.jl")
 include("./RBP functions/calc_residue.jl")

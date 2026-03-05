@@ -1,0 +1,53 @@
+############################### LDPC parameters ################################
+LDPC Protocol: IEEE80216e (WiMAX)
+Parity Check Matrix: 288 x 576
+
+Graph girth = 6
+Effective rate = 0.5
+Code length = 576
+
+############################# Starting simulation ##############################
+
+Number of trials: [512, 2560, 25600, 1280000, 25600000]
+Message passing protocol: C-RBP (using LLR-SPA calculated by tanh function)
+Maximum number of iterations: 30
+Number of threads (multithreading): 32
+Eb/No (dB): [1.0, 1.5, 2.0, 2.5, 3.0]
+Stop at zero syndrome ? true
+Residual decaying factor: 0.85
+
+Elapsed 2.7 seconds (3.96% gc time, 2210.58% compilation time)
+Elapsed 1.1 seconds (5.34% gc time, 0.0% compilation time)
+Elapsed 3.5 seconds (2.2% gc time, 0.0% compilation time)
+Elapsed 120.5 seconds (0.11% gc time, 0.0% compilation time)
+Elapsed 2294.3 seconds (0.01% gc time, 0.0% compilation time)
+############################# Starting simulation ##############################
+
+Number of trials: [512, 2560, 25600, 1280000, 25600000]
+Message passing protocol: C&R-RBP (using LLR-SPA calculated by tanh function)
+Maximum number of iterations: 30
+Number of threads (multithreading): 32
+Eb/No (dB): [1.0, 1.5, 2.0, 2.5, 3.0]
+Stop at zero syndrome ? true
+Residual decaying factor: 0.85
+
+Elapsed 0.7 seconds (10.98% gc time, 0.0% compilation time)
+Elapsed 1.1 seconds (10.22% gc time, 0.0% compilation time)
+Elapsed 4.1 seconds (2.72% gc time, 0.0% compilation time)
+Elapsed 157.1 seconds (0.1% gc time, 0.0% compilation time)
+Elapsed 2826.4 seconds (0.01% gc time, 0.0% compilation time)
+############################# Starting simulation ##############################
+
+Number of trials: [512, 2560, 25600, 1280000, 25600000]
+Message passing protocol: C&DR-RBP (using LLR-SPA calculated by tanh function)
+Maximum number of iterations: 30
+Number of threads (multithreading): 32
+Eb/No (dB): [1.0, 1.5, 2.0, 2.5, 3.0]
+Stop at zero syndrome ? true
+Residual decaying factor: 0.85
+
+Elapsed 0.7 seconds (16.23% gc time, 0.0% compilation time)
+Elapsed 1.1 seconds (10.34% gc time, 0.0% compilation time)
+Elapsed 3.4 seconds (3.28% gc time, 0.0% compilation time)
+Elapsed 119.9 seconds (0.1% gc time, 0.0% compilation time)
+Elapsed 2296.7 seconds (0.01% gc time, 0.0% compilation time)

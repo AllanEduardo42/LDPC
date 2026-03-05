@@ -41,13 +41,14 @@ const ALPHA2 = 0.885
 const TABLESIZE = 8192
 const TABLERANGE = 10
 const SIZE_PER_RANGE = TABLESIZE/TABLERANGE
+const C_DR_ITER = 3
 
 # Random seed
 SEED::Int = 1111
 
 ################################ CONTROL FLAGS #################################
 
-TEST::Bool = true
+TEST::Bool = false
 PRIN::Bool = true
 PROF::Bool = false
 STOP::Bool = true # stop simulation at zero syndrome (if true, BER curves are
@@ -56,32 +57,34 @@ STOP::Bool = true # stop simulation at zero syndrome (if true, BER curves are
 ############################### TEST PARAMETERS ################################
 
 ### Maximum number of BP iterations
-MAXITER_TEST::Int = 10
+MAXITER_TEST::Int = 2
 ### EbN0
 EbN0_TEST::Float64 = 2.0
 ### Number of Monte Carlo Trials
-TRIALS_TEST::Int = 1
+TRIALS_TEST::Int = 2
 ### Residual Decay factors
 DECAY_TEST::Float64 = 1.0
 
 ################################## PARAMETERS ##################################
 
 ### Maximum number of BP iterations
-MAXITER::Int = 50
+MAXITER::Int = 30
 
 ### EbN0
-EbN0 = [2.25]
-# EbN0 = [1.0, 1.5, 2.0, 2.5]
+EbN0 = [2.5]
+# EbN0 = [1.0, 1.5, 2.0, 3.0]
 # EbN0 = [1.0, 1.5, 2.0, 2.5, 3.0]
 
 ### Number of Monte Carlo Trials
-TRIALS = [12_800_000]
+# TRIALS = [2*12_800]
+TRIALS = [1_280_000]
 # TRIALS = [128, 1280, 12800, 128000]
-# TRIALS = [128, 1280, 12800, 128000, 1280000]
+# TRIALS = [512, 2*1280, 2*12_800, 2*12_800_000]
+# TRIALS = [512, 2*1280, 2*12_800, 1_280_000, 2*12_800_000]
 
 ### Residual Decay factors
-FACTORS = [1.0]
-# FACTORS = [0.7, 0.8, 0.9, 1.0]
+FACTORS = [0.85]
+# FACTORS = [0.7, 0.8, 0.85, 0.9, 1.0]
 
 ############################### LDPC ALGORITHMS ################################
 
@@ -98,7 +101,10 @@ ALGORITHMS = ["Flooding",        # Flooding
               "C&DR-RBP",        # Consensus & Delayed Return RBP
               "VC-RBP",          # Variable to Check RBP
               "OV-RBP",          # Oscillating Variable Node RBP
-              "RPD"              # Reliability Profile Dynamic
+            #   "RPD",             # Reliability Profile Dynamic
+              "CI-RBP",          # Conditional Innovation RBP
+              "CI-CDR-RBP",
+              "UBP-RBP"          # Update Before Propagate RBP
               ]
 
 NUM_MODES = length(ALGORITHMS)
@@ -132,7 +138,7 @@ MAXITERS[i] = MAXITER
 
 # RBP
 i += 1
-ACTIVE[i] = 0
+ACTIVE[i] = 1
 BPTYPES[i] = ["TANH"]
 MAXITERS[i] = MAXITER
 
@@ -201,13 +207,32 @@ MAXITERS[i] = MAXITER
 
 # OV-RBP
 i += 1
-ACTIVE[i] = 0
+ACTIVE[i] = 1
 BPTYPES[i] = ["TANH"]
 MAXITERS[i] = MAXITER
 
 # RPD
+# i += 1
+# ACTIVE[i] = 0
+# BPTYPES[i] = ["TANH"]
+# MAXITERS[i] = MAXITER
+
+# CI-RBP
 i += 1
-ACTIVE[i] = 1
+ACTIVE[i] = 0
+BPTYPES[i] = ["TANH"]
+MAXITERS[i] = MAXITER
+
+# CI-CDR-RBP
+i += 1
+ACTIVE[i] = 0
+BPTYPES[i] = ["TANH"]
+MAXITERS[i] = MAXITER
+DECAYS[i] = FACTORS
+
+# UBP-RBP
+i += 1
+ACTIVE[i] = 0
 BPTYPES[i] = ["TANH"]
 MAXITERS[i] = MAXITER
 
@@ -218,7 +243,7 @@ GG::Int = 576
 # Effective Rate
 RR::Float64 = 1/2                       # WiMAX compatibility offset
 # LDPC protocol: NR5G = NR-LDPC (5G); PEG = PEG; WiMAX = IEEE80216e;
-PROTOCOL::String = "WiMAX"
+PROTOCOL::String = "NR5G"
     LAMBDA = [0.21, 0.25, 0.25, 0.29, 0]
     RO = [1.0, 0, 0, 0, 0, 0]
 

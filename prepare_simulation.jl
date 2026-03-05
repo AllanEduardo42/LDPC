@@ -61,6 +61,7 @@ function
                                                     trials[k]÷NTHREADS,
                                                     maxiter,
                                                     STOP,
+                                                    C_DR_ITER,
                                                     decay,
                                                     LISTSIZES,
                                                     RGN_SEEDS[i],

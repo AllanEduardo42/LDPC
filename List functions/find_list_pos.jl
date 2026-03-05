@@ -6,7 +6,9 @@ function
     find_list_pos(
         li::Int,
         listsize::Int,
-        coords::Matrix{<:Int}
+        coords::Matrix{<:Int},
+        ci::Int,
+        vj::Int
     )
 
     pos = 0
@@ -17,7 +19,7 @@ function
         end
     end
     if pos == 0
-        throw(error("($(coords[1,i]),$(coords[2,i])) is registered as being on the list, but it's not."))
+        throw(error("($ci,$vj) is registered as being on the list, but it's not."))
     end
 
     return pos

@@ -1,0 +1,36 @@
+############################### LDPC parameters ################################
+LDPC Protocol: NR-LDPC (5G), Zc = 40, BG = 2
+Parity Check Matrix: 352 x 656
+
+Graph girth = 6
+Effective rate = 0.5
+Code length = 576
+
+############################# Starting simulation ##############################
+
+Number of trials: [512, 2560, 25600, 1280000, 25600000]
+Message passing protocol: D-SVNF (using LLR-SPA calculated by tanh function)
+Maximum number of iterations: 30
+Number of threads (multithreading): 32
+Eb/No (dB): [1.0, 1.5, 2.0, 2.5, 3.0]
+Stop at zero syndrome ? true
+
+Elapsed 2.8 seconds (3.86% gc time, 2105.71% compilation time)
+Elapsed 2.1 seconds (3.19% gc time, 0.0% compilation time)
+Elapsed 7.9 seconds (0.06% gc time, 0.0% compilation time)
+Elapsed 215.1 seconds (0.06% gc time, 0.0% compilation time)
+Elapsed 2932.5 seconds (0.01% gc time, 0.0% compilation time)
+############################# Starting simulation ##############################
+
+Number of trials: [512, 2560, 25600, 1280000, 25600000]
+Message passing protocol: CI-RBP (using LLR-SPA calculated by tanh function)
+Maximum number of iterations: 30
+Number of threads (multithreading): 32
+Eb/No (dB): [1.0, 1.5, 2.0, 2.5, 3.0]
+Stop at zero syndrome ? true
+
+Elapsed 2.4 seconds (6.56% gc time, 216.64% compilation time)
+Elapsed 3.6 seconds (4.13% gc time, 0.0% compilation time)
+Elapsed 10.2 seconds (1.64% gc time, 0.0% compilation time)
+Elapsed 289.1 seconds (1.58% gc time, 0.0% compilation time)
+Elapsed 5262.0 seconds (1.7% gc time, 0.0% compilation time)

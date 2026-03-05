@@ -35,13 +35,14 @@ function
         rv::Int,
         show_nr_par::Bool;
         Q_m = 1,
+        n_layers = 1,
         I_LBRM = 0,
         TBS_LBRM = Inf,
         CBGTI = [],
         N_L = 1,
     )::Tuple{Int,Int,Float64,Vector{Bool},Int,nr_ldpc_data}
 
-    A = get_TBS(G*R)
+    A = get_TBS(G*R*Q_m*n_layers,R)
 
     R = A/G
 
