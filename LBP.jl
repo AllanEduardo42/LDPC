@@ -3,10 +3,6 @@
 # 17 set 2024
 # LBP Sum-Product Algorithm
 
-include("update_Lq.jl")
-include("update_Lr.jl")
-include("calc_syndrome.jl")
-
 function
     LBP!(
         bitvector::Vector{Bool},

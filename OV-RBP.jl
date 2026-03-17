@@ -1,85 +1,83 @@
+################################################################################
+# Allan Eduardo Feitosa
+# 13 Mar 2026
+# RBP Algorithm
+
 function
     OV_RBP!(
         bitvector::Vector{Bool},
-        Lq::Matrix{Float64},
-        Lr::Matrix{Float64},
-        Lf::Vector{Float64},
+        V2C::Matrix{Float64},
+        C2V::Matrix{Float64},
+        prior_LLRs::Vector{Float64},
         Nc::Vector{Vector{Int}},
         Nv::Vector{Vector{Int}},
         phi::Union{Vector{Float64},Nothing},
         msum_factor::Union{Float64,Nothing},
         msum2::Bool,
         num_reps::Int,
-        newLr::Matrix{Float64},
+        newC2V::Matrix{Float64},
         Residues::Vector{Float64},
         rbp_not_converged::Bool,
-        Lv::Vector{Float64},
-        newLv::Vector{Float64},
+        LLRs::Vector{Float64},
+        newLLRs::Vector{Float64},
         C::Vector{Bool},
+        C1::Vector{Bool},
         upc::Vector{Int},
-        max_upc::Int,
-        size_C::Int
-    )   
+        max_upc::Int
+    )
 
-    @fastmath @inbounds for e in 1:num_reps
+    for e in 1:num_reps
 
-        # println()
-        # display("e = $e")
-        # display("P = $max_upc")
+        # display(e)
 
-        # Dynamic selection
-
-        vjmax = 0
-        maxresidue = 0.0
-        
-        if size_C > 0 # if C is not empty
-
-            for vj in eachindex(upc)    # find vjmax in C1, if C1 is not empty
-                if upc[vj] == max_upc
-                    if C[vj]
-                        # print("$vj ")
-                        residue = Residues[vj] 
-                        # println("residue = $residue")
-                        if residue > maxresidue
-                            maxresidue = residue
-                            vjmax = vj
-                        end
+        if sum(C1) > 0
+            max_residue = 0.0
+            vjmax = 0
+            for vj in eachindex(Nv)
+                if C1[vj]
+                    residue = Residues[vj]
+                    if residue > max_residue
+                        max_residue = residue
+                        vjmax = vj
                     end
                 end
             end
-            # println()
-
-            if vjmax == 0 # if C1 is empty, find vjmax in C2   
-                # display("C2")
-                for vj in eachindex(Nv)
-                    if C[vj]
-                        residue = Residues[vj]
-                        if residue > maxresidue
-                            maxresidue = residue
-                            vjmax = vj 
-                        end
-                    end
-                end 
-                # Find new maximum number of unsatisfied paity check equations
-                max_upc = 1
-                for p in upc
-                    if p > max_upc
-                        max_upc = p
+            if vjmax == 0
+                throw(error("vjmax == 0"))
+            end
+        elseif sum(C) > 0
+            max_residue = 0.0
+            vjmax = 0
+            for vj in eachindex(Nv)
+                if C[vj]
+                    residue = Residues[vj]
+                    if residue > max_residue
+                        max_residue = residue
+                        vjmax = vj
                     end
                 end
             end
-        else # if C is empty
+            if vjmax == 0
+                throw(error("vjmax == 0"))
+            end
+            # Find new maximum number of unsatisfied parity check equations
+            max_upc = 1
+            for p in upc
+                if p > max_upc
+                    max_upc = p
+                end
+            end
+        else
+            max_residue = 0.0
+            vjmax = 0
             for vj in eachindex(Nv)
                 residue = Residues[vj]
-                if residue > maxresidue
-                    maxresidue = residue
-                    vjmax = vj 
+                if residue > max_residue
+                    max_residue = residue
+                    vjmax = vj
                 end
             end
         end
-
-        # display("vjmax = $vjmax")
-        # display("maxresidue = $maxresidue")
 
         if vjmax == 0
             rbp_not_converged = false
@@ -88,85 +86,67 @@ function
 
         Nvjmax = Nv[vjmax]
 
-        # C2V
-
+        # 12 - 14
         for ci in Nvjmax
-            li = LinearIndices(Lr)[ci,vjmax]
-            Lr[li] = newLr[li]
+            li = LinearIndices(C2V)[ci,vjmax]
+            C2V[li] = newC2V[li]
         end
 
-        # Oscillation decision
+        # 15
+        newLLR_vjmax = newLLRs[vjmax]
+
+        #16 - 19
         if C[vjmax]
+            LLRs[vjmax] += newLLR_vjmax
+            # LLRs[vjmax] = newLvjmax
             C[vjmax] = false
-            size_C -= 1
-            upc[vjmax] = 0
-            oldlv = Lv[vjmax]
-            Lv[vjmax] = oldlv + newLv[vjmax]
-            # Lv[vjmax] = newLv[vjmax]
+            C1[vjmax] = false
         else
-            Lv[vjmax] = newLv[vjmax]
+            LLRs[vjmax] = newLLR_vjmax
         end
 
-        bitvector[vjmax] = signbit(Lv[vjmax])
 
-        Residues[vjmax] = 0.0
+        # 20
+        Residues[vjmax] = 0        
 
-        # V2C
-
+        #21 - 23
+        post_LLR = calc_post_LLR(vjmax,Nvjmax,prior_LLRs,C2V)
+        bitvector[vjmax] = signbit(LLRs[vjmax])
         for ci in Nvjmax
-            li = LinearIndices(Lr)[ci,vjmax]
-            Lq[li] = tanhLq(Lv[vjmax],Lr[li],msum_factor)
-        end
-
-        # Lv
-
-        for ci in Nvjmax
+            li = LinearIndices(C2V)[ci,vjmax]
+            V2C[li] = tanh_V2C(post_LLR,C2V[li],msum_factor)
+            # 3 - 7
             Nci = Nc[ci]
             for vj in Nci
-                if vj != vjmax                    
-                    if C[vj]
-                        C[vj] = false
-                        size_C -= 1
-                        upc[vj] = 0
-                    end
-                    li = LinearIndices(Lr)[ci,vj]
-                    newLr[li] = calc_Lr(Nci,ci,vj,Lq,msum_factor)
-                    oldlv = Lv[vj]
-                    newlv = calc_Ld(vj,Nv[vj],Lf,newLr)
-                    Residues[vj] = abs(newlv - oldlv)        
-                    newLv[vj] = newlv
-                    if sign(oldlv)*sign(newlv) < 0
+                if vj != vjmax
+                    newC2V[ci,vj] = calc_C2V(Nci,ci,vj,V2C,msum_factor) 
+                    oldllr = LLRs[vj]
+                    newllr = calc_post_LLR(vj,Nv[vj],prior_LLRs,newC2V)
+                    newLLRs[vj] = newllr
+                    Residues[vj] = abs(newllr - oldllr)        
+                    if sign(oldllr)*sign(newllr) < 0
                         C[vj] = true
-                        size_C += 1
-                        count = 0
-                        for cii in Nv[vj]
-                            if _calc_syndrome(bitvector,Nc[cii])
-                                count += 1
+                        count_upc = 0
+                        for ca in Nv[vj]
+                            if _calc_syndrome(bitvector,Nc[ca])
+                                count_upc += 1
                             end
                         end
-                        upc[vj] = count
+                        upc[vj] = count_upc
+                        if count_upc == max_upc  # every VN in C1 is in C
+                            C1[vj] = true
+                        else
+                            C1[vj] = false
+                        end
+                    else
+                        C[vj] = false
+                        C1[vj] = false
                     end
                 end
             end
-        end
+        end   
     end
 
-    return rbp_not_converged, max_upc, size_C
+    return rbp_not_converged
 
 end
-
-
-
-
-
-
-
-
-
-
-        
-
-
-
-
-

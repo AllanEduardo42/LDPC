@@ -30,8 +30,8 @@ end
 ################################## CONSTANTS ###################################
 
 const INF = typemax(Int64)
-const MAXLR = 1e3
-const MINLR = -MAXLR
+const MAXC2V = 1e3
+const MINC2V = -MAXC2V
 # const ALPHA = 0.73                     # Min-Sum attenuation factor
 # const ALPHA = 0.78
 const ALPHA = 0.755
@@ -53,17 +53,20 @@ PRIN::Bool = true
 PROF::Bool = false
 STOP::Bool = true # stop simulation at zero syndrome (if true, BER curves are
 # not printed)
+RAYL::Bool = false
 
 ############################### TEST PARAMETERS ################################
 
 ### Maximum number of BP iterations
-MAXITER_TEST::Int = 2
+MAXITER_TEST::Int = 1
 ### EbN0
 EbN0_TEST::Float64 = 2.0
 ### Number of Monte Carlo Trials
-TRIALS_TEST::Int = 2
+TRIALS_TEST::Int = 1
 ### Residual Decay factors
 DECAY_TEST::Float64 = 1.0
+### CI gamma
+CI_GAMMA = 1.0
 
 ################################## PARAMETERS ##################################
 
@@ -71,13 +74,13 @@ DECAY_TEST::Float64 = 1.0
 MAXITER::Int = 30
 
 ### EbN0
-EbN0 = [2.5]
+EbN0 = [2.0]
 # EbN0 = [1.0, 1.5, 2.0, 3.0]
 # EbN0 = [1.0, 1.5, 2.0, 2.5, 3.0]
 
 ### Number of Monte Carlo Trials
-# TRIALS = [2*12_800]
-TRIALS = [1_280_000]
+TRIALS = [2*12_800]
+# TRIALS = [2560000]
 # TRIALS = [128, 1280, 12800, 128000]
 # TRIALS = [512, 2*1280, 2*12_800, 2*12_800_000]
 # TRIALS = [512, 2*1280, 2*12_800, 1_280_000, 2*12_800_000]
@@ -104,7 +107,8 @@ ALGORITHMS = ["Flooding",        # Flooding
             #   "RPD",             # Reliability Profile Dynamic
               "CI-RBP",          # Conditional Innovation RBP
               "CI-CDR-RBP",
-              "UBP-RBP"          # Update Before Propagate RBP
+              "UBP-RBP",         # Update Before Propagate RBP
+              "RBP-D1VN"         # RBP with D1VN Processing Scheme
               ]
 
 NUM_MODES = length(ALGORITHMS)
@@ -138,7 +142,7 @@ MAXITERS[i] = MAXITER
 
 # RBP
 i += 1
-ACTIVE[i] = 1
+ACTIVE[i] = 0
 BPTYPES[i] = ["TANH"]
 MAXITERS[i] = MAXITER
 
@@ -207,7 +211,7 @@ MAXITERS[i] = MAXITER
 
 # OV-RBP
 i += 1
-ACTIVE[i] = 1
+ACTIVE[i] = 0
 BPTYPES[i] = ["TANH"]
 MAXITERS[i] = MAXITER
 
@@ -231,6 +235,12 @@ MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
 
 # UBP-RBP
+i += 1
+ACTIVE[i] = 0
+BPTYPES[i] = ["TANH"]
+MAXITERS[i] = MAXITER
+
+# RBP-D1VN
 i += 1
 ACTIVE[i] = 0
 BPTYPES[i] = ["TANH"]

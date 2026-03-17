@@ -3,9 +3,6 @@
 # 27 set 2024
 # Flooding Sum-Product Algorithm
 
-include("update_Lr.jl")
-include("update_Lq.jl")
-
 function
     flooding!(
         bitvector::Vector{Bool},

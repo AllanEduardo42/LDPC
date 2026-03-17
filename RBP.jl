@@ -1,32 +1,26 @@
 ################################################################################
 # Allan Eduardo Feitosa
-# 07 Apr 2025
-# RBP, RD-RBP, C&R-RBP and C&DR-RBP Algorithms
+# 13 Mar 2026
+# RBP Algorithm
 
 include("./RBP functions/findmaxedge.jl")
-include("./RBP functions/calc_residue.jl")
 
 function
     RBP!(
         bitvector::Vector{Bool},
-        Lq::Matrix{Float64},
-        Lr::Matrix{Float64},
-        Lf::Vector{Float64},
+        V2C::Matrix{Float64},
+        C2V::Matrix{Float64},
+        prior_LLRs::Vector{Float64},
         Nc::Vector{Vector{Int}},
         Nv::Vector{Vector{Int}},
         phi::Union{Vector{Float64},Nothing},
         msum_factor::Union{Float64,Nothing},
         msum2::Bool,
         num_reps::Int,
-        newLr::Matrix{Float64},
+        newC2V::Matrix{Float64},
         Residues::Matrix{Float64},
         alpha::Vector{Float64},
-        RBP_decay::Bool,
-        decayfactor::Float64,
-        Factors::Union{Matrix{Float64},Nothing},
-        rbp_not_converged::Bool,
-        consensus::Bool,
-        switch_R::Bool
+        rbp_not_converged::Bool
     )
     
     # for e in 1:num_reps
@@ -39,38 +33,37 @@ function
         if cimax == 0.0
             rbp_not_converged = false
             break # i.e., BP has converged
-        end
+        end        
 
-        #2), 3), 4) C2V update
-        Nvjmax = Nv[vjmax]
-        if consensus
-            for ci in Nvjmax
-                RBP_update_Lr!(Lr,newLr,Lq,Residues,RBP_decay,Factors,decayfactor,Nc,ci,vjmax,msum2)
-            end
+        # 2) update C2V message C2V[cimax,vjmax]
+        limax = LinearIndices(C2V)[cimax,vjmax]
+        if msum2
+            C2V[limax] = calc_C2V_no_opt(Nc[cimax],cimax,vjmax,V2C)
         else
-            RBP_update_Lr!(Lr,newLr,Lq,Residues,RBP_decay,Factors,decayfactor,Nc,cimax,vjmax,msum2)
-        end    
-
-        Ld = calc_Ld(vjmax,Nvjmax,Lf,Lr)
-        bitvector[vjmax] = signbit(Ld)
+            C2V[limax] = newC2V[limax]
+        end
+        # 3) set maximum residue to zero
+        Residues[limax] = 0.0
+        
+        # 4) update LLR[vjmax]
+        Nvjmax = Nv[vjmax]
+        post_LLR = calc_post_LLR(vjmax,Nvjmax,prior_LLRs,C2V)
+        bitvector[vjmax] = signbit(post_LLR)
 
         for ci in Nvjmax
-            if ci ≠ cimax || switch_R
-                # 5) update Nv messages Lq[ci,vnmax]
-                li = LinearIndices(Lq)[ci,vjmax]
+            if ci ≠ cimax
+                # 5) update V2C messages V2C[ci,vnmax]
+                li = LinearIndices(V2C)[ci,vjmax]
                 alp = Residues[li]
-                Lq[li] = tanhLq(Ld,Lr[li],msum_factor)
+                V2C[li] = tanh_V2C(post_LLR,C2V[li],msum_factor)
                 # 6) calculate Residues
                 Nci = Nc[ci]
                 for vj in Nci
                     if vj ≠ vjmax
-                        li = LinearIndices(Lr)[ci,vj]
-                        newlr = calc_Lr(Nci,ci,vj,Lq,msum_factor)
-                        newLr[li] = newlr
-                        residue = abs(newlr - Lr[li])
-                        if RBP_decay
-                            residue *= Factors[li]
-                        end
+                        li = LinearIndices(C2V)[ci,vj]
+                        newc2v = calc_C2V(Nci,ci,vj,V2C,msum_factor)
+                        newC2V[li] = newc2v
+                        residue = abs(newc2v - C2V[li])
                         if residue > alp
                             alp = residue
                         end
@@ -84,38 +77,4 @@ function
 
     return rbp_not_converged
 end
-
-function 
-    RBP_update_Lr!(
-        Lr::Matrix{Float64},
-        newLr::Matrix{Float64},
-        Lq::Matrix{Float64},
-        Residues::Matrix{Float64},
-        RBP_decay::Bool,
-        Factors::Union{Matrix{Float64},Nothing},
-        decayfactor::Float64,
-        Nc::Vector{Vector{Int}},
-        ci::Int,
-        vjmax::Int,
-        msum2::Bool
-    )
-
-    # begin
-    @fastmath @inbounds begin
-        li = LinearIndices(Lr)[ci,vjmax]
-        # 2) Decay the RBP factor corresponding to the maximum residue
-        if RBP_decay
-            Factors[li] *= decayfactor
-        end
-        # 3) update check to node message Lr[ci,vjmax]
-        if msum2
-            Lr[li] = calc_Lr_no_opt(Nc[ci],ci,vjmax,Lq)
-        else
-            Lr[li] = newLr[li]
-        end
-        # 4) set maximum residue to zero
-        Residues[li] = 0.0
-    end
-end
-
 

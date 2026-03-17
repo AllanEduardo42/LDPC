@@ -3,15 +3,12 @@
 # 3 Mar 2025
 # Calculate all Residues
 
-include("calc_residue.jl")
-
 function
     init_residues!(
-        Lq::Matrix{Float64},
-        Lr::Matrix{Float64},
+        V2C::Matrix{Float64},
         Nc::Vector{Vector{Int}},
         phi::Union{Vector{Float64},Nothing},
-        newLr::Matrix{Float64}, 
+        newC2V::Matrix{Float64}, 
         alpha::Vector{Float64},
         Residues::Matrix{Float64},
         msum_factor::Union{Float64,Nothing}
@@ -22,8 +19,13 @@ function
         Nci = Nc[ci]
         alp = 0.0
         for vj in Nci
-            li = LinearIndices(Lr)[ci,vj]
-            alp, residue = calc_residue!(Lq,Lr,newLr,li,ci,vj,Nci,1.0,alp,msum_factor)
+            li = LinearIndices(newC2V)[ci,vj]
+            newc2v = calc_C2V(Nci,ci,vj,V2C,msum_factor)
+            newC2V[li] = newc2v
+            residue = abs(newc2v)
+            if residue > alp
+                alp = residue
+            end
             Residues[li] = residue
         end
         alpha[ci] = alp

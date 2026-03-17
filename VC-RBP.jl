@@ -4,14 +4,13 @@
 # VC-RBP
 
 include("./RBP functions/findmaxedge.jl")
-include("./RBP functions/calc_residue.jl")
 
 function
     VC_RBP!(
         bitvector::Vector{Bool},
-        Lq::Matrix{Float64},
-        Lr::Matrix{Float64},
-        Lf::Vector{Float64},
+        V2C::Matrix{Float64},
+        C2V::Matrix{Float64},
+        prior_LLRs::Vector{Float64},
         Nc::Vector{Vector{Int}},
         Nv::Vector{Vector{Int}},
         phi::Union{Vector{Float64},Nothing},
@@ -22,8 +21,6 @@ function
         alpha::Vector{Float64},        
         rbp_not_converged::Bool
     )
-
-    # greediness .= 0
     
     @fastmath for e in 1:num_reps
 
@@ -36,30 +33,31 @@ function
             break # i.e., BP has converged
         end
 
-        # greediness[vjmax] += 1
-
         # 2) Set to zero max residue
         Residues[cimax,vjmax] = 0.0
 
         Ncimax = Nc[cimax]        
         for vj in Ncimax
             if vj ≠ vjmax
-                # 5) update messages Lr[cimax, vj]
-                li = LinearIndices(Lr)[cimax,vj]
+                # 5) update messages C2V[cimax, vj]
+                li = LinearIndices(C2V)[cimax,vj]
                 alp = Residues[li]
-                Lr[li] = calc_Lr(Ncimax,cimax,vj,Lq,msum_factor)
+                C2V[li] = calc_C2V(Ncimax,cimax,vj,V2C,msum_factor)
                 # 6) calculate Residues
                 Nvj = Nv[vj]
-                Ld = calc_Ld(vj,Nvj,Lf,Lr)
-                bitvector[vj] = signbit(Ld)
+                post_LLR = calc_post_LLR(vj,Nvj,prior_LLRs,C2V)
+                bitvector[vj] = signbit(post_LLR)
                 for ci in Nvj
                     if ci ≠ cimax
-                        li = LinearIndices(Lq)[ci,vj]
-                        newlq = Ld - Lr[li]
-                        oldlq = 2*atanh(Lq[li])
-                        alp, residue = calc_residue_lq!(newlq,oldlq,alp)
+                        li = LinearIndices(V2C)[ci,vj]
+                        newv2c = post_LLR - C2V[li]
+                        oldv2c = 2*atanh(V2C[li])
+                        residue = abs(newv2c - oldv2c)
+                        if residue > alp
+                            alp = residue
+                        end
                         Residues[li] = residue
-                        Lq[li] = tanhLq(newlq,0.0,msum_factor)
+                        V2C[li] = tanh_V2C(newv2c,0.0,msum_factor)
                     end
                 end
                 alpha[vj] = alp

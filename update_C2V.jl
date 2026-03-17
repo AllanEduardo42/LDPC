@@ -6,84 +6,84 @@
 
 ####################### SPA USING FAST HYPERBOLIC TANGENT ######################
 function 
-    calc_Lr(
+    calc_C2V(
         Nci::Vector{Int},
         ci::Int,
         vj::Int,    
-        Lq::Matrix{Float64},
+        V2C::Matrix{Float64},
         ::Nothing
     )
     
     @inbounds begin
-        pLq = 1.0
+        prod_v2c = 1.0
         for vb in Nci
             if vb ≠ vj
-                lq = Lq[ci,vb]
-                if lq == 0.0
+                v2c = V2C[ci,vb]
+                if v2c == 0.0
                     return 0.0
                 else
-                    pLq *= lq
+                    prod_v2c *= v2c
                 end
             end
         end
-        if abs(pLq) < 1.0
-            return 2*atanh(pLq)
-        elseif signbit(pLq)
-            return MINLR
+        if abs(prod_v2c) < 1.0
+            return 2*atanh(prod_v2c)
+        elseif signbit(prod_v2c)
+            return MINC2V
         else
-            return MAXLR
+            return MAXC2V
         end
     end
 end
 
 function 
-    calc_Lr_no_opt(
+    calc_C2V_no_opt(
         Nci::Vector{Int},
         ci::Int,
         vj::Int,    
-        Lq::Matrix{Float64}
+        V2C::Matrix{Float64}
     )
     @fastmath @inbounds begin
-        pLq = 1.0
+        prod_v2c = 1.0
         for vb in Nci
             if vb ≠ vj
-                lq = Lq[ci,vb]
-                if lq == 0.0
+                v2c = V2C[ci,vb]
+                if v2c == 0.0
                     return 0.0
                 else
-                    pLq *= tanh(0.5*lq)
+                    prod_v2c *= tanh(0.5*v2c)
                 end
             end
         end
-        if abs(pLq) < 1.0
-            return 2*atanh(pLq)
-        elseif signbit(pLq)
-            return MINLR
+        if abs(prod_v2c) < 1.0
+            return 2*atanh(prod_v2c)
+        elseif signbit(prod_v2c)
+            return MINC2V
         else
-            return MAXLR
+            return MAXC2V
         end
     end
 end
 
 ############################### SPA USING MIN-SUM ##############################
 function 
-    calc_Lr(
+    calc_C2V(
         Nci::Vector{Int},
         ci::Int,
         vj::Int,    
-        Lq::Matrix{Float64},
+        V2C::Matrix{Float64},
         msum_factor::Float64
     )
 
     @fastmath @inbounds begin
         s = false
-        minL = MAXLR
+        minL = MAXC2V
         for vb in Nci
             if vb ≠ vj
-                lq = Lq[ci,vb]
-                sig = signbit(lq)
+                v2c = V2C[ci,vb]
+                sig = signbit(v2c)
                 s ⊻= sig
-                β = abs(lq)
+                β = abs(v2c)
                 if β < minL
                     minL = β
                 end
@@ -100,40 +100,40 @@ end
 ################ ALTERNATIVE TO HYPERBOLIC TANGENT USING TABLE ################
 function 
     calc_ABCD!(
-        Lq::Matrix{Float64},
+        V2C::Matrix{Float64},
         ci::Int,
         Nci::Vector{Int},
         signs::Vector{Bool},
         phi::Vector{Float64}
     )
 
-    sLr = 0.0
+    sum_c2v = 0.0
     s = false
     @fastmath @inbounds for vj in Nci
-        lq = Lq[ci,vj]
-        sig = signbit(lq)
+        v2c = V2C[ci,vj]
+        sig = signbit(v2c)
         s ⊻= sig
         signs[vj] = sig
-        sLr += ϕ(abs(lq),phi) 
+        sum_c2v += ϕ(abs(v2c),phi) 
     end
 
-    return sLr, s, nothing, nothing
+    return sum_c2v, s, nothing, nothing
 end
 
 function 
-    calc_Lr(
-        sLr::Float64,       #A
+    calc_C2V(
+        sum_c2v::Float64,   #A
         s::Bool,            #B          
         ::Nothing,          #C
         ::Nothing,          #D
         vj::Int,
-        lq::Float64,
+        v2c::Float64,
         signs::Vector{Bool},
         phi::Vector{Float64}
     )
 
     @fastmath @inbounds begin
-        x = abs(sLr - lq)
+        x = abs(sum_c2v - v2c)
         y = signs[vj] ⊻ s
         return (1 - 2*y)*ϕ(x,phi)
     end

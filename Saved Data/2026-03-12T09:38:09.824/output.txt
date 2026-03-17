@@ -1,0 +1,48 @@
+############################### LDPC parameters ################################
+LDPC Protocol: IEEE80216e (WiMAX)
+Parity Check Matrix: 288 x 576
+
+Graph girth = 6
+Effective rate = 0.5
+Code length = 576
+
+############################# Starting simulation ##############################
+
+Number of trials: [2560000]
+Message passing protocol: Flooding (using LLR-SPA calculated by tanh function)
+Maximum number of iterations: 30
+Number of threads (multithreading): 32
+Eb/No (dB): [2.65]
+Stop at zero syndrome ? true
+
+Elapsed 74.6 seconds (0.22% gc time, 86.72% compilation time)
+############################# Starting simulation ##############################
+
+Number of trials: [2560000]
+Message passing protocol: LBP (using LLR-SPA calculated by tanh function)
+Maximum number of iterations: 30
+Number of threads (multithreading): 32
+Eb/No (dB): [2.65]
+Stop at zero syndrome ? true
+
+Elapsed 55.3 seconds (0.14% gc time, 2.34% compilation time)
+############################# Starting simulation ##############################
+
+Number of trials: [2560000]
+Message passing protocol: RBP (using LLR-SPA calculated by tanh function)
+Maximum number of iterations: 30
+Number of threads (multithreading): 32
+Eb/No (dB): [2.65]
+Stop at zero syndrome ? true
+
+Elapsed 324.3 seconds (0.03% gc time, 0.76% compilation time)
+############################# Starting simulation ##############################
+
+Number of trials: [2560000]
+Message passing protocol: OV-RBP (using LLR-SPA calculated by tanh function)
+Maximum number of iterations: 30
+Number of threads (multithreading): 32
+Eb/No (dB): [2.65]
+Stop at zero syndrome ? true
+
+Elapsed 430.7 seconds (0.38% gc time, 1.14% compilation time)

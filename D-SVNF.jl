@@ -6,16 +6,16 @@
 function
     D_SVNF!( 
         bitvector::Vector{Bool},
-        Lq::Matrix{Float64},
-        Lr::Matrix{Float64},
-        Lf::Vector{Float64},
+        V2C::Matrix{Float64},
+        C2V::Matrix{Float64},
+        prior_LLRs::Vector{Float64},
         Nc::Vector{Vector{Int}},
         Nv::Vector{Vector{Int}},
         phi::Union{Vector{Float64},Nothing},
         msum_factor::Union{Float64,Nothing},
         msum2::Bool,
         num_reps::Int,
-        newLr::Matrix{Float64},
+        newC2V::Matrix{Float64},
         Residues::Matrix{Float64},
         rbp_not_converged::Bool,
         N::Int,        
@@ -46,7 +46,7 @@ function
                 if no_unsat_check
                     no_unsat_check = false
                 end   
-                maxresidue, cimax, vjmax = calc_newLr!(Lq,Lr,ci,Nci,msum_factor,newLr,
+                maxresidue, cimax, vjmax = calc_newC2V!(V2C,C2V,ci,Nci,msum_factor,newC2V,
                                                 maxresidue,cimax,vjmax,vp)
             end
         end            
@@ -55,7 +55,7 @@ function
             for ci in Nvp
                 # display("       ci = $ci")
                 Nci = Nc[ci] 
-                maxresidue, cimax, vjmax = calc_newLr!(Lq,Lr,ci,Nci,msum_factor,newLr,
+                maxresidue, cimax, vjmax = calc_newC2V!(V2C,C2V,ci,Nci,msum_factor,newC2V,
                                                 maxresidue,cimax,vjmax,vp)
             end 
         end
@@ -71,23 +71,23 @@ function
             count_zeros = 0
             count += 1
             Ncimax = Nc[cimax]
-            limax = LinearIndices(Lr)[cimax,vjmax]
+            limax = LinearIndices(C2V)[cimax,vjmax]
             if msum2
-                Lr[limax] = calc_Lr_no_opt(Ncimax,cimax,vjmax,Lq)
+                C2V[limax] = calc_C2V_no_opt(Ncimax,cimax,vjmax,V2C)
             else
-                Lr[limax] = newLr[limax]
+                C2V[limax] = newC2V[limax]
             end
             Residues[limax] = 0.0
 
             Nvjmax = Nv[vjmax]
-            Ld = calc_Ld(vjmax,Nvjmax,Lf,Lr)
-            bitvector[vjmax] = signbit(Ld)
+            post_LLR = calc_post_LLR(vjmax,Nvjmax,prior_LLRs,C2V)
+            bitvector[vjmax] = signbit(post_LLR)
 
             for ci in Nvjmax
                 if ci ≠ cimax
-                    # 6) update V2C messages Lq[ci,vjmax]
-                    li = LinearIndices(Lq)[ci,vjmax]
-                    Lq[li] = tanhLq(Ld,Lr[li],msum_factor)
+                    # 6) update V2C messages V2C[ci,vjmax]
+                    li = LinearIndices(V2C)[ci,vjmax]
+                    V2C[li] = tanh_V2C(post_LLR,C2V[li],msum_factor)
                 end
             end
 
@@ -137,13 +137,13 @@ function
 end
 
 function 
-    calc_newLr!(
-        Lq::Matrix{Float64},
-        Lr::Matrix{Float64},
+    calc_newC2V!(
+        V2C::Matrix{Float64},
+        C2V::Matrix{Float64},
         ci::Int,
         Nci::Vector{Int},
         msum_factor::Union{Float64,Nothing},
-        newLr::Matrix{Float64},
+        newC2V::Matrix{Float64},
         maxresidue::Float64,
         cimax::Int,
         vjmax::Int,
@@ -153,10 +153,10 @@ function
     for vj in Nci
         if vj ≠ vp
             # display("           vj = $vj")
-            li = LinearIndices(Lr)[ci,vj]
-            newlr = calc_Lr(Nci,ci,vj,Lq,msum_factor)
-            newLr[li] = newlr
-            residue = abs(newlr - Lr[li])
+            li = LinearIndices(C2V)[ci,vj]
+            newc2v = calc_C2V(Nci,ci,vj,V2C,msum_factor)
+            newC2V[li] = newc2v
+            residue = abs(newc2v - C2V[li])
             if residue > maxresidue
                 maxresidue = residue
                 cimax = ci

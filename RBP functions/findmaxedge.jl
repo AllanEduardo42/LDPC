@@ -154,3 +154,33 @@ function
     end
 end
 
+function
+    findmaxedge_D1VN(
+        Residues::Matrix{Float64},
+        alpha::Vector{Float64},
+        Nc::Vector{Vector{Int}},
+        F::Vector{Bool}
+    )
+
+    # begin
+    @fastmath @inbounds begin
+        maxresidue = 0.0
+        cimax = 0
+        vjmax = 0
+        for ci in eachindex(Nc)
+            Nci = Nc[ci]
+            for vj in Nci
+                if !F[vj]
+                    residue = Residues[ci,vj]
+                    if residue > maxresidue
+                        maxresidue = residue
+                        cimax = ci
+                        vjmax = vj
+                    end
+                end
+            end
+        end
+    end
+
+    return cimax, vjmax
+end

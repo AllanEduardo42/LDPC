@@ -1,5 +1,5 @@
 function 
-    tanhLq(
+    tanh_V2C(
         arg::Float64,
         ::Float64,
         ::Float64
@@ -8,15 +8,15 @@ function
 end
 
 function 
-    tanhLq(
-        ld::Float64,
-        lr::Float64,
+    tanh_V2C(
+        post_LLR::Float64,
+        c2v::Float64,
         ::Nothing
     )
 
     # begin
     @fastmath begin
-        tanh(0.5*(ld - lr))
+        tanh(0.5*(post_LLR - c2v))
     end
     
 end

@@ -4,31 +4,31 @@
 # Auxiliary functions used in sincore.jl
 
 function 
-    init_Lq!(
-        Lq::Matrix{Float64},
-        Lf::Vector{Float64},
+    init_V2C!(
+        V2C::Matrix{Float64},
+        prior_LLRs::Vector{Float64},
         Nv::Vector{Vector{Int}},
         msum_factor::Union{Float64,Nothing}
     )
     
     @inbounds for vj in eachindex(Nv)
         for ci in Nv[vj]
-            Lq[ci,vj] = tanhLq(Lf[vj],0.0,msum_factor)
+            V2C[ci,vj] = tanh_V2C(prior_LLRs[vj],0.0,msum_factor)
         end
     end
 end
 
 function
-    init_Lq!(
-        Lq::Array{Float64,3},
-        Lf::Matrix{Float64},
+    init_V2C!(
+        V2C::Array{Float64,3},
+        prior_LLRs::Matrix{Float64},
         Nv::Vector{Vector{Int}}
     )
    
     @inbounds for vj in eachindex(Nv)
         for ci in Nv[vj]
-            Lq[ci,vj,1] = Lf[vj,1]
-            Lq[ci,vj,2] = Lf[vj,2]
+            V2C[ci,vj,1] = prior_LLRs[vj,1]
+            V2C[ci,vj,2] = prior_LLRs[vj,2]
         end
     end
 
@@ -42,39 +42,31 @@ function
         twoLs::Int,
         σ::Float64,
         rgn::AbstractRNG,
-        ::Nothing
+        rayleigh::Bool,
+        fading::Union{Vector{Float64},Nothing},
+        x1::Union{Vector{Float64},Nothing},
+        x2::Union{Vector{Float64},Nothing}
     )
 
     @inbounds @fastmath begin
-        randn!(rgn,signal)    # put the noise in the vector 'signal'
+        randn!(rgn,signal)          # put the noise in the vector 'signal'
         lmul!(σ,signal)             # multiply by the standard deviation
-        for g in 1:G
-            aux = 2*cword[twoLs+g] - 1  
-            signal[g] += aux            # sum the modulated signal
+        if rayleigh
+            randn!(rgn,x1)
+            randn!(rgn,x2)
+            for g in 1:G
+                aux = 2*cword[twoLs+g] - 1
+                fading[g] = sqrt(0.5*(x1[g]^2 + x2[g]^2))  
+                signal[g] += fading[g]*aux  # sum the modulated signal
+            end
+        else
+            for g in 1:G
+                aux = 2*cword[twoLs+g] - 1  
+                signal[g] += aux            # sum the modulated signal
+            end
         end
     end
 
-end
-
-function
-    received_signal!(
-        signal::Vector{Float64},
-        cword::Vector{Bool},
-        G::Int,
-        twoLs::Int,
-        σ::Float64,
-        ::AbstractRNG,
-        noisetest::Vector{Float64}
-    )
-
-    @fastmath @fastmath begin
-        copy!(signal,noisetest)
-        lmul!(σ,signal)
-        for g in 1:G
-            aux = 2*cword[twoLs+g] - 1
-            signal[g] += aux
-        end
-    end
 end
 
 function
@@ -104,26 +96,6 @@ function
             X[ci,vj,2] = value
         end
     end
-end
-
-function generate_message!(
-    msg::Vector{Bool},
-    rgn_msg::AbstractRNG,
-    ::Nothing
-)
-
-    rand!(rgn_msg,msg,Bool)
-
-end
-
-function generate_message!(
-    msg::Vector{Bool},
-    ::AbstractRNG,
-    msgtest::Vector{Bool}
-)
-
-    copy!(msg, msgtest)
-
 end
 
 # append the CRC to the message

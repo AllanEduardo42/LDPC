@@ -5,23 +5,23 @@
 # "Inf" restriction)
 
 
-include("tanhLq.jl")
+include("tanh_V2C.jl")
 
 ############################ SPA USING LLRs METHOD #############################
 
 function 
-    calc_Ld(
+    calc_post_LLR(              
         vj::Int,
         Nvj::Vector{Int},
         Lf::Vector{Float64},
-        Lr::Matrix{Float64}
+        C2V::Matrix{Float64}
     )
 
     # begin
     @fastmath @inbounds begin
         Ld = Lf[vj]
         for ci in Nvj
-            Ld += Lr[ci,vj]
+            Ld += C2V[ci,vj]
         end
     end
     
@@ -31,11 +31,11 @@ end
 
 ######################### SPA USING LLRs METHOD NO OPT #########################
 
-function calc_Lq(
+function calc_V2C(
     Nvj::Vector{Int},
     ci::Int,
     vj::Int,
-    Lr::Matrix{Float64},
+    C2V::Matrix{Float64},
     Lf::Vector{Float64}
 )::Float64
 
@@ -43,7 +43,7 @@ function calc_Lq(
         lq = Lf[vj]
         for ca in Nvj
             if ca ≠ ci
-                lq += Lr[ca,vj]
+                lq += C2V[ca,vj]
             end
         end
         return tanh(0.5*lq)

@@ -4,21 +4,20 @@
 # Nodewise RBP Algorithm with residual decaying factor
 
 include("./RBP functions/findmaxnode.jl")
-include("./RBP functions/calc_residue.jl")
 
 function
     NW_RBP!(
         bitvector::Vector{Bool},
-        Lq::Matrix{Float64},
-        Lr::Matrix{Float64},
-        Lf::Vector{Float64},
+        V2C::Matrix{Float64},
+        C2V::Matrix{Float64},
+        prior_LLRs::Vector{Float64},
         Nc::Vector{Vector{Int}},
         Nv::Vector{Vector{Int}},
         phi::Union{Vector{Float64},Nothing},
         msum_factor::Union{Float64,Nothing},
         msum2::Bool,
         num_reps::Int,
-        newLr::Matrix{Float64},
+        newC2V::Matrix{Float64},
         alpha::Vector{Float64},
         bp_not_converged::Bool        
     )
@@ -39,23 +38,28 @@ function
         alpha[cimax] = 0.0
     
         for vk in Nc[cimax]
-            # 4) update check to node messages Lr[cimax,vnmax]
-            li = LinearIndices(Lr)[cimax,vk]
-            Lr[li] = newLr[li]
+            # 4) update C2V messages C2V[cimax,vnmax]
+            li = LinearIndices(C2V)[cimax,vk]
+            C2V[li] = newC2V[li]
             Nvk = Nv[vk]
-            Ld = calc_Ld(vk,Nvk,Lf,Lr)
-            bitvector[vk] = signbit(Ld)
+            post_LLR = calc_post_LLR(vk,Nvk,prior_LLRs,C2V)
+            bitvector[vk] = signbit(post_LLR)
             for ci in Nvk
                 alp = 0.0
                 if ci ≠ cimax
-                    # 5) update Nv messages Lq[ci,vk]
-                    li = LinearIndices(Lq)[ci,vk]
-                    Lq[li] = tanh(0.5*(Ld - Lr[li]))   
+                    # 5) update V2C messages V2C[ci,vk]
+                    li = LinearIndices(V2C)[ci,vk]
+                    V2C[li] = tanh(0.5*(post_LLR - C2V[li]))   
                     # 6) calculate alpha
                     Nci = Nc[ci]
                     for vj in Nci
-                        li = LinearIndices(Lr)[ci,vj]
-                        alp, _ = calc_residue!(Lq,Lr,newLr,li,ci,vj,Nci,1.0,alp,msum_factor)
+                        li = LinearIndices(C2V)[ci,vj]
+                        newc2v = calc_C2V(Nci,ci,vj,V2C,msum_factor)
+                        newC2V[li] = newc2v
+                        residue = abs(newc2v - C2V[li])
+                        if residue > alp
+                            alp = residue
+                        end
                     end
                     alpha[ci] = alp
                 end

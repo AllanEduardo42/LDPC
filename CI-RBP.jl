@@ -4,21 +4,20 @@
 # CI-RBP Algorithm
 
 include("./RBP functions/findmaxedge.jl")
-include("./RBP functions/calc_residue.jl")
 
 function
     CI_RBP!(
         bitvector::Vector{Bool},
-        Lq::Matrix{Float64},
-        Lr::Matrix{Float64},
-        Lf::Vector{Float64},
+        V2C::Matrix{Float64},
+        C2V::Matrix{Float64},
+        prior_LLRs::Vector{Float64},
         Nc::Vector{Vector{Int}},
         Nv::Vector{Vector{Int}},
         phi::Union{Vector{Float64},Nothing},
         msum_factor::Union{Float64,Nothing},
         msum2::Bool,
         num_reps::Int,
-        newLr::Matrix{Float64},
+        newC2V::Matrix{Float64},
         Residues::Matrix{Float64},
         alpha::Vector{Float64},
         rbp_not_converged::Bool,
@@ -49,16 +48,25 @@ function
             break # i.e., BP has converged
         end
 
-        #2), 3), 4) C2V update
-        
-        RBP_update_Lr!(Lr,newLr,Lq,Residues,false,nothing,0.0,Nc,cimax,vjmax,msum2)   
-        Nvjmax = Nv[vjmax]
-        Ld = calc_Ld(vjmax,Nvjmax,Lf,Lr)
-        bitvector[vjmax] = signbit(Ld)
+        limax = LinearIndices(C2V)[cimax,vjmax]
+        # 2) update check to node message C2V[ci,vjmax]
+        if msum2
+            C2V[limax] = calc_C2V_no_opt(Nc[cimax],cimax,vjmax,V2C)
+        else
+            C2V[limax] = newC2V[limax]
+        end
+        # 3) set maximum residue to zero
+        Residues[limax] = 0.0
 
-        Prob0[vjmax] = calc_prob(Ld)
+        # 4) update LLR[vjmax]
+        Nvjmax = Nv[vjmax]
+        post_LLR = calc_post_LLR(vjmax,Nvjmax,prior_LLRs,C2V)
+        bitvector[vjmax] = signbit(post_LLR)
+
+        Prob0[vjmax] = calc_prob(post_LLR)
         Dn[vjmax] = 0.0
 
+        # update alpha[cimax]
         maxalp = 0.0
         for vj in Nc[cimax]
             residue = Residues[cimax,vj]
@@ -70,25 +78,23 @@ function
 
         for ci in Nvjmax
             if ci ≠ cimax
-                # 5) update Nv messages Lq[ci,vnmax]
-                li = LinearIndices(Lq)[ci,vjmax]
+                # 5) update Nv messages V2C[ci,vnmax]
+                li = LinearIndices(V2C)[ci,vjmax]
                 alp = Residues[li]
-                Lq[li] = tanhLq(Ld,Lr[li],msum_factor)
+                V2C[li] = tanh_V2C(post_LLR,C2V[li],msum_factor)
                 # 6) calculate Residues
                 Nci = Nc[ci]
                 for vj in Nci
                     if vj ≠ vjmax
-                        li = LinearIndices(Lr)[ci,vj]
-                        newlr = calc_Lr(Nci,ci,vj,Lq,msum_factor)
-                        newLr[li] = newlr
-                        residue = abs(newlr - Lr[li])
+                        li = LinearIndices(C2V)[ci,vj]
+                        newc2v = calc_C2V(Nci,ci,vj,V2C,msum_factor)
+                        newC2V[li] = newc2v
+                        residue = abs(newc2v - C2V[li])
                         if residue > alp
                             alp = residue
                         end
                         Residues[li] = residue
-                        ln = calc_Ld(vj,Nv[vj],Lf,newLr)
-                        new_prob0 = calc_prob(ln)
-                        Dn[vj] = abs(Prob0[vj] - new_prob0)                        
+                        calc_Dn!(Dn,Prob0,newC2V,prior_LLRs,vj,Nv)                    
                     end
                 end
                 alpha[ci] = alp
@@ -100,71 +106,28 @@ function
 end
 
 function 
-    RBP_update_Lr!(
-        Lr::Matrix{Float64},
-        newLr::Matrix{Float64},
-        Lq::Matrix{Float64},
-        Residues::Matrix{Float64},
-        RBP_decay::Bool,
-        Factors::Union{Matrix{Float64},Nothing},
-        decayfactor::Float64,
-        Nc::Vector{Vector{Int}},
-        ci::Int,
-        vjmax::Int,
-        msum2::Bool
-    )
-
-    # begin
-    @fastmath @inbounds begin
-        li = LinearIndices(Lr)[ci,vjmax]
-        # 2) Decay the RBP factor corresponding to the maximum residue
-        if RBP_decay
-            Factors[li] *= decayfactor
-        end
-        # 3) update check to node message Lr[ci,vjmax]
-        if msum2
-            Lr[li] = calc_Lr_no_opt(Nc[ci],ci,vjmax,Lq)
-        else
-            Lr[li] = newLr[li]
-        end
-        # 4) set maximum residue to zero
-        Residues[li] = 0.0
-    end
-end
-
-function 
     calc_Dn!(
         Dn::Vector{Float64},
         Prob0::Vector{Float64},
-        newLr::Matrix{Float64},
-        Lf::Vector{Float64},
+        newC2V::Matrix{Float64},
+        prior_LLRs::Vector{Float64},
+        vj::Int,
         Nv::Vector{Vector{Int}}
     )
 
-    @inbounds @fastmath for vj in eachindex(Nv)
-        ln = calc_Ld(vj,Nv[vj],Lf,newLr)
-        new_prob0 = calc_prob(ln)
+    @inbounds @fastmath begin
+        llr = calc_post_LLR(vj,Nv[vj],prior_LLRs,newC2V)
+        new_prob0 = calc_prob(llr)
         Dn[vj] = abs(Prob0[vj] - new_prob0)
     end
 
-end
-
-function 
-    init_Prob0!(
-       Prob0::Vector{Float64}, 
-       Lf::Vector{Float64}
-    )
-
-    @inbounds for vj in eachindex(Lf)
-        Prob0[vj] = calc_prob(Lf[vj])
-    end
 
 end
 
-function calc_prob(ln::Float64)
+function calc_prob(llr::Float64)
     @fastmath begin
-        exp_ln = exp(ln)
-        return exp_ln/(1 + exp_ln)
+        exp_llr = exp(llr)
+        return exp_llr/(1 + exp_llr)
     end
 end
 

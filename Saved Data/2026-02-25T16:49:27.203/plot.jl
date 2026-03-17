@@ -4,7 +4,7 @@ iters = 2*12_800_000
 maxiter = 20
 iter = 5
 EbN0 = [1.0, 1.5, 2.0, 2.5, 3.0]
-active = [0 0 0 1 0]
+active = [0 0 0 0 1]
 # active = [1 1 1 1 1]
 protocol = "NR5G"
 
@@ -17,17 +17,17 @@ FB = ["F","B"]
 modes_markers_lines =  ["Flooding"             :none            :solid          
                         "LBP"                  :none            :solid
                         "RBP"                  :dtriangle       :solid
-                        "RD-RBP"          :utriangle       :solid                
+                        "RD-RBP"               :utriangle       :solid                
                         "NW-RBP"               :star5           :solid         
                         "SVNF"                 :diamond         :solid
                         # "D-SVNF"               :diamond         :solid
-                        "List-RBP" :circle          :solid
-                        "C-RBP"           :none            :dot
-                        "C&R-RBP"         :rect            :solid
-                        "C&DR-RBP"      :circle          :solid
+                        "List-RBP"             :circle          :solid
+                        "CI-RBP"               :cross            :solid
+                        "UBP-RBP"              :none            :dot
+                        "C-RBP"                :none            :dot
+                        "C&R-RBP"              :rect            :solid
+                        "C&DR-RBP"             :circle          :solid
                         # "C&DR-RBP 4"      :cross           :solid
-                        # "CI-RBP"               :none            :dashdot
-                        "UBP-RBP"              :none            :dashdot
                  ]
 directory = "./Saved Data/2026-02-25T16:49:27.203/"
 liminf = -3.5
@@ -40,8 +40,8 @@ p1 = plot()
 p2 = plot()
 
 
-colors = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
-marker_sizes = [4,4,4,4,5,5,3,4,3,3,4,4,4,4]
+colors = [1, 2, 3, 4, 5, 15, :gray, :black, :black, 11, 11, 14, 13, 14]
+marker_sizes = [4,4,4,4,5,5,3,4,3,3,4,3,4,4]
 
 # plotlyjs()
 
@@ -105,7 +105,7 @@ gr()
 values = 10.0 .^(-[0, 1, 2, 3, 4, 5])
 labels = ["0", "-1", "-2", "-3", "-4", "-5", "-6"]
 
-liminf = 1*10^(-4)
+liminf = 1*10^(-5)
 limsup = 1
 
 for j=1:2
@@ -177,63 +177,63 @@ Plots.pdf(p,directory*"/FER_BER_576")
 
 
 
-# # FER x EbN0
-# for j = 1:2
-#     for k in eachindex(EbN0)
-#         for i in axes(modes_markers_lines,1)
-#             str = modes_markers_lines[i,1]
-#             x = readdlm(directory*FB[j]*"ER_"*str*".txt",'\t',Float64,'\n')
-#             x = x[:,k]
-#             if j == 1
-#                 FER_EbN0[k,i] = x[iter]
-#             else
-#                 BER_EbN0[k,i] = x[iter]
-#             end
-#         end
-#     end
-# end
+# FER x EbN0
+for j = 1:2
+    for k in eachindex(EbN0)
+        for i in axes(modes_markers_lines,1)
+            str = modes_markers_lines[i,1]
+            x = readdlm(directory*FB[j]*"ER_"*str*".txt",'\t',Float64,'\n')
+            x = x[:,k]
+            if j == 1
+                FER_EbN0[k,i] = x[iter]
+            else
+                BER_EbN0[k,i] = x[iter]
+            end
+        end
+    end
+end
 
+PLOT = plot(
+    EbN0,FER_EbN0,
+    minorgrid=true,
+    minorgridalpha=0.05,
+    yscale=:log10,
+    ylabel="FER",
+    xlabel=L"E_b/N_0"*" (dB)",
+    ylims=(10^(-5),1),
+    color=permutedims(colors),
+    label=permutedims(modes_markers_lines[:,1]),
+    markershape=permutedims(modes_markers_lines[:,2]),
+    line=permutedims(modes_markers_lines[:,3]),
+    lw=1.5,
+    markersize=marker_sizes',
+    markerstrokewidth = 0.5,
+    guidefontsize=10,
+    legend_position = :bottomleft,
+    # tickfontsize=12,
+    # legend_font_pointsize = 10,
+    fontfamily="Computer Modern",
+    size = 1.5 .*(300,200),
+    # left_margin=1Plots.mm,
+    framestyle=:box
+)
+# display(PLOT)
+# BER x EbN0
 # PLOT = plot(
-#     EbN0,FER_EbN0,
+#     EbN0,BER_EbN0,
 #     minorgrid=true,
-#     minorgridalpha=0.05,
 #     yscale=:log10,
-#     ylabel="FER",
-#     xlabel=L"E_b/N_0"*" (dB)",
-#     ylims=(10^(-5),1),
-#     color=colors',
+#     xlabel="EbN0 (dB)",
+#     ylims=(10^(-8),0.1),
 #     label=permutedims(modes_markers_lines[:,1]),
 #     markershape=permutedims(modes_markers_lines[:,2]),
-#     line=permutedims(modes_markers_lines[:,3]),
-#     lw=1.5,
-#     markersize=marker_sizes',
-#     markerstrokewidth = 0.5,
-#     guidefontsize=10,
-#     legend_position = :bottomleft,
-#     # tickfontsize=12,
-#     # legend_font_pointsize = 10,
-#     fontfamily="Computer Modern",
-#     size = 1.5 .*(300,200),
-#     # left_margin=1Plots.mm,
-#     framestyle=:box
+#     lw=2,
+#     # title="BER x EbN0 (Iter = 10, N = $N, R = $(R[1])/$(R[2]))",
+#     size = 1.5 .*(600,400),
+#     # ylims=(-6,-1)
 # )
-# # display(PLOT)
-# # BER x EbN0
-# # PLOT = plot(
-# #     EbN0,BER_EbN0,
-# #     minorgrid=true,
-# #     yscale=:log10,
-# #     xlabel="EbN0 (dB)",
-# #     ylims=(10^(-8),0.1),
-# #     label=permutedims(modes_markers_lines[:,1]),
-# #     markershape=permutedims(modes_markers_lines[:,2]),
-# #     lw=2,
-# #     # title="BER x EbN0 (Iter = 10, N = $N, R = $(R[1])/$(R[2]))",
-# #     size = 1.5 .*(600,400),
-# #     # ylims=(-6,-1)
-# # )
-# # display(PLOT)
-# Plots.pdf(PLOT,directory*"/FER_$(iter)_dB.pdf")
+# display(PLOT)
+Plots.pdf(PLOT,directory*"/FER_$(iter)_dB.pdf")
 
 # ### C&DR-RBP
 
