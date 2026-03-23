@@ -74,13 +74,13 @@ CI_GAMMA = 1.0
 MAXITER::Int = 30
 
 ### EbN0
-EbN0 = [2.0]
+EbN0 = [2.5]
 # EbN0 = [1.0, 1.5, 2.0, 3.0]
 # EbN0 = [1.0, 1.5, 2.0, 2.5, 3.0]
 
 ### Number of Monte Carlo Trials
-TRIALS = [2*12_800]
-# TRIALS = [2560000]
+# TRIALS = [2*12_800]
+TRIALS = [1_280_000]
 # TRIALS = [128, 1280, 12800, 128000]
 # TRIALS = [512, 2*1280, 2*12_800, 2*12_800_000]
 # TRIALS = [512, 2*1280, 2*12_800, 1_280_000, 2*12_800_000]
@@ -97,16 +97,13 @@ ALGORITHMS = ["Flooding",        # Flooding
               "RD-RBP",          # Residual Decay RBP
               "NW-RBP",          # Node Wise RBP
               "SVNF",            # Silent Variable Node Free RBP
-              "D-SVNF",          # Dynamic SVNF
               "List-RBP",        # List RBP
               "C-RBP",           # Consensus RBP
               "C&R-RBP",         # Consensus & Return RBP
               "C&DR-RBP",        # Consensus & Delayed Return RBP
               "VC-RBP",          # Variable to Check RBP
               "OV-RBP",          # Oscillating Variable Node RBP
-            #   "RPD",             # Reliability Profile Dynamic
               "CI-RBP",          # Conditional Innovation RBP
-              "CI-CDR-RBP",
               "UBP-RBP",         # Update Before Propagate RBP
               "RBP-D1VN"         # RBP with D1VN Processing Scheme
               ]
@@ -130,7 +127,7 @@ ACTIVE_ALL = false
 
 i = 1
 # Flooding
-ACTIVE[i] = 0
+ACTIVE[i] = 1
 BPTYPES[i] = ["TANH"]
 MAXITERS[i] = MAXITER
 
@@ -160,12 +157,6 @@ BPTYPES[i] = ["TANH"]
 MAXITERS[i] = MAXITER
 
 # SVNF
-i += 1
-ACTIVE[i] = 0
-BPTYPES[i] = ["TANH"]
-MAXITERS[i] = MAXITER
-
-# D-SVNF
 i += 1
 ACTIVE[i] = 0
 BPTYPES[i] = ["TANH"]
@@ -215,24 +206,11 @@ ACTIVE[i] = 0
 BPTYPES[i] = ["TANH"]
 MAXITERS[i] = MAXITER
 
-# RPD
-# i += 1
-# ACTIVE[i] = 0
-# BPTYPES[i] = ["TANH"]
-# MAXITERS[i] = MAXITER
-
 # CI-RBP
 i += 1
 ACTIVE[i] = 0
 BPTYPES[i] = ["TANH"]
 MAXITERS[i] = MAXITER
-
-# CI-CDR-RBP
-i += 1
-ACTIVE[i] = 0
-BPTYPES[i] = ["TANH"]
-MAXITERS[i] = MAXITER
-DECAYS[i] = FACTORS
 
 # UBP-RBP
 i += 1
@@ -253,7 +231,7 @@ GG::Int = 576
 # Effective Rate
 RR::Float64 = 1/2                       # WiMAX compatibility offset
 # LDPC protocol: NR5G = NR-LDPC (5G); PEG = PEG; WiMAX = IEEE80216e;
-PROTOCOL::String = "NR5G"
+PROTOCOL::String = "WiMAX"
     LAMBDA = [0.21, 0.25, 0.25, 0.29, 0]
     RO = [1.0, 0, 0, 0, 0, 0]
 

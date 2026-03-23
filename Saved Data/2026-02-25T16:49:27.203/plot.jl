@@ -2,7 +2,7 @@ N = 576
 R = [1,2]
 iters = 2*12_800_000
 maxiter = 20
-iter = 5
+iter = 10
 EbN0 = [1.0, 1.5, 2.0, 2.5, 3.0]
 active = [0 0 0 0 1]
 # active = [1 1 1 1 1]
@@ -20,14 +20,11 @@ modes_markers_lines =  ["Flooding"             :none            :solid
                         "RD-RBP"               :utriangle       :solid                
                         "NW-RBP"               :star5           :solid         
                         "SVNF"                 :diamond         :solid
-                        # "D-SVNF"               :diamond         :solid
                         "List-RBP"             :circle          :solid
-                        "CI-RBP"               :cross            :solid
-                        "UBP-RBP"              :none            :dot
+                        "UBP-RBP"              :cross            :solid
                         "C-RBP"                :none            :dot
                         "C&R-RBP"              :rect            :solid
                         "C&DR-RBP"             :circle          :solid
-                        # "C&DR-RBP 4"      :cross           :solid
                  ]
 directory = "./Saved Data/2026-02-25T16:49:27.203/"
 liminf = -3.5
@@ -40,8 +37,8 @@ p1 = plot()
 p2 = plot()
 
 
-colors = [1, 2, 3, 4, 5, 15, :gray, :black, :black, 11, 11, 14, 13, 14]
-marker_sizes = [4,4,4,4,5,5,3,4,3,3,4,3,4,4]
+colors = [1, 2, 3, 4, 5, 15, :gray, :black, 11, 11, 14, 13, 14]
+marker_sizes = [4,4,4,4,5,5,3,3,3,4,3,4,4]
 
 # plotlyjs()
 

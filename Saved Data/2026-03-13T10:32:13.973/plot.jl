@@ -20,14 +20,11 @@ modes_markers_lines =  ["Flooding"             :none            :solid
                         "RD-RBP"               :utriangle       :solid                
                         "NW-RBP"               :star5           :solid         
                         "SVNF"                 :diamond         :solid
-                        # "D-SVNF"               :diamond         :solid
                         "List-RBP"             :circle          :solid
-                        "CI-RBP"               :cross            :solid
-                        "UBP-RBP"              :none            :dot
+                        "UBP-RBP"              :cross           :solid
                         "C-RBP"                :none            :dot
                         "C&R-RBP"              :rect            :solid
                         "C&DR-RBP"             :circle          :solid
-                        # "C&DR-RBP 4"      :cross           :solid
                  ]
 directory = "./Saved Data/2026-03-13T10:32:13.973/"
 liminf = -3.5
@@ -40,7 +37,8 @@ p1 = plot()
 p2 = plot()
 
 
-colors = [1, 2, 3, 4, 5, 15, :gray, :black, :black, 11, 11, 14, 13, 14]
+colors = [1, 2, 3, 4, 5, 15, :gray, #:black,
+ :black, 11, 11, 14, 13, 14]
 marker_sizes = [4,4,4,4,5,5,3,4,3,3,4,3,4,4]
 
 # plotlyjs()

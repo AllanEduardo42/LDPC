@@ -17,9 +17,7 @@ include("OV-RBP.jl")
 include("E_NV_RBP.jl")
 include("List-RBP.jl")
 include("SVNF.jl")
-include("D-SVNF.jl")
 include("NW-RBP.jl")
-include("RPD.jl")
 include("CI-RBP.jl")
 include("UBP-RBP.jl")
 include("RBP_D1VN.jl")
@@ -169,21 +167,15 @@ function
 
     phi = (bptype == "TABL") ? lookupTable() : nothing
 
-    if algorithm == "RPD" || test
+    if test
         syndrome = Vector{Bool}(undef,M)
-    end
-
-    if algorithm == "RPD"
-        oldLr = Matrix{Float64}(undef,M,N)
-        f = Vector{Int}(undef,N)
     end
 
 ############################### RBP PREALLOCATIONS #############################
     
     # RBP switchs 
     RBP_based = algorithm != "Flooding" && 
-                algorithm != "LBP"      && 
-                algorithm != "RPD"
+                algorithm != "LBP"      
 
     if RBP_based
 
@@ -241,9 +233,7 @@ function
                 switch_C_DR = true
             end
         elseif algorithm == "NW-RBP"
-            num_reps = M
-        elseif algorithm == "D-SVNF"
-            u = zeros(Bool,N)    
+            num_reps = M  
         elseif algorithm == "List-RBP"
             listsize = listsizes[1]
             list = Vector{Float64}(undef,listsize+1)
@@ -332,11 +322,7 @@ function
         end
 
         ### 6) init the V2C matrix
-        if algorithm == "RPD"
-            init_V2C!(V2C,prior_LLRs,Nv,0.0)
-        else
-            init_V2C!(V2C,prior_LLRs,Nv,msum_factor)
-        end
+        init_V2C!(V2C,prior_LLRs,Nv,msum_factor)
         # print info if in test algorithm
         if test && printtest
             println()
@@ -426,9 +412,7 @@ function
                     if C[vj] && (p == max_upc)  # every VN in C1 is in C
                         C1[vj] = true
                     end
-                end  
-            else
-                # D-SVNF: do nothing          
+                end       
             end
         end
 
@@ -540,24 +524,6 @@ function
                         rbp_not_converged,
                         twoLs,
                         N
-                    )
-                elseif algorithm == "D-SVNF"
-                    rbp_not_converged = D_SVNF!(
-                        bitvector,
-                        V2C,
-                        C2V,
-                        prior_LLRs,
-                        Nc,
-                        Nv,
-                        phi,
-                        msum_factor,
-                        msum2,
-                        num_reps,
-                        newC2V,
-                        Residues,
-                        rbp_not_converged,
-                        N,
-                        u
                     )
                 elseif algorithm == "List-RBP"
                     rbp_not_converged = List_RBP!(
@@ -710,28 +676,6 @@ function
                     phi,
                     msum_factor
                     )
-            elseif algorithm == "RPD"
-
-                for ci in eachindex(Nc)
-                    for vj in Nc[ci]
-                        li = LinearIndices(C2V)[ci,vj]
-                        oldLr[li] = C2V[li]
-                    end
-                end
-
-                RPD!(
-                    bitvector,
-                    V2C,
-                    C2V,
-                    prior_LLRs,
-                    Nc,
-                    Nv,
-                    phi,
-                    msum_factor,
-                    oldLr,
-                    syndrome,
-                    f
-                )
             end            
 
             # Evalute the bit error vector
