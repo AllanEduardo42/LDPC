@@ -21,18 +21,18 @@ function
         for ci in eachindex(Nc)
             Nci = Nc[ci]
             for vj in Nci
-                Lr[ci,vj] = calc_Lr(Nci,ci,vj,Lq,msum_factor)
+                Lr[ci,vj] = calc_C2V(Nci,ci,vj,Lq,msum_factor)
             end
         end
 
         # Lq update
         for vj in eachindex(Nv)
             Nvj = Nv[vj]
-            Ld = calc_Ld(vj,Nvj,Lf,Lr)
+            Ld = calc_post_LLR(vj,Nvj,Lf,Lr)
             bitvector[vj] = signbit(Ld)
             for ci in Nvj
                 li = LinearIndices(Lq)[ci,vj]
-                Lq[li] = tanhLq(Ld,Lr[li],msum_factor)
+                Lq[li] = tanh_V2C(Ld,Lr[li],msum_factor)
             end
         end 
     end

@@ -74,13 +74,13 @@ CI_GAMMA = 1.0
 MAXITER::Int = 30
 
 ### EbN0
-EbN0 = [2.5]
+EbN0 = [2.4]
 # EbN0 = [1.0, 1.5, 2.0, 3.0]
 # EbN0 = [1.0, 1.5, 2.0, 2.5, 3.0]
 
 ### Number of Monte Carlo Trials
 # TRIALS = [2*12_800]
-TRIALS = [1_280_000]
+TRIALS = [2_560_000]
 # TRIALS = [128, 1280, 12800, 128000]
 # TRIALS = [512, 2*1280, 2*12_800, 2*12_800_000]
 # TRIALS = [512, 2*1280, 2*12_800, 1_280_000, 2*12_800_000]
@@ -133,38 +133,38 @@ MAXITERS[i] = MAXITER
 
 # LBP
 i += 1
-ACTIVE[i] = 0
+ACTIVE[i] = 1
 BPTYPES[i] = ["TANH"]
 MAXITERS[i] = MAXITER
 
 # RBP
 i += 1
-ACTIVE[i] = 0
+ACTIVE[i] = 1
 BPTYPES[i] = ["TANH"]
 MAXITERS[i] = MAXITER
 
 # RD-RBP
 i += 1
-ACTIVE[i] = 0
+ACTIVE[i] = 1
 BPTYPES[i] = ["TANH"]
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
 
 # NW-RBP
 i += 1
-ACTIVE[i] = 0
+ACTIVE[i] = 1
 BPTYPES[i] = ["TANH"]
 MAXITERS[i] = MAXITER
 
 # SVNF
 i += 1
-ACTIVE[i] = 0
+ACTIVE[i] = 1
 BPTYPES[i] = ["TANH"]
 MAXITERS[i] = MAXITER
 
 # List-RBP
 i += 1
-ACTIVE[i] = 0
+ACTIVE[i] = 1
 BPTYPES[i] = ["TANH"]
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
@@ -175,21 +175,21 @@ LISTSIZES[2] = 2
 
 # C-RBP
 i += 1
-ACTIVE[i] = 0
+ACTIVE[i] = 1
 BPTYPES[i] = ["TANH"]
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
 
 # C&R-RBP
 i += 1
-ACTIVE[i] = 0
+ACTIVE[i] = 1
 BPTYPES[i] = ["TANH"]
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
 
 # C&DR-RBP
 i += 1
-ACTIVE[i] = 0
+ACTIVE[i] = 1
 BPTYPES[i] = ["TANH"]
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
@@ -208,19 +208,19 @@ MAXITERS[i] = MAXITER
 
 # CI-RBP
 i += 1
-ACTIVE[i] = 0
+ACTIVE[i] = 1
 BPTYPES[i] = ["TANH"]
 MAXITERS[i] = MAXITER
 
 # UBP-RBP
 i += 1
-ACTIVE[i] = 0
+ACTIVE[i] = 1
 BPTYPES[i] = ["TANH"]
 MAXITERS[i] = MAXITER
 
 # RBP-D1VN
 i += 1
-ACTIVE[i] = 0
+ACTIVE[i] = 1
 BPTYPES[i] = ["TANH"]
 MAXITERS[i] = MAXITER
 
@@ -229,9 +229,9 @@ MAXITERS[i] = MAXITER
 # Transmitted message length
 GG::Int = 576
 # Effective Rate
-RR::Float64 = 1/2                       # WiMAX compatibility offset
+RR::Float64 = 1/3                       # WiMAX compatibility offset
 # LDPC protocol: NR5G = NR-LDPC (5G); PEG = PEG; WiMAX = IEEE80216e;
-PROTOCOL::String = "WiMAX"
+PROTOCOL::String = "NR5G"
     LAMBDA = [0.21, 0.25, 0.25, 0.29, 0]
     RO = [1.0, 0, 0, 0, 0, 0]
 
