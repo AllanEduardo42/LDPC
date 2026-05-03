@@ -71,35 +71,6 @@ end
 NC = make_cn2vn_list(HH)
 NV = make_vn2cn_list(HH)
 
-STR = 
-"""############################### LDPC parameters ################################
-LDPC Protocol: """
-if PROTOCOL == "NR5G"
-    STR *= "NR-LDPC (5G), Zc = $(NR_LDPC_DATA.Zc), BG = $(NR_LDPC_DATA.bg)"
-elseif PROTOCOL == "PEG"
-    STR *= "PEG"
-elseif PROTOCOL == "WiMAX"
-    STR *= "IEEE80216e (WiMAX)"
-end
-STR *= "\nParity Check Matrix: $MM x $NN"
-println(STR)
-if SAVE
-    println(FILE,STR)
-end
-
-display(sparse(HH))
-
-STR = """
-
-Graph girth = $GIRTH
-Effective rate = $(round(RR,digits=3))
-Code length = $GG
-"""
-println(STR)
-if SAVE
-    println(FILE,STR)
-end
-
 # Number of Threads
 if !TEST
     NTHREADS = Threads.nthreads()
@@ -114,17 +85,17 @@ for i in 1:NTHREADS
     RGN_SEEDS[i] = SEED + i - 1
 end
 
-if PROF
-    
-end
-
-
 ############################## PREPARE SIMULATION ##############################
 if TEST
+
+    print_simulation_details(ERRORS_TEST,MAXITER_TEST,EbN0_TEST)
+
     LRM = Dict()
     LQM = Dict()
+    COUNT = 0
     for i in eachindex(ACTIVE)
         if ACTIVE[i]
+            global COUNT += 1
             if DECAYS[i][1] == 0.0
                 global DECAY_TEST = 0.0
             end
@@ -134,7 +105,7 @@ if TEST
                     # evaluate expr for profile view
                     prog = "@profview (prepare_simulation([EbN0_TEST],
                             ALGORITHMS[i],
-                            [TRIALS_TEST],
+                            TRIALS_TEST,
                             MAXITER_TEST,
                             bptype,
                             DECAY_TEST))"
@@ -142,9 +113,10 @@ if TEST
                     eval(expr)
                 else
                 LRM[ALGORITHMS[i]], LQM[ALGORITHMS[i]] = prepare_simulation(
+                                                    COUNT,
                                                     [EbN0_TEST],
                                                     ALGORITHMS[i],
-                                                    [TRIALS_TEST],
+                                                    ERRORS_TEST,
                                                     MAXITER_TEST,
                                                     bptype,
                                                     DECAY_TEST)
@@ -153,26 +125,32 @@ if TEST
         end
     end
 else
+
+    print_simulation_details(ERRORS,MAXITER,EbN0)
+
     FER = Dict()
     BER = Dict()
+    COUNT = 0
     for i in eachindex(ACTIVE)
         if ACTIVE[i]
+            global COUNT += 1
             algo = ALGORITHMS[i]
-            if algo == "List-RBP"
-                algo *= " ($(LISTSIZES[1]),$(LISTSIZES[2]))"
-            end
+            # if algo == "List-RBP"
+            #     algo *= " ($(LISTSIZES[1]),$(LISTSIZES[2]))"
+            # end
             for bptype in BPTYPES[i]
                 if bptype != "TANH"
                     algo *= " ($bptype)"
                 end
                 for decay in DECAYS[i]
-                    if decay != 0.0
+                    if length(DECAYS[i]) > 1 && decay != 0.0
                         algo *= " $decay"
                     end
                     fer, ber = prepare_simulation(
+                                            COUNT,
                                             EbN0,
                                             ALGORITHMS[i],
-                                            TRIALS,
+                                            ERRORS,
                                             MAXITERS[i],
                                             bptype,
                                             decay)

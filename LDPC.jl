@@ -51,8 +51,7 @@ SEED::Int = 1111
 TEST::Bool = false
 PRIN::Bool = true
 PROF::Bool = false
-STOP::Bool = true # stop simulation at zero syndrome (if true, BER curves are
-# not printed)
+STOP::Bool = true # stop simulation at zero syndrome
 RAYL::Bool = false
 
 ############################### TEST PARAMETERS ################################
@@ -61,29 +60,23 @@ RAYL::Bool = false
 MAXITER_TEST::Int = 1
 ### EbN0
 EbN0_TEST::Float64 = 2.0
-### Number of Monte Carlo Trials
-TRIALS_TEST::Int = 1
+### Maximum number of Frame Errors
+ERRORS_TEST::Int = 1
 ### Residual Decay factors
 DECAY_TEST::Float64 = 1.0
 ### CI gamma
-CI_GAMMA = 1.0
+CI_GAMMA = 0.15
 
 ################################## PARAMETERS ##################################
 
 ### Maximum number of BP iterations
-MAXITER::Int = 30
+MAXITER::Int = 20
 
 ### EbN0
-EbN0 = [2.4]
-# EbN0 = [1.0, 1.5, 2.0, 3.0]
-# EbN0 = [1.0, 1.5, 2.0, 2.5, 3.0]
+EbN0 = [1.0, 1.5, 2.0, 2.5, 3.0]
 
-### Number of Monte Carlo Trials
-# TRIALS = [2*12_800]
-TRIALS = [2_560_000]
-# TRIALS = [128, 1280, 12800, 128000]
-# TRIALS = [512, 2*1280, 2*12_800, 2*12_800_000]
-# TRIALS = [512, 2*1280, 2*12_800, 1_280_000, 2*12_800_000]
+### Maximum number of Frame Errors (at the last iteration)
+ERRORS = 36*7
 
 ### Residual Decay factors
 FACTORS = [0.85]
@@ -220,16 +213,16 @@ MAXITERS[i] = MAXITER
 
 # RBP-D1VN
 i += 1
-ACTIVE[i] = 1
+ACTIVE[i] = 0
 BPTYPES[i] = ["TANH"]
 MAXITERS[i] = MAXITER
 
 ######################## CODE LENGTH, RATE AND PROTOCOL ########################
 
 # Transmitted message length
-GG::Int = 576
+GG::Int = 1248
 # Effective Rate
-RR::Float64 = 1/3                       # WiMAX compatibility offset
+RR::Float64 = 1/2                       
 # LDPC protocol: NR5G = NR-LDPC (5G); PEG = PEG; WiMAX = IEEE80216e;
 PROTOCOL::String = "NR5G"
     LAMBDA = [0.21, 0.25, 0.25, 0.29, 0]

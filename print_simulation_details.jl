@@ -1,48 +1,64 @@
-function 
-    print_simulation_details(
-        test::Bool,
-        trials::Vector{Int},
-        algorithm::String,
-        bptype::String,
-        maxiter::Int,
-        ebn0::Vector{Float64},
-        decay::Float64,
-    )
-    if test
-        str =
-        """###################### Starting simulation (Testing algorithm) ######################
-        """
+function print_simulation_details(
+    errors::Int,
+    maxiter::Int,
+    ebn0::Union{Float64,Vector{Float64}}
+)
+    str = """
+********************************************************************************
 
-    else
-        str = 
-        """############################# Starting simulation ##############################
-        """
+                           LDPC PERFORMANCE SIMULATION                          
+
+********************************************************************************
+
+############################### LDPC parameters ################################
+
+LDPC Protocol: """
+
+    if PROTOCOL == "NR5G"
+        str *= "NR-LDPC (5G), Zc = $(NR_LDPC_DATA.Zc), BG = $(NR_LDPC_DATA.bg)"
+    elseif PROTOCOL == "PEG"
+        str *= "PEG"
+    elseif PROTOCOL == "WiMAX"
+        str *= "IEEE80216e (WiMAX)"
     end
-    str *= """\nNumber of trials: $trials
-    Message passing protocol: $algorithm (using """
-    if bptype == "MKAY"
-        str *="Mckay's SPA method)"
-    elseif bptype == "TANH"
-        str *="LLR-SPA calculated by tanh function)"
-    elseif bptype == "TABL"
-        str *="LLR-SPA precalculated in look-up table)"
-    elseif bptype == "MSUM"
-        str *="LLRs calculated by min-sum algorithm)"
-    end
-    str *=
-    """\nMaximum number of iterations: $maxiter
-    Number of threads (multithreading): $NTHREADS
-    Eb/No (dB): $ebn0
-    Stop at zero syndrome ? $STOP"""
-    if decay != 0.0
-        str *= "\nResidual decaying factor: $decay"
-    end
-    if algorithm == "List-RBP"
-        str *= "\nList 1 size: $(LISTSIZES[1])\nList 2 size: $(LISTSIZES[2])"
-    end
-    str *= "\n"
+    str *= "\nParity Check Matrix: $MM x $NN\n"
+
     println(str)
     if SAVE
         println(FILE,str)
     end
+
+    display(sparse(HH))
+
+    str = """
+
+Graph girth = $GIRTH
+Effective rate = $(round(RR,digits=3))
+Code length = $GG    
+
+############################ Simulation parameters #############################
+
+Maximum number of frame errors: $errors
+Maximum number of iterations: $maxiter
+Number of threads (multithreading): $NTHREADS
+Eb/No (dB): $ebn0
+Stop at zero syndrome ? $STOP
+
+"""
+
+    if TEST
+        str *= """######################### Starting simulation (Testing) ########################
+        
+        """
+    else
+        str *= """############################# Starting simulation ##############################
+
+        """
+    end
+    
+    print(str)
+    if SAVE
+        print(FILE,str)
+    end
+
 end

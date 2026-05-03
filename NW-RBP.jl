@@ -18,9 +18,10 @@ function
         msum2::Bool,
         num_reps::Int,
         newC2V::Matrix{Float64},
-        alpha::Vector{Float64},
-        bp_not_converged::Bool        
+        alpha::Vector{Float64}      
     )
+
+    rbp_not_converged = true
 
     @fastmath @inbounds for m in 1:num_reps
 
@@ -30,7 +31,7 @@ function
         cimax = findmaxnode(alpha)
         # display(findmax(alpha))
         if cimax == 0
-            bp_not_converged = false
+            rbp_not_converged = false
             break # i.e., BP has converged
         end
 
@@ -56,9 +57,9 @@ function
                         li = LinearIndices(C2V)[ci,vj]
                         newc2v = calc_C2V(Nci,ci,vj,V2C,msum_factor)
                         newC2V[li] = newc2v
-                        residue = abs(newc2v - C2V[li])
-                        if residue > alp
-                            alp = residue
+                        residual = abs(newc2v - C2V[li])
+                        if residual > alp
+                            alp = residual
                         end
                     end
                     alpha[ci] = alp
@@ -67,5 +68,5 @@ function
         end
     end
 
-    return bp_not_converged
+    return rbp_not_converged
 end

@@ -18,13 +18,14 @@ function
         msum2::Bool,
         num_reps::Int,
         newC2V::Matrix{Float64},
-        Residues::Matrix{Float64},
+        Residuals::Matrix{Float64},
         alpha::Vector{Float64},
-        rbp_not_converged::Bool,
         Dn::Vector{Float64},
         Prob0::Vector{Float64},
         gamma::Float64
     )
+
+    rbp_not_converged = true
     
     # for e in 1:num_reps
     @inbounds @fastmath for e in 1:num_reps
@@ -39,9 +40,9 @@ function
         end        
             
         if Dn[vjmax] < gamma            
-            cimax, vjmax = findmaxedge(Residues,alpha,Nc)
+            cimax, vjmax = findmaxedge(Residuals,alpha,Nc)
         else
-            cimax = find_cimax(Residues,Nv,vjmax)
+            cimax = find_cimax(Residuals,Nv,vjmax)
         end
         if cimax == 0.0
             rbp_not_converged = false
@@ -55,8 +56,8 @@ function
         else
             C2V[limax] = newC2V[limax]
         end
-        # 3) set maximum residue to zero
-        Residues[limax] = 0.0
+        # 3) set maximum residual to zero
+        Residuals[limax] = 0.0
 
         # 4) update LLR[vjmax]
         Nvjmax = Nv[vjmax]
@@ -69,9 +70,9 @@ function
         # update alpha[cimax]
         maxalp = 0.0
         for vj in Nc[cimax]
-            residue = Residues[cimax,vj]
-            if residue > maxalp
-                maxalp = residue
+            residual = Residuals[cimax,vj]
+            if residual > maxalp
+                maxalp = residual
             end
         end
         alpha[cimax] = maxalp
@@ -80,20 +81,20 @@ function
             if ci ≠ cimax
                 # 5) update Nv messages V2C[ci,vnmax]
                 li = LinearIndices(V2C)[ci,vjmax]
-                alp = Residues[li]
+                alp = Residuals[li]
                 V2C[li] = tanh_V2C(post_LLR,C2V[li],msum_factor)
-                # 6) calculate Residues
+                # 6) calculate Residuals
                 Nci = Nc[ci]
                 for vj in Nci
                     if vj ≠ vjmax
                         li = LinearIndices(C2V)[ci,vj]
                         newc2v = calc_C2V(Nci,ci,vj,V2C,msum_factor)
                         newC2V[li] = newc2v
-                        residue = abs(newc2v - C2V[li])
-                        if residue > alp
-                            alp = residue
+                        residual = abs(newc2v - C2V[li])
+                        if residual > alp
+                            alp = residual
                         end
-                        Residues[li] = residue
+                        Residuals[li] = residual
                         calc_Dn!(Dn,Prob0,newC2V,prior_LLRs,vj,Nv)                    
                     end
                 end
@@ -149,7 +150,7 @@ end
 
 function 
     find_cimax(
-        Residues::Matrix{Float64},
+        Residuals::Matrix{Float64},
         Nv::Vector{Vector{Int}},
         vjmax::Int
     )
@@ -157,9 +158,9 @@ function
     maxresidue = 0.0
     cimax = 0
     @inbounds @fastmath for ci in Nv[vjmax]
-        residue = Residues[ci,vjmax]
-        if residue > maxresidue
-            maxresidue = residue
+        residual = Residuals[ci,vjmax]
+        if residual > maxresidue
+            maxresidue = residual
             cimax = ci
         end
     end

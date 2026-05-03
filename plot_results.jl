@@ -9,8 +9,8 @@ MARKERS = [:none,:none,:none,:dtriangle,:circle,:rect,:utriangle,:diamond,:cross
 plotlyjs()
 # gr()
 
-LIMFER = 1 ./(TRIALS)
-LIMBER = 1 ./((TRIALS)*NN)
+# LIMFER = 1 ./(TRIALS)
+# LIMBER = 1 ./((TRIALS)*NN)
 
 LABELS = Vector{String}()
 FERMAX = zeros(length(EbN0),NUM_MODES)
@@ -25,15 +25,15 @@ for j=1:2
         for i in eachindex(ACTIVE)
             if ACTIVE[i]
                 algo = ALGORITHMS[i]
-                if algo == "List-RBP"
-                    algo *= " ($(LISTSIZES[1]),$(LISTSIZES[2]))"
-                end
+                # if algo == "List-RBP"
+                #     algo *= " ($(LISTSIZES[1]),$(LISTSIZES[2]))"
+                # end
                 for bptype in BPTYPES[i]
                     if bptype != "TANH"
                         algo *= " ($bptype)"
                     end
                     for decay in DECAYS[i]
-                        if decay != 0.0
+                        if length(DECAYS[i]) > 1 && decay != 0.0
                             algo *= " $decay"
                         end
                         if j == 1 && k == 1
@@ -41,10 +41,10 @@ for j=1:2
                         end
                         if FB[j] == "F"
                             y = log10.(FER[algo][:,k])
-                            lim = log10(LIMFER[k])
+                            # lim = log10(LIMFER[k])
                         else
                             y = log10.(BER[algo][:,k])
-                            lim = log10(LIMBER[k])
+                            # lim = log10(LIMBER[k])
                         end
                         x = 1:MAXITERS[i]
                         if j == 1
@@ -59,7 +59,7 @@ for j=1:2
                             label=algo,
                             lw=2,
                             title=title,
-                            ylims=(lim,0),
+                            # ylims=(lim,0),
                             size = (700,500)
                         )
                     end
@@ -72,7 +72,7 @@ end
 
 LABELS = permutedims(LABELS)
 
-TITLE = "ER $PROTOCOL (G = $GG, R = $(Rational(RR)), Iter = $MAXITER)"
+TITLE = "ER $PROTOCOL (G = $GG, R = $(round(RR,digits=3)), Iter = $MAXITER)"
 
 if length(EbN0) > 1
 

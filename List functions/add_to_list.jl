@@ -1,36 +1,36 @@
 ################################################################################
 # Allan Eduardo Feitosa
 # 2 Mar 2025
-# Add the residue
+# Add the residual to the list
 
 # List-RBP
 function add_to_list!(
         inlist::Union{Matrix{Bool},Nothing},
         list::Vector{Float64},
         coords::Matrix{Int},
-        residue::Float64,
+        residual::Float64,
         li::Int,
         ci::Int,
         vj::Int,
         listsize::Int
     )
 
-    @fastmath @inbounds if residue > list[listsize]
+    @fastmath @inbounds if residual > list[listsize]
 
-        if residue ≥ list[1]
+        if residual ≥ list[1]
             i = 1
         else
             d = listsize >> 1
             i = d
             while d > 1
                 d >>= 1
-                if residue ≥ list[i]
+                if residual ≥ list[i]
                     i -= d
                 else
                     i += d
                 end
             end
-            if residue < list[i]
+            if residual < list[i]
                 i += 1
             end
         end
@@ -48,7 +48,7 @@ function add_to_list!(
         coords[1,i] = ci
         coords[2,i] = vj
         coords[3,i] = li
-        list[i] = residue        
+        list[i] = residual        
     end
 end
 

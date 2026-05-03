@@ -22,7 +22,7 @@ include("CI-RBP.jl")
 include("UBP-RBP.jl")
 include("RBP_D1VN.jl")
 include("./List functions/init_list.jl")
-include("./RBP functions/init_RBP.jl")
+include("./RBP functions/init_residuals.jl")
 include("update_C2V.jl")
 include("update_V2C.jl")
 include("NR LDPC/NR_LDPC_functions.jl")
@@ -48,7 +48,7 @@ function
         LS::Int,                        # NR5G and WiMAX matrix liftsize
         algorithm::String,              # BP algorithm (flooding, RBP etc.)
         bptype::String,                 # Type of BP implementation (FAST, TANH etc.)
-        trials::Int,                    # Number of trials
+        max_errors::Int,                # Number of max frame errors
         maxiter::Int,                   # Maximum number of BP iterations
         stop::Bool,                     # "true" if routine stops at zero syndrome
         rayleigh::Bool,
@@ -58,8 +58,8 @@ function
         ci_gamma::Float64,              # CI gamma threshold
         rgn_seed::Int,                  # random seed to generate noise and message
         test::Bool,                     # if "true", perform test algorithm
-        printtest::Bool                # if "true", print test algorithm results
-    )::Tuple{Union{Matrix{Float64},Nothing},Union{Matrix{Float64},Nothing},Vector{Int},Vector{Int}}
+        printtest::Bool                 # if "true", print test algorithm results
+    )
     
 ################################## CONSTANTS ###################################
 
@@ -205,9 +205,9 @@ function
         newC2V = Matrix{Float64}(undef,M,N)
 
         if algorithm != "OV-RBP"
-            Residues = Matrix{Float64}(undef,M,N)
+            Residuals = Matrix{Float64}(undef,M,N)
         else
-            Residues = Vector{Float64}(undef,N)
+            Residuals = Vector{Float64}(undef,N)
         end
 
         if RBP_decay
@@ -272,8 +272,13 @@ function
 
 ################################## MAIN LOOP ###################################
     
-    # for trial in 1:trials
-    @fastmath @inbounds for trial in 1:trials
+    count_errors = 0
+    count_trials = 0
+
+    #while count_errors < max_errors
+    @fastmath @inbounds while count_errors < max_errors
+
+        count_trials += 1
 
         ### 1) generate the random message
         rand!(rgn,msg,Bool)
@@ -301,13 +306,6 @@ function
 
         ### 3) sum the noise to the modulated cword to produce the received signal
         received_signal!(signal,cword,G,twoLs,stdev,rgn,rayleigh,fading,x1,x2)
-
-        # print info if in test algorithm
-        if test && printtest
-            println("Trial #$trial:")
-            print_test("Message",msg)
-            print_test("Transmitted codeword",cword[twoLs+1:end])
-        end
         
         ### 4) reset simulation variables
         decoded .= false
@@ -323,10 +321,17 @@ function
 
         ### 6) init the V2C matrix
         init_V2C!(V2C,prior_LLRs,Nv,msum_factor)
-        # print info if in test algorithm
-        if test && printtest
+
+        ### 6.5) print test info
+        if printtest
+            println("________________________________________________________________________________")
             println()
-            println("### Iteration #0 ###")
+            println("                                    TRIAL #$count_trials")
+            println("________________________________________________________________________________")
+            print_test("Message",msg)
+            print_test("Transmitted codeword",cword[twoLs+1:end])
+            println()
+            println("                              ### Iteration #0 ###                              ")
             calc_syndrome!(syndrome,bitvector,Nc)
             biterror .= (bitvector .≠ cword)
             print_test("Syndrome",syndrome)  
@@ -344,7 +349,7 @@ function
             end
 
             if RBP_init
-                init_residues!(V2C,Nc,phi,newC2V,alpha,Residues,msum_factor)
+                init_residuals!(V2C,Nc,phi,newC2V,alpha,Residuals,msum_factor)
                 if algorithm == "CI-RBP"
                     for vj in eachindex(Nv)
                         Prob0[vj] = calc_prob(prior_LLRs[vj])
@@ -357,18 +362,18 @@ function
                 resetmatrix!(inlist,Nv,false)
                 local_list .= 0.0
                 local_coords .= 0
-                init_list!(V2C,Nc,phi,msum_factor,newC2V,inlist,
-                                                Residues,list,coords,listsize)  
+                init_list!(V2C,Nc,phi,msum_factor,newC2V,inlist,Residuals,list,
+                                                                coords,listsize)  
             elseif algorithm == "VC-RBP"
                 for vj in eachindex(Nv)
                     alp = 0.0
                     for ci in Nv[vj]
                         li = LinearIndices(V2C)[ci,vj]
-                        residue = abs(V2C[li])
-                        if residue > alp
-                            alp = residue
+                        residual = abs(V2C[li])
+                        if residual > alp
+                            alp = residual
                         end
-                        Residues[li] = residue
+                        Residuals[li] = residual
                     end
                     alpha[vj] = alp
                 end
@@ -389,7 +394,7 @@ function
                     oldllr = LLRs[vj]
                     newllr = calc_post_LLR(vj,Nv[vj],prior_LLRs,newC2V)
                     newLLRs[vj] = newllr
-                    Residues[vj] = abs(newllr - oldllr)        
+                    Residuals[vj] = abs(newllr - oldllr)        
                     if sign(oldllr)*sign(newllr) < 0
                         C[vj] = true
                         count_upc = 0
@@ -417,17 +422,13 @@ function
         end
 
         ### 8) BP routine
-        zero_syn = false
-        rbp_not_converged = true
+
+        rbp_not_converged = true        # avoids useless iterations if false
 
         iter = 0
-        while iter < maxiter && rbp_not_converged && !zero_syn
+        while iter < maxiter
 
             iter += 1
-
-            if test && printtest  
-                println("### Iteration #$iter ###")
-            end
     
             if RBP_based
                 if algorithm == "RBP"
@@ -443,9 +444,8 @@ function
                         msum2,
                         num_reps,
                         newC2V,
-                        Residues,
-                        alpha,
-                        rbp_not_converged
+                        Residuals,
+                        alpha
                         )
                 elseif algorithm == "RD-RBP"
                     rbp_not_converged = RD_RBP!(
@@ -460,11 +460,10 @@ function
                         msum2,
                         num_reps,
                         newC2V,
-                        Residues,
+                        Residuals,
                         alpha,
                         decayfactor,
-                        Factors,
-                        rbp_not_converged
+                        Factors
                         )
                 elseif RBP_consensus
                     if switch_C_DR && iter ≥ C_DR_iter
@@ -484,11 +483,10 @@ function
                         msum2,
                         num_reps,
                         newC2V,
-                        Residues,
+                        Residuals,
                         alpha,
                         decayfactor,
                         Factors,
-                        rbp_not_converged,
                         switch_R
                         )
                 elseif algorithm == "NW-RBP"
@@ -504,8 +502,7 @@ function
                         msum2,
                         num_reps,
                         newC2V,
-                        alpha,
-                        rbp_not_converged                    
+                        alpha                    
                     )
                 elseif algorithm == "SVNF"
                     rbp_not_converged = SVNF!(
@@ -520,8 +517,7 @@ function
                         msum2,
                         num_reps,
                         newC2V,
-                        Residues,
-                        rbp_not_converged,
+                        Residuals,
                         twoLs,
                         N
                     )
@@ -538,10 +534,9 @@ function
                         msum2,
                         num_reps,
                         newC2V,
-                        Residues,
+                        Residuals,
                         decayfactor,
                         Factors,
-                        rbp_not_converged,
                         coords,
                         inlist,
                         list,
@@ -562,9 +557,8 @@ function
                         msum_factor,
                         msum2,
                         num_reps,
-                        Residues,
-                        alpha,                    
-                        rbp_not_converged
+                        Residuals,
+                        alpha
                     )
                 elseif algorithm == "OV-RBP"
                     rbp_not_converged = OV_RBP!(
@@ -579,8 +573,7 @@ function
                         msum2,
                         num_reps,
                         newC2V,
-                        Residues,
-                        rbp_not_converged,                    
+                        Residuals,                    
                         LLRs,
                         newLLRs,
                         C,
@@ -601,9 +594,8 @@ function
                         msum2,
                         num_reps,
                         newC2V,
-                        Residues,
+                        Residuals,
                         alpha,
-                        rbp_not_converged,
                         Dn,
                         Prob0,
                         ci_gamma
@@ -621,30 +613,28 @@ function
                         msum2,
                         num_reps,
                         newC2V,
-                        Residues,
+                        Residuals,
                         alpha,
-                        rbp_not_converged,
                         UBP
                         )
                     elseif algorithm == "RBP-D1VN"
                         rbp_not_converged = RBP_D1VN!(
-                            bitvector,
-                            V2C,
-                            C2V,
-                            prior_LLRs,
-                            Nc,
-                            Nv,
-                            phi,
-                            msum_factor,
-                            msum2,
-                            num_reps,
-                            newC2V,
-                            Residues,
-                            alpha,
-                            rbp_not_converged,
-                            F,
-                            degree_vn
-                            )
+                        bitvector,
+                        V2C,
+                        C2V,
+                        prior_LLRs,
+                        Nc,
+                        Nv,
+                        phi,
+                        msum_factor,
+                        msum2,
+                        num_reps,
+                        newC2V,
+                        Residuals,
+                        alpha,
+                        F,
+                        degree_vn
+                        )
                 else
                     throw(error(lazy"Invalid RBP-based Algorithm"))  
                 end
@@ -685,8 +675,9 @@ function
             # Evaluate BER
             ber[iter] = sum(biterror)
 
-            # print info if in test algorithm
-            if test && printtest        
+            # print test info
+            if printtest
+                println("                              ### Iteration #$iter ###                              ")       
                 calc_syndrome!(syndrome,bitvector,Nc) 
                 print_test("Syndrome",syndrome)  
                 println("Syndrome rate: $(sum(syndrome))/$M")
@@ -695,30 +686,33 @@ function
                 println()
             end
             if stop
-            # Verify if all check equations are satisfied (syndrome vector is zero)
+            # Verify if all check equations are satisfied (syndrome vector == zero)
                 zero_syn = iszerosyndrome(bitvector,Nc)
-                if zero_syn || !rbp_not_converged
+                if zero_syn
                     if iszero(biterror)
                         decoded[iter] = true
                     end
-                    if test && printtest
-                        if zero_syn
-                            println("#### Zero Syndrome at iteration $iter ####")
-                        end
-                        if !rbp_not_converged
-                            println("#### BP converged at iteration $iter ####")
-                        end
+                    if printtest
+                        println("#### Algorithm stopped: zero syndrome at iteration $iter ####")
+                        println()
                     end
+                    break               # stop iterations
                 end
             else
                 if iszero(biterror)
                     decoded[iter] = true
                 end
             end
-
+            if !rbp_not_converged       # all residuals are zero
+                if printtest
+                    println("#### Algorithm stopped: BP converged at iteration $iter ####")
+                    println()
+                end
+                break
+            end
         end
 
-        if iter < maxiter
+        if iter < maxiter               # if the algorithm stopped
             for i = iter+1:maxiter
                 decoded[i] = decoded[iter]
                 ber[i] = ber[iter]
@@ -737,6 +731,20 @@ function
             sum_ber[i] += ber[i]
             sum_decoded[i] += decoded[i]
         end
+
+        if !decoded[maxiter]
+            count_errors += 1
+        end
+
+        if printtest
+            println("Frame Errors: $(count_errors)/$(max_errors)")
+            println()
+        end
+    end
+
+    if printtest
+        println("Monte Carlo trials ended: maximum number of frame errors reached.")
+        println("Total number of trials: $count_trials")
     end
 
     # MKAY compatibility
@@ -754,9 +762,9 @@ function
     end
 
     if test
-        return C2V, V2C, sum_decoded, sum_ber
+        return C2V, V2C, sum_decoded, sum_ber, count_trials
     else
-        return nothing, nothing, sum_decoded, sum_ber
+        return nothing, nothing, sum_decoded, sum_ber, count_trials
     end
 
 end

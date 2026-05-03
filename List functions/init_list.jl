@@ -12,7 +12,7 @@ function
         msum_factor::Union{Float64,Nothing},
         newC2V::Matrix{Float64},   
         inlist::Matrix{Bool},
-        Residues::Matrix{Float64},
+        Residuals::Matrix{Float64},
         list::Vector{Float64},
         coords::Matrix{Int},
         listsize::Int;
@@ -25,9 +25,9 @@ function
             li = LinearIndices(newC2V)[ci,vj]
             newlr = calc_C2V(Nci,ci,vj,V2C,msum_factor)
             newC2V[li] = newlr
-            residue = abs(newlr)
-            Residues[li] = residue
-            add_to_list!(inlist,list,coords,residue,li,ci,vj,listsize)
+            residual = abs(newlr)
+            Residuals[li] = residual
+            add_to_list!(inlist,list,coords,residual,li,ci,vj,listsize)
         end
     end
 end

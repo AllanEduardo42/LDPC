@@ -16,8 +16,7 @@ function
         msum2::Bool,
         num_reps::Int,
         newC2V::Matrix{Float64},
-        Residues::Vector{Float64},
-        rbp_not_converged::Bool,
+        Residuals::Vector{Float64},
         LLRs::Vector{Float64},
         newLLRs::Vector{Float64},
         C::Vector{Bool},
@@ -25,6 +24,8 @@ function
         upc::Vector{Int},
         max_upc::Int
     )
+
+    rbp_not_converged = true
 
     for e in 1:num_reps
 
@@ -35,9 +36,9 @@ function
             vjmax = 0
             for vj in eachindex(Nv)
                 if C1[vj]
-                    residue = Residues[vj]
-                    if residue > max_residue
-                        max_residue = residue
+                    residual = Residuals[vj]
+                    if residual > max_residue
+                        max_residue = residual
                         vjmax = vj
                     end
                 end
@@ -50,9 +51,9 @@ function
             vjmax = 0
             for vj in eachindex(Nv)
                 if C[vj]
-                    residue = Residues[vj]
-                    if residue > max_residue
-                        max_residue = residue
+                    residual = Residuals[vj]
+                    if residual > max_residue
+                        max_residue = residual
                         vjmax = vj
                     end
                 end
@@ -71,9 +72,9 @@ function
             max_residue = 0.0
             vjmax = 0
             for vj in eachindex(Nv)
-                residue = Residues[vj]
-                if residue > max_residue
-                    max_residue = residue
+                residual = Residuals[vj]
+                if residual > max_residue
+                    max_residue = residual
                     vjmax = vj
                 end
             end
@@ -107,7 +108,7 @@ function
 
 
         # 20
-        Residues[vjmax] = 0        
+        Residuals[vjmax] = 0        
 
         #21 - 23
         post_LLR = calc_post_LLR(vjmax,Nvjmax,prior_LLRs,C2V)
@@ -123,7 +124,7 @@ function
                     oldllr = LLRs[vj]
                     newllr = calc_post_LLR(vj,Nv[vj],prior_LLRs,newC2V)
                     newLLRs[vj] = newllr
-                    Residues[vj] = abs(newllr - oldllr)        
+                    Residuals[vj] = abs(newllr - oldllr)        
                     if sign(oldllr)*sign(newllr) < 0
                         C[vj] = true
                         count_upc = 0

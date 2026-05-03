@@ -16,11 +16,12 @@ function
         msum2::Bool,
         num_reps::Int,
         newC2V::Matrix{Float64},
-        Residues::Matrix{Float64},
-        rbp_not_converged::Bool,
+        Residuals::Matrix{Float64},
         twoLS::Int,
         N::Int      
     )
+
+    rbp_not_converged = true
 
     count = 0
     count_zeros = 0
@@ -35,9 +36,9 @@ function
 
             # display("vj = $vj")
 
-            # 1) Find largest residue and coordenates
+            # 1) Find largest residual and coordenates
             Nvj = Nv[vj]
-            cimax, vjmax = findmaxedge_SVNF(Residues,vj,Nvj,Nc)
+            cimax, vjmax = findmaxedge_SVNF(Residuals,vj,Nvj,Nc)
             if cimax ≠ 0
                 count_zeros = 0
 
@@ -52,8 +53,8 @@ function
                 
                 count += 1
                 
-                # 3) set maximum residue to zero
-                Residues[limax] = 0.0
+                # 3) set maximum residual to zero
+                Residuals[limax] = 0.0
 
                 # 4) Calculate post_LLR of vjmax and bitvector[vjmax]
                 Nvjmax = Nv[vjmax]
@@ -65,14 +66,14 @@ function
                         # 6) update Nv messages V2C[ci,vjmax]
                         li = LinearIndices(V2C)[ci,vjmax]
                         V2C[li] = tanh_V2C(post_LLR,C2V[li],msum_factor)
-                        # 7) calculate Residues
+                        # 7) calculate Residuals
                         Nci = Nc[ci]    
                         for vj in Nci
                             if vj ≠ vjmax
                                 li = LinearIndices(C2V)[ci,vj]
                                 newc2v = calc_C2V(Nci,ci,vj,V2C,msum_factor)
                                 newC2V[li] = newc2v
-                                Residues[li] = abs(newc2v - C2V[li])
+                                Residuals[li] = abs(newc2v - C2V[li])
                             end
                         end
                     end

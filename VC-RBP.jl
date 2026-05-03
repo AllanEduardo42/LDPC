@@ -17,33 +17,34 @@ function
         msum_factor::Union{Float64,Nothing},
         msum2::Bool,
         num_reps::Int,
-        Residues::Matrix{Float64},
-        alpha::Vector{Float64},        
-        rbp_not_converged::Bool
+        Residuals::Matrix{Float64},
+        alpha::Vector{Float64}
     )
+
+    rbp_not_converged = true
     
     @fastmath for e in 1:num_reps
 
         # display("e = $e")
 
-        # 1) Find largest residue  and coordenates
-        cimax, vjmax = findmaxedge_VC(Residues,alpha,Nv)
+        # 1) Find largest residual and coordenates
+        cimax, vjmax = findmaxedge_VC(Residuals,alpha,Nv)
         if vjmax == 0.0
             rbp_not_converged = false
             break # i.e., BP has converged
         end
 
-        # 2) Set to zero max residue
-        Residues[cimax,vjmax] = 0.0
+        # 2) Set to zero max residual
+        Residuals[cimax,vjmax] = 0.0
 
         Ncimax = Nc[cimax]        
         for vj in Ncimax
             if vj ≠ vjmax
                 # 5) update messages C2V[cimax, vj]
                 li = LinearIndices(C2V)[cimax,vj]
-                alp = Residues[li]
+                alp = Residuals[li]
                 C2V[li] = calc_C2V(Ncimax,cimax,vj,V2C,msum_factor)
-                # 6) calculate Residues
+                # 6) calculate Residuals
                 Nvj = Nv[vj]
                 post_LLR = calc_post_LLR(vj,Nvj,prior_LLRs,C2V)
                 bitvector[vj] = signbit(post_LLR)
@@ -52,11 +53,11 @@ function
                         li = LinearIndices(V2C)[ci,vj]
                         newv2c = post_LLR - C2V[li]
                         oldv2c = 2*atanh(V2C[li])
-                        residue = abs(newv2c - oldv2c)
-                        if residue > alp
-                            alp = residue
+                        residual = abs(newv2c - oldv2c)
+                        if residual > alp
+                            alp = residual
                         end
-                        Residues[li] = residue
+                        Residuals[li] = residual
                         V2C[li] = tanh_V2C(newv2c,0.0,msum_factor)
                     end
                 end

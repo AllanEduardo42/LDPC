@@ -20,12 +20,13 @@ function
         msum2::Bool,
         num_reps::Int,
         newC2V::Matrix{Float64},
-        Residues::Matrix{Float64},
+        Residuals::Matrix{Float64},
         alpha::Vector{Float64},
-        rbp_not_converged::Bool,
         F::Vector{Bool},
         degree_vn::Vector{Int}
     )
+
+    rbp_not_converged = true
 
     # for e in 1:num_reps + 1
     @fastmath @inbounds for e in 1:num_reps + 1
@@ -34,8 +35,8 @@ function
         
         if e ≤ num_reps
 
-            # 1) Find largest residue  and coordenates
-            cimax, vjmax = findmaxedge_D1VN(Residues,alpha,Nc,F)
+            # 1) Find largest residual and coordenates
+            cimax, vjmax = findmaxedge_D1VN(Residuals,alpha,Nc,F)
             if cimax == 0.0
                 rbp_not_converged = false
                 break # i.e., BP has converged
@@ -48,10 +49,10 @@ function
                 vjmax2 = Ncimax[1]
                 for vj in Ncimax                    
                     if vj != vjmax
-                        residue = Residues[cimax,vj]
-                        if residue > maxresidue
+                        residual = Residuals[cimax,vj]
+                        if residual > maxresidue
                             vjmax2 = vj
-                            maxresidue = residue
+                            maxresidue = residual
                         end
                     end
                 end
@@ -62,8 +63,8 @@ function
             limax = LinearIndices(V2C)[cimax,vjmax]
             C2V[limax] = newC2V[limax]
 
-            # 3) set maximum residue to zero
-            Residues[limax] = 0.0 
+            # 3) set maximum residual to zero
+            Residuals[limax] = 0.0 
 
             # 4) Update LLR and estimate bit message
             Nvjmax = Nv[vjmax]
@@ -74,20 +75,20 @@ function
                 if ci ≠ cimax
                     # 5) update V2C messages
                     li = LinearIndices(V2C)[ci,vjmax]
-                    # alp = Residues[li]
+                    # alp = Residuals[li]
                     V2C[li] = tanh_V2C(post_LLR,C2V[li],msum_factor)
-                    # 6) calculate Residues
+                    # 6) calculate Residuals
                     Nci = Nc[ci]
                     for vj in Nci
                         if vj ≠ vjmax && !F[vj]
                             li = LinearIndices(C2V)[ci,vj]
                             newc2v = calc_C2V(Nci,ci,vj,V2C,msum_factor)
                             newC2V[li] = newc2v
-                            residue = abs(newc2v - C2V[li])
-                            # if residue > alp
-                            #     alp = residue
+                            residual = abs(newc2v - C2V[li])
+                            # if residual > alp
+                            #     alp = residual
                             # end
-                            Residues[li] = residue
+                            Residuals[li] = residual
                         end
                     end
                     # alpha[ci] = alp
@@ -102,8 +103,8 @@ function
                     li = LinearIndices(V2C)[cimax,vjmax]
                     C2V[li] = newC2V[li]
 
-                    # 3) set maximum residue to zero
-                    Residues[li] = 0.0 
+                    # 3) set maximum residual to zero
+                    Residuals[li] = 0.0 
 
                     # 4) Update LLR and estimate bit message
                     Nvjmax = Nv[vjmax]

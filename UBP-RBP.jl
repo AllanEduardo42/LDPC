@@ -18,19 +18,20 @@ function
         msum2::Bool,
         num_reps::Int,
         newC2V::Matrix{Float64},
-        Residues::Matrix{Float64},
+        Residuals::Matrix{Float64},
         alpha::Vector{Float64},
-        rbp_not_converged::Bool,
         UBP::Vector{Bool}
     )
+
+    rbp_not_converged = true
     
     # for e in 1:num_reps
     @fastmath @inbounds for e in 1:num_reps
 
         # display("e = $e")
 
-        # 1) Find largest residue  and coordenates
-        cimax, vjmax = findmaxedge_UBP(Residues,alpha,Nc,UBP)
+        # 1) Find largest residual and coordenates
+        cimax, vjmax = findmaxedge_UBP(Residuals,alpha,Nc,UBP)
         if cimax == 0.0
             rbp_not_converged = false
             break # i.e., BP has converged
@@ -45,8 +46,8 @@ function
         else
             C2V[limax] = newC2V[limax]
         end
-        # 3) set maximum residue to zero
-        Residues[limax] = 0.0
+        # 3) set maximum residual to zero
+        Residuals[limax] = 0.0
 
         # 4) update LLR[vjmax]
         Nvjmax = Nv[vjmax]
@@ -58,20 +59,20 @@ function
                 UBP[ci] = true
                 # 5) update Nv messages V2C[ci,vnmax]
                 li = LinearIndices(V2C)[ci,vjmax]
-                alp = Residues[li]
+                alp = Residuals[li]
                 V2C[li] = tanh_V2C(post_LLR,C2V[li],msum_factor)
-                # 6) calculate Residues
+                # 6) calculate Residuals
                 Nci = Nc[ci]
                 for vj in Nci
                     if vj ≠ vjmax
                         li = LinearIndices(C2V)[ci,vj]
                         newc2v = calc_C2V(Nci,ci,vj,V2C,msum_factor)
                         newC2V[li] = newc2v
-                        residue = abs(newc2v - C2V[li])
-                        if residue > alp
-                            alp = residue
+                        residual = abs(newc2v - C2V[li])
+                        if residual > alp
+                            alp = residual
                         end
-                        Residues[li] = residue
+                        Residuals[li] = residual
                     end
                 end
                 alpha[ci] = alp
