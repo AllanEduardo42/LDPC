@@ -1,9 +1,9 @@
 function print_algorithm_details(
-        count::Int,
-        algorithm::String,
-        bptype::String,
-        decay::Float64,
-    )
+    count::Int,
+    algorithm::String,
+    bptype::String,
+    decay::Float64,
+)
 
     str = """
 ________________________________________________________________________________
@@ -26,6 +26,8 @@ Message passing algorithm: $algorithm (using """
     end
     if algorithm == "List-RBP"
         str *= "\nList 1 size: $(LISTSIZES[1])\nList 2 size: $(LISTSIZES[2])"
+    elseif algorithm == "C&DR-RBP"
+        str *= "\nReturn activation at iteration $(C_DR_ITER)"
     end
     str *= "\n"
     println(str)

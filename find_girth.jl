@@ -4,8 +4,6 @@
 # Function to find the girth (shortest cicle) in a bipartite graph using random
 # walk
 
-include("auxiliary_functions.jl")
-
 function find_girth(H,max)::Int
 
     M,N = size(H)

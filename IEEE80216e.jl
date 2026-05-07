@@ -3,12 +3,11 @@
 # 20 Mai 2025
 # IEEE80216e LDPC enconding (WiMAX)
 
-function
-    IEEE80216e(
-        N::Int,
-        R::Float64,
-        mode::String
-    )::Tuple{Matrix{Bool},Int,Matrix{Int}}
+function IEEE80216e(
+    N::Int,
+    R::Float64,
+    mode::String
+)
 
     if iszero(N .== [576,672,768,864,960,1056,1152,1248,1344,1440,1536,1632,1728,1824,1920,2016,2112,2208,2304])
         throw(

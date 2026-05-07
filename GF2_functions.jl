@@ -3,20 +3,16 @@
 # 9 set 2024
 # GF(2) Matrix Functions
 
-using Random
-using LinearAlgebra
-
 import Base.*
 
 ########################### GF2 matrix multiplication ##########################
 *(A::AbstractMatrix{Bool},B::AbstractMatrix{Bool}) = gf2_mat_mult(A,B)
 *(A::AbstractMatrix{Bool},B::AbstractVector{Bool}) = gf2_mat_mult(A,B)
 
-function
-    gf2_mat_mult(
-        A::AbstractMatrix{Bool},
-        B::AbstractArray{Bool}
-    )
+function gf2_mat_mult(
+    A::AbstractMatrix{Bool},
+    B::AbstractArray{Bool}
+)
 
     (mA, nA) =  (ndims(A) == 2) ? size(A) : (length(A),1)
     (mB, nB) =  (ndims(B) == 2) ? size(B) : (length(B),1)
@@ -45,12 +41,11 @@ function
 
 end
 
-function
-    gf2_mat_mult!(
-        C::AbstractMatrix{Bool},
-        A::AbstractMatrix{Bool},
-        B::AbstractArray{Bool}
-    )
+function gf2_mat_mult!(
+    C::AbstractMatrix{Bool},
+    A::AbstractMatrix{Bool},
+    B::AbstractArray{Bool}
+)
 
     (mC, nC) =  (ndims(C) == 2) ? size(C) : (length(C),1)
     (mA, nA) =  (ndims(A) == 2) ? size(A) : (length(A),1)
@@ -82,15 +77,14 @@ function
 
 end
 
-function 
-    _gf2_mat_mult!(
-        C::AbstractMatrix{Bool},
-        A::AbstractMatrix{Bool},
-        B::AbstractMatrix{Bool},
-        mA::Int,
-        nA::Int,
-        nB::Int
-    )
+function _gf2_mat_mult!(
+    C::AbstractMatrix{Bool},
+    A::AbstractMatrix{Bool},
+    B::AbstractMatrix{Bool},
+    mA::Int,
+    nA::Int,
+    nB::Int
+)
     
     @inbounds for i in 1:mA
         for j in 1:nB
@@ -108,15 +102,14 @@ function
 
 end
 
-function 
-    _gf2_mat_mult!(
-        y::AbstractVector{Bool},
-        A::AbstractMatrix{Bool},
-        x::AbstractVector{Bool},
-        mA::Int,
-        nA::Int
-    )
-    
+function _gf2_mat_mult!(
+    y::AbstractVector{Bool},
+    A::AbstractMatrix{Bool},
+    x::AbstractVector{Bool},
+    mA::Int,
+    nA::Int
+)
+
     @inbounds for i in 1:mA
         result = false
         for k in 1:nA
@@ -341,12 +334,11 @@ function find_gf2_invertible_matrix(M::Int)
 
 end
 
-function 
-    gf2_solve_LU(
-        L::Matrix{Bool},
-        U::Matrix{Bool},
-        y::Vector{Bool}
-    )
+function gf2_solve_LU(
+    L::Matrix{Bool},
+    U::Matrix{Bool},
+    y::Vector{Bool}
+)
 
     M = is_LU_conformable(L,U,y)
 
@@ -358,13 +350,12 @@ function
 
 end
 
-function 
-    gf2_solve_LU!(
-        x::Vector{Bool},
-        L::Matrix{Bool},
-        U::Matrix{Bool},
-        y::Vector{Bool}
-    )
+function gf2_solve_LU!(
+    x::Vector{Bool},
+    L::Matrix{Bool},
+    U::Matrix{Bool},
+    y::Vector{Bool}
+)
 
     M = is_LU_conformable(L,U,y)
     Lx = length(x)
@@ -381,12 +372,11 @@ function
 
 end
 
-function 
-    is_LU_conformable(
-        L::Matrix{Bool},
-        U::Matrix{Bool},
-        y::Vector{Bool}
-    )
+function is_LU_conformable(
+    L::Matrix{Bool},
+    U::Matrix{Bool},
+    y::Vector{Bool}
+)
 
     ML,NL = size(L)
     MU,NU = size(U)
@@ -435,14 +425,13 @@ function
 end
 
 
-function 
-    _gf2_solve_LU!(
-        x::Vector{Bool},
-        L::Matrix{Bool},
-        U::Matrix{Bool},
-        y::Vector{Bool},
-        M::Int
-    )
+function _gf2_solve_LU!(
+    x::Vector{Bool},
+    L::Matrix{Bool},
+    U::Matrix{Bool},
+    y::Vector{Bool},
+    M::Int
+)
 
     @inbounds begin
         _gf2_solve_L!(x,L,y,M)
@@ -450,13 +439,12 @@ function
     end
 end
 
-function 
-    _gf2_solve_L!(
-        x::Vector{Bool},
-        L::Matrix{Bool},
-        y::Vector{Bool},
-        M::Int
-    )
+function _gf2_solve_L!(
+    x::Vector{Bool},
+    L::Matrix{Bool},
+    y::Vector{Bool},
+    M::Int
+)
 
     @inbounds begin
         for i in 1:M
@@ -473,12 +461,11 @@ function
     end
 end
 
-function 
-    _gf2_solve_U!(
-        x::Vector{Bool},
-        U::Matrix{Bool},
-        M::Int
-    )
+function _gf2_solve_U!(
+    x::Vector{Bool},
+    U::Matrix{Bool},
+    M::Int
+)
 
     @inbounds begin
         for i in M:-1:1

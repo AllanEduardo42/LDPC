@@ -21,7 +21,7 @@ FB = ["F","B"]
 for j=1:2          
     for k in eachindex(EbN0)  
         p = plot()      
-        title = FB[j]*"ER $PROTOCOL (G = $GG, R = $(Rational(RR)), Eb/N0 = $(EbN0[k])dB)"      
+        title = FB[j]*"ER $PROTOCOL (G = $GG, R = $(round(RR,digits=3)), Eb/N0 = $(EbN0[k])dB)"      
         for i in eachindex(ACTIVE)
             if ACTIVE[i]
                 algo = ALGORITHMS[i]

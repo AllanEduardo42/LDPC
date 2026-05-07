@@ -3,17 +3,6 @@
 # 26 mai 2025
 # Setup of the LDPC simulation
 
-################################ INCLUDED FILES ################################
-
-include("NR LDPC/NR_LDPC_parameters.jl")
-include("IEEE80216e.jl")
-include("PEG.jl")
-include("LU_encoding.jl")
-include("find_girth.jl")
-include("make_VN_CN_lists.jl")
-include("print_simulation_details.jl")
-include("prepare_simulation.jl")
-
 if ACTIVE_ALL
     for i in eachindex(ACTIVE)
         if ACTIVE[i]
@@ -24,9 +13,54 @@ if ACTIVE_ALL
     end
 end
 
+################################ INCLUDED FILES ################################
+
+include("GF2_functions.jl")
+include("get_CRC_poly.jl")
+include("GF2_poly.jl")
+include("find_girth.jl")
+include("make_VN_CN_lists.jl")
+include("print_simulation_details.jl")
+include("print_algorithm_details.jl")
+include("prepare_simulation.jl")
+include("simcore.jl")
+
+if PROTOCOL == "5GNR"
+    include("5G NR LDPC/NR_LDPC_parameters.jl")
+    include("5G NR LDPC/NR_LDPC_auxiliary_functions.jl")
+    include("5G NR LDPC/NR_LDPC_make_parity_check_matrix.jl")
+elseif PROTOCOL == "WiMAX"
+    include("IEEE80216e.jl")
+elseif PROTOCOL == "PEG"
+    include("PEG.jl")
+    include("LU_encoding.jl")
+else
+    throw(error(lazy"Invalid coding protocol (valid options: 5GNR, WiMAX and PEG)"))
+end
+
+# simcore functions
+include("Simulation core functions/auxiliary_functions.jl")
+include("Simulation core functions/encode_LDPC.jl")
+include("Simulation core functions/calc_prior_LLRs.jl")
+include("Simulation core functions/tanh_V2C.jl")
+include("Simulation core functions/calc_syndrome.jl")
+include("Simulation core functions/calc_C2V.jl")
+include("Simulation core functions/calc_post_LLR.jl")
+
+# algorithms
+for i in eachindex(ACTIVE)
+    if ACTIVE[i]
+        if ALGORITHMS[i] == "C-RBP" || ALGORITHMS[i] == "C&DR-RBP"
+            include("Algorithms/C&R-RBP.jl")
+        else
+            include("Algorithms/$(ALGORITHMS[i]).jl")
+        end
+    end
+end
+
 ############################# PARITY-CHECK MATRIX #############################
-if PROTOCOL == "NR5G"
-    H1::Matrix{Bool} = [false false]
+if PROTOCOL == "5GNR"
+    H1 = [false false]
     RV = 0
     AA, KK, RR, G_CRC, LIFTSIZE, NR_LDPC_DATA = NR_LDPC_parameters(GG,RR,RV,false)
     HH, E_H = NR_LDPC_make_parity_check_matrix(LIFTSIZE,

@@ -1,21 +1,18 @@
 ################################################################################
 # Allan Eduardo Feitosa
 # 26 mai 2024
-# First layer of the routine to estimate the LPDC performance (Fer Ber x SNR)
+# First layer of the routine to estimate the LPDC performance (Fer Ber x EbN0)
+# Separates simulations in terms of EbN0 and number of threads
 
-include("simcore.jl")
-include("print_algorithm_details.jl")
-
-function 
-    prepare_simulation(
-        count::Int,
-        ebn0::Vector{Float64},
-        algorithm::String,
-        max_errors::Int,
-        maxiter::Integer,
-        bptype::String,
-        decay::Float64
-    )
+function prepare_simulation(
+    count::Int,
+    ebn0::Vector{Float64},
+    algorithm::String,
+    max_errors::Int,
+    maxiter::Integer,
+    bptype::String,
+    decay::Float64
+)
 
     if bptype == "MKAY" && algorithm ≠ "Flooding"
         throw(error(lazy"The McKay method is only supported for Flooding"))
@@ -28,18 +25,18 @@ function
     if TEST
         Lr = Matrix{Float64}(undef,MM,NN)
         Lq = Matrix{Float64}(undef,MM,NN)
-        K = 1
+        num_ebn0 = 1
         nthreads = 1
     else
         Lr = nothing
         Lq = nothing
-        K = length(ebn0) 
+        num_ebn0 = length(ebn0) 
         nthreads = NTHREADS
     end
-    global Sum_decoded = Array{Int,3}(undef,maxiter,K,nthreads)
-    global Sum_ber = Array{Int,3}(undef,maxiter,K,nthreads)
-    global Trials = Matrix{Int}(undef,K,nthreads)
-    for k in 1:K
+    Sum_decoded = Array{Int,3}(undef,maxiter,num_ebn0,nthreads)
+    Sum_ber = Array{Int,3}(undef,maxiter,num_ebn0,nthreads)
+    Trials = Matrix{Int}(undef,num_ebn0,nthreads)
+    for k in 1:num_ebn0
         stats = @timed Threads.@threads for i in 1:nthreads
         # stats = @timed for i in 1:nthreads
             Lr, Lq, sum_decoded, sum_ber, count_trials = simcore(
@@ -89,15 +86,15 @@ function
         return Lr, Lq
     else
         Total_trials = sum(Trials,dims=2)
-        Fer = zeros(maxiter,K)
+        Fer = zeros(maxiter,num_ebn0)
         Fer .= sum(Sum_decoded,dims=3)
-        for k = 1:K
+        for k = 1:num_ebn0
             Fer[:,k] ./= Total_trials[k]
         end
         @. Fer = 1 - Fer
-        Ber = zeros(maxiter,K)
+        Ber = zeros(maxiter,num_ebn0)
         Ber .= sum(Sum_ber,dims=3)
-        for k = 1:K
+        for k = 1:num_ebn0
             Ber[:,k] ./= (NN*Total_trials[k])
         end
 

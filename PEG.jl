@@ -3,15 +3,12 @@
 # 3 set 2024
 # PEG Algorithm
 
-using Polynomials
-
-function 
-    PEG(
-        lambda::Vector{Float64},
-        rho::Vector{Float64},
-        M::Int,
-        N::Int
-    )::Tuple{Matrix{Bool},Int}
+function PEG(
+    lambda::Vector{Float64},
+    rho::Vector{Float64},
+    M::Int,
+    N::Int
+)
 
     @inbounds begin
         BitNode_poly = lambda[end:-1:1]
@@ -71,19 +68,18 @@ function
 
 end
 
-function 
-    subtree!(
-        H::Matrix{Bool},
-        M::Int,
-        N::Int,
-        root::Int,
-        level::Int,
-        check_degrees::Vector{Int},
-        L0_checks::Vector{Int},
-        parent_nodes::Vector{Int},
-        L0_check_set::Vector{Int},
-        L1_check_set::Vector{Int}
-    )    
+function subtree!(
+    H::Matrix{Bool},
+    M::Int,
+    N::Int,
+    root::Int,
+    level::Int,
+    check_degrees::Vector{Int},
+    L0_checks::Vector{Int},
+    parent_nodes::Vector{Int},
+    L0_check_set::Vector{Int},
+    L1_check_set::Vector{Int}
+)    
     # L0: previous level in the subtree
     # L1: current level in the subtree
 
@@ -138,11 +134,10 @@ function
     return level
 end
 
-function 
-    append_sort_unique!(
-        x::Vector{Int},
-        y::Vector{Int}
-    )
+function append_sort_unique!(
+    x::Vector{Int},
+    y::Vector{Int}
+)
 
     append!(x,y)
     sort!(x)

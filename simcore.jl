@@ -3,63 +3,36 @@
 # 25 Feb 2025
 # Core routine to estimate the LPCD performance (FER sum_ber x SNR)
 
-include("auxiliary_functions.jl")
-include("lookupTable.jl")
-include("calc_prior_LLRs.jl")
-include("calc_syndrome.jl")
-include("flooding.jl")
-include("LBP.jl")
-include("RBP.jl")
-include("RD-RBP.jl")
-include("C&R-RBP.jl")
-include("VC-RBP.jl")
-include("OV-RBP.jl")
-include("E_NV_RBP.jl")
-include("List-RBP.jl")
-include("SVNF.jl")
-include("NW-RBP.jl")
-include("CI-RBP.jl")
-include("UBP-RBP.jl")
-include("RBP_D1VN.jl")
-include("./List functions/init_list.jl")
-include("./RBP functions/init_residuals.jl")
-include("update_C2V.jl")
-include("update_V2C.jl")
-include("NR LDPC/NR_LDPC_functions.jl")
-include("encode_LDPC.jl")
-include("tanh_V2C.jl")
-
-function
-    simcore(
-        A::Int,                         # payload length
-        K::Int,                         # payload + CRC length
-        R::Float64,                     # effective rate
-        G::Int,                         # transmitted signal length
-        g_CRC::Vector{Bool},            # CRC polynomial
-        ebn0::Float64,                  # EbN0
-        H::Matrix{Bool},                # Parity-Check Matrix
-        H1::Matrix{Bool},               # H = [H1 H2], size(H1) = (M,K)
-        L::Matrix{Bool},                # L*U = H2  (PEG)
-        U::Matrix{Bool},                # L*U = H2  (PEG)
-        Nc::Vector{Vector{Int}},        # Nc[ci] : neighborhood of check node ci
-        Nv::Vector{Vector{Int}},        # Nv[vj] : neighborhood of variable node vj
-        eH::Matrix{Int},                # Exponential Matrix (NR5G and WiMAX)
-        protocol::String,               # PEG, NR5G or WiMAX
-        LS::Int,                        # NR5G and WiMAX matrix liftsize
-        algorithm::String,              # BP algorithm (flooding, RBP etc.)
-        bptype::String,                 # Type of BP implementation (FAST, TANH etc.)
-        max_errors::Int,                # Number of max frame errors
-        maxiter::Int,                   # Maximum number of BP iterations
-        stop::Bool,                     # "true" if routine stops at zero syndrome
-        rayleigh::Bool,
-        C_DR_iter::Int,                 # C&DR switch iter
-        decayfactor::Float64,           # RBP decay factor
-        listsizes::Vector{Int},         # sizes of the list for List-RBP algorithm
-        ci_gamma::Float64,              # CI gamma threshold
-        rgn_seed::Int,                  # random seed to generate noise and message
-        test::Bool,                     # if "true", perform test algorithm
-        printtest::Bool                 # if "true", print test algorithm results
-    )
+function simcore(
+    A::Int,                         # payload length
+    K::Int,                         # payload + CRC length
+    R::Float64,                     # effective rate
+    G::Int,                         # transmitted signal length
+    g_CRC::Vector{Bool},            # CRC polynomial
+    ebn0::Float64,                  # EbN0
+    H::Matrix{Bool},                # Parity-Check Matrix
+    H1::Matrix{Bool},               # H = [H1 H2], size(H1) = (M,K)
+    L::Matrix{Bool},                # L*U = H2  (PEG)
+    U::Matrix{Bool},                # L*U = H2  (PEG)
+    Nc::Vector{Vector{Int}},        # Nc[ci] : neighborhood of check node ci
+    Nv::Vector{Vector{Int}},        # Nv[vj] : neighborhood of variable node vj
+    eH::Matrix{Int},                # Exponential Matrix (5GNR and WiMAX)
+    protocol::String,               # PEG, 5GNR or WiMAX
+    LS::Int,                        # 5GNR and WiMAX matrix liftsize
+    algorithm::String,              # BP algorithm (flooding, RBP etc.)
+    bptype::String,                 # Type of BP implementation (FAST, TANH etc.)
+    max_errors::Int,                # Number of max frame errors
+    maxiter::Int,                   # Maximum number of BP iterations
+    stop::Bool,                     # "true" if routine stops at zero syndrome
+    rayleigh::Bool,                 # Rayleigh fading flag
+    C_DR_iter::Int,                 # C&DR switch iter
+    decayfactor::Float64,           # RBP decay factor
+    listsizes::Vector{Int},         # sizes of the list for List-RBP algorithm
+    ci_gamma::Float64,              # CI gamma threshold
+    rgn_seed::Int,                  # random seed to generate noise and message
+    test::Bool,                     # if "true", perform test algorithm
+    printtest::Bool                 # if "true", print test algorithm results
+)
     
 ################################## CONSTANTS ###################################
 
@@ -71,13 +44,13 @@ function
     twoLs = 0
 
     # Parity Check Matrix constants
-    if protocol == "WiMAX" || protocol == "NR5G"
+    if protocol == "WiMAX" || protocol == "5GNR"
         eM, eN = size(eH)
         eK = eN - eM 
         if protocol == "WiMAX"            
             eB = eM  
             S = 0   
-        elseif protocol == "NR5G"
+        elseif protocol == "5GNR"
             twoLs = 2*LS
             eB = 4
             S = eK*LS - K               # filler bits
@@ -93,6 +66,17 @@ function
 
     # Set the random seeds
     rgn = Xoshiro(rgn_seed)
+
+    # min-sum constants
+    msum2 = false
+    if bptype == "MSUM"
+        msum_factor = ALPHA
+    elseif bptype == "MSUM2"
+        msum2 = true
+        msum_factor = ALPHA2
+    else
+        msum_factor = nothing
+    end
 
 ################################# PREALLOCATIONS ###############################
 
@@ -154,16 +138,6 @@ function
     # if algorithm == "MKAY" the are different matrices for bit = 0 and bit = 1
     V2C = (bptype != "MKAY") ? Matrix{Float64}(undef,M,N) : Array{Float64,3}(undef,M,N,2)
     C2V = (bptype != "MKAY") ? Matrix{Float64}(undef,M,N) : Array{Float64,3}(undef,M,N,2)
-    
-    msum2 = false
-    if bptype == "MSUM"
-        msum_factor = ALPHA
-    elseif bptype == "MSUM2"
-        msum2 = true
-        msum_factor = ALPHA2
-    else
-        msum_factor = nothing
-    end
 
     phi = (bptype == "TABL") ? lookupTable() : nothing
 
@@ -174,8 +148,7 @@ function
 ############################### RBP PREALLOCATIONS #############################
     
     # RBP switchs 
-    RBP_based = algorithm != "Flooding" && 
-                algorithm != "LBP"      
+    RBP_based = algorithm != "Flooding" && algorithm != "LBP"      
 
     if RBP_based
 
@@ -191,15 +164,9 @@ function
                      
 
         # Algorithms that uses the default RBP initialization
-        RBP_init = RBP_consensus          || 
-                   algorithm == "RBP"     ||
-                   algorithm == "RD-RBP"  ||
-                   algorithm == "NW-RBP"  || 
-                   algorithm == "SVNF"    ||
-                   algorithm == "CI-RBP"  ||
-                   algorithm == "UBP-RBP" ||
-                   algorithm == "RBP-D1VN"
-
+        RBP_init = algorithm != "List-RBP" &&
+                   algorithm != "OV-RBP"   &&
+                   algorithm != "VC-RBP"
         
         # newly calculate C2V messages
         newC2V = Matrix{Float64}(undef,M,N)
@@ -253,7 +220,7 @@ function
             C1 = zeros(Bool,N)
             upc = zeros(Int,N)
         elseif algorithm == "CI-RBP"
-            Prob0 = Vector{Float64}(undef,N)
+            Prob = Vector{Float64}(undef,N)     # Probability of bj = 0
             Dn = Vector{Float64}(undef,N)
         elseif algorithm == "UBP-RBP"
             UBP = ones(Bool,M)
@@ -352,8 +319,8 @@ function
                 init_residuals!(V2C,Nc,phi,newC2V,alpha,Residuals,msum_factor)
                 if algorithm == "CI-RBP"
                     for vj in eachindex(Nv)
-                        Prob0[vj] = calc_prob(prior_LLRs[vj])
-                        calc_Dn!(Dn,Prob0,newC2V,prior_LLRs,vj,Nv)
+                        Prob[vj] = calc_prob(prior_LLRs[vj])
+                        calc_Dn!(Dn,Prob,newC2V,prior_LLRs,vj,Nv)
                     end
                 end
             elseif algorithm == "List-RBP"
@@ -365,59 +332,10 @@ function
                 init_list!(V2C,Nc,phi,msum_factor,newC2V,inlist,Residuals,list,
                                                                 coords,listsize)  
             elseif algorithm == "VC-RBP"
-                for vj in eachindex(Nv)
-                    alp = 0.0
-                    for ci in Nv[vj]
-                        li = LinearIndices(V2C)[ci,vj]
-                        residual = abs(V2C[li])
-                        if residual > alp
-                            alp = residual
-                        end
-                        Residuals[li] = residual
-                    end
-                    alpha[vj] = alp
-                end
+                init_VC!(V2C,Nv,alpha,Residuals)
             elseif algorithm == "OV-RBP"
-                LLRs = copy(prior_LLRs)
-                # 3 - 7
-                for ci in eachindex(Nc)
-                    Nci = Nc[ci]
-                    for vj in Nci
-                        newC2V[ci,vj] = calc_C2V(Nci,ci,vj,V2C,msum_factor) 
-                    end
-                end
-                #8 - 10                    
-                C .= false                      # set C of VNs whose sign of the LLR changes
-                upc .= 0                        # unsatisfied parity check equations
-                max_upc = 0                     # maximum number of unsatified parity check equations 
-                for vj in eachindex(Nv)
-                    oldllr = LLRs[vj]
-                    newllr = calc_post_LLR(vj,Nv[vj],prior_LLRs,newC2V)
-                    newLLRs[vj] = newllr
-                    Residuals[vj] = abs(newllr - oldllr)        
-                    if sign(oldllr)*sign(newllr) < 0
-                        C[vj] = true
-                        count_upc = 0
-                        for ci in Nv[vj]
-                            if _calc_syndrome(bitvector,Nc[ci])
-                                count_upc += 1
-                            end
-                        end
-                        upc[vj] = count_upc
-                        if count_upc > max_upc
-                            max_upc = count_upc
-                        end
-                    end
-                end
-
-                # 11
-                C1 .= false                     # set of VNs with upc = max_upc
-                for vj in eachindex(Nv)
-                    p = upc[vj]
-                    if C[vj] && (p == max_upc)  # every VN in C1 is in C
-                        C1[vj] = true
-                    end
-                end       
+                max_upc = init_OV!(V2C,Nc,Nv,newC2V,Residuals,msum_factor,
+                prior_LLRs,LLRs,newLLRs,C,C1,upc)
             end
         end
 
@@ -597,7 +515,7 @@ function
                         Residuals,
                         alpha,
                         Dn,
-                        Prob0,
+                        Prob,
                         ci_gamma
                         )
                 elseif algorithm == "UBP-RBP"

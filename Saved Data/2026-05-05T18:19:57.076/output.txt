@@ -1,0 +1,52 @@
+********************************************************************************
+
+                           LDPC PERFORMANCE SIMULATION                          
+
+********************************************************************************
+
+############################### LDPC parameters ################################
+
+LDPC Protocol: NR-LDPC (5G), Zc = 52, BG = 2
+Parity Check Matrix: 280 x 680
+
+
+Graph girth = 6
+Effective rate = 0.667
+Code length = 576    
+
+############################ Simulation parameters #############################
+
+Maximum number of frame errors: 252
+Maximum number of iterations: 20
+Number of threads (multithreading): 36
+Eb/No (dB): [4.0]
+Stop at zero syndrome ? true
+
+############################# Starting simulation ##############################
+
+________________________________________________________________________________
+
+                                  Algorithm 1                                  
+________________________________________________________________________________
+
+Message passing algorithm: C-RBP (using LLR-SPA calculated by tanh function)
+Residual decaying factor: 0.85
+
+Elapsed 1427.2 seconds (0.02% gc time, 4.7% compilation time)
+________________________________________________________________________________
+
+                                  Algorithm 2                                  
+________________________________________________________________________________
+
+Message passing algorithm: C&DR-RBP (using LLR-SPA calculated by tanh function)
+Residual decaying factor: 0.85
+
+Elapsed 1858.3 seconds (0.01% gc time, 0.0% compilation time)
+________________________________________________________________________________
+
+                                  Algorithm 3                                  
+________________________________________________________________________________
+
+Message passing algorithm: UBP-RBP (using LLR-SPA calculated by tanh function)
+
+Elapsed 546.2 seconds (0.03% gc time, 0.35% compilation time)

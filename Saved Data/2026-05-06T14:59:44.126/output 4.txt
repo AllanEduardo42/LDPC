@@ -1,0 +1,35 @@
+********************************************************************************
+
+                           LDPC PERFORMANCE SIMULATION                          
+
+********************************************************************************
+
+############################### LDPC parameters ################################
+
+LDPC Protocol: NR-LDPC (5G), Zc = 52, BG = 2
+Parity Check Matrix: 280 x 680
+
+
+Graph girth = 6
+Effective rate = 0.667
+Code length = 576    
+
+############################ Simulation parameters #############################
+
+Maximum number of frame errors: 252
+Maximum number of iterations: 20
+Number of threads (multithreading): 36
+Eb/No (dB): [3.8]
+Stop at zero syndrome ? true
+
+############################# Starting simulation ##############################
+
+________________________________________________________________________________
+
+                                  Algorithm 1                                  
+________________________________________________________________________________
+
+Message passing algorithm: C&DR-RBP (using LLR-SPA calculated by tanh function)
+Residual decaying factor: 0.85
+
+Elapsed 906.6 seconds (0.03% gc time, 7.32% compilation time)

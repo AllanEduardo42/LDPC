@@ -7,6 +7,8 @@
 
 using LinearAlgebra
 using Random
+using LinearAlgebra
+using Polynomials
 using Statistics
 using Plots
 using SparseArrays
@@ -32,7 +34,7 @@ end
 const INF = typemax(Int64)
 const MAXC2V = 1e3
 const MINC2V = -MAXC2V
-# const ALPHA = 0.73                     # Min-Sum attenuation factor
+# const ALPHA = 0.73                    # Min-Sum attenuation factor
 # const ALPHA = 0.78
 const ALPHA = 0.755
 # const ALPHA2 = 0.86 
@@ -41,14 +43,14 @@ const ALPHA2 = 0.885
 const TABLESIZE = 8192
 const TABLERANGE = 10
 const SIZE_PER_RANGE = TABLESIZE/TABLERANGE
-const C_DR_ITER = 3
+const C_DR_ITER = 5
 
 # Random seed
 SEED::Int = 1111
 
 ################################ CONTROL FLAGS #################################
 
-TEST::Bool = false
+TEST::Bool = true
 PRIN::Bool = true
 PROF::Bool = false
 STOP::Bool = true # stop simulation at zero syndrome
@@ -73,7 +75,9 @@ CI_GAMMA = 0.15
 MAXITER::Int = 20
 
 ### EbN0
-EbN0 = [1.0, 1.5, 2.0, 2.5, 3.0]
+# EbN0 = [1.0, 1.25, 1.5, 1.75, 2.0]
+# EbN0 = [1.0, 1.5, 2.0, 2.5, 3.0]
+EbN0 = [2.65]
 
 ### Maximum number of Frame Errors (at the last iteration)
 ERRORS = 36*7
@@ -120,44 +124,44 @@ ACTIVE_ALL = false
 
 i = 1
 # Flooding
-ACTIVE[i] = 1
+ACTIVE[i] = 0
 BPTYPES[i] = ["TANH"]
 MAXITERS[i] = MAXITER
 
 # LBP
 i += 1
-ACTIVE[i] = 1
+ACTIVE[i] = 0
 BPTYPES[i] = ["TANH"]
 MAXITERS[i] = MAXITER
 
 # RBP
 i += 1
-ACTIVE[i] = 1
+ACTIVE[i] = 0
 BPTYPES[i] = ["TANH"]
 MAXITERS[i] = MAXITER
 
 # RD-RBP
 i += 1
-ACTIVE[i] = 1
+ACTIVE[i] = 0
 BPTYPES[i] = ["TANH"]
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
 
 # NW-RBP
 i += 1
-ACTIVE[i] = 1
+ACTIVE[i] = 0
 BPTYPES[i] = ["TANH"]
 MAXITERS[i] = MAXITER
 
 # SVNF
 i += 1
-ACTIVE[i] = 1
+ACTIVE[i] = 0
 BPTYPES[i] = ["TANH"]
 MAXITERS[i] = MAXITER
 
 # List-RBP
 i += 1
-ACTIVE[i] = 1
+ACTIVE[i] = 0
 BPTYPES[i] = ["TANH"]
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
@@ -168,21 +172,21 @@ LISTSIZES[2] = 2
 
 # C-RBP
 i += 1
-ACTIVE[i] = 1
+ACTIVE[i] = 0
 BPTYPES[i] = ["TANH"]
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
 
 # C&R-RBP
 i += 1
-ACTIVE[i] = 1
+ACTIVE[i] = 0
 BPTYPES[i] = ["TANH"]
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
 
 # C&DR-RBP
 i += 1
-ACTIVE[i] = 1
+ACTIVE[i] = 0
 BPTYPES[i] = ["TANH"]
 MAXITERS[i] = MAXITER
 DECAYS[i] = FACTORS
@@ -201,13 +205,13 @@ MAXITERS[i] = MAXITER
 
 # CI-RBP
 i += 1
-ACTIVE[i] = 1
+ACTIVE[i] = 0
 BPTYPES[i] = ["TANH"]
 MAXITERS[i] = MAXITER
 
 # UBP-RBP
 i += 1
-ACTIVE[i] = 1
+ACTIVE[i] = 0
 BPTYPES[i] = ["TANH"]
 MAXITERS[i] = MAXITER
 
@@ -220,11 +224,11 @@ MAXITERS[i] = MAXITER
 ######################## CODE LENGTH, RATE AND PROTOCOL ########################
 
 # Transmitted message length
-GG::Int = 1248
+GG::Int = 576
 # Effective Rate
-RR::Float64 = 1/2                       
-# LDPC protocol: NR5G = NR-LDPC (5G); PEG = PEG; WiMAX = IEEE80216e;
-PROTOCOL::String = "NR5G"
+RR::Float64 = 1/2                      
+# LDPC protocol: 5GNR = NR-LDPC (5G); PEG = PEG; WiMAX = IEEE80216e;
+PROTOCOL::String = "5GNR"
     LAMBDA = [0.21, 0.25, 0.25, 0.29, 0]
     RO = [1.0, 0, 0, 0, 0, 0]
 
@@ -232,7 +236,7 @@ PROTOCOL::String = "NR5G"
                                      # 1632,1728,1824,1920,2016,2112,2208,2304}.    
                   # R takes values in {"1/2","2/3A","2/3B","3/4A","3/4B","5/6"}.
 
-# NR5G: A takes values in
+# 5GNR: A takes values in
 # [    24,   32,   40,   48,   56,   64,   72,   80,   88,   96,  104,  112,  
 #     120,  128,  136,  144,  152,  160,  168,  176,  184,  192,  208,  224,  
 #     240,  256,  272,  288,  304,  320,  336,  352,  368,  384,  408,  432,  

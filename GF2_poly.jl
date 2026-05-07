@@ -3,8 +3,7 @@
 # 28 Out 2024
 # GF(2) polynomial functions
 
-function
-    gf2_poly(p::String)
+function gf2_poly(p::String)
 
     L = length(p)
     if L == 1
@@ -52,11 +51,10 @@ function
     return coeffs
 end
 
-function 
-    divide_poly(
-        p::Vector{Bool},
-        d::Vector{Bool}
-    )
+function divide_poly(
+    p::Vector{Bool},
+    d::Vector{Bool}
+)
 
     if !d[1]
         throw(ArgumentError(
@@ -102,14 +100,13 @@ function
 
 end
 
-function 
-    divide_poly_CRC!(
-        b::Vector{Bool},
-        Cw::Union{Matrix{Bool},Vector{Bool}},
-        g_CRC::Vector{Bool},
-        A::Int,
-        K::Int,
-    )
+function divide_poly_CRC!(
+    b::Vector{Bool},
+    Cw::Union{Matrix{Bool},Vector{Bool}},
+    g_CRC::Vector{Bool},
+    A::Int,
+    K::Int,
+)
 
     @inbounds begin
         for i in 1:K
