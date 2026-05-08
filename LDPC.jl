@@ -28,23 +28,25 @@ SEED::Int = 1111
 
 ################################ CONTROL FLAGS #################################
 
-TEST::Bool = false                       # Testing mode (few trials)
-PRIN::Bool = true                       # Print info is in testing mode
-PROF::Bool = false                      # profview
-RAYL::Bool = false                      # Rayleigh fading channel
+# Testing mode (few trials)
+TEST::Bool = false     
+# Print info is in testing mode                 
+PRIN::Bool = true   
+# profview                    
+PROF::Bool = false    
+# Rayleigh fading channel                  
+RAYL::Bool = false                      
 
 ############################### TEST PARAMETERS ################################
 
 ### Maximum number of BP iterations
-MAXITER_TEST::Int = 1
+MAXITER_TEST::Int = 20
 ### EbN0
-EbN0_TEST::Float64 = 2.0
+EbN0_TEST::Float64 = 2.5
 ### Maximum number of Frame Errors
-ERRORS_TEST::Int = 1
+MAX_FRAME_ERRORS_TEST::Int = 36*7
 ### Residual Decay factors
-DECAY_TEST::Float64 = 1.0
-### CI-RBP gamma constant
-CI_GAMMA = 0.15
+DECAY_TEST::Float64 = 0.85
 
 ################################## PARAMETERS ##################################
 
@@ -53,7 +55,7 @@ MAXITER::Int = 20
 
 ### EbN0
 # EbN0 = [1.0, 1.25, 1.5, 1.75, 2.0]
-EbN0 = [1.0, 1.5, 2.0]
+EbN0 = [2.0, 2.5, 3.0, 3.5, 4.0]
 # EbN0 = [2.0]
 
 ### Maximum number of Frame Errors (at the last iteration)
@@ -65,6 +67,9 @@ MAX_FRAME_ERRORS = 36*7
 # DECAYS = [0.85]
 # DECAYS = [0.7, 0.8, 0.85, 0.9, 1.0]
 DECAYS = [0.85]
+
+### CI-RBP gamma constant
+CI_GAMMA = 0.15
 
 ############################### LDPC ALGORITHMS ################################
 
@@ -132,7 +137,7 @@ ACTIVE[9] = 1
 
 # C&DR-RBP
 ACTIVE[10] = 1
-C_DR_ITER::Int = 4                      # Activation of Return in C&DR-RBP
+C_DR_ITER::Int = 3                      # Activation of Return in C&DR-RBP
 
 # VC-RBP
 ACTIVE[11] = 0
@@ -154,7 +159,7 @@ ACTIVE[15] = 0
 # Transmitted message length
 CODE_LENGTH::Int = 576
 # Code Rate = RATE[1]/RATE[2]
-RATE = [1, 2]              
+RATE = [2, 3]              
 # LDPC protocol: 5GNR = NR-LDPC (5G); PEG = PEG; WiMAX = IEEE80216e;
 PROTOCOL::String = "5GNR"
     LAMBDA = [0.21, 0.25, 0.25, 0.29, 0]
@@ -181,7 +186,8 @@ if length(ARGS) == 0
 elseif ARGS[1] == "true"
     SAVE = true
     NOW = string(now())
-    DIRECTORY = "./Saved Data/"*NOW[1:10]*" "*NOW[12:16]*" $PROTOCOL $CODE_LENGTH $(RATE[1])|$(RATE[2])"
+    DIRECTORY = "./Saved Data/"*NOW[1:10]*" "*NOW[12:16]*
+    " $PROTOCOL $CODE_LENGTH $(RATE[1])|$(RATE[2])"
     for ebn0 in EbN0
         global DIRECTORY *= " $(ebn0)dB"
     end

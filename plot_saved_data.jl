@@ -2,15 +2,22 @@ using DelimitedFiles
 using Plots
 using LaTeXStrings
 
-Date = "2026-05-05"
-Hour = "08:50"
+# Date = "2026-05-05"
+# Hour = "08:50"
+# Protocol = "5GNR"
+# N = 576
+# R = [1,2]
+# EbN0 = [1.0, 1.5, 2.0, 2.5, 3.0]
+
+Date = "2026-05-04"
+Hour = "11:26"
 Protocol = "5GNR"
-N = 576
+N = 1248
 R = [1,2]
-EbN0 = [1.0, 1.5, 2.0, 2.5, 3.0]
+EbN0 = [1.0, 1.25, 1.5, 1.75, 2.0]
 
 maxiter = 20
-iter = 5
+iter = 10
 
 FB = ["F","B"]
 # markers = [:none, :none, :dtriangle, :circle, :rect, :utriangle, :diamond, :cross, :star5, :hexagon]
@@ -25,6 +32,7 @@ modes_markers_lines =  ["Flooding"             :none            :solid
                         "C-RBP"                :none            :dot
                         "C&R-RBP"              :rect            :solid
                         "C&DR-RBP"             :circle          :solid
+                        # "C&DR-RBP 4"             :circle          :solid
                  ]
 
 
@@ -90,9 +98,9 @@ for k in eachindex(EbN0)
                 # legend_font_pointsize = 10,
                 legend_position = :topright,
                 # legend = :outertopright,
-                size = 1.5 .*(300,400),
+                size = 1.5 .*(300,500),
                 markershape = modes_markers_lines[i,2],
-                left_margin=1Plots.mm,
+                left_margin=3Plots.mm,
                 # bottom_margin=-20Plots.mm,
                 top_margin=1Plots.mm,
                 fontfamily="Computer Modern",
@@ -137,7 +145,7 @@ PLOT = plot(
     yscale=:log10,
     ylabel="FER",
     xlabel=L"E_b/N_0"*" (dB)",
-    ylims=(10^(-5),1),
+    ylims=(10^(-4),1),
     color=permutedims(colors),
     label=permutedims(modes_markers_lines[:,1]),
     markershape=permutedims(modes_markers_lines[:,2]),
@@ -150,7 +158,7 @@ PLOT = plot(
     # tickfontsize=12,
     # legend_font_pointsize = 10,
     fontfamily="Computer Modern",
-    size = 1.5 .*(300,200),
+    size = 1.5 .*(300,300),
     # left_margin=1Plots.mm,
     framestyle=:box
 )
@@ -175,68 +183,68 @@ Plots.pdf(PLOT,directory*"/FER_$(iter)_dB.pdf")
 
 # #
 
-plotlyjs()
+# plotlyjs()
 
-for k in eachindex(EbN0)
-    for j=1:2
-        title = FB[j]*"ER $Protocol (N = $N, R = $(R[1])/$(R[2]), Eb/N0 = $(EbN0[k])dB)"
-        p = plot()
-        for i in axes(modes_markers_lines,1)
-            str = modes_markers_lines[i,1]
-            x = readdlm(directory*FB[j]*"ER_"*str*".txt",'\t',Float64,'\n')
-            x = x[:,k]
-            p = plot!(
-                1:maxiter,
-                log10.(x[1:maxiter]),
-                lw=4,
-                title=title,
-                label=modes_markers_lines[i,1],
-                markershape = modes_markers_lines[i,2],
-                size = (1400,1000),
-                color=colors[i],
-                tickfontsize=16,
-                legend_font_pointsize = 20,
-                markersize=8,
-                markerstrokewidth = 1
-            )
-        end
-        display(p)
-    end    
-end
+# for k in eachindex(EbN0)
+#     for j=1:2
+#         title = FB[j]*"ER $Protocol (N = $N, R = $(R[1])/$(R[2]), Eb/N0 = $(EbN0[k])dB)"
+#         p = plot()
+#         for i in axes(modes_markers_lines,1)
+#             str = modes_markers_lines[i,1]
+#             x = readdlm(directory*FB[j]*"ER_"*str*".txt",'\t',Float64,'\n')
+#             x = x[:,k]
+#             p = plot!(
+#                 1:maxiter,
+#                 log10.(x[1:maxiter]),
+#                 lw=4,
+#                 title=title,
+#                 label=modes_markers_lines[i,1],
+#                 markershape = modes_markers_lines[i,2],
+#                 size = (1400,1000),
+#                 color=colors[i],
+#                 tickfontsize=16,
+#                 legend_font_pointsize = 20,
+#                 markersize=8,
+#                 markerstrokewidth = 1
+#             )
+#         end
+#         display(p)
+#     end    
+# end
 
-# #
-# FER x EbN0
-if length(EbN0) > 1
-    for j = 1:2
-        for k in eachindex(EbN0)
-            for i in axes(modes_markers_lines,1)
-                str = modes_markers_lines[i,1]
-                x = readdlm(directory*FB[j]*"ER_"*str*".txt",'\t',Float64,'\n')
-                x = x[:,k]
-                if j == 1
-                    FER_EbN0[k,i] = log10.(x[iter])
-                else
-                    BER_EbN0[k,i] = log10.(x[iter])
-                end
-            end
-        end
-    end
+# # #
+# # FER x EbN0
+# if length(EbN0) > 1
+#     for j = 1:2
+#         for k in eachindex(EbN0)
+#             for i in axes(modes_markers_lines,1)
+#                 str = modes_markers_lines[i,1]
+#                 x = readdlm(directory*FB[j]*"ER_"*str*".txt",'\t',Float64,'\n')
+#                 x = x[:,k]
+#                 if j == 1
+#                     FER_EbN0[k,i] = log10.(x[iter])
+#                 else
+#                     BER_EbN0[k,i] = log10.(x[iter])
+#                 end
+#             end
+#         end
+#     end
 
-    p = plot(
-        EbN0,FER_EbN0,
-        title = "FER x EbN0 $Protocol (N = $N, R = $(R[1])/$(R[2]), Iter = $iter)",
-        color=permutedims(colors),
-        label=permutedims(modes_markers_lines[:,1]),
-        markershape=permutedims(modes_markers_lines[:,2]),
-        line=permutedims(modes_markers_lines[:,3]),
-        lw=4,
-        markersize=8,
-        markerstrokewidth = 1,
-        guidefontsize=10,
-        legend_position = :bottomleft,
-        tickfontsize=16,
-        legend_font_pointsize = 20,
-        size = (1400,1000)
-    )
-    display(p)
-end
+#     p = plot(
+#         EbN0,FER_EbN0,
+#         title = "FER x EbN0 $Protocol (N = $N, R = $(R[1])/$(R[2]), Iter = $iter)",
+#         color=permutedims(colors),
+#         label=permutedims(modes_markers_lines[:,1]),
+#         markershape=permutedims(modes_markers_lines[:,2]),
+#         line=permutedims(modes_markers_lines[:,3]),
+#         lw=4,
+#         markersize=8,
+#         markerstrokewidth = 1,
+#         guidefontsize=10,
+#         legend_position = :bottomleft,
+#         tickfontsize=16,
+#         legend_font_pointsize = 20,
+#         size = (1400,1000)
+#     )
+#     display(p)
+# end

@@ -131,9 +131,12 @@ if TEST
             if PROF
                 global PRIN = false
                 # evaluate expr for profile view
-                prog = "@profview (prepare_simulation([EbN0_TEST],
-                        ALGORITHMS[i],
-                        TRIALS_TEST,
+                global ALGO_PROF = ALGORITHMS[i]
+                prog = "@profview (prepare_simulation(
+                        COUNT,
+                        [EbN0_TEST],
+                        ALGO_PROF,
+                        MAX_FRAME_ERRORS_TEST,
                         MAXITER_TEST,
                         BPTYPE,
                         DECAY_TEST))"
@@ -144,7 +147,7 @@ if TEST
                                                 COUNT,
                                                 [EbN0_TEST],
                                                 ALGORITHMS[i],
-                                                ERRORS_TEST,
+                                                MAX_FRAME_ERRORS_TEST,
                                                 MAXITER_TEST,
                                                 BPTYPE,
                                                 DECAY_TEST)

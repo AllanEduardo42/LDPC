@@ -77,7 +77,7 @@ function simcore(
     msum2 = false
     if bptype == "MSUM"
         msum_factor = ALPHA
-    elseif bptype == "MSUM2"
+    elseif bptype == "MSUMRBP"
         msum2 = true
         msum_factor = ALPHA2
     else

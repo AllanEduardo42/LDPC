@@ -48,7 +48,7 @@ function C_and_R_RBP!(
             if msum2
                 C2V[li] = calc_C2V_no_opt(Nc[ci],ci,vjmax,V2C)
             else
-                C2V[li] = newC2V[li]
+                C2V[li] = newC2V[li]    # NO EXTRA CALCULATIONS!!!
             end
             # 3) set maximum residual to zero
             Residuals[li] = 0.0
