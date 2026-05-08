@@ -3,6 +3,55 @@
 # 26 mai 2025
 # Auxiliary functions used in sincore.jl
 
+# Function to calculate the prior log-likelihood ratios
+function calc_prior_LLRs!(
+    prior_LLR::Vector{Float64},
+    twoZc::Int,
+    signal::Vector{Float64},
+    variance::Float64,
+    rayleigh::Bool,
+    fading::Union{Vector{Float64},Nothing},
+    bptype::String
+)
+
+    @fastmath @inbounds begin
+        if rayleigh
+            for i in eachindex(signal)
+                prior_LLR[twoZc+i] = -2*signal[i]*fading[i]/variance
+            end
+        else
+            for i in eachindex(signal)
+                prior_LLR[twoZc+i] = -2*signal[i]/variance
+            end
+        end
+        if bptype == "TABL"
+            for i in eachindex(signal)
+                prior_LLR[twoZc+i] *= SIZE_PER_RANGE
+            end
+        end
+    end
+
+end
+
+function calc_post_LLR(              
+    vj::Int,
+    Nvj::Vector{Int},
+    Lf::Vector{Float64},
+    C2V::Matrix{Float64}
+)
+
+    # begin
+    @fastmath @inbounds begin
+        Ld = Lf[vj]
+        for ci in Nvj
+            Ld += C2V[ci,vj]
+        end
+    end
+    
+    return Ld
+
+end
+
 function init_V2C!(
     V2C::Matrix{Float64},
     prior_LLRs::Vector{Float64},
@@ -15,21 +64,6 @@ function init_V2C!(
             V2C[ci,vj] = tanh_V2C(prior_LLRs[vj],0.0,msum_factor)
         end
     end
-end
-
-function init_V2C!(
-    V2C::Array{Float64,3},
-    prior_LLRs::Matrix{Float64},
-    Nv::Vector{Vector{Int}}
-)
-   
-    @inbounds for vj in eachindex(Nv)
-        for ci in Nv[vj]
-            V2C[ci,vj,1] = prior_LLRs[vj,1]
-            V2C[ci,vj,2] = prior_LLRs[vj,2]
-        end
-    end
-
 end
 
 function received_signal!(
@@ -75,20 +109,6 @@ function resetmatrix!(
     @inbounds for vj in eachindex(Nv)
         for ci in Nv[vj]
             X[ci,vj] = value
-        end
-    end
-end
-
-function resetmatrix!(
-    X::Array{<:Real,3},
-    Nv::Vector{Vector{Int}},
-    value::Real
-)    
-    
-    @inbounds for vj in eachindex(Nv)
-        for ci in Nv[vj]
-            X[ci,vj,1] = value
-            X[ci,vj,2] = value
         end
     end
 end

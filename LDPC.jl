@@ -12,49 +12,27 @@ using Polynomials
 using Statistics
 using Plots
 using SparseArrays
-#using CSV, DataFrames
 using Dates
 using DelimitedFiles
 
-##################################### SAVE #####################################
-
-if length(ARGS) == 0
-    SAVE = false
-elseif ARGS[1] == "true"
-    SAVE = true
-    NOW = string(now())
-    mkdir("./Saved Data/"*NOW)
-    FILE = open("./Saved Data/"*NOW*"/output.txt", "w")
-else
-    SAVE = false
-end
-
 ################################## CONSTANTS ###################################
 
-const INF = typemax(Int64)
-const MAXC2V = 1e3
-const MINC2V = -MAXC2V
-# const ALPHA = 0.73                    # Min-Sum attenuation factor
-# const ALPHA = 0.78
-const ALPHA = 0.755
-# const ALPHA2 = 0.86 
-# const ALPHA2 = 0.91
-const ALPHA2 = 0.885
-const TABLESIZE = 8192
-const TABLERANGE = 10
-const SIZE_PER_RANGE = TABLESIZE/TABLERANGE
-const C_DR_ITER = 5
+const INF = typemax(Int64)              
+const MAXC2V = 1e3                      # saturate values for C2V (Inf approx)
+const MINC2V = -MAXC2V                  # -Inf approx
+const ALPHA = 0.75                      # Min-Sum attenuation factor #1
+const ALPHA2 = 0.885                    # Min-Sum attenuation factor #2
 
 # Random seed
 SEED::Int = 1111
 
 ################################ CONTROL FLAGS #################################
 
-TEST::Bool = true
-PRIN::Bool = true
-PROF::Bool = false
-STOP::Bool = true # stop simulation at zero syndrome
-RAYL::Bool = false
+TEST::Bool = true                       # Testing mode (few trials)
+PRIN::Bool = true                       # Print info is in testing mode
+PROF::Bool = false                      # profview
+STOP::Bool = true                       # stop simulation at zero syndrome
+RAYL::Bool = false                      # Rayleigh fading channel
 
 ############################### TEST PARAMETERS ################################
 
@@ -66,18 +44,18 @@ EbN0_TEST::Float64 = 2.0
 ERRORS_TEST::Int = 1
 ### Residual Decay factors
 DECAY_TEST::Float64 = 1.0
-### CI gamma
+### CI-RBP gamma constant
 CI_GAMMA = 0.15
 
 ################################## PARAMETERS ##################################
 
-### Maximum number of BP iterations
+### Maximum number of Belief Propagation (BP) iterations
 MAXITER::Int = 20
 
 ### EbN0
 # EbN0 = [1.0, 1.25, 1.5, 1.75, 2.0]
-# EbN0 = [1.0, 1.5, 2.0, 2.5, 3.0]
-EbN0 = [2.65]
+EbN0 = [1.0, 1.5, 2.0, 2.5, 3.0]
+# EbN0 = [1.0]
 
 ### Maximum number of Frame Errors (at the last iteration)
 ERRORS = 36*7
@@ -94,7 +72,7 @@ ALGORITHMS = ["Flooding",        # Flooding
               "RD-RBP",          # Residual Decay RBP
               "NW-RBP",          # Node Wise RBP
               "SVNF",            # Silent Variable Node Free RBP
-              "List-RBP",        # List RBP
+              "List-RBP",        # List-RBP
               "C-RBP",           # Consensus RBP
               "C&R-RBP",         # Consensus & Return RBP
               "C&DR-RBP",        # Consensus & Delayed Return RBP
@@ -104,129 +82,140 @@ ALGORITHMS = ["Flooding",        # Flooding
               "UBP-RBP",         # Update Before Propagate RBP
               "RBP-D1VN"         # RBP with D1VN Processing Scheme
               ]
-
 NUM_MODES = length(ALGORITHMS)
+
+# Vector that indicates if each algorithm is active for simulation
+# if ACTIVE[ALGO] == true, the performance of Algorithm[ALGO] will be simulated
 ACTIVE = zeros(Bool,NUM_MODES)
 
-# BP type: "MKAY", "TANH", "TABL", "MSUM", "MSUM2"
+# BP types: 
+# "TANH": used the log-domain implementation of SPA (tanh functions)
+# "MSUM": approximates the C2V functions using the min-sum algorithm
+# "MSUMRBP": For RBP based algorithms, calculate only the residuals using min-sum
 BPTYPES = Vector{Vector{String}}(undef,NUM_MODES)
 
 # maximum number of BP iterations
 MAXITERS = zeros(Int,NUM_MODES)
 
 DECAYS = Vector{Vector{<:AbstractFloat}}(undef,NUM_MODES)
-for i in 1:NUM_MODES
-    DECAYS[i] = [0.0]
+for ALGO in 1:NUM_MODES
+    DECAYS[ALGO] = [0.0]
 end
 
 ### Flag to activate all algorithms
 ACTIVE_ALL = false
 
-i = 1
+# For each algorithm:
+# ACTIVE[ALGO] = 1 : the performance will be simulated
+# BPTYPES[ALGO] = ["TANH", "MSUM"] : the BP types the algorithm will be simulated
+# MAXITERS[ALGO] = 50 : number of BP iterations, defined for each active algorithm
+
+ALGO = 1
 # Flooding
-ACTIVE[i] = 0
-BPTYPES[i] = ["TANH"]
-MAXITERS[i] = MAXITER
+ACTIVE[ALGO] = 1                           
+BPTYPES[ALGO] = ["TANH"]                  
+MAXITERS[ALGO] = MAXITER
 
 # LBP
-i += 1
-ACTIVE[i] = 0
-BPTYPES[i] = ["TANH"]
-MAXITERS[i] = MAXITER
+ALGO += 1
+ACTIVE[ALGO] = 0
+BPTYPES[ALGO] = ["TANH"]
+MAXITERS[ALGO] = MAXITER
 
 # RBP
-i += 1
-ACTIVE[i] = 0
-BPTYPES[i] = ["TANH"]
-MAXITERS[i] = MAXITER
+ALGO += 1
+ACTIVE[ALGO] = 0
+BPTYPES[ALGO] = ["TANH"]
+MAXITERS[ALGO] = MAXITER
 
 # RD-RBP
-i += 1
-ACTIVE[i] = 0
-BPTYPES[i] = ["TANH"]
-MAXITERS[i] = MAXITER
-DECAYS[i] = FACTORS
+ALGO += 1
+ACTIVE[ALGO] = 0
+BPTYPES[ALGO] = ["TANH"]
+MAXITERS[ALGO] = MAXITER
+DECAYS[ALGO] = FACTORS
 
 # NW-RBP
-i += 1
-ACTIVE[i] = 0
-BPTYPES[i] = ["TANH"]
-MAXITERS[i] = MAXITER
+ALGO += 1
+ACTIVE[ALGO] = 0
+BPTYPES[ALGO] = ["TANH"]
+MAXITERS[ALGO] = MAXITER
 
 # SVNF
-i += 1
-ACTIVE[i] = 0
-BPTYPES[i] = ["TANH"]
-MAXITERS[i] = MAXITER
+ALGO += 1
+ACTIVE[ALGO] = 0
+BPTYPES[ALGO] = ["TANH"]
+MAXITERS[ALGO] = MAXITER
 
 # List-RBP
-i += 1
-ACTIVE[i] = 0
-BPTYPES[i] = ["TANH"]
-MAXITERS[i] = MAXITER
-DECAYS[i] = FACTORS
+ALGO += 1
+ACTIVE[ALGO] = 0
+BPTYPES[ALGO] = ["TANH"]
+MAXITERS[ALGO] = MAXITER
+DECAYS[ALGO] = FACTORS
 # List sizes (min values = 4 and 2)
 LISTSIZES = zeros(Int,2)
 LISTSIZES[1] = 16
 LISTSIZES[2] = 2
 
 # C-RBP
-i += 1
-ACTIVE[i] = 0
-BPTYPES[i] = ["TANH"]
-MAXITERS[i] = MAXITER
-DECAYS[i] = FACTORS
+ALGO += 1
+ACTIVE[ALGO] = 0
+BPTYPES[ALGO] = ["TANH"]
+MAXITERS[ALGO] = MAXITER
+DECAYS[ALGO] = FACTORS
 
 # C&R-RBP
-i += 1
-ACTIVE[i] = 0
-BPTYPES[i] = ["TANH"]
-MAXITERS[i] = MAXITER
-DECAYS[i] = FACTORS
+ALGO += 1
+ACTIVE[ALGO] = 0
+BPTYPES[ALGO] = ["TANH"]
+MAXITERS[ALGO] = MAXITER
+DECAYS[ALGO] = FACTORS
 
 # C&DR-RBP
-i += 1
-ACTIVE[i] = 0
-BPTYPES[i] = ["TANH"]
-MAXITERS[i] = MAXITER
-DECAYS[i] = FACTORS
+ALGO += 1
+ACTIVE[ALGO] = 0
+BPTYPES[ALGO] = ["TANH"]
+MAXITERS[ALGO] = MAXITER
+DECAYS[ALGO] = FACTORS
+C_DR_ITER::Int = 4                           # Activation of Return in C&DR-RBP
 
 # VC-RBP
-i += 1
-ACTIVE[i] = 0
-BPTYPES[i] = ["TANH"]
-MAXITERS[i] = MAXITER
+ALGO += 1
+ACTIVE[ALGO] = 0
+BPTYPES[ALGO] = ["TANH"]
+MAXITERS[ALGO] = MAXITER
 
 # OV-RBP
-i += 1
-ACTIVE[i] = 0
-BPTYPES[i] = ["TANH"]
-MAXITERS[i] = MAXITER
+ALGO += 1
+ACTIVE[ALGO] = 0
+BPTYPES[ALGO] = ["TANH"]
+MAXITERS[ALGO] = MAXITER
 
 # CI-RBP
-i += 1
-ACTIVE[i] = 0
-BPTYPES[i] = ["TANH"]
-MAXITERS[i] = MAXITER
+ALGO += 1
+ACTIVE[ALGO] = 0
+BPTYPES[ALGO] = ["TANH"]
+MAXITERS[ALGO] = MAXITER
 
 # UBP-RBP
-i += 1
-ACTIVE[i] = 0
-BPTYPES[i] = ["TANH"]
-MAXITERS[i] = MAXITER
+ALGO += 1
+ACTIVE[ALGO] = 0
+BPTYPES[ALGO] = ["TANH"]
+MAXITERS[ALGO] = MAXITER
 
 # RBP-D1VN
-i += 1
-ACTIVE[i] = 0
-BPTYPES[i] = ["TANH"]
-MAXITERS[i] = MAXITER
+ALGO += 1
+ACTIVE[ALGO] = 0
+BPTYPES[ALGO] = ["TANH"]
+MAXITERS[ALGO] = MAXITER
 
 ######################## CODE LENGTH, RATE AND PROTOCOL ########################
 
 # Transmitted message length
-GG::Int = 576
-# Effective Rate
-RR::Float64 = 1/2                      
+CODE_LENGTH::Int = 576
+# Code Rate = RATE[1]/RATE[2]
+RATE = [1, 2]              
 # LDPC protocol: 5GNR = NR-LDPC (5G); PEG = PEG; WiMAX = IEEE80216e;
 PROTOCOL::String = "5GNR"
     LAMBDA = [0.21, 0.25, 0.25, 0.29, 0]
@@ -246,10 +235,32 @@ PROTOCOL::String = "5GNR"
 #    2024, 2088, 2152, 2216, 2280, 2408, 2472, 2536, 2600, 2664, 2728, 2792, 
 #    2856, 2976, 3104, 3240, 3368, 3496, 3624, 3752, 3824]
 
+##################################### SAVE #####################################
+
+if length(ARGS) == 0
+    SAVE = false
+elseif ARGS[1] == "true"
+    SAVE = true
+    NOW = string(now())
+    DIRECTORY = "./Saved Data/"*NOW[1:10]*" "*NOW[12:16]*" $PROTOCOL $CODE_LENGTH $(RATE[1])|$(RATE[2])"
+    for ebn0 in EbN0
+        global DIRECTORY *= " $(ebn0)dB"
+    end
+    mkdir(DIRECTORY)
+    FILE = open(DIRECTORY*"/output.txt", "w")
+else
+    SAVE = false
+end
+
 #################################### SETUP #####################################
 include("setup.jl")
 
 ################################# PLOT RESULTS #################################
 if !TEST && !SAVE
     include("plot_results.jl")
+end
+
+if SAVE
+    println(FILE, "The End!")
+    close(FILE)
 end

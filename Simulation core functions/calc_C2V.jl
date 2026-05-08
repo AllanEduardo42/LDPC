@@ -2,7 +2,6 @@
 # Allan Eduardo Feitosa
 # 2 set 2025
 # C2V Update
-# There are 4 different methods for SPA: Mckay, tanh, minsum and table
 
 ####################### SPA USING FAST HYPERBOLIC TANGENT ######################
 function calc_C2V(
@@ -95,100 +94,7 @@ function calc_C2V(
     end
 end
 
-################ ALTERNATIVE TO HYPERBOLIC TANGENT USING TABLE ################
-function calc_ABCD!(
-    V2C::Matrix{Float64},
-    ci::Int,
-    Nci::Vector{Int},
-    signs::Vector{Bool},
-    phi::Vector{Float64}
-)
 
-    sum_c2v = 0.0
-    s = false
-    @fastmath @inbounds for vj in Nci
-        v2c = V2C[ci,vj]
-        sig = signbit(v2c)
-        s ⊻= sig
-        signs[vj] = sig
-        sum_c2v += ϕ(abs(v2c),phi) 
-    end
 
-    return sum_c2v, s, nothing, nothing
-end
 
-function calc_C2V(
-    sum_c2v::Float64,   #A
-    s::Bool,            #B          
-    ::Nothing,          #C
-    ::Nothing,          #D
-    vj::Int,
-    v2c::Float64,
-    signs::Vector{Bool},
-    phi::Vector{Float64}
-)
-
-    @fastmath @inbounds begin
-        x = abs(sum_c2v - v2c)
-        y = signs[vj] ⊻ s
-        return (1 - 2*y)*ϕ(x,phi)
-    end
-end
-
-########################### SPA USING MKAY's METHOD ############################
-function calc_δr(
-    Nci::Vector{Int},
-    vj::Int,
-    δq::Vector{Float64}
-)
-
-    @fastmath @inbounds begin
-        δr = 1.0
-        for vb in Nci
-            if vb ≠ vj
-                δr *= δq[vb]
-            end
-        end
-        return δr
-    end 
-
-end
-
-# pre-historic method
-function calc_r(
-    q::Array{Float64,3},
-    ci::Int,
-    vj::Int,
-    Nci::Vector{Int},
-    S::Int
-)
-
-    @fastmath @inbounds begin
-        r1 = 0.0   
-        r2 = 0.0          
-        for s = 0:2^S-1
-            dig = digits(s, base = 2, pad = S)
-            count = 0
-            rr = 1.0
-            if iseven(sum(dig))
-                for nn in Nci
-                    if nn != vj
-                        count += 1
-                        rr *= q[ci,nn,dig[count]+1]
-                    end
-                end
-                r1 += rr
-            else
-                for nn in Nci
-                    if nn != vj
-                        count += 1
-                        rr *= q[ci,nn,dig[count]+1]
-                    end               
-                end
-                r2 += rr
-            end
-        end
-        return r1, r2
-    end
-end
 

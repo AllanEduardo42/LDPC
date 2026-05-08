@@ -106,7 +106,6 @@ end
 function init_list!(
     V2C::Matrix{Float64},
     Nc::Vector{Vector{Int}},
-    phi::Union{Vector{Float64},Nothing},
     msum_factor::Union{Float64,Nothing},
     newC2V::Matrix{Float64},   
     inlist::Matrix{Bool},

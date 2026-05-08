@@ -3,6 +3,13 @@
 # 25 Feb 2025
 # Core routine to estimate the LPCD performance (FER sum_ber x SNR)
 
+# simcore functions
+include("./Simulation core functions/auxiliary_functions.jl")
+include("./Simulation core functions/encode_LDPC.jl")
+include("./Simulation core functions/tanh_V2C.jl")
+include("./Simulation core functions/calc_syndrome.jl")
+include("./Simulation core functions/calc_C2V.jl")
+
 function simcore(
     A::Int,                         # payload length
     K::Int,                         # payload + CRC length
@@ -108,14 +115,20 @@ function simcore(
     # estimate
     bitvector = Vector{Bool}(undef,N)    
 
-    # prior llr (if algorithm == "MKAY" it is just the prior probabilities)
-    prior_LLRs = (bptype != "MKAY") ? Vector{Float64}(undef,N) : Matrix{Float64}(undef,N,2)
+    # prior llr
+    prior_LLRs = Vector{Float64}(undef,N)
 
+    # if there are punctured bits
     if twoLs > 0
         for i in 1:twoLs
             prior_LLRs[i] = 0.0
         end
     end
+
+    # V2C -> matrix of V2C messages (N x M)
+    # C2V -> matrix of C2V messages (N x M)
+    V2C = Matrix{Float64}(undef,M,N)
+    C2V = Matrix{Float64}(undef,M,N)
 
     # received signal
     signal = Vector{Float64}(undef,G)
@@ -123,6 +136,7 @@ function simcore(
     # bit-error
     biterror = Vector{Bool}(undef,N) 
 
+    # Rayleigh fading channel
     if rayleigh
         x1 = Vector{Float64}(undef,G)
         x2 = Vector{Float64}(undef,G)
@@ -132,14 +146,6 @@ function simcore(
         x2 = nothing
         fading = nothing
     end
-
-    # V2C -> matrix of V2C messages (N x M)
-    # C2V -> matrix of C2V messages (N x M)
-    # if algorithm == "MKAY" the are different matrices for bit = 0 and bit = 1
-    V2C = (bptype != "MKAY") ? Matrix{Float64}(undef,M,N) : Array{Float64,3}(undef,M,N,2)
-    C2V = (bptype != "MKAY") ? Matrix{Float64}(undef,M,N) : Array{Float64,3}(undef,M,N,2)
-
-    phi = (bptype == "TABL") ? lookupTable() : nothing
 
     if test
         syndrome = Vector{Bool}(undef,M)
@@ -291,14 +297,16 @@ function simcore(
 
         ### 6.5) print test info
         if printtest
-            println("________________________________________________________________________________")
-            println()
-            println("                                    TRIAL #$count_trials")
-            println("________________________________________________________________________________")
+            println("""
+________________________________________________________________________________
+
+                                    TRIAL #$count_trials")
+________________________________________________________________________________
+""")
             print_test("Message",msg)
             print_test("Transmitted codeword",cword[twoLs+1:end])
             println()
-            println("                              ### Iteration #0 ###                              ")
+            println("                              ### Iteration #0 ###")
             calc_syndrome!(syndrome,bitvector,Nc)
             biterror .= (bitvector .≠ cword)
             print_test("Syndrome",syndrome)  
@@ -316,7 +324,7 @@ function simcore(
             end
 
             if RBP_init
-                init_residuals!(V2C,Nc,phi,newC2V,alpha,Residuals,msum_factor)
+                init_residuals!(V2C,Nc,newC2V,alpha,Residuals,msum_factor)
                 if algorithm == "CI-RBP"
                     for vj in eachindex(Nv)
                         Prob[vj] = calc_prob(prior_LLRs[vj])
@@ -329,7 +337,7 @@ function simcore(
                 resetmatrix!(inlist,Nv,false)
                 local_list .= 0.0
                 local_coords .= 0
-                init_list!(V2C,Nc,phi,msum_factor,newC2V,inlist,Residuals,list,
+                init_list!(V2C,Nc,msum_factor,newC2V,inlist,Residuals,list,
                                                                 coords,listsize)  
             elseif algorithm == "VC-RBP"
                 init_VC!(V2C,Nv,alpha,Residuals)
@@ -357,7 +365,6 @@ function simcore(
                         prior_LLRs,
                         Nc,
                         Nv,
-                        phi,
                         msum_factor,
                         msum2,
                         num_reps,
@@ -373,7 +380,6 @@ function simcore(
                         prior_LLRs,
                         Nc,
                         Nv,
-                        phi,
                         msum_factor,
                         msum2,
                         num_reps,
@@ -396,7 +402,6 @@ function simcore(
                         prior_LLRs,
                         Nc,
                         Nv,
-                        phi,
                         msum_factor,
                         msum2,
                         num_reps,
@@ -415,7 +420,6 @@ function simcore(
                         prior_LLRs,
                         Nc,
                         Nv,
-                        phi,
                         msum_factor,
                         msum2,
                         num_reps,
@@ -430,7 +434,6 @@ function simcore(
                         prior_LLRs,
                         Nc,
                         Nv,
-                        phi,
                         msum_factor,
                         msum2,
                         num_reps,
@@ -447,7 +450,6 @@ function simcore(
                         prior_LLRs,
                         Nc,
                         Nv,
-                        phi,
                         msum_factor,
                         msum2,
                         num_reps,
@@ -471,7 +473,6 @@ function simcore(
                         prior_LLRs,
                         Nc,
                         Nv,
-                        phi,
                         msum_factor,
                         msum2,
                         num_reps,
@@ -486,7 +487,6 @@ function simcore(
                         prior_LLRs,
                         Nc,
                         Nv,
-                        phi,
                         msum_factor,
                         msum2,
                         num_reps,
@@ -507,7 +507,6 @@ function simcore(
                         prior_LLRs,
                         Nc,
                         Nv,
-                        phi,
                         msum_factor,
                         msum2,
                         num_reps,
@@ -526,7 +525,6 @@ function simcore(
                         prior_LLRs,
                         Nc,
                         Nv,
-                        phi,
                         msum_factor,
                         msum2,
                         num_reps,
@@ -543,7 +541,6 @@ function simcore(
                         prior_LLRs,
                         Nc,
                         Nv,
-                        phi,
                         msum_factor,
                         msum2,
                         num_reps,
@@ -570,7 +567,6 @@ function simcore(
                     prior_LLRs,
                     Nc,
                     Nv,
-                    phi,
                     msum_factor
                     )
             elseif algorithm == "LBP"
@@ -581,7 +577,6 @@ function simcore(
                     prior_LLRs,
                     Nc,
                     Nv,
-                    phi,
                     msum_factor
                     )
             end            
@@ -595,7 +590,7 @@ function simcore(
 
             # print test info
             if printtest
-                println("                              ### Iteration #$iter ###                              ")       
+                println("                              ### Iteration #$iter ###")       
                 calc_syndrome!(syndrome,bitvector,Nc) 
                 print_test("Syndrome",syndrome)  
                 println("Syndrome rate: $(sum(syndrome))/$M")
@@ -663,20 +658,6 @@ function simcore(
     if printtest
         println("Monte Carlo trials ended: maximum number of frame errors reached.")
         println("Total number of trials: $count_trials")
-    end
-
-    # MKAY compatibility
-    if test && bptype == "MKAY"
-        retr = Matrix{Float64}(undef,M,N)
-        retq = Matrix{Float64}(undef,M,N)
-        for ci in eachindex(Nc)
-            for vj in Nc[ci]
-                retr[ci,vj] = log.(C2V[ci,vj,1]) - log.(C2V[ci,vj,2])
-                retq[ci,vj] = log.(V2C[ci,vj,1]) - log.(V2C[ci,vj,2])
-            end
-        end
-        C2V = retr
-        V2C = retq
     end
 
     if test

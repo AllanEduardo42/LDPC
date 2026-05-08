@@ -7,7 +7,6 @@
 function init_residuals!(
     V2C::Matrix{Float64},
     Nc::Vector{Vector{Int}},
-    phi::Union{Vector{Float64},Nothing},
     newC2V::Matrix{Float64}, 
     alpha::Vector{Float64},
     Residuals::Matrix{Float64},

@@ -14,10 +14,6 @@ function prepare_simulation(
     decay::Float64
 )
 
-    if bptype == "MKAY" && algorithm ≠ "Flooding"
-        throw(error(lazy"The McKay method is only supported for Flooding"))
-    end
-
 ############################ PRINT ALGORITHM DETAILS ###########################
     print_algorithm_details(count,algorithm,bptype,decay)
 
@@ -43,7 +39,7 @@ function prepare_simulation(
                                                     AA,
                                                     KK,
                                                     RR,
-                                                    GG,
+                                                    CODE_LENGTH,
                                                     G_CRC,
                                                     ebn0[k],
                                                     HH,

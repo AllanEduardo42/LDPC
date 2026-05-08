@@ -21,13 +21,10 @@ FB = ["F","B"]
 for j=1:2          
     for k in eachindex(EbN0)  
         p = plot()      
-        title = FB[j]*"ER $PROTOCOL (G = $GG, R = $(round(RR,digits=3)), Eb/N0 = $(EbN0[k])dB)"      
+        title = FB[j]*"ER $PROTOCOL (Code length = $CODE_LENGTH, Rate = $(RATE[1])/$(RATE[2]), Eb/N0 = $(EbN0[k])dB)"      
         for i in eachindex(ACTIVE)
             if ACTIVE[i]
                 algo = ALGORITHMS[i]
-                # if algo == "List-RBP"
-                #     algo *= " ($(LISTSIZES[1]),$(LISTSIZES[2]))"
-                # end
                 for bptype in BPTYPES[i]
                     if bptype != "TANH"
                         algo *= " ($bptype)"
@@ -41,10 +38,8 @@ for j=1:2
                         end
                         if FB[j] == "F"
                             y = log10.(FER[algo][:,k])
-                            # lim = log10(LIMFER[k])
                         else
                             y = log10.(BER[algo][:,k])
-                            # lim = log10(LIMBER[k])
                         end
                         x = 1:MAXITERS[i]
                         if j == 1
@@ -59,8 +54,7 @@ for j=1:2
                             label=algo,
                             lw=2,
                             title=title,
-                            # ylims=(lim,0),
-                            size = (700,500)
+                            size = (800,500)
                         )
                     end
                 end
@@ -72,7 +66,7 @@ end
 
 LABELS = permutedims(LABELS)
 
-TITLE = "ER $PROTOCOL (G = $GG, R = $(round(RR,digits=3)), Iter = $MAXITER)"
+TITLE = "ER $PROTOCOL (Code length = $CODE_LENGTH, Rate = $(RATE[1])/$(RATE[2]), Iter = $MAXITER)"
 
 if length(EbN0) > 1
 
@@ -102,7 +96,3 @@ if length(EbN0) > 1
 end
 
 println("The End!")
-if SAVE
-    println(FILE, "The End!")
-    close(FILE)
-end

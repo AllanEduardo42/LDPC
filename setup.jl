@@ -38,15 +38,6 @@ else
     throw(error(lazy"Invalid coding protocol (valid options: 5GNR, WiMAX and PEG)"))
 end
 
-# simcore functions
-include("Simulation core functions/auxiliary_functions.jl")
-include("Simulation core functions/encode_LDPC.jl")
-include("Simulation core functions/calc_prior_LLRs.jl")
-include("Simulation core functions/tanh_V2C.jl")
-include("Simulation core functions/calc_syndrome.jl")
-include("Simulation core functions/calc_C2V.jl")
-include("Simulation core functions/calc_post_LLR.jl")
-
 # algorithms
 for i in eachindex(ACTIVE)
     if ACTIVE[i]
@@ -59,10 +50,13 @@ for i in eachindex(ACTIVE)
 end
 
 ############################# PARITY-CHECK MATRIX #############################
+
+RR = RATE[1]/RATE[2]
+
 if PROTOCOL == "5GNR"
     H1 = [false false]
     RV = 0
-    AA, KK, RR, G_CRC, LIFTSIZE, NR_LDPC_DATA = NR_LDPC_parameters(GG,RR,RV,false)
+    AA, KK, RR, G_CRC, LIFTSIZE, NR_LDPC_DATA = NR_LDPC_parameters(CODE_LENGTH,RR,RV,false)
     HH, E_H = NR_LDPC_make_parity_check_matrix(LIFTSIZE,
                                                NR_LDPC_DATA.iLS,
                                                NR_LDPC_DATA.bg,
@@ -75,8 +69,8 @@ if PROTOCOL == "5GNR"
     LL = H1
     UU = H1
 else
-    NN = GG
-    AA = round(Int,GG*RR)
+    NN = CODE_LENGTH
+    AA = round(Int,CODE_LENGTH*RR)
     KK, G_CRC = get_CRC_poly(AA)  
     if PROTOCOL == "PEG"     
         LIFTSIZE = 0
@@ -169,9 +163,6 @@ else
         if ACTIVE[i]
             global COUNT += 1
             algo = ALGORITHMS[i]
-            # if algo == "List-RBP"
-            #     algo *= " ($(LISTSIZES[1]),$(LISTSIZES[2]))"
-            # end
             for bptype in BPTYPES[i]
                 if bptype != "TANH"
                     algo *= " ($bptype)"
@@ -189,10 +180,10 @@ else
                                             bptype,
                                             decay)
                     if SAVE
-                        open("./Saved Data/"*NOW*"/FER_"*algo*".txt","w") do io
+                        open(DIRECTORY*"/FER_"*algo*".txt","w") do io
                                 writedlm(io,fer)
                         end
-                        open("./Saved Data/"*NOW*"/BER_"*algo*".txt","w") do io
+                        open(DIRECTORY*"/BER_"*algo*".txt","w") do io
                                 writedlm(io,ber)
                         end
                     end

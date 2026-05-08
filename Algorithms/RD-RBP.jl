@@ -12,7 +12,6 @@ function RD_RBP!(
     prior_LLRs::Vector{Float64},
     Nc::Vector{Vector{Int}},
     Nv::Vector{Vector{Int}},
-    phi::Union{Vector{Float64},Nothing},
     msum_factor::Union{Float64,Nothing},
     msum2::Bool,
     num_reps::Int,

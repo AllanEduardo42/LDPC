@@ -33,8 +33,8 @@ LDPC Protocol: """
     str = """
 
 Graph girth = $GIRTH
-Effective rate = $(round(RR,digits=3))
-Code length = $GG    
+Rate = $(RATE[1])/$(RATE[2])
+Code length = $CODE_LENGTH    
 
 ############################ Simulation parameters #############################
 
