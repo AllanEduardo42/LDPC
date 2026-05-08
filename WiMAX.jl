@@ -3,7 +3,7 @@
 # 20 Mai 2025
 # IEEE80216e LDPC enconding (WiMAX)
 
-function IEEE80216e(
+function WiMAX(
     N::Int,
     R::Float64,
     mode::String

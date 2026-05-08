@@ -53,15 +53,18 @@ MAXITER::Int = 20
 
 ### EbN0
 # EbN0 = [1.0, 1.25, 1.5, 1.75, 2.0]
-# EbN0 = [1.0, 1.5, 2.0, 2.5, 3.0]
-EbN0 = [2.0]
+EbN0 = [1.0, 1.5, 2.0]
+# EbN0 = [2.0]
 
 ### Maximum number of Frame Errors (at the last iteration)
 MAX_FRAME_ERRORS = 36*7
 
-### Residual Decay factors
-FACTORS = [0.85]
-# FACTORS = [0.7, 0.8, 0.85, 0.9, 1.0]
+### Residual Decay (RD) factors
+# Algorithms that uses RD: RD-RBP, List-RBP, C-RBP, C&R-RBP and C&R-RBP
+
+# DECAYS = [0.85]
+# DECAYS = [0.7, 0.8, 0.85, 0.9, 1.0]
+DECAYS = [0.85]
 
 ############################### LDPC ALGORITHMS ################################
 
@@ -93,11 +96,6 @@ ACTIVE = zeros(Bool,NUM_MODES)
 # "MSUMRBP": For RBP based algorithms, calculate only the residuals using min-sum
 BPTYPE = "TANH"
 
-DECAYS = Vector{Vector{<:AbstractFloat}}(undef,NUM_MODES)
-for ALGO in 1:NUM_MODES
-    DECAYS[ALGO] = [0.0]
-end
-
 ### Flag to activate all algorithms
 ACTIVE_ALL = false
 
@@ -108,40 +106,32 @@ ACTIVE_ALL = false
 ACTIVE[1] = 1                           
 
 # LBP
-ACTIVE[2] = 0
+ACTIVE[2] = 1
 
 # RBP
-ACTIVE[3] = 0
+ACTIVE[3] = 1
 
 # RD-RBP
-ACTIVE[4] = 0
-DECAYS[4] = FACTORS
+ACTIVE[4] = 1
 
 # NW-RBP
-ACTIVE[5] = 0
+ACTIVE[5] = 1
 
 # SVNF
-ACTIVE[6] = 0
+ACTIVE[6] = 1
 
 # List-RBP
-ACTIVE[7] = 0
-DECAYS[7] = FACTORS
-# List sizes (min values = 4 and 2)
-LISTSIZES = zeros(Int,2)
-LISTSIZES[1] = 16
-LISTSIZES[2] = 2
+ACTIVE[7] = 1
+LISTSIZES = [16,2]                      # List sizes (min values = [4,2])
 
 # C-RBP
-ACTIVE[8] = 0
-DECAYS[8] = FACTORS
+ACTIVE[8] = 1
 
 # C&R-RBP
-ACTIVE[9] = 0
-DECAYS[9] = FACTORS
+ACTIVE[9] = 1
 
 # C&DR-RBP
-ACTIVE[10] = 0
-DECAYS[10] = FACTORS
+ACTIVE[10] = 1
 C_DR_ITER::Int = 4                      # Activation of Return in C&DR-RBP
 
 # VC-RBP
@@ -154,7 +144,7 @@ ACTIVE[12] = 0
 ACTIVE[13] = 0
 
 # UBP-RBP
-ACTIVE[14] = 0
+ACTIVE[14] = 1
 
 # RBP-D1VN
 ACTIVE[15] = 0
@@ -206,6 +196,7 @@ include("setup.jl")
 
 ################################# PLOT RESULTS #################################
 if !TEST && !SAVE
+    ITER = 10                           # FER x EbN0 iteration
     include("plot_results.jl")
 end
 

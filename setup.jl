@@ -16,10 +16,9 @@ end
 ################################ INCLUDED FILES ################################
 
 include("GF2_functions.jl")
-include("get_CRC_poly.jl")
+
 include("GF2_poly.jl")
-include("find_girth.jl")
-include("make_VN_CN_lists.jl")
+include("auxiliary setup functions.jl")
 include("print_simulation_details.jl")
 include("print_algorithm_details.jl")
 include("prepare_simulation.jl")
@@ -29,8 +28,10 @@ if PROTOCOL == "5GNR"
     include("5G NR LDPC/NR_LDPC_parameters.jl")
     include("5G NR LDPC/NR_LDPC_auxiliary_functions.jl")
     include("5G NR LDPC/NR_LDPC_make_parity_check_matrix.jl")
+    include("5G NR LDPC/get_CRC_poly.jl")
 elseif PROTOCOL == "WiMAX"
-    include("IEEE80216e.jl")
+    include("WiMAX.jl")
+    include("5G NR LDPC/get_CRC_poly.jl")
 elseif PROTOCOL == "PEG"
     include("PEG.jl")
     include("LU_encoding.jl")
@@ -84,7 +85,7 @@ else
         # N takes values in {576,672,768,864,960,1056,1152,1248,1344,1440,1536,
         # 1632,1728,1824,1920,2016,2112,2208,2304}.    
         # R takes values in {"1/2","2/3A","2/3B","3/4A","3/4B","5/6"}.
-        HH, LIFTSIZE, E_H = IEEE80216e(NN,RR,"A")
+        HH, LIFTSIZE, E_H = WiMAX(NN,RR,"A")
         MM,_ = size(HH)
         KK = NN - MM
         AA = KK - 16 # since max(AA) = 2304*5/6 ≤ 3824, g_cRC = {CRC16}      
@@ -124,7 +125,7 @@ if TEST
     for i in eachindex(ACTIVE)
         if ACTIVE[i]
             global COUNT += 1
-            if DECAYS[i][1] == 0.0
+            if !is_RD_algorithm(ALGORITHMS[i])
                 global DECAY_TEST = 0.0
             end
             if PROF
@@ -156,14 +157,20 @@ else
 
     FER = Dict()
     BER = Dict()
+    LABELS = []
     COUNT = 0
     for i in eachindex(ACTIVE)
         if ACTIVE[i]
-            global COUNT += 1
-            algo = ALGORITHMS[i]
-            for decay in DECAYS[i]
-                if length(DECAYS[i]) > 1 && decay != 0.0
-                    algo *= " $decay"
+            if is_RD_algorithm(ALGORITHMS[i])
+                decays = DECAYS
+            else
+                decays = [0.0]
+            end
+            for decay in decays
+                global COUNT += 1
+                algo = ALGORITHMS[i]
+                if length(decays) > 1
+                    algo *= " $decay"                  
                 end
                 fer, ber = prepare_simulation(
                                         COUNT,
@@ -183,6 +190,7 @@ else
                 end
                 FER[algo] = fer
                 BER[algo] = ber
+                push!(LABELS,algo)
             end
         end
     end

@@ -1,6 +1,6 @@
 ################################################################################
 # Allan Eduardo Feitosa
-# 27 mai 202
+# 27 mai 2025
 # Function to obtain the proper CRC polynomial according to the 3GPP TS 38.212
 
 function get_CRC_poly(A::Int)
