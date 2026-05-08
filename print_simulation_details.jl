@@ -42,7 +42,6 @@ Maximum number of frame errors: $errors
 Maximum number of iterations: $maxiter
 Number of threads (multithreading): $NTHREADS
 Eb/No (dB): $ebn0
-Stop at zero syndrome ? $STOP
 
 """
 

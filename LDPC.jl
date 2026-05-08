@@ -28,7 +28,7 @@ SEED::Int = 1111
 
 ################################ CONTROL FLAGS #################################
 
-TEST::Bool = true                       # Testing mode (few trials)
+TEST::Bool = false                       # Testing mode (few trials)
 PRIN::Bool = true                       # Print info is in testing mode
 PROF::Bool = false                      # profview
 RAYL::Bool = false                      # Rayleigh fading channel
@@ -53,11 +53,11 @@ MAXITER::Int = 20
 
 ### EbN0
 # EbN0 = [1.0, 1.25, 1.5, 1.75, 2.0]
-EbN0 = [1.0, 1.5, 2.0, 2.5, 3.0]
-# EbN0 = [1.0]
+# EbN0 = [1.0, 1.5, 2.0, 2.5, 3.0]
+EbN0 = [2.0]
 
 ### Maximum number of Frame Errors (at the last iteration)
-ERRORS = 36*7
+MAX_FRAME_ERRORS = 36*7
 
 ### Residual Decay factors
 FACTORS = [0.85]
@@ -65,36 +65,33 @@ FACTORS = [0.85]
 
 ############################### LDPC ALGORITHMS ################################
 
-ALGORITHMS = ["Flooding",        # Flooding
-              "LBP",             # Layered Believe Propagation
-              "RBP",             # Residual Believe Propagation
-              "RD-RBP",          # Residual Decay RBP
-              "NW-RBP",          # Node Wise RBP
-              "SVNF",            # Silent Variable Node Free RBP
-              "List-RBP",        # List-RBP
-              "C-RBP",           # Consensus RBP
-              "C&R-RBP",         # Consensus & Return RBP
-              "C&DR-RBP",        # Consensus & Delayed Return RBP
-              "VC-RBP",          # Variable to Check RBP
-              "OV-RBP",          # Oscillating Variable Node RBP
-              "CI-RBP",          # Conditional Innovation RBP
-              "UBP-RBP",         # Update Before Propagate RBP
-              "RBP-D1VN"         # RBP with D1VN Processing Scheme
+ALGORITHMS = ["Flooding",        #  1) Flooding
+              "LBP",             #  2) Layered Believe Propagation
+              "RBP",             #  3) Residual Believe Propagation
+              "RD-RBP",          #  4) Residual Decay RBP
+              "NW-RBP",          #  5) Node Wise RBP
+              "SVNF",            #  6) Silent Variable Node Free RBP
+              "List-RBP",        #  7) List-RBP
+              "C-RBP",           #  8) Consensus RBP
+              "C&R-RBP",         #  9) Consensus & Return RBP
+              "C&DR-RBP",        # 10) Consensus & Delayed Return RBP
+              "VC-RBP",          # 11) Variable to Check RBP
+              "OV-RBP",          # 12) Oscillating Variable Node RBP
+              "CI-RBP",          # 13) Conditional Innovation RBP
+              "UBP-RBP",         # 14) Update Before Propagate RBP
+              "RBP-D1VN"         # 15) RBP with D1VN Processing Scheme
               ]
 NUM_MODES = length(ALGORITHMS)
 
 # Vector that indicates if each algorithm is active for simulation
-# if ACTIVE[ALGO] == true, the performance of Algorithm[ALGO] will be simulated
+# if ACTIVE[i] == true, the performance of Algorithm[i] will be simulated
 ACTIVE = zeros(Bool,NUM_MODES)
 
 # BP types: 
 # "TANH": used the log-domain implementation of SPA (tanh functions)
 # "MSUM": approximates the C2V functions using the min-sum algorithm
 # "MSUMRBP": For RBP based algorithms, calculate only the residuals using min-sum
-BPTYPES = Vector{Vector{String}}(undef,NUM_MODES)
-
-# maximum number of BP iterations
-MAXITERS = zeros(Int,NUM_MODES)
+BPTYPE = "TANH"
 
 DECAYS = Vector{Vector{<:AbstractFloat}}(undef,NUM_MODES)
 for ALGO in 1:NUM_MODES
@@ -105,109 +102,62 @@ end
 ACTIVE_ALL = false
 
 # For each algorithm:
-# ACTIVE[ALGO] = 1 : the performance will be simulated
-# BPTYPES[ALGO] = ["TANH", "MSUM"] : the BP types the algorithm will be simulated
-# MAXITERS[ALGO] = 50 : number of BP iterations, defined for each active algorithm
+# ACTIVE[i] = 1 : the performance will be simulated
 
-ALGO = 1
 # Flooding
-ACTIVE[ALGO] = 1                           
-BPTYPES[ALGO] = ["TANH"]                  
-MAXITERS[ALGO] = MAXITER
+ACTIVE[1] = 1                           
 
 # LBP
-ALGO += 1
-ACTIVE[ALGO] = 0
-BPTYPES[ALGO] = ["TANH"]
-MAXITERS[ALGO] = MAXITER
+ACTIVE[2] = 0
 
 # RBP
-ALGO += 1
-ACTIVE[ALGO] = 0
-BPTYPES[ALGO] = ["TANH"]
-MAXITERS[ALGO] = MAXITER
+ACTIVE[3] = 0
 
 # RD-RBP
-ALGO += 1
-ACTIVE[ALGO] = 0
-BPTYPES[ALGO] = ["TANH"]
-MAXITERS[ALGO] = MAXITER
-DECAYS[ALGO] = FACTORS
+ACTIVE[4] = 0
+DECAYS[4] = FACTORS
 
 # NW-RBP
-ALGO += 1
-ACTIVE[ALGO] = 0
-BPTYPES[ALGO] = ["TANH"]
-MAXITERS[ALGO] = MAXITER
+ACTIVE[5] = 0
 
 # SVNF
-ALGO += 1
-ACTIVE[ALGO] = 0
-BPTYPES[ALGO] = ["TANH"]
-MAXITERS[ALGO] = MAXITER
+ACTIVE[6] = 0
 
 # List-RBP
-ALGO += 1
-ACTIVE[ALGO] = 0
-BPTYPES[ALGO] = ["TANH"]
-MAXITERS[ALGO] = MAXITER
-DECAYS[ALGO] = FACTORS
+ACTIVE[7] = 0
+DECAYS[7] = FACTORS
 # List sizes (min values = 4 and 2)
 LISTSIZES = zeros(Int,2)
 LISTSIZES[1] = 16
 LISTSIZES[2] = 2
 
 # C-RBP
-ALGO += 1
-ACTIVE[ALGO] = 0
-BPTYPES[ALGO] = ["TANH"]
-MAXITERS[ALGO] = MAXITER
-DECAYS[ALGO] = FACTORS
+ACTIVE[8] = 0
+DECAYS[8] = FACTORS
 
 # C&R-RBP
-ALGO += 1
-ACTIVE[ALGO] = 0
-BPTYPES[ALGO] = ["TANH"]
-MAXITERS[ALGO] = MAXITER
-DECAYS[ALGO] = FACTORS
+ACTIVE[9] = 0
+DECAYS[9] = FACTORS
 
 # C&DR-RBP
-ALGO += 1
-ACTIVE[ALGO] = 0
-BPTYPES[ALGO] = ["TANH"]
-MAXITERS[ALGO] = MAXITER
-DECAYS[ALGO] = FACTORS
-C_DR_ITER::Int = 4                           # Activation of Return in C&DR-RBP
+ACTIVE[10] = 0
+DECAYS[10] = FACTORS
+C_DR_ITER::Int = 4                      # Activation of Return in C&DR-RBP
 
 # VC-RBP
-ALGO += 1
-ACTIVE[ALGO] = 0
-BPTYPES[ALGO] = ["TANH"]
-MAXITERS[ALGO] = MAXITER
+ACTIVE[11] = 0
 
 # OV-RBP
-ALGO += 1
-ACTIVE[ALGO] = 0
-BPTYPES[ALGO] = ["TANH"]
-MAXITERS[ALGO] = MAXITER
+ACTIVE[12] = 0
 
 # CI-RBP
-ALGO += 1
-ACTIVE[ALGO] = 0
-BPTYPES[ALGO] = ["TANH"]
-MAXITERS[ALGO] = MAXITER
+ACTIVE[13] = 0
 
 # UBP-RBP
-ALGO += 1
-ACTIVE[ALGO] = 0
-BPTYPES[ALGO] = ["TANH"]
-MAXITERS[ALGO] = MAXITER
+ACTIVE[14] = 0
 
 # RBP-D1VN
-ALGO += 1
-ACTIVE[ALGO] = 0
-BPTYPES[ALGO] = ["TANH"]
-MAXITERS[ALGO] = MAXITER
+ACTIVE[15] = 0
 
 ######################## CODE LENGTH, RATE AND PROTOCOL ########################
 

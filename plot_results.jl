@@ -25,38 +25,28 @@ for j=1:2
         for i in eachindex(ACTIVE)
             if ACTIVE[i]
                 algo = ALGORITHMS[i]
-                for bptype in BPTYPES[i]
-                    if bptype != "TANH"
-                        algo *= " ($bptype)"
+                for decay in DECAYS[i]
+                    if length(DECAYS[i]) > 1 && decay != 0.0
+                        algo *= " $decay"
                     end
-                    for decay in DECAYS[i]
-                        if length(DECAYS[i]) > 1 && decay != 0.0
-                            algo *= " $decay"
-                        end
-                        if j == 1 && k == 1
-                            push!(LABELS,algo)
-                        end
-                        if FB[j] == "F"
-                            y = log10.(FER[algo][:,k])
-                        else
-                            y = log10.(BER[algo][:,k])
-                        end
-                        x = 1:MAXITERS[i]
-                        if j == 1
-                            FERMAX[k,i] = y[MAXITER]
-                        else
-                            BERMAX[k,i] = y[MAXITER]
-                        end
-                        p = plot!(
-                            x,
-                            y,
-                            xlabel="Iteration",
-                            label=algo,
-                            lw=2,
-                            title=title,
-                            size = (800,500)
-                        )
+                    if j == 1 && k == 1
+                        push!(LABELS,algo)
                     end
+                    if FB[j] == "F"
+                        y = log10.(FER[algo][:,k])
+                    else
+                        y = log10.(BER[algo][:,k])
+                    end
+                    x = 1:MAXITER
+                    p = plot!(
+                        x,
+                        y,
+                        xlabel="Iteration",
+                        label=algo,
+                        lw=2,
+                        title=title,
+                        size = (800,500)
+                    )
                 end
             end
         end

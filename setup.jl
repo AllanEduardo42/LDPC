@@ -127,34 +127,32 @@ if TEST
             if DECAYS[i][1] == 0.0
                 global DECAY_TEST = 0.0
             end
-            for bptype in BPTYPES[i]
-                if PROF
-                    global PRIN = false
-                    # evaluate expr for profile view
-                    prog = "@profview (prepare_simulation([EbN0_TEST],
-                            ALGORITHMS[i],
-                            TRIALS_TEST,
-                            MAXITER_TEST,
-                            bptype,
-                            DECAY_TEST))"
-                    expr = Meta.parse(prog)
-                    eval(expr)
-                else
-                LRM[ALGORITHMS[i]], LQM[ALGORITHMS[i]] = prepare_simulation(
-                                                    COUNT,
-                                                    [EbN0_TEST],
-                                                    ALGORITHMS[i],
-                                                    ERRORS_TEST,
-                                                    MAXITER_TEST,
-                                                    bptype,
-                                                    DECAY_TEST)
-                end
+            if PROF
+                global PRIN = false
+                # evaluate expr for profile view
+                prog = "@profview (prepare_simulation([EbN0_TEST],
+                        ALGORITHMS[i],
+                        TRIALS_TEST,
+                        MAXITER_TEST,
+                        BPTYPE,
+                        DECAY_TEST))"
+                expr = Meta.parse(prog)
+                eval(expr)
+            else
+            LRM[ALGORITHMS[i]], LQM[ALGORITHMS[i]] = prepare_simulation(
+                                                COUNT,
+                                                [EbN0_TEST],
+                                                ALGORITHMS[i],
+                                                ERRORS_TEST,
+                                                MAXITER_TEST,
+                                                BPTYPE,
+                                                DECAY_TEST)
             end
         end
     end
 else
 
-    print_simulation_details(ERRORS,MAXITER,EbN0)
+    print_simulation_details(MAX_FRAME_ERRORS,MAXITER,EbN0)
 
     FER = Dict()
     BER = Dict()
@@ -163,33 +161,28 @@ else
         if ACTIVE[i]
             global COUNT += 1
             algo = ALGORITHMS[i]
-            for bptype in BPTYPES[i]
-                if bptype != "TANH"
-                    algo *= " ($bptype)"
+            for decay in DECAYS[i]
+                if length(DECAYS[i]) > 1 && decay != 0.0
+                    algo *= " $decay"
                 end
-                for decay in DECAYS[i]
-                    if length(DECAYS[i]) > 1 && decay != 0.0
-                        algo *= " $decay"
+                fer, ber = prepare_simulation(
+                                        COUNT,
+                                        EbN0,
+                                        ALGORITHMS[i],
+                                        MAX_FRAME_ERRORS,
+                                        MAXITER,
+                                        BPTYPE,
+                                        decay)
+                if SAVE
+                    open(DIRECTORY*"/FER_"*algo*".txt","w") do io
+                            writedlm(io,fer)
                     end
-                    fer, ber = prepare_simulation(
-                                            COUNT,
-                                            EbN0,
-                                            ALGORITHMS[i],
-                                            ERRORS,
-                                            MAXITERS[i],
-                                            bptype,
-                                            decay)
-                    if SAVE
-                        open(DIRECTORY*"/FER_"*algo*".txt","w") do io
-                                writedlm(io,fer)
-                        end
-                        open(DIRECTORY*"/BER_"*algo*".txt","w") do io
-                                writedlm(io,ber)
-                        end
+                    open(DIRECTORY*"/BER_"*algo*".txt","w") do io
+                            writedlm(io,ber)
                     end
-                    FER[algo] = fer
-                    BER[algo] = ber
                 end
+                FER[algo] = fer
+                BER[algo] = ber
             end
         end
     end

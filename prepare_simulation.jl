@@ -8,7 +8,7 @@ function prepare_simulation(
     count::Int,
     ebn0::Vector{Float64},
     algorithm::String,
-    max_errors::Int,
+    max_frame_errors::Int,
     maxiter::Integer,
     bptype::String,
     decay::Float64
@@ -35,7 +35,7 @@ function prepare_simulation(
     for k in 1:num_ebn0
         stats = @timed Threads.@threads for i in 1:nthreads
         # stats = @timed for i in 1:nthreads
-            Lr, Lq, sum_decoded, sum_ber, count_trials = simcore(
+            Lr, Lq, sum_decoded, sum_ber, trials = simcore(
                                                     AA,
                                                     KK,
                                                     RR,
@@ -53,7 +53,7 @@ function prepare_simulation(
                                                     LIFTSIZE,
                                                     algorithm,
                                                     bptype,
-                                                    max_errors ÷ NTHREADS,
+                                                    max_frame_errors ÷ NTHREADS,
                                                     maxiter,
                                                     RAYL,
                                                     C_DR_ITER,
@@ -67,7 +67,7 @@ function prepare_simulation(
             if !TEST
                 Sum_decoded[:,k,i] = sum_decoded
                 Sum_ber[:,k,i] = sum_ber
-                Trials[k,i] = count_trials
+                Trials[k,i] = trials
             end
         end
         str = """Elapsed $(round(stats.time;digits=1)) seconds ($(round(stats.gctime/stats.time*100;digits=2))% gc time, $(round(stats.compile_time/stats.time*100,digits=2))% compilation time)"""

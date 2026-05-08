@@ -28,7 +28,7 @@ function simcore(
     LS::Int,                        # 5GNR and WiMAX matrix liftsize
     algorithm::String,              # BP algorithm (flooding, RBP etc.)
     bptype::String,                 # Type of BP implementation (FAST, TANH etc.)
-    max_errors::Int,                # Number of max frame errors
+    max_frame_errors::Int,                # Number of max frame errors
     maxiter::Int,                   # Maximum number of BP iterations
     rayleigh::Bool,                 # Rayleigh fading flag
     C_DR_iter::Int,                 # C&DR switch iter
@@ -244,13 +244,13 @@ function simcore(
 
 ################################## MAIN LOOP ###################################
     
-    count_errors = 0
-    count_trials = 0
+    frame_errors = 0
+    trials = 0
 
-    #while count_errors < max_errors
-    @fastmath @inbounds while count_errors < max_errors
+    #while frame_errors < max_frame_errors
+    @fastmath @inbounds while frame_errors < max_frame_errors
 
-        count_trials += 1
+        trials += 1
 
         ### 1) generate the random message
         rand!(rgn,msg,Bool)
@@ -299,7 +299,7 @@ function simcore(
             println("""
 ________________________________________________________________________________
 
-                                    TRIAL #$count_trials")
+                                    TRIAL #$trials")
 ________________________________________________________________________________
 """)
             print_test("Message",msg)
@@ -639,24 +639,24 @@ ________________________________________________________________________________
         end
 
         if !decoded[maxiter]
-            count_errors += 1
+            frame_errors += 1
         end
 
         if printtest
-            println("Frame Errors: $(count_errors)/$(max_errors)")
+            println("Frame Errors: $(frame_errors)/$(max_frame_errors)")
             println()
         end
     end
 
     if printtest
         println("Monte Carlo trials ended: maximum number of frame errors reached.")
-        println("Total number of trials: $count_trials")
+        println("Total number of trials: $trials")
     end
 
     if test
-        return C2V, V2C, sum_decoded, sum_ber, count_trials
+        return C2V, V2C, sum_decoded, sum_ber, trials
     else
-        return nothing, nothing, sum_decoded, sum_ber, count_trials
+        return nothing, nothing, sum_decoded, sum_ber, trials
     end
 
 end
