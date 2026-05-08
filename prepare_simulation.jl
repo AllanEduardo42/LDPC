@@ -55,7 +55,6 @@ function prepare_simulation(
                                                     bptype,
                                                     max_errors ÷ NTHREADS,
                                                     maxiter,
-                                                    STOP,
                                                     RAYL,
                                                     C_DR_ITER,
                                                     decay,

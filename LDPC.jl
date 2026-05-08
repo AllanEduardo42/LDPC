@@ -31,7 +31,6 @@ SEED::Int = 1111
 TEST::Bool = true                       # Testing mode (few trials)
 PRIN::Bool = true                       # Print info is in testing mode
 PROF::Bool = false                      # profview
-STOP::Bool = true                       # stop simulation at zero syndrome
 RAYL::Bool = false                      # Rayleigh fading channel
 
 ############################### TEST PARAMETERS ################################

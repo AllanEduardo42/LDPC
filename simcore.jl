@@ -30,7 +30,6 @@ function simcore(
     bptype::String,                 # Type of BP implementation (FAST, TANH etc.)
     max_errors::Int,                # Number of max frame errors
     maxiter::Int,                   # Maximum number of BP iterations
-    stop::Bool,                     # "true" if routine stops at zero syndrome
     rayleigh::Bool,                 # Rayleigh fading flag
     C_DR_iter::Int,                 # C&DR switch iter
     decayfactor::Float64,           # RBP decay factor
@@ -598,23 +597,17 @@ ________________________________________________________________________________
                 println("Bit error rate: $(sum(biterror))/$N")
                 println()
             end
-            if stop
-            # Verify if all check equations are satisfied (syndrome vector == zero)
-                zero_syn = iszerosyndrome(bitvector,Nc)
-                if zero_syn
-                    if iszero(biterror)
-                        decoded[iter] = true
-                    end
-                    if printtest
-                        println("#### Algorithm stopped: zero syndrome at iteration $iter ####")
-                        println()
-                    end
-                    break               # stop iterations
-                end
-            else
+
+            # Verify if all check equations are satisfied (syndrome == zero)
+            if iszerosyndrome(bitvector,Nc)
                 if iszero(biterror)
                     decoded[iter] = true
                 end
+                if printtest
+                    println("#### Algorithm stopped: zero syndrome at iteration $iter ####")
+                    println()
+                end
+                break                   # stops the algorithm
             end
             if !rbp_not_converged       # all residuals are zero
                 if printtest
@@ -625,21 +618,21 @@ ________________________________________________________________________________
             end
         end
 
-        if iter < maxiter               # if the algorithm stopped
+        if iter < maxiter               # if the algorithm stopped before maxiter
             for i = iter+1:maxiter
                 decoded[i] = decoded[iter]
                 ber[i] = ber[iter]
             end
         end
 
-        # reset for C&DR-RBP
+        # reset C&DR-RBP
         if algorithm == "C&DR-RBP"
             switch_R = false
             switch_C_DR = true
             num_reps = num_edges
         end
 
-        ###  bit error rate
+        ### 9) bit error rate
         for i=1:maxiter
             sum_ber[i] += ber[i]
             sum_decoded[i] += decoded[i]
