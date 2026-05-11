@@ -14,8 +14,8 @@ function print_simulation_details(
 
 LDPC Protocol: """
 
-    if PROTOCOL == "NR5G"
-        str *= "NR-LDPC (5G), Zc = $(NR_LDPC_DATA.Zc), BG = $(NR_LDPC_DATA.bg)"
+    if PROTOCOL == "5GNR"
+        str *= "NR-LDPC (5G), Zc = $(NR_LDPC_DATA.Zc), BG = $(NR_LDPC_DATA.bg), set index = $(NR_LDPC_DATA.iLS)"
     elseif PROTOCOL == "PEG"
         str *= "PEG"
     elseif PROTOCOL == "WiMAX"
@@ -42,9 +42,16 @@ Maximum number of frame errors: $errors
 Maximum number of iterations: $maxiter
 Number of threads (multithreading): $NTHREADS
 Eb/No (dB): $ebn0
-
 """
+    if RAYL
+        str*= """Rayleigh fading channel model activated
 
+        """
+    else
+        str*= """
+        
+        """
+    end
     if TEST
         str *= """######################### Starting simulation (Testing) ########################
         

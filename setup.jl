@@ -117,7 +117,7 @@ end
 ############################## PREPARE SIMULATION ##############################
 if TEST
 
-    print_simulation_details(ERRORS_TEST,MAXITER_TEST,EbN0_TEST)
+    print_simulation_details(MAX_FRAME_ERRORS_TEST,MAXITER_TEST,EbN0_TEST)
 
     LRM = Dict()
     LQM = Dict()
@@ -185,10 +185,10 @@ else
                                         decay)
                 if SAVE
                     open(DIRECTORY*"/FER_"*algo*".txt","w") do io
-                            writedlm(io,fer)
+                        writedlm(io,fer)
                     end
                     open(DIRECTORY*"/BER_"*algo*".txt","w") do io
-                            writedlm(io,ber)
+                        writedlm(io,ber)
                     end
                 end
                 FER[algo] = fer

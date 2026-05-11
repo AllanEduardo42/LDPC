@@ -2,7 +2,8 @@
 # Allan Eduardo Feitosa
 # 26 mai 2024
 # First layer of the routine to estimate the LPDC performance (Fer Ber x EbN0)
-# Separates simulations in terms of EbN0 and number of threads
+# Separates simulations in terms of EbN0 and number of threads (paralelization)
+# Returns FER and BER matrices (iteration x EbN)
 
 function prepare_simulation(
     count::Int,

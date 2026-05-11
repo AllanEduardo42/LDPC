@@ -86,14 +86,14 @@ function received_signal!(
             randn!(rgn,x1)
             randn!(rgn,x2)
             for g in 1:G
-                aux = 2*cword[twoLs+g] - 1
+                u = 2*cword[twoLs+g] - 1
                 fading[g] = sqrt(0.5*(x1[g]^2 + x2[g]^2))  
-                signal[g] += fading[g]*aux  # sum the modulated signal
+                signal[g] += fading[g]*u  # sum the modulated signal
             end
         else
             for g in 1:G
-                aux = 2*cword[twoLs+g] - 1  
-                signal[g] += aux            # sum the modulated signal
+                u = 2*cword[twoLs+g] - 1  
+                signal[g] += u            # sum the modulated signal
             end
         end
     end

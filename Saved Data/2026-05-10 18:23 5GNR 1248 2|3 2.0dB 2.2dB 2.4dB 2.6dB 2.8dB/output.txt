@@ -7,19 +7,19 @@
 ############################### LDPC parameters ################################
 
 LDPC Protocol: 
-Parity Check Matrix: 280 x 680
+Parity Check Matrix: 464 x 1328
 
 
 Graph girth = 6
 Rate = 2/3
-Code length = 576    
+Code length = 1248    
 
 ############################ Simulation parameters #############################
 
 Maximum number of frame errors: 252
 Maximum number of iterations: 20
 Number of threads (multithreading): 36
-Eb/No (dB): [2.0, 2.5, 3.0, 3.5, 4.0]
+Eb/No (dB): [2.0, 2.2, 2.4, 2.6, 2.8]
 
 ############################# Starting simulation ##############################
 
@@ -30,11 +30,11 @@ ________________________________________________________________________________
 
 Message passing algorithm: Flooding (using LLR-SPA calculated by tanh function)
 
-Elapsed 1.7 seconds (3.08% gc time, 3364.89% compilation time)
-Elapsed 0.2 seconds (36.19% gc time, 0.0% compilation time)
-Elapsed 0.7 seconds (0.29% gc time, 0.0% compilation time)
-Elapsed 7.7 seconds (0.73% gc time, 0.0% compilation time)
-Elapsed 62.4 seconds (0.27% gc time, 0.0% compilation time)
+Elapsed 1.9 seconds (5.86% gc time, 3057.7% compilation time)
+Elapsed 0.4 seconds (1.24% gc time, 0.0% compilation time)
+Elapsed 0.8 seconds (12.97% gc time, 0.0% compilation time)
+Elapsed 2.1 seconds (1.31% gc time, 0.0% compilation time)
+Elapsed 8.5 seconds (1.01% gc time, 0.0% compilation time)
 ________________________________________________________________________________
 
                                   Algorithm 2                                  
@@ -42,11 +42,11 @@ ________________________________________________________________________________
 
 Message passing algorithm: LBP (using LLR-SPA calculated by tanh function)
 
-Elapsed 0.1 seconds (19.08% gc time, 0.0% compilation time)
-Elapsed 0.3 seconds (34.32% gc time, 0.0% compilation time)
-Elapsed 1.4 seconds (4.16% gc time, 0.0% compilation time)
-Elapsed 16.7 seconds (0.54% gc time, 0.0% compilation time)
-Elapsed 185.6 seconds (0.3% gc time, 0.0% compilation time)
+Elapsed 0.4 seconds (20.98% gc time, 0.0% compilation time)
+Elapsed 0.6 seconds (9.7% gc time, 0.0% compilation time)
+Elapsed 1.4 seconds (4.27% gc time, 0.0% compilation time)
+Elapsed 5.6 seconds (1.61% gc time, 0.0% compilation time)
+Elapsed 29.7 seconds (0.31% gc time, 0.0% compilation time)
 ________________________________________________________________________________
 
                                   Algorithm 3                                  
@@ -54,11 +54,11 @@ ________________________________________________________________________________
 
 Message passing algorithm: RBP (using LLR-SPA calculated by tanh function)
 
-Elapsed 0.6 seconds (6.45% gc time, 296.81% compilation time)
-Elapsed 1.6 seconds (5.29% gc time, 0.0% compilation time)
-Elapsed 11.3 seconds (0.97% gc time, 0.0% compilation time)
-Elapsed 80.6 seconds (0.18% gc time, 0.0% compilation time)
-Elapsed 281.8 seconds (0.08% gc time, 0.0% compilation time)
+Elapsed 9.6 seconds (1.24% gc time, 12.75% compilation time)
+Elapsed 16.1 seconds (0.7% gc time, 0.0% compilation time)
+Elapsed 39.0 seconds (0.35% gc time, 0.0% compilation time)
+Elapsed 135.5 seconds (0.11% gc time, 0.0% compilation time)
+Elapsed 583.0 seconds (0.03% gc time, 0.0% compilation time)
 ________________________________________________________________________________
 
                                   Algorithm 4                                  
@@ -67,11 +67,11 @@ ________________________________________________________________________________
 Message passing algorithm: RD-RBP (using LLR-SPA calculated by tanh function)
 Residual decaying factor: 0.85
 
-Elapsed 0.7 seconds (12.13% gc time, 192.79% compilation time)
-Elapsed 1.8 seconds (8.82% gc time, 0.0% compilation time)
-Elapsed 15.1 seconds (0.75% gc time, 0.0% compilation time)
-Elapsed 246.5 seconds (0.08% gc time, 0.0% compilation time)
-Elapsed 1315.1 seconds (0.05% gc time, 0.0% compilation time)
+Elapsed 13.9 seconds (1.64% gc time, 7.47% compilation time)
+Elapsed 23.5 seconds (0.33% gc time, 0.0% compilation time)
+Elapsed 59.3 seconds (0.34% gc time, 0.0% compilation time)
+Elapsed 259.1 seconds (0.08% gc time, 0.0% compilation time)
+Elapsed 1750.8 seconds (0.01% gc time, 0.0% compilation time)
 ________________________________________________________________________________
 
                                   Algorithm 5                                  
@@ -79,11 +79,11 @@ ________________________________________________________________________________
 
 Message passing algorithm: NW-RBP (using LLR-SPA calculated by tanh function)
 
-Elapsed 0.6 seconds (20.8% gc time, 43.21% compilation time)
-Elapsed 1.7 seconds (6.68% gc time, 0.0% compilation time)
-Elapsed 18.1 seconds (0.75% gc time, 0.0% compilation time)
-Elapsed 430.9 seconds (0.05% gc time, 0.0% compilation time)
-Elapsed 2051.2 seconds (0.04% gc time, 0.0% compilation time)
+Elapsed 8.8 seconds (1.46% gc time, 0.84% compilation time)
+Elapsed 16.6 seconds (1.38% gc time, 0.0% compilation time)
+Elapsed 51.4 seconds (0.29% gc time, 0.0% compilation time)
+Elapsed 225.6 seconds (0.1% gc time, 0.0% compilation time)
+Elapsed 1342.7 seconds (0.01% gc time, 0.0% compilation time)
 ________________________________________________________________________________
 
                                   Algorithm 6                                  
@@ -91,11 +91,11 @@ ________________________________________________________________________________
 
 Message passing algorithm: SVNF (using LLR-SPA calculated by tanh function)
 
-Elapsed 0.5 seconds (16.54% gc time, 83.79% compilation time)
-Elapsed 1.3 seconds (8.58% gc time, 0.0% compilation time)
-Elapsed 13.8 seconds (0.93% gc time, 0.0% compilation time)
-Elapsed 174.5 seconds (0.13% gc time, 0.0% compilation time)
-Elapsed 1826.2 seconds (0.07% gc time, 0.0% compilation time)
+Elapsed 9.8 seconds (2.65% gc time, 9.79% compilation time)
+Elapsed 16.6 seconds (1.11% gc time, 0.0% compilation time)
+Elapsed 42.7 seconds (0.32% gc time, 0.0% compilation time)
+Elapsed 218.0 seconds (0.08% gc time, 0.0% compilation time)
+Elapsed 1645.3 seconds (0.01% gc time, 0.0% compilation time)
 ________________________________________________________________________________
 
                                   Algorithm 7                                  
@@ -106,11 +106,11 @@ Residual decaying factor: 0.85
 List 1 size: 16
 List 2 size: 2
 
-Elapsed 1.9 seconds (30.52% gc time, 225.56% compilation time)
-Elapsed 4.1 seconds (23.6% gc time, 0.0% compilation time)
-Elapsed 46.2 seconds (21.32% gc time, 0.0% compilation time)
-Elapsed 707.1 seconds (20.3% gc time, 0.0% compilation time)
-Elapsed 4051.3 seconds (18.27% gc time, 0.0% compilation time)
+Elapsed 33.6 seconds (17.32% gc time, 18.24% compilation time)
+Elapsed 52.8 seconds (17.75% gc time, 0.0% compilation time)
+Elapsed 134.9 seconds (17.55% gc time, 0.0% compilation time)
+Elapsed 593.5 seconds (18.56% gc time, 0.0% compilation time)
+Elapsed 4775.4 seconds (19.06% gc time, 0.0% compilation time)
 ________________________________________________________________________________
 
                                   Algorithm 8                                  
@@ -119,11 +119,11 @@ ________________________________________________________________________________
 Message passing algorithm: C-RBP (using LLR-SPA calculated by tanh function)
 Residual decaying factor: 0.85
 
-Elapsed 0.6 seconds (2.82% gc time, 358.32% compilation time)
-Elapsed 1.2 seconds (2.52% gc time, 0.0% compilation time)
-Elapsed 12.1 seconds (0.87% gc time, 0.0% compilation time)
-Elapsed 199.1 seconds (0.11% gc time, 0.0% compilation time)
-Elapsed 1396.2 seconds (0.06% gc time, 0.0% compilation time)
+Elapsed 11.4 seconds (0.84% gc time, 12.76% compilation time)
+Elapsed 15.8 seconds (0.0% gc time, 0.0% compilation time)
+Elapsed 39.1 seconds (0.5% gc time, 0.0% compilation time)
+Elapsed 224.3 seconds (0.07% gc time, 0.0% compilation time)
+Elapsed 1933.7 seconds (0.01% gc time, 0.0% compilation time)
 ________________________________________________________________________________
 
                                   Algorithm 9                                  
@@ -132,11 +132,11 @@ ________________________________________________________________________________
 Message passing algorithm: C&R-RBP (using LLR-SPA calculated by tanh function)
 Residual decaying factor: 0.85
 
-Elapsed 0.6 seconds (21.94% gc time, 0.0% compilation time)
-Elapsed 1.3 seconds (9.67% gc time, 0.0% compilation time)
-Elapsed 20.7 seconds (0.69% gc time, 0.0% compilation time)
-Elapsed 331.0 seconds (0.1% gc time, 0.0% compilation time)
-Elapsed 2863.0 seconds (0.04% gc time, 0.0% compilation time)
+Elapsed 10.3 seconds (1.79% gc time, 0.0% compilation time)
+Elapsed 17.7 seconds (1.12% gc time, 0.0% compilation time)
+Elapsed 52.6 seconds (0.43% gc time, 0.0% compilation time)
+Elapsed 335.6 seconds (0.06% gc time, 0.0% compilation time)
+Elapsed 2935.1 seconds (0.01% gc time, 0.0% compilation time)
 ________________________________________________________________________________
 
                                   Algorithm 10                                  
@@ -146,11 +146,11 @@ Message passing algorithm: C&DR-RBP (using LLR-SPA calculated by tanh function)
 Residual decaying factor: 0.85
 Return activation at iteration 3
 
-Elapsed 0.6 seconds (27.73% gc time, 0.0% compilation time)
-Elapsed 1.3 seconds (6.91% gc time, 0.0% compilation time)
-Elapsed 13.7 seconds (1.06% gc time, 0.0% compilation time)
-Elapsed 250.8 seconds (0.12% gc time, 0.0% compilation time)
-Elapsed 1841.3 seconds (0.06% gc time, 0.0% compilation time)
+Elapsed 10.4 seconds (1.3% gc time, 0.0% compilation time)
+Elapsed 15.5 seconds (1.31% gc time, 0.0% compilation time)
+Elapsed 41.6 seconds (0.47% gc time, 0.0% compilation time)
+Elapsed 275.2 seconds (0.07% gc time, 0.0% compilation time)
+Elapsed 2158.9 seconds (0.01% gc time, 0.0% compilation time)
 ________________________________________________________________________________
 
                                   Algorithm 11                                  
@@ -158,9 +158,9 @@ ________________________________________________________________________________
 
 Message passing algorithm: UBP-RBP (using LLR-SPA calculated by tanh function)
 
-Elapsed 0.7 seconds (14.52% gc time, 0.0% compilation time)
-Elapsed 1.3 seconds (8.87% gc time, 0.0% compilation time)
-Elapsed 12.9 seconds (0.9% gc time, 0.0% compilation time)
-Elapsed 115.8 seconds (0.17% gc time, 0.0% compilation time)
-Elapsed 544.4 seconds (0.08% gc time, 0.0% compilation time)
+Elapsed 8.6 seconds (1.21% gc time, 12.82% compilation time)
+Elapsed 12.8 seconds (1.72% gc time, 0.0% compilation time)
+Elapsed 33.2 seconds (0.53% gc time, 0.0% compilation time)
+Elapsed 108.7 seconds (0.13% gc time, 0.0% compilation time)
+Elapsed 655.8 seconds (0.04% gc time, 0.0% compilation time)
 The End!

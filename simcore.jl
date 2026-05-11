@@ -1,7 +1,7 @@
 ################################################################################
 # Allan Eduardo Feitosa
 # 25 Feb 2025
-# Core routine to estimate the LPCD performance (FER sum_ber x SNR)
+# Core routine to estimate the LPCD performance (FER/BER x iteration)
 
 # simcore functions
 include("./Simulation core functions/auxiliary_functions.jl")
@@ -14,7 +14,7 @@ function simcore(
     A::Int,                         # payload length
     K::Int,                         # payload + CRC length
     R::Float64,                     # effective rate
-    G::Int,                         # transmitted signal length
+    G::Int,                         # transmitted code length
     g_CRC::Vector{Bool},            # CRC polynomial
     ebn0::Float64,                  # EbN0
     H::Matrix{Bool},                # Parity-Check Matrix
@@ -23,18 +23,18 @@ function simcore(
     U::Matrix{Bool},                # L*U = H2  (PEG)
     Nc::Vector{Vector{Int}},        # Nc[ci] : neighborhood of check node ci
     Nv::Vector{Vector{Int}},        # Nv[vj] : neighborhood of variable node vj
-    eH::Matrix{Int},                # Exponential Matrix (5GNR and WiMAX)
-    protocol::String,               # PEG, 5GNR or WiMAX
-    LS::Int,                        # 5GNR and WiMAX matrix liftsize
+    eH::Matrix{Int},                # Exponential Matrix (5G NR and WiMAX)
+    protocol::String,               # PEG, 5G NR or WiMAX
+    LS::Int,                        # 5G NR and WiMAX matrix liftsize
     algorithm::String,              # BP algorithm (flooding, RBP etc.)
-    bptype::String,                 # Type of BP implementation (FAST, TANH etc.)
-    max_frame_errors::Int,                # Number of max frame errors
+    bptype::String,                 # Type of BP implementation (TANH etc.)
+    max_frame_errors::Int,          # Number of max frame errors
     maxiter::Int,                   # Maximum number of BP iterations
-    rayleigh::Bool,                 # Rayleigh fading flag
+    rayleigh::Bool,                 # Rayleigh fading channel flag
     C_DR_iter::Int,                 # C&DR switch iter
     decayfactor::Float64,           # RBP decay factor
     listsizes::Vector{Int},         # sizes of the list for List-RBP algorithm
-    ci_gamma::Float64,              # CI gamma threshold
+    ci_gamma::Float64,              # CI-RBP gamma threshold
     rgn_seed::Int,                  # random seed to generate noise and message
     test::Bool,                     # if "true", perform test algorithm
     printtest::Bool                 # if "true", print test algorithm results
@@ -45,7 +45,7 @@ function simcore(
     # Parity-Check Matrix dimensions
     M,N = size(H)
 
-    # 2*LS in NR 5G (determines the number of initial punctured bits)
+    # 2*LS in 5G NR (determines the number of initial punctured bits)
     # = 0 otherwise
     twoLs = 0
 
@@ -139,7 +139,7 @@ function simcore(
     if rayleigh
         x1 = Vector{Float64}(undef,G)
         x2 = Vector{Float64}(undef,G)
-        fading = Vector{Float64}(undef,G)   # fading .= sqrt(x_1^2 + x_2^2)
+        fading = Vector{Float64}(undef,G)   # fading = sqrt(x_1^2 + x_2^2)
     else
         x1 = nothing
         x2 = nothing
@@ -299,7 +299,7 @@ function simcore(
             println("""
 ________________________________________________________________________________
 
-                                    TRIAL #$trials")
+                                    TRIAL #$trials
 ________________________________________________________________________________
 """)
             print_test("Message",msg)

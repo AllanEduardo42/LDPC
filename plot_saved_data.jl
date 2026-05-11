@@ -9,31 +9,56 @@ using LaTeXStrings
 # R = [1,2]
 # EbN0 = [1.0, 1.5, 2.0, 2.5, 3.0]
 
-Date = "2026-05-04"
-Hour = "11:26"
+# Date = "2026-05-04"
+# Hour = "11:26"
+# Protocol = "5GNR"
+# N = 1248
+# R = [1,2]
+# EbN0 = [1.0, 1.25, 1.5, 1.75, 2.0]
+
+# Date = "2026-05-08"
+# Hour = "16:37"
+# Protocol = "5GNR"
+# N = 576
+# R = [2,3]
+# EbN0 = [2.0, 2.5, 3.0, 3.5, 4.0]
+
+Date = "2026-05-08"
+Hour = "22:11"
 Protocol = "5GNR"
-N = 1248
+N = 576
 R = [1,2]
-EbN0 = [1.0, 1.25, 1.5, 1.75, 2.0]
+EbN0 = [3.5, 4.0, 4.5, 5.0, 5.5, 6.0]
+
+# Date = "2026-05-10"
+# Hour = "18:23"
+# Protocol = "5GNR"
+# N = 1248
+# R = [2,3]
+# EbN0 = [2.0, 2.2, 2.4, 2.6, 2.8]
 
 maxiter = 20
 iter = 10
 
 FB = ["F","B"]
 # markers = [:none, :none, :dtriangle, :circle, :rect, :utriangle, :diamond, :cross, :star5, :hexagon]
-modes_markers_lines =  ["Flooding"             :none            :solid          
-                        "LBP"                  :none            :solid
-                        "RBP"                  :dtriangle       :solid
-                        "RD-RBP"               :utriangle       :solid                
-                        "NW-RBP"               :star5           :solid         
-                        "SVNF"                 :diamond         :solid
-                        "List-RBP"             :circle          :solid
-                        "UBP-RBP"              :cross            :solid
-                        "C-RBP"                :none            :dot
-                        "C&R-RBP"              :rect            :solid
-                        "C&DR-RBP"             :circle          :solid
-                        # "C&DR-RBP 4"             :circle          :solid
-                 ]
+
+ 
+curves =  
+# algorithm             marker           line       color       marker size                        
+[
+ "Flooding"             :none            :solid     1           4  
+ "LBP"                  :none            :solid     2           4
+ "RBP"                  :dtriangle       :solid     3           4      
+ "RD-RBP"               :utriangle       :solid     4           4         
+ "NW-RBP"               :star5           :solid     5           5
+ "SVNF"                 :diamond         :solid     15          5
+ "List-RBP"             :circle          :solid     :gray       3
+ "UBP-RBP"              :cross           :solid     :black      3
+ "C&R-RBP"              :rect            :solid     11          4
+ "C&DR-RBP"             :circle          :solid     14          4       
+ "C-RBP"                :none            :dot       11          4
+]
 
 
 directory = "./Saved Data/$Date $Hour $Protocol $N $(R[1])|$(R[2])"
@@ -42,73 +67,64 @@ for ebn0 in EbN0
 end
 directory *= "/"
 
-FER_EbN0 = zeros(length(EbN0),size(modes_markers_lines,1))
-BER_EbN0 = zeros(length(EbN0),size(modes_markers_lines,1))
+L = size(curves,1)-1
+FER_EbN0 = zeros(length(EbN0),L) # C-RBP not included
+BER_EbN0 = zeros(length(EbN0),L)
 
 p1 = plot()
 p2 = plot()
 
-
-colors = [1, 2, 3, 4, 5, 15, :gray, :black, 11, 11, 14, 13, 14]
-marker_sizes = [4,4,4,4,5,5,3,3,3,4,3,4,4]
-
-
-# #
+##
 gr()
 
-values = 10.0 .^(-[0, 1, 2, 3, 4, 5])
-labels = ["0", "-1", "-2", "-3", "-4", "-5", "-6"]
-
-min_x = zeros(size(modes_markers_lines,1))
-max_x = zeros(size(modes_markers_lines,1))
+min_x = zeros(size(curves,1))
+max_x = zeros(size(curves,1))
 
 for k in eachindex(EbN0)
     for j=1:2
         title = FB[j]*"ER $Protocol (N = $N, R = $(R[1])/$(R[2]), Eb/N0 = $(EbN0[k])dB)"
         p = plot()
-        for i in axes(modes_markers_lines,1)
-            str = modes_markers_lines[i,1]
+        for i in axes(curves,1)
+            str = curves[i,1]
             x = readdlm(directory*FB[j]*"ER_"*str*".txt",'\t',Float64,'\n')
             x = x[1:maxiter,k]
             min_x[i] = minimum(x)
             max_x[i] = maximum(x)
             p = plot!(
                 1:maxiter,
-                # log10.(x),
                 x,
                 ylabel=FB[j]*"ER",
-                label=modes_markers_lines[i,1],
+                label=curves[i,1],
                 lw=1.5,
-                ls=modes_markers_lines[i,3],
-                # title=title,
-                # ylims=(liminf,limsup),
-                # xlim=(1,maxiter),
+                ls=curves[i,3],
                 minorgrid=true,
                 minorgridalpha=0.05,
                 yscale=:log10,
-                color=colors[i],
-                markersize=marker_sizes[i],
+                color=curves[i,4],
+                markersize=curves[i,5],
                 markerstrokewidth = 0.5,
                 guidefontsize=10,
-                # ticks=9,
-                # yticks = (values,labels),
-                # tickfontsize=10,
-                # legend_title = "(Algorithm, best decay factor)",
-                # legend_title_font_pointsize = 10,
-                # legend_font_pointsize = 10,
                 legend_position = :topright,
-                # legend = :outertopright,
                 size = 1.5 .*(300,500),
-                markershape = modes_markers_lines[i,2],
+                markershape = curves[i,2],
                 left_margin=3Plots.mm,
-                # bottom_margin=-20Plots.mm,
                 top_margin=1Plots.mm,
                 fontfamily="Computer Modern",
                 framestyle=:box
             )
         end
-        liminf = 10^(floor(log10(minimum(min_x))))
-        limsup = 10^(ceil(log10(maximum(max_x))))
+        aux = log10(minimum(min_x))
+        diff = aux - floor(aux)
+        if diff > 1 - 0.01
+            liminf = 10^(floor(aux)+1)
+        else
+            liminf = 10^(floor(aux))
+        end
+        if j == 1
+            limsup = 10^(ceil(log10(maximum(max_x))))
+        else
+            limsup = 0.1
+        end
         p = plot!(ylims=(liminf,limsup))
         if j == 1
             global p1 = p
@@ -125,8 +141,8 @@ end
 # FER x EbN0
 for j = 1:2
     for k in eachindex(EbN0)
-        for i in axes(modes_markers_lines,1)
-            str = modes_markers_lines[i,1]
+        for i in 1:L
+            str = curves[i,1]
             x = readdlm(directory*FB[j]*"ER_"*str*".txt",'\t',Float64,'\n')
             x = x[:,k]
             if j == 1
@@ -145,106 +161,87 @@ PLOT = plot(
     yscale=:log10,
     ylabel="FER",
     xlabel=L"E_b/N_0"*" (dB)",
-    ylims=(10^(-4),1),
-    color=permutedims(colors),
-    label=permutedims(modes_markers_lines[:,1]),
-    markershape=permutedims(modes_markers_lines[:,2]),
-    line=permutedims(modes_markers_lines[:,3]),
+    ylims=(10^(-5),1),
     lw=1.5,
-    markersize=marker_sizes',
+    label=permutedims(curves[:,1]),
+    markershape=permutedims(curves[:,2]),
+    line=permutedims(curves[:,3]),
+    color=permutedims(curves[:,4]),
+    markersize=permutedims(curves[:,5]),
     markerstrokewidth = 0.5,
     guidefontsize=10,
     legend_position = :bottomleft,
-    # tickfontsize=12,
-    # legend_font_pointsize = 10,
     fontfamily="Computer Modern",
     size = 1.5 .*(300,300),
-    # left_margin=1Plots.mm,
     framestyle=:box
 )
 
-# display(PLOT)
-# BER x EbN0
-# PLOT = plot(
-#     EbN0,BER_EbN0,
-#     minorgrid=true,
-#     yscale=:log10,
-#     xlabel="EbN0 (dB)",
-#     ylims=(10^(-8),0.1),
-#     label=permutedims(modes_markers_lines[:,1]),
-#     markershape=permutedims(modes_markers_lines[:,2]),
-#     lw=2,
-#     # title="BER x EbN0 (Iter = 10, N = $N, R = $(R[1])/$(R[2]))",
-#     size = 1.5 .*(600,400),
-#     # ylims=(-6,-1)
-# )
-# display(PLOT)
 Plots.pdf(PLOT,directory*"/FER_$(iter)_dB.pdf")
 
 # #
 
-# plotlyjs()
+plotlyjs()
 
-# for k in eachindex(EbN0)
-#     for j=1:2
-#         title = FB[j]*"ER $Protocol (N = $N, R = $(R[1])/$(R[2]), Eb/N0 = $(EbN0[k])dB)"
-#         p = plot()
-#         for i in axes(modes_markers_lines,1)
-#             str = modes_markers_lines[i,1]
-#             x = readdlm(directory*FB[j]*"ER_"*str*".txt",'\t',Float64,'\n')
-#             x = x[:,k]
-#             p = plot!(
-#                 1:maxiter,
-#                 log10.(x[1:maxiter]),
-#                 lw=4,
-#                 title=title,
-#                 label=modes_markers_lines[i,1],
-#                 markershape = modes_markers_lines[i,2],
-#                 size = (1400,1000),
-#                 color=colors[i],
-#                 tickfontsize=16,
-#                 legend_font_pointsize = 20,
-#                 markersize=8,
-#                 markerstrokewidth = 1
-#             )
-#         end
-#         display(p)
-#     end    
-# end
+for k in eachindex(EbN0)
+    for j=1:2
+        title = FB[j]*"ER $Protocol (N = $N, R = $(R[1])/$(R[2]), Eb/N0 = $(EbN0[k])dB)"
+        p = plot()
+        for i in axes(curves,1)
+            str = curves[i,1]
+            x = readdlm(directory*FB[j]*"ER_"*str*".txt",'\t',Float64,'\n')
+            x = x[:,k]
+            p = plot!(
+                1:maxiter,
+                log10.(x[1:maxiter]),
+                lw=4,
+                title=title,
+                label=curves[i,1],
+                markershape = curves[i,2],
+                size = (1400,1000),
+                color=curves[i,4],
+                tickfontsize=16,
+                legend_font_pointsize = 20,
+                markersize=8,
+                markerstrokewidth = 1
+            )
+        end
+        display(p)
+    end    
+end
 
-# # #
-# # FER x EbN0
-# if length(EbN0) > 1
-#     for j = 1:2
-#         for k in eachindex(EbN0)
-#             for i in axes(modes_markers_lines,1)
-#                 str = modes_markers_lines[i,1]
-#                 x = readdlm(directory*FB[j]*"ER_"*str*".txt",'\t',Float64,'\n')
-#                 x = x[:,k]
-#                 if j == 1
-#                     FER_EbN0[k,i] = log10.(x[iter])
-#                 else
-#                     BER_EbN0[k,i] = log10.(x[iter])
-#                 end
-#             end
-#         end
-#     end
+# #
+# FER x EbN0
+if length(EbN0) > 1
+    for j = 1:2
+        for k in eachindex(EbN0)
+            for i in 1:L
+                str = curves[i,1]
+                x = readdlm(directory*FB[j]*"ER_"*str*".txt",'\t',Float64,'\n')
+                x = x[:,k]
+                if j == 1
+                    FER_EbN0[k,i] = log10.(x[iter])
+                else
+                    BER_EbN0[k,i] = log10.(x[iter])
+                end
+            end
+        end
+    end
 
-#     p = plot(
-#         EbN0,FER_EbN0,
-#         title = "FER x EbN0 $Protocol (N = $N, R = $(R[1])/$(R[2]), Iter = $iter)",
-#         color=permutedims(colors),
-#         label=permutedims(modes_markers_lines[:,1]),
-#         markershape=permutedims(modes_markers_lines[:,2]),
-#         line=permutedims(modes_markers_lines[:,3]),
-#         lw=4,
-#         markersize=8,
-#         markerstrokewidth = 1,
-#         guidefontsize=10,
-#         legend_position = :bottomleft,
-#         tickfontsize=16,
-#         legend_font_pointsize = 20,
-#         size = (1400,1000)
-#     )
-#     display(p)
-# end
+    p = plot(
+        EbN0,FER_EbN0,
+        title = "FER x EbN0 $Protocol (N = $N, R = $(R[1])/$(R[2]), Iter = $iter)",
+        color=permutedims(curves[:,4]),
+        label=permutedims(curves[:,1]),
+        markershape=permutedims(curves[:,2]),
+        line=permutedims(curves[:,3]),
+        lw=4,
+        markersize=8,
+        markerstrokewidth = 1,
+        guidefontsize=10,
+        legend_position = :bottomleft,
+        tickfontsize=16,
+        legend_font_pointsize = 20,
+        size = (1400,1000)
+    )
+    display(p)
+end

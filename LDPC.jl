@@ -29,7 +29,7 @@ SEED::Int = 1111
 ################################ CONTROL FLAGS #################################
 
 # Testing mode (few trials)
-TEST::Bool = false     
+TEST::Bool = true     
 # Print info is in testing mode                 
 PRIN::Bool = true   
 # profview                    
@@ -40,11 +40,11 @@ RAYL::Bool = false
 ############################### TEST PARAMETERS ################################
 
 ### Maximum number of BP iterations
-MAXITER_TEST::Int = 20
+MAXITER_TEST::Int = 1
 ### EbN0
 EbN0_TEST::Float64 = 2.5
 ### Maximum number of Frame Errors
-MAX_FRAME_ERRORS_TEST::Int = 36*7
+MAX_FRAME_ERRORS_TEST::Int = 1
 ### Residual Decay factors
 DECAY_TEST::Float64 = 0.85
 
@@ -55,8 +55,10 @@ MAXITER::Int = 20
 
 ### EbN0
 # EbN0 = [1.0, 1.25, 1.5, 1.75, 2.0]
-EbN0 = [2.0, 2.5, 3.0, 3.5, 4.0]
-# EbN0 = [2.0]
+# EbN0 = [2.0, 2.5, 3.0, 3.5, 4.0]
+# EbN0 = [3.5, 4.0, 4.5, 5.0, 5.5]
+# EbN0 = [2.8]
+EbN0 = [2.0, 2.2, 2.4, 2.6, 2.8]
 
 ### Maximum number of Frame Errors (at the last iteration)
 MAX_FRAME_ERRORS = 36*7
@@ -92,7 +94,7 @@ ALGORITHMS = ["Flooding",        #  1) Flooding
 NUM_MODES = length(ALGORITHMS)
 
 # Vector that indicates if each algorithm is active for simulation
-# if ACTIVE[i] == true, the performance of Algorithm[i] will be simulated
+# if ACTIVE[J] == true, the performance of Algorithm[J] will be simulated
 ACTIVE = zeros(Bool,NUM_MODES)
 
 # BP types: 
@@ -105,60 +107,76 @@ BPTYPE = "TANH"
 ACTIVE_ALL = false
 
 # For each algorithm:
-# ACTIVE[i] = 1 : the performance will be simulated
+# ACTIVE [J] = 1: the performance will be simulated
 
 # Flooding
-ACTIVE[1] = 1                           
+J = 1
+ACTIVE[J] = 0                           
 
 # LBP
-ACTIVE[2] = 1
+J += 1
+ACTIVE[J] = 0
 
 # RBP
-ACTIVE[3] = 1
+J += 1
+ACTIVE[J] = 0
 
 # RD-RBP
-ACTIVE[4] = 1
+J += 1
+ACTIVE[J] = 0
 
 # NW-RBP
-ACTIVE[5] = 1
+J += 1
+ACTIVE[J] = 0
 
 # SVNF
-ACTIVE[6] = 1
+J += 1
+ACTIVE[J] = 0
 
 # List-RBP
-ACTIVE[7] = 1
+J += 1
+ACTIVE[J] = 0
 LISTSIZES = [16,2]                      # List sizes (min values = [4,2])
 
 # C-RBP
-ACTIVE[8] = 1
+J += 1
+ACTIVE[J] = 0
 
 # C&R-RBP
-ACTIVE[9] = 1
+J += 1
+ACTIVE[J] = 0
 
 # C&DR-RBP
-ACTIVE[10] = 1
-C_DR_ITER::Int = 3                      # Activation of Return in C&DR-RBP
+J += 1
+ACTIVE[J] = 1
+C_DR_ITER::Int = 5                      # Activation of Return in C&DR-RBP
 
 # VC-RBP
-ACTIVE[11] = 0
+J += 1
+ACTIVE[J] = 0
 
 # OV-RBP
-ACTIVE[12] = 0
+J += 1
+ACTIVE[J] = 0
 
 # CI-RBP
-ACTIVE[13] = 0
+J += 1
+ACTIVE[J] = 0
 
 # UBP-RBP
-ACTIVE[14] = 1
+J += 1
+ACTIVE[J] = 0
 
 # RBP-D1VN
-ACTIVE[15] = 0
+J += 1
+ACTIVE[J] = 0
 
 ######################## CODE LENGTH, RATE AND PROTOCOL ########################
 
 # Transmitted message length
-CODE_LENGTH::Int = 576
+CODE_LENGTH::Int = 1248
 # Code Rate = RATE[1]/RATE[2]
+# RATE = [1, 2]      
 RATE = [2, 3]              
 # LDPC protocol: 5GNR = NR-LDPC (5G); PEG = PEG; WiMAX = IEEE80216e;
 PROTOCOL::String = "5GNR"
