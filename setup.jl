@@ -23,13 +23,12 @@ include("prepare_simulation.jl")
 include("simcore.jl")
 
 if PROTOCOL == "5GNR"
+    include("5G NR LDPC/NR_LDPC_functions.jl")
     include("5G NR LDPC/NR_LDPC_parameters.jl")
     include("5G NR LDPC/NR_LDPC_auxiliary_functions.jl")
     include("5G NR LDPC/NR_LDPC_make_parity_check_matrix.jl")
-    include("5G NR LDPC/get_CRC_poly.jl")
 elseif PROTOCOL == "WiMAX"
     include("WiMAX.jl")
-    include("5G NR LDPC/get_CRC_poly.jl")
 elseif PROTOCOL == "PEG"
     include("PEG.jl")
     include("LU_encoding.jl")
@@ -53,7 +52,6 @@ end
 RR = RATE[1]/RATE[2]
 
 if PROTOCOL == "5GNR"
-    H1 = [false false]
     RV = 0
     AA, KK, RR, G_CRC, LIFTSIZE, NR_LDPC_DATA = NR_LDPC_parameters(CODE_LENGTH,RR,RV,false)
     HH, E_H = NR_LDPC_make_parity_check_matrix(LIFTSIZE,
@@ -65,33 +63,30 @@ if PROTOCOL == "5GNR"
                                                NR_LDPC_DATA.P_Zc)
     MM, NN = size(HH)
     GIRTH = find_girth(HH,100000)
-    LL = H1
-    UU = H1
+    P = nothing
 else
     NN = CODE_LENGTH
-    AA = round(Int,CODE_LENGTH*RR)
-    KK, G_CRC = get_CRC_poly(AA)  
+    G_CRC = nothing
     if PROTOCOL == "PEG"     
+        KK = round(Int,CODE_LENGTH*RR)
         LIFTSIZE = 0
         E_H = [0 0]
         MM = NN - KK
         # Generate Parity-Check Matrix by the PEG algorithm
         H_PEG, GIRTH = PEG(LAMBDA,RO,MM,NN)
         HH, LL, UU = LU_encoding(H_PEG,0)
-        H1 = HH[:,1:KK]
+        P = generate_parity_matrix(HH,LL,UU)        
     elseif PROTOCOL == "WiMAX"
         # N takes values in {576,672,768,864,960,1056,1152,1248,1344,1440,1536,
         # 1632,1728,1824,1920,2016,2112,2208,2304}.    
         # R takes values in {"1/2","2/3A","2/3B","3/4A","3/4B","5/6"}.
         HH, LIFTSIZE, E_H = WiMAX(NN,RR,"A")
         MM,_ = size(HH)
-        KK = NN - MM
-        AA = KK - 16 # since max(AA) = 2304*5/6 ≤ 3824, g_cRC = {CRC16}      
+        KK = NN - MM   
         GIRTH = find_girth(HH,100000)
-        LL = [false false]
-        UU = [false false]
-        H1 = [false false]
+        P = nothing
     end
+    AA =  KK
 end
 
 # list of checks and variables nodes

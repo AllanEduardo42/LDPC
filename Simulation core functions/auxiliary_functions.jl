@@ -130,7 +130,7 @@ function append_CRC!(
         for i in A+1:K
             Cw[i] = false
         end
-        divide_poly_CRC!(b,Cw,g_CRC,A,K)
+        gf2_divide_poly_CRC!(b,Cw,g_CRC,A,K)
     end
 end
 

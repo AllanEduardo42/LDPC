@@ -29,7 +29,7 @@ SEED::Int = 1111
 ################################ CONTROL FLAGS #################################
 
 # Testing mode (few trials)
-TEST::Bool = true     
+TEST::Bool = false     
 # Print info is in testing mode                 
 PRIN::Bool = true   
 # profview                    
@@ -57,8 +57,8 @@ MAXITER::Int = 20
 # EbN0 = [1.0, 1.25, 1.5, 1.75, 2.0]
 # EbN0 = [2.0, 2.5, 3.0, 3.5, 4.0]
 # EbN0 = [3.5, 4.0, 4.5, 5.0, 5.5]
-# EbN0 = [2.8]
-EbN0 = [2.0, 2.2, 2.4, 2.6, 2.8]
+EbN0 = [1.5]
+# EbN0 = [2.0, 2.2, 2.4, 2.6, 2.8]
 
 ### Maximum number of Frame Errors (at the last iteration)
 MAX_FRAME_ERRORS = 36*7
@@ -176,8 +176,8 @@ ACTIVE[J] = 0
 # Transmitted message length
 CODE_LENGTH::Int = 1248
 # Code Rate = RATE[1]/RATE[2]
-# RATE = [1, 2]      
-RATE = [2, 3]              
+RATE = [1, 2]      
+# RATE = [2, 3]              
 # LDPC protocol: 5GNR = NR-LDPC (5G); PEG = PEG; WiMAX = IEEE80216e;
 PROTOCOL::String = "5GNR"
     LAMBDA = [0.21, 0.25, 0.25, 0.29, 0]

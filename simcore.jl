@@ -11,33 +11,31 @@ include("./Simulation core functions/calc_syndrome.jl")
 include("./Simulation core functions/calc_C2V.jl")
 
 function simcore(
-    A::Int,                         # payload length
-    K::Int,                         # payload + CRC length
-    R::Float64,                     # effective rate
-    G::Int,                         # transmitted code length
-    g_CRC::Vector{Bool},            # CRC polynomial
-    ebn0::Float64,                  # EbN0
-    H::Matrix{Bool},                # Parity-Check Matrix
-    H1::Matrix{Bool},               # H = [H1 H2], size(H1) = (M,K)
-    L::Matrix{Bool},                # L*U = H2  (PEG)
-    U::Matrix{Bool},                # L*U = H2  (PEG)
-    Nc::Vector{Vector{Int}},        # Nc[ci] : neighborhood of check node ci
-    Nv::Vector{Vector{Int}},        # Nv[vj] : neighborhood of variable node vj
-    eH::Matrix{Int},                # Exponential Matrix (5G NR and WiMAX)
-    protocol::String,               # PEG, 5G NR or WiMAX
-    LS::Int,                        # 5G NR and WiMAX matrix liftsize
-    algorithm::String,              # BP algorithm (flooding, RBP etc.)
-    bptype::String,                 # Type of BP implementation (TANH etc.)
-    max_frame_errors::Int,          # Number of max frame errors
-    maxiter::Int,                   # Maximum number of BP iterations
-    rayleigh::Bool,                 # Rayleigh fading channel flag
-    C_DR_iter::Int,                 # C&DR switch iter
-    decayfactor::Float64,           # RBP decay factor
-    listsizes::Vector{Int},         # sizes of the list for List-RBP algorithm
-    ci_gamma::Float64,              # CI-RBP gamma threshold
-    rgn_seed::Int,                  # random seed to generate noise and message
-    test::Bool,                     # if "true", perform test algorithm
-    printtest::Bool                 # if "true", print test algorithm results
+    A::Int,                             # payload length
+    K::Int,                             # payload + CRC length
+    R::Float64,                         # effective rate
+    G::Int,                             # transmitted code length
+    g_CRC::Union{Vector{Bool},Nothing}, # CRC polynomial (5GNR only)
+    ebn0::Float64,                      # EbN0
+    H::Matrix{Bool},                    # Parity-Check Matrix
+    P::Union{Matrix{Bool},Nothing},     # Parity matrix (PEG only)
+    Nc::Vector{Vector{Int}},            # Nc[ci] : neighborhood of check node ci
+    Nv::Vector{Vector{Int}},            # Nv[vj] : neighborhood of variable node vj
+    eH::Matrix{Int},                    # Exponential Matrix (5G NR and WiMAX)
+    protocol::String,                   # PEG, 5G NR or WiMAX
+    LS::Int,                            # 5G NR and WiMAX matrix liftsize
+    algorithm::String,                  # BP algorithm (flooding, RBP etc.)
+    bptype::String,                     # Type of BP implementation (TANH etc.)
+    max_frame_errors::Int,              # Number of max frame errors
+    maxiter::Int,                       # Maximum number of BP iterations
+    rayleigh::Bool,                     # Rayleigh fading channel flag
+    C_DR_iter::Int,                     # C&DR switch iter
+    decayfactor::Float64,               # RBP decay factor
+    listsizes::Vector{Int},             # sizes of the list for List-RBP algorithm
+    ci_gamma::Float64,                  # CI-RBP gamma threshold
+    rgn_seed::Int,                      # random seed to generate noise and message
+    test::Bool,                         # if "true", perform test algorithm
+    printtest::Bool                     # if "true", print test algorithm results
 )
     
 ################################## CONSTANTS ###################################
@@ -88,9 +86,9 @@ function simcore(
 
     msg = Vector{Bool}(undef,A)         # payload
     
-    b = Vector{Bool}(undef,K)           # payload + CRC
+    b = Vector{Bool}(undef,K)           # payload + CRC (5GNR only)
 
-    cword = Vector{Bool}(undef,N)       # codeword (payload + CRC + parity bits)
+    cword = Vector{Bool}(undef,N)       # codeword (payload + parity bits)
 
     if protocol == "PEG"
         Cw = cword
@@ -256,16 +254,20 @@ function simcore(
         rand!(rgn,msg,Bool)
 
         ### 2) generate the codeword
-        append_CRC!(Cw,b,msg,g_CRC,A,K)
+        
         if protocol == "PEG"
-            encode_LDPC_LU!(Cw,H1,w,L,U,M,K)
+            cword[1:K] .= msg
+            w = P*msg
             for i in 1:M
-                Cw[K+i] = w[i]
+                cword[K+i] = w[i]
             end
         else
-            for i in K+1:K+S
-                Cw[i] = false           # filler bits (they are removed later)
-            end
+            if protocol == "5GNR"
+                append_CRC!(Cw,b,msg,g_CRC,A,K)
+                for i in K+1:K+S
+                    Cw[i] = false       # filler bits (they are removed later)
+                end
+            end            
             encode_LDPC_BG!(cword,Cw,W,aux1,aux2,aux3,K,N,eH,eM,eK,eB,S,LS)
         end
         # if in test algorithm, verify the encoding

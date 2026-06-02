@@ -96,3 +96,22 @@ function find_girth(H,max)::Int
     return 2*girth
 
 end
+
+function generate_parity_matrix(
+    H::Matrix{Bool},
+    L::Matrix{Bool},
+    U::Matrix{Bool}
+)
+
+    M,N = size(H)
+    K = N - M
+    P = zeros(Bool,M,K)
+    H1 = H[:,1:K]
+
+    @turbo for k in axes(P,2)
+        P[:,k] = gf2_solve_LU(L,U,H1[:,k])
+    end
+
+    return P
+
+end

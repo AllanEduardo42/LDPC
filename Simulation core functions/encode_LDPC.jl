@@ -33,22 +33,6 @@ function encode_LDPC_BG!(
     end
 end
 
-# encoding LDPC using LU decomposition
-function encode_LDPC_LU!(
-    cw::Vector{Bool},
-    H1::Matrix{Bool},
-    w::Vector{Bool},
-    L::Matrix{Bool},
-    U::Matrix{Bool},
-    M::Int,
-    K::Int
-)
-
-    _gf2_mat_mult!(w,H1,cw)
-    _gf2_solve_LU!(w,L,U,w,M) 
-    
-end
-
 # parity bits calculation for base graph LDPC
 function calc_LDPC_BG_parity_bits!(
     Cw::Matrix{Bool},
