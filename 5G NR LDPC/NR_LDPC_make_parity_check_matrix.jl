@@ -13,7 +13,7 @@ function NR_LDPC_make_parity_check_matrix(
     P_Zc::Int
 )
 
-    E_H = readdlm("./5G NR LDPC/5G_exponent_matrices/EM_$(bg)_$(iLS)_$(Zc).txt",'\t', Int,'\n')
+    E_H = readdlm("/home/allan/LDPC/5G NR LDPC/5G_exponent_matrices/EM_$(bg)_$(iLS)_$(Zc).txt",'\t', Int,'\n')
 
     m, n = size(E_H)
 

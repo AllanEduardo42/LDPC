@@ -8,12 +8,12 @@
 using LinearAlgebra
 using Random
 using LinearAlgebra
-using Polynomials
 using Statistics
 using Plots
 using SparseArrays
 using Dates
 using DelimitedFiles
+using LoopVectorization
 
 ################################## CONSTANTS ###################################
 

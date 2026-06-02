@@ -16,8 +16,6 @@ end
 ################################ INCLUDED FILES ################################
 
 include("GF2_functions.jl")
-
-include("GF2_poly.jl")
 include("auxiliary setup functions.jl")
 include("print_simulation_details.jl")
 include("print_algorithm_details.jl")
@@ -79,7 +77,7 @@ else
         MM = NN - KK
         # Generate Parity-Check Matrix by the PEG algorithm
         H_PEG, GIRTH = PEG(LAMBDA,RO,MM,NN)
-        HH, LL, UU = remake_H(H_PEG,0)
+        HH, LL, UU = LU_encoding(H_PEG,0)
         H1 = HH[:,1:KK]
     elseif PROTOCOL == "WiMAX"
         # N takes values in {576,672,768,864,960,1056,1152,1248,1344,1440,1536,

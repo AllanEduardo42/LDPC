@@ -44,8 +44,9 @@ function encode_LDPC_LU!(
     K::Int
 )
 
-    _gf2_mat_mult!(w,H1,cw,M,K)
+    _gf2_mat_mult!(w,H1,cw)
     _gf2_solve_LU!(w,L,U,w,M) 
+    
 end
 
 # parity bits calculation for base graph LDPC
@@ -183,7 +184,7 @@ function my_inplace_xor!(
     L::Int
 )
 
-    @inbounds for k in 1:L
+    @turbo for k in 1:L
         x[k] ⊻= y[k]
     end
 end

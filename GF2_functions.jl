@@ -3,6 +3,8 @@
 # 9 set 2024
 # GF(2) Matrix Functions
 
+using LoopVectorization
+
 import Base.*
 
 ########################### GF2 matrix multiplication ##########################
@@ -25,9 +27,9 @@ function gf2_mat_mult(
 
     if nA == mB
         if nB > 1
-            _gf2_mat_mult!(C,A,B,mA,nA,nB)
+            _gf2_mat_mult!(C,A,B)
         else
-            _gf2_mat_mult!(C,A,B,mA,nA)
+            _gf2_mat_mult!(C,A,B)
         end
     else
         throw(
@@ -54,9 +56,9 @@ function gf2_mat_mult!(
     if nA == mB 
         if mC == mA && nC == nB
             if nB > 1
-                _gf2_mat_mult!(C,A,B,mA,nA,nB)
+                _gf2_mat_mult!(C,A,B)
             else
-                _gf2_mat_mult!(C,A,B,mA,nA)
+                _gf2_mat_mult!(C,A,B)
             end
         else
             throw(
@@ -80,44 +82,28 @@ end
 function _gf2_mat_mult!(
     C::AbstractMatrix{Bool},
     A::AbstractMatrix{Bool},
-    B::AbstractMatrix{Bool},
-    mA::Int,
-    nA::Int,
-    nB::Int
+    B::AbstractMatrix{Bool}
 )
-    
-    @inbounds for i in 1:mA
-        for j in 1:nB
-            result = false
-            for k in 1:nA
-                if A[i,k]
-                    if B[k,j]
-                         result ⊻= true
-                    end
-                end
-            end
-            C[i,j] = result
-        end
-    end
 
+    @turbo for i in axes(A,1), j in axes(B,2)
+        result = false
+        for k in axes(A,2)
+            result ⊻= A[i,k] & B[k,j]
+        end
+        C[i,j] = result
+    end
 end
 
 function _gf2_mat_mult!(
     y::AbstractVector{Bool},
     A::AbstractMatrix{Bool},
-    x::AbstractVector{Bool},
-    mA::Int,
-    nA::Int
+    x::AbstractVector{Bool}
 )
 
-    @inbounds for i in 1:mA
+    @turbo for i in axes(A,1)
         result = false
-        for k in 1:nA
-            if A[i,k]
-                if x[k]
-                    result ⊻= true
-                end
-            end
+        for k in axes(A,2)
+            result ⊻= A[i,k] & x[k] 
         end
         y[i] = result
     end
@@ -193,7 +179,7 @@ function gf2_inverse(A::AbstractMatrix{Bool};ACCEF=false)
         if M ≠ N
             throw(
                 DimensionMismatch(
-                    lazy"matrix is not square: dimensions are ($M,N)"
+                    lazy"matrix is not square: dimensions are ($M,$N)"
                 )
             )
         end
@@ -334,6 +320,8 @@ function find_gf2_invertible_matrix(M::Int)
 
 end
 
+################################ GF2 LU MATRIX #################################
+
 function gf2_solve_LU(
     L::Matrix{Bool},
     U::Matrix{Bool},
@@ -349,6 +337,8 @@ function gf2_solve_LU(
     return x
 
 end
+
+# Solve (L*U)*x = y for x
 
 function gf2_solve_LU!(
     x::Vector{Bool},
@@ -439,6 +429,8 @@ function _gf2_solve_LU!(
     end
 end
 
+# Solve Lx = y
+
 function _gf2_solve_L!(
     x::Vector{Bool},
     L::Matrix{Bool},
@@ -449,17 +441,17 @@ function _gf2_solve_L!(
     @inbounds begin
         for i in 1:M
             result = y[i]
-            for j=1:i-1
-                if L[i,j]
-                    if x[j]
-                        result ⊻= true
-                    end
+            for j in 1:i-1
+                if x[j]
+                    result ⊻= L[i,j]
                 end
             end
             x[i] = result
         end
     end
 end
+
+# Solve Uy = x (stores the result in x)
 
 function _gf2_solve_U!(
     x::Vector{Bool},
@@ -470,14 +462,176 @@ function _gf2_solve_U!(
     @inbounds begin
         for i in M:-1:1
             result = x[i]
-            for j=i+1:M
-                if U[i,j]
-                    if x[j]
-                        result ⊻= true
-                    end
+            for j in i+1:M
+                if x[j]
+                    result ⊻= U[i,j]
                 end
             end
             x[i] = result
         end
     end
+end
+
+########################### GF2 POLYNOMIAL FUNCTIONS ###########################
+
+function gf2_poly(p::String)
+
+    L = length(p)
+    if L == 1
+        if p[1] == '1'
+            return [true]
+        elseif p[1] == 'x'
+            return [true, false]
+        else
+            return nothing
+        end
+    end
+    first = true
+    coeffs = Vector{Bool}()
+    N = 0
+    l = 1
+    while l ≤ L
+        if p[l] == 'x'
+            if l < L
+                l += 1
+                if p[l] == '^'
+                    l += 1
+                    str = ""
+                    while l ≤ L && p[l] ≠ ' ' && p[l] ≠ '+'
+                        str *= p[l]
+                        l += 1
+                    end
+                    c = parse(Int,str)
+                else
+                    c = 1
+                end                
+                if first
+                    first = false
+                    N = c + 1
+                    coeffs = zeros(Bool,c+1)
+                end
+                coeffs[N - c] = true
+            else
+                coeffs[N-1] = true
+            end
+        elseif p[l] == '1'
+            coeffs[N] = true
+        end
+        l += 1
+    end
+    return coeffs
+end
+
+function gf2_divide_poly(
+    p::Vector{Bool},
+    d::Vector{Bool}
+)
+
+    if !d[1]
+        throw(ArgumentError(
+            lazy"d[1] must be one."
+        ))
+    end
+    N = length(p)
+    # p(x) = p[1]*x^(N-1) + p[2]*x^(N-2) + ... + p[N-2]*x^2 + p[N-1]*x + p[N]
+    M = length(d)
+    # d(x) = d[1]*x^(M-1) + d[2]*x^(M-2) + ... + d[M-2]*x^2 + d[M-1]*x + d[M]
+
+    # p(x) = q(x)*d(x) + r(x)
+    # Degree{q(x)} = Degree{p(x)} - Degree{d(x)} ==>
+    # Length{q(x)} - 1 = Length{p(x)} - 1 - (Length{d(x)} - 1) ==>
+    # Length{q(x)} = Length{p(x)} - Length{d(x)} + 1 ==>
+    # Length{q(x)} = N - M + 1
+    L = N - M + 1
+    if L < 1
+        return [0], p
+    end
+    q = zeros(Bool,L)
+    # q(x) = q[1]*x^(L-1) + q[2]*x^(L-2) + ... + q[L-2]*x^2 + q[L-1]*x + q[L]
+    a = copy(p)
+    @inbounds for i = 1:L
+        if a[i]
+            q[i] = true
+            for j = 1:M
+                # a[i+j-1]*x^(N+1-i-j) + q[i]*x^(L-i) * d[j]*x^(M-j) =
+                # a[i+j-1]*x^(N+1-i-j) + (q[i]*d[j]) * x^(L+M-i-j) =
+                # (a[i+j-1] + q[i]*d[j])*x^(N+1-i-j), since N+1=L+M
+                a[j+i-1] ⊻= d[j]
+            end
+        end
+    end
+
+    # Degree{r(x)} < Degree{d(x)} ==>
+    # Length{r(x)} - 1 < Length{d(x)} - 1 ==>
+    # Length{r(x)} < M ==>
+    # Length{r(x)} ≤ M - 1 ==>
+    # r(x) = a[N-(M-1)+1:end]
+
+    @inbounds return q, a[N-M+2:end]
+
+end
+
+function gf2_divide_poly_CRC!(
+    b::Vector{Bool},
+    Cw::Union{Matrix{Bool},Vector{Bool}},
+    g_CRC::Vector{Bool},
+    A::Int,
+    K::Int,
+)
+
+    @inbounds begin
+        for i in 1:K
+            b[i] = Cw[i]
+        end
+        for i = 1:A
+            im1 = i - 1
+            if b[i]
+                for j in eachindex(g_CRC)
+                    b[j+im1] ⊻= g_CRC[j]
+                end
+            end
+        end
+        for i in A+1:K
+            Cw[i] = b[i]
+        end
+    end
+
+end
+
+function gf2_mul_poly(q::Vector{Bool},d::Vector{Bool})
+
+    L = length(q)
+    M = length(d)
+    N = L + M - 1
+
+    p = zeros(Bool,N)
+
+    for i=1:L
+        for j=1:M
+            p[i+j-1] ⊻= q[i] && d[j]
+        end
+    end
+
+    return p
+
+end
+
+function gf2_sum_poly(p::Vector{Bool},r::Vector{Bool})
+
+    N = length(p)
+    R = length(r)
+
+    if N < R
+        a = [zeros(Bool,R-N);p]
+        b = r
+    elseif R < N
+        a = p
+        b = [zeros(Bool,N-R);r]
+    else
+        a = p
+        b = r
+    end
+
+    return a .⊻ b
+
 end

@@ -9,6 +9,6 @@
           "color": "#00000085"
         },
     ],
-    "julia.NumThreads": 36,
+    "julia.NumThreads": 1,
     "svg.preview.background": "editor",
 }

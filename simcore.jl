@@ -270,7 +270,7 @@ function simcore(
         end
         # if in test algorithm, verify the encoding
         if test
-            _gf2_mat_mult!(syndrome,H,cword,M,N)
+            _gf2_mat_mult!(syndrome,H,cword)
             if !iszero(syndrome)
                 throw(error("encoding error"))
             end

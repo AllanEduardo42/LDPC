@@ -3,6 +3,8 @@
 # 3 set 2024
 # PEG Algorithm
 
+using Polynomials
+
 function PEG(
     lambda::Vector{Float64},
     rho::Vector{Float64},
@@ -43,19 +45,24 @@ function PEG(
             append!(d,kk*ones(Int,Nv[kk]))
         end
         H = zeros(Bool,M,N)
+        H_trans = zeros(Bool,N,M)
         check_degrees = zeros(Int,M)
         girth = typemax(Int)
+
+        row = zeros(Bool,N)
+        column = zeros(Bool,M)
 
         for n in 1:N
             for k in 1:d[n]
                 if k == 1
                     _,m = findmin(check_degrees)
                     H[m,n] = true
+                    H_trans[n,m] = true
                     check_degrees[m] += 1
                 else
                     L0_checks = findall(isone,H[:,n])
-                    level = subtree!(H,M,N,n,0,check_degrees,L0_checks,[n],
-                                copy(L0_checks),copy(L0_checks))
+                    level = subtree!(H,H_trans,M,n,0,check_degrees,L0_checks,[n],
+                                copy(L0_checks),copy(L0_checks),row,column)
                     if level > 0
                         girth = min(girth, 2*(level+1))
                     end
@@ -70,15 +77,17 @@ end
 
 function subtree!(
     H::Matrix{Bool},
+    H_trans::Matrix{Bool},
     M::Int,
-    N::Int,
     root::Int,
     level::Int,
     check_degrees::Vector{Int},
     L0_checks::Vector{Int},
     parent_nodes::Vector{Int},
     L0_check_set::Vector{Int},
-    L1_check_set::Vector{Int}
+    L1_check_set::Vector{Int},
+    row::Vector{Bool},
+    column::Vector{Bool}
 )    
     # L0: previous level in the subtree
     # L1: current level in the subtree
@@ -90,29 +99,34 @@ function subtree!(
         L1_checks = Vector{Int}(undef,0)    # checks in the current level
         L1_nodes = Vector{Int}(undef,0)     # nodes in the current level
 
-        row = zeros(Bool,N)
-        column = zeros(Bool,M)
+        row .= false
+        column .= false
 
         for check in L0_checks
-            for i in 1:N
-                row[i] = H[check,i]
+            for i in axes(H_trans,1)
+                row[i] = H_trans[i,check]
             end
-            row[parent_nodes] .= 0              # remove parent nodes
-            check_nodes = findall(row)    # nodes linked to the current check
-            append_sort_unique!(L1_nodes,check_nodes)
+            for node in parent_nodes
+                row[node] = false       # remove parent nodes
+            end    
+            check_nodes = findall(row)  # nodes linked to the current check
+            append!(L1_nodes,check_nodes)
             for node in check_nodes
-                for i in 1:M
+                for i in axes(H,1)
                     column[i] = H[i,node]
                 end
-                column[check] = 0  
+                column[check] = false  
                 # include checks linked to the current node
-                append_sort_unique!(L1_checks,findall(column))
+                append!(L1_checks,findall(column))
             end
         end
-        append_sort_unique!(L1_check_set,L1_checks)
+        sort_unique!(L1_nodes)
+        sort_unique!(L1_checks)
+        append!(L1_check_set,L1_checks)
+        sort_unique!(L1_check_set)
         len0 = length(L0_check_set)
         len1 = length(L1_check_set)
-        if len1 == len0                     # subtee stopped increasing 
+        if len1 == len0                 # subtee stopped increasing 
             STOPPED = true
             level = 0
         end
@@ -122,25 +136,28 @@ function subtree!(
             _,m = findmin(check_degrees[compl])
             idx = compl[m]
             H[idx,root] = true
+            H_trans[root,idx] = true
             check_degrees[idx] += 1
         else
-            append_sort_unique!(L0_check_set,L1_checks)
+            append!(L0_check_set,L1_checks)
+            sort_unique!(L0_check_set) 
             level = 
-                subtree!(H,M,N,root,level,check_degrees,L1_checks,L1_nodes,L0_check_set,
-                    L1_check_set)
+                subtree!(H,H_trans,M,root,level,check_degrees,L1_checks,L1_nodes,L0_check_set,
+                    L1_check_set,row,column)
         end
     end
 
     return level
 end
 
-function append_sort_unique!(
-    x::Vector{Int},
-    y::Vector{Int}
+function sort_unique!(
+    x::Vector{Int}
 )
-
-    append!(x,y)
-    sort!(x)
+    if length(x) > 100
+        sort!(x,alg=QuickSort)
+    else
+        sort!(x,alg=InsertionSort)
+    end
     unique!(x)
 
 end

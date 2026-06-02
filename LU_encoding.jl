@@ -4,10 +4,10 @@
 # General encoding procedure for LDPC using LU decomposition
 # Original Author: R. C. de Lamare (2007)
 
-function remake_H(
+function LU_encoding(
     H::Matrix{Bool},
     strategy::Int
-)::Tuple{Matrix{Bool},Matrix{Bool},Matrix{Bool}}
+)
     
     #  strategy: Strategy for finding the next non-zero diagonal elements
     #            {0} First  : First non-zero found by column search
@@ -55,7 +55,7 @@ function remake_H(
             x, ix = findmin(colWeight[c[rowIndex]])
             # Add offset to the chosen row index to match the dimension of the... 
             # original matrix F
-            chosenCol = c[rowIndex(ix)] + (i - 1)
+            chosenCol = c[rowIndex[ix]] + (i - 1)
                 
         # Create diagonally structured matrix using 'Minprod' strategy   
         elseif strategy == 2
