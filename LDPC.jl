@@ -54,10 +54,11 @@ DECAY_TEST::Float64 = 0.85
 MAXITER::Int = 20
 
 ### EbN0
+EbN0 = [1.0, 1.5, 2.0, 2.5, 3.0]
 # EbN0 = [1.0, 1.25, 1.5, 1.75, 2.0]
 # EbN0 = [2.0, 2.5, 3.0, 3.5, 4.0]
 # EbN0 = [3.5, 4.0, 4.5, 5.0, 5.5]
-EbN0 = [1.5]
+# EbN0 = [1.5]
 # EbN0 = [2.0, 2.2, 2.4, 2.6, 2.8]
 
 ### Maximum number of Frame Errors (at the last iteration)
@@ -94,7 +95,7 @@ ALGORITHMS = ["Flooding",        #  1) Flooding
 NUM_MODES = length(ALGORITHMS)
 
 # Vector that indicates if each algorithm is active for simulation
-# if ACTIVE[J] == true, the performance of Algorithm[J] will be simulated
+# if ACTIVE[J+=1] == true, the performance of Algorithm[J] will be simulated
 ACTIVE = zeros(Bool,NUM_MODES)
 
 # BP types: 
@@ -109,72 +110,58 @@ ACTIVE_ALL = false
 # For each algorithm:
 # ACTIVE [J] = 1: the performance will be simulated
 
+J = 0
 # Flooding
-J = 1
-ACTIVE[J] = 0                           
+ACTIVE[J+=1] = 1                          
 
 # LBP
-J += 1
-ACTIVE[J] = 0
+ACTIVE[J+=1] = 0
 
 # RBP
-J += 1
-ACTIVE[J] = 0
+ACTIVE[J+=1] = 0
 
 # RD-RBP
-J += 1
-ACTIVE[J] = 0
+ACTIVE[J+=1] = 0
 
 # NW-RBP
-J += 1
-ACTIVE[J] = 0
+ACTIVE[J+=1] = 0
 
 # SVNF
-J += 1
-ACTIVE[J] = 0
+ACTIVE[J+=1] = 0
 
 # List-RBP
-J += 1
-ACTIVE[J] = 0
+ACTIVE[J+=1] = 0
 LISTSIZES = [16,2]                      # List sizes (min values = [4,2])
 
 # C-RBP
-J += 1
-ACTIVE[J] = 0
+ACTIVE[J+=1] = 0
 
 # C&R-RBP
-J += 1
-ACTIVE[J] = 0
+ACTIVE[J+=1] = 0
 
 # C&DR-RBP
-J += 1
-ACTIVE[J] = 1
+ACTIVE[J+=1] = 0
 C_DR_ITER::Int = 5                      # Activation of Return in C&DR-RBP
 
 # VC-RBP
-J += 1
-ACTIVE[J] = 0
+ACTIVE[J+=1] = 0
 
 # OV-RBP
-J += 1
-ACTIVE[J] = 0
+ACTIVE[J+=1] = 0
 
 # CI-RBP
-J += 1
-ACTIVE[J] = 0
+ACTIVE[J+=1] = 0
 
 # UBP-RBP
-J += 1
-ACTIVE[J] = 0
+ACTIVE[J+=1] = 0
 
 # RBP-D1VN
-J += 1
-ACTIVE[J] = 0
+ACTIVE[J+=1] = 0
 
 ######################## CODE LENGTH, RATE AND PROTOCOL ########################
 
 # Transmitted message length
-CODE_LENGTH::Int = 1248
+CODE_LENGTH::Int = 64
 # Code Rate = RATE[1]/RATE[2]
 RATE = [1, 2]      
 # RATE = [2, 3]              

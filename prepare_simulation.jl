@@ -11,12 +11,11 @@ function prepare_simulation(
     algorithm::String,
     max_frame_errors::Int,
     maxiter::Integer,
-    bptype::String,
     decay::Float64
 )
 
 ############################ PRINT ALGORITHM DETAILS ###########################
-    print_algorithm_details(count,algorithm,bptype,decay)
+    print_algorithm_details(count,algorithm,BPTYPE,decay)
 
 ################################ MULTITHREADING ################################   
     if TEST
@@ -30,29 +29,34 @@ function prepare_simulation(
         num_ebn0 = length(ebn0) 
         nthreads = NTHREADS
     end
-    Sum_decoded = Array{Int,3}(undef,maxiter,num_ebn0,nthreads)
-    Sum_ber = Array{Int,3}(undef,maxiter,num_ebn0,nthreads)
+    max_frame_errors ÷= nthreads
+    Frame_errors = Array{Int,3}(undef,maxiter,num_ebn0,nthreads)
+    Bit_errors = Array{Int,3}(undef,maxiter,num_ebn0,nthreads)
     Trials = Matrix{Int}(undef,num_ebn0,nthreads)
     for k in 1:num_ebn0
+
+        # transform EbN0 in standard deviations
+        variance = exp10.(-ebn0[k]/10) / (2*RR)
+        stdev = sqrt.(variance)
+
+        # thread "for" loop
         stats = @timed Threads.@threads for i in 1:nthreads
         # stats = @timed for i in 1:nthreads
-            Lr, Lq, sum_decoded, sum_ber, trials = simcore(
-                                                    AA,
+            Lr, Lq, frame_errors, bit_errors, trials = simcore(
                                                     KK,
-                                                    RR,
                                                     CODE_LENGTH,
                                                     G_CRC,
-                                                    ebn0[k],
+                                                    stdev,
                                                     HH,
-                                                    P,
+                                                    PP,
                                                     NC,
                                                     NV,
                                                     E_H,
                                                     PROTOCOL,
                                                     LIFTSIZE,
                                                     algorithm,
-                                                    bptype,
-                                                    max_frame_errors ÷ NTHREADS,
+                                                    BPTYPE,
+                                                    max_frame_errors,
                                                     maxiter,
                                                     RAYL,
                                                     C_DR_ITER,
@@ -64,8 +68,8 @@ function prepare_simulation(
                                                     TEST && PRIN
                                                 )
             if !TEST
-                Sum_decoded[:,k,i] = sum_decoded
-                Sum_ber[:,k,i] = sum_ber
+                Frame_errors[:,k,i] = frame_errors
+                Bit_errors[:,k,i] = bit_errors
                 Trials[k,i] = trials
             end
         end
@@ -81,13 +85,12 @@ function prepare_simulation(
     else
         Total_trials = sum(Trials,dims=2)
         Fer = zeros(maxiter,num_ebn0)
-        Fer .= sum(Sum_decoded,dims=3)
+        Fer .= sum(Frame_errors,dims=3)
         for k = 1:num_ebn0
             Fer[:,k] ./= Total_trials[k]
         end
-        @. Fer = 1 - Fer
         Ber = zeros(maxiter,num_ebn0)
-        Ber .= sum(Sum_ber,dims=3)
+        Ber .= sum(Bit_errors,dims=3)
         for k = 1:num_ebn0
             Ber[:,k] ./= (NN*Total_trials[k])
         end

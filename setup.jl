@@ -75,7 +75,7 @@ else
         # Generate Parity-Check Matrix by the PEG algorithm
         H_PEG, GIRTH = PEG(LAMBDA,RO,MM,NN)
         HH, LL, UU = LU_encoding(H_PEG,0)
-        P = generate_parity_matrix(HH,LL,UU)        
+        PP = generate_parity_matrix(HH,LL,UU)        
     elseif PROTOCOL == "WiMAX"
         # N takes values in {576,672,768,864,960,1056,1152,1248,1344,1440,1536,
         # 1632,1728,1824,1920,2016,2112,2208,2304}.    
@@ -84,9 +84,8 @@ else
         MM,_ = size(HH)
         KK = NN - MM   
         GIRTH = find_girth(HH,100000)
-        P = nothing
+        PP = nothing
     end
-    AA =  KK
 end
 
 # list of checks and variables nodes
@@ -142,7 +141,6 @@ if TEST
                                                 ALGORITHMS[i],
                                                 MAX_FRAME_ERRORS_TEST,
                                                 MAXITER_TEST,
-                                                BPTYPE,
                                                 DECAY_TEST)
             end
         end
@@ -174,7 +172,6 @@ else
                                         ALGORITHMS[i],
                                         MAX_FRAME_ERRORS,
                                         MAXITER,
-                                        BPTYPE,
                                         decay)
                 if SAVE
                     open(DIRECTORY*"/FER_"*algo*".txt","w") do io

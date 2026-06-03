@@ -11,12 +11,10 @@ include("./Simulation core functions/calc_syndrome.jl")
 include("./Simulation core functions/calc_C2V.jl")
 
 function simcore(
-    A::Int,                             # payload length
-    K::Int,                             # payload + CRC length
-    R::Float64,                         # effective rate
-    G::Int,                             # transmitted code length
+    K::Int,                             # payload length
+    code_length::Int,                   # transmitted code length
     g_CRC::Union{Vector{Bool},Nothing}, # CRC polynomial (5GNR only)
-    ebn0::Float64,                      # EbN0
+    stdev::Float64,                     # noise standard deviation
     H::Matrix{Bool},                    # Parity-Check Matrix
     P::Union{Matrix{Bool},Nothing},     # Parity matrix (PEG only)
     Nc::Vector{Vector{Int}},            # Nc[ci] : neighborhood of check node ci
@@ -26,7 +24,7 @@ function simcore(
     LS::Int,                            # 5G NR and WiMAX matrix liftsize
     algorithm::String,                  # BP algorithm (flooding, RBP etc.)
     bptype::String,                     # Type of BP implementation (TANH etc.)
-    max_frame_errors::Int,              # Number of max frame errors
+    max_frame_errors::Int,              # Number of max frame frame_errors
     maxiter::Int,                       # Maximum number of BP iterations
     rayleigh::Bool,                     # Rayleigh fading channel flag
     C_DR_iter::Int,                     # C&DR switch iter
@@ -64,10 +62,6 @@ function simcore(
     # number of edges in the graph
     num_edges = sum(H)
 
-    # transform EbN0 in standard deviations
-    variance = exp10.(-ebn0/10) / (2*R)
-    stdev = sqrt.(variance)
-
     # Set the random seeds
     rgn = Xoshiro(rgn_seed)
 
@@ -84,9 +78,13 @@ function simcore(
 
 ################################# PREALLOCATIONS ###############################
 
-    msg = Vector{Bool}(undef,A)         # payload
-    
-    b = Vector{Bool}(undef,K)           # payload + CRC (5GNR only)
+    if protocol == "5GNR"
+        b = Vector{Bool}(undef,K)       # payload + CRC (5GNR only)
+        A = K - length(g_CRC) + 1
+        msg = Vector{Bool}(undef,A)     # payload
+    else
+        msg = Vector{Bool}(undef,K)     # payload
+    end
 
     cword = Vector{Bool}(undef,N)       # codeword (payload + parity bits)
 
@@ -102,12 +100,11 @@ function simcore(
     end
 
     # frame error rate
-    sum_decoded = zeros(Int,maxiter)
+    frame_errors = zeros(Int,maxiter)
     decoded = Vector{Bool}(undef,maxiter)
 
     # bit error rate
-    sum_ber = zeros(Int,maxiter)
-    ber = Vector{Int}(undef,maxiter)
+    bit_errors = zeros(Int,maxiter)
 
     # estimate
     bitvector = Vector{Bool}(undef,N)    
@@ -128,16 +125,18 @@ function simcore(
     C2V = Matrix{Float64}(undef,M,N)
 
     # received signal
-    signal = Vector{Float64}(undef,G)
+    signal = Vector{Float64}(undef,code_length)
+
+    variance = stdev^2
 
     # bit-error
     biterror = Vector{Bool}(undef,N) 
 
     # Rayleigh fading channel
     if rayleigh
-        x1 = Vector{Float64}(undef,G)
-        x2 = Vector{Float64}(undef,G)
-        fading = Vector{Float64}(undef,G)   # fading = sqrt(x_1^2 + x_2^2)
+        x1 = Vector{Float64}(undef,code_length)
+        x2 = Vector{Float64}(undef,code_length)
+        fading = Vector{Float64}(undef,code_length)   # fading = sqrt(x_1^2 + x_2^2)
     else
         x1 = nothing
         x2 = nothing
@@ -242,11 +241,10 @@ function simcore(
 
 ################################## MAIN LOOP ###################################
     
-    frame_errors = 0
     trials = 0
 
     #while frame_errors < max_frame_errors
-    @fastmath @inbounds while frame_errors < max_frame_errors
+    @fastmath @inbounds while frame_errors[maxiter] < max_frame_errors
 
         trials += 1
 
@@ -279,7 +277,7 @@ function simcore(
         end
 
         ### 3) sum the noise to the modulated cword to produce the received signal
-        received_signal!(signal,cword,G,twoLs,stdev,rgn,rayleigh,fading,x1,x2)
+        received_signal!(signal,cword,code_length,twoLs,stdev,rgn,rayleigh,fading,x1,x2)
         
         ### 4) reset simulation variables
         decoded .= false
@@ -583,11 +581,11 @@ ________________________________________________________________________________
             end            
 
             # Evalute the bit error vector
-            for vj in 1:N
-                biterror[vj] = bitvector[vj] ≠ cword[vj]
+            @turbo for vj in eachindex(bitvector)
+                biterror[vj] = bitvector[vj] ⊻ cword[vj]
             end
             # Evaluate BER
-            ber[iter] = sum(biterror)
+            bit_errors[iter] += sum(biterror)
 
             # print test info
             if printtest
@@ -621,9 +619,10 @@ ________________________________________________________________________________
         end
 
         if iter < maxiter               # if the algorithm stopped before maxiter
+            sum_bit_error = sum(biterror)   # sum the bit errors of the last iteration
             for i = iter+1:maxiter
                 decoded[i] = decoded[iter]
-                ber[i] = ber[iter]
+                bit_errors[i] += sum_bit_error
             end
         end
 
@@ -634,31 +633,28 @@ ________________________________________________________________________________
             num_reps = num_edges
         end
 
-        ### 9) bit error rate
+        ### 9) Frame error rate
         for i=1:maxiter
-            sum_ber[i] += ber[i]
-            sum_decoded[i] += decoded[i]
-        end
-
-        if !decoded[maxiter]
-            frame_errors += 1
+            if !decoded[i]
+                frame_errors[i] += 1
+            end
         end
 
         if printtest
-            println("Frame Errors: $(frame_errors)/$(max_frame_errors)")
+            println("Frame Errors: $(frame_errors[maxiter])/$(max_frame_errors)")
             println()
         end
     end
 
     if printtest
-        println("Monte Carlo trials ended: maximum number of frame errors reached.")
+        println("Monte Carlo trials ended: maximum number of frame frame_errors reached.")
         println("Total number of trials: $trials")
     end
 
     if test
-        return C2V, V2C, sum_decoded, sum_ber, trials
+        return C2V, V2C, frame_errors, bit_errors, trials
     else
-        return nothing, nothing, sum_decoded, sum_ber, trials
+        return nothing, nothing, frame_errors, bit_errors, trials
     end
 
 end
