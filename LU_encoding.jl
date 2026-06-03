@@ -64,8 +64,8 @@ function LU_encoding(
             y = findall(F[:,i:end])
             r = getindex.(y,1)
             c = getindex.(y,2)
-            colWeight = sum(F[:, i:end],dims=1) - 1
-            rowWeight = sum(F[i, :]) - 1
+            colWeight = sum(F[:, i:end],dims=1) .- 1
+            rowWeight = sum(F[i, :]) .- 1
             
             # Find non-zero diagonal element candidates
             rowIndex = findall(r .== i)
