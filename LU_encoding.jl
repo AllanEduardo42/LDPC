@@ -37,6 +37,9 @@ function LU_encoding(
             chosenCol = i
             while !F[i,chosenCol]
                 chosenCol += 1
+                if chosenCol > N
+                    throw(error(lazy"H is rank deficient"))
+                end
             end
             
         # Create diagonally structured matrix using 'Mincol' strategy
@@ -107,6 +110,6 @@ function LU_encoding(
     # U = F[:,1:M]
     # L*U = newH[1:M]
 
-    @inbounds return [newH[:,M+1:end] newH[:,1:M]], L, F[:,1:M]
+    @inbounds return [newH[:,M+1:end] newH[:,1:M]], L, F[:,1:M], F
 
 end
