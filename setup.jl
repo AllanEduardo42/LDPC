@@ -63,7 +63,7 @@ if PROTOCOL == "5GNR"
                                                NR_LDPC_DATA.P_Zc)
     MM, NN = size(HH)
     GIRTH = find_girth(HH,100000)
-    P = nothing
+    PP = nothing
 else
     NN = CODE_LENGTH
     G_CRC = nothing

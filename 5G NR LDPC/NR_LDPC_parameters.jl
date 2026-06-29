@@ -128,9 +128,13 @@ function NR_LDPC_parameters(
     #     display("Atention: NR-LDPC new rate R = $(round(R,digits=3))")
     # end
 
-    if P > 42*Zc && bg == "1" || P > 38*Zc && bg == "2"
+    if P > 42*Zc && bg == "1"
         throw(error(
-            """rate is too high or G is too low"""
+            """rate is too high or G is too low (P = $P > $(42*Zc), bg = 1)"""
+        ))
+    elseif P > 38*Zc && bg == "2"
+        throw(error(
+            """rate is too high or G is too low (P = $P > $(38*Zc), bg = 2)"""
         ))
     end
     if P < 0
