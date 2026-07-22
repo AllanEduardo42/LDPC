@@ -38,7 +38,8 @@ function calc_C2V_no_opt(
     Nci::Vector{Int},
     ci::Int,
     vj::Int,    
-    V2C::Matrix{Float64}
+    V2C::Matrix{Float64},
+    ::Union{Nothing,Float64}
 )
 
     @fastmath @inbounds begin

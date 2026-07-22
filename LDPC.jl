@@ -29,7 +29,7 @@ SEED::Int = 1111
 ################################ CONTROL FLAGS #################################
 
 # Testing mode (few trials)
-TEST::Bool = false     
+TEST::Bool = true     
 # Print info is in testing mode                 
 PRIN::Bool = true   
 # profview                    
@@ -40,7 +40,7 @@ RAYL::Bool = false
 ############################### TEST PARAMETERS ################################
 
 ### Maximum number of BP iterations
-MAXITER_TEST::Int = 1
+MAXITER_TEST::Int = 10
 ### EbN0
 EbN0_TEST::Float64 = 2.5
 ### Maximum number of Frame Errors
@@ -112,10 +112,10 @@ ACTIVE_ALL = false
 
 J = 0
 # Flooding
-ACTIVE[J+=1] = 1                          
+ACTIVE[J+=1] = 0                          
 
 # LBP
-ACTIVE[J+=1] = 0
+ACTIVE[J+=1] = 1
 
 # RBP
 ACTIVE[J+=1] = 0
@@ -161,7 +161,7 @@ ACTIVE[J+=1] = 0
 ######################## CODE LENGTH, RATE AND PROTOCOL ########################
 
 # Transmitted message length
-CODE_LENGTH::Int = 64
+CODE_LENGTH::Int = 576
 # Code Rate = RATE[1]/RATE[2]
 RATE = [1, 2]      
 # RATE = [2, 3]              

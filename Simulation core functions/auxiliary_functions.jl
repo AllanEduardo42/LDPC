@@ -10,8 +10,7 @@ function calc_prior_LLRs!(
     signal::Vector{Float64},
     variance::Float64,
     rayleigh::Bool,
-    fading::Union{Vector{Float64},Nothing},
-    bptype::String
+    fading::Union{Vector{Float64},Nothing}
 )
 
     @fastmath @inbounds begin
@@ -22,11 +21,6 @@ function calc_prior_LLRs!(
         else
             for i in eachindex(signal)
                 prior_LLR[twoZc+i] = -2*signal[i]/variance
-            end
-        end
-        if bptype == "TABL"
-            for i in eachindex(signal)
-                prior_LLR[twoZc+i] *= SIZE_PER_RANGE
             end
         end
     end

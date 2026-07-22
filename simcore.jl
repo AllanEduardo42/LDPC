@@ -284,7 +284,7 @@ function simcore(
         resetmatrix!(C2V,Nv,0.0)
 
         ### 5) init the LLR priors
-        calc_prior_LLRs!(prior_LLRs,twoLs,signal,variance,rayleigh,fading,bptype)
+        calc_prior_LLRs!(prior_LLRs,twoLs,signal,variance,rayleigh,fading)
 
         # initial estimate of the bits (0-th iteration)
         for i in eachindex(bitvector)
