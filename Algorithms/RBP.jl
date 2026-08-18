@@ -29,7 +29,7 @@ function RBP!(
 
         # 1) Find largest residual and coordenates
         cimax, vjmax = findmaxedge(Residuals,alpha,Nc)
-        if cimax == 0.0
+        if cimax == 0
             rbp_not_converged = false
             break # i.e., BP has converged
         end        

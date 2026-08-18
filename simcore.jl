@@ -33,7 +33,8 @@ function simcore(
     ci_gamma::Float64,                  # CI-RBP gamma threshold
     rgn_seed::Int,                      # random seed to generate noise and message
     test::Bool,                         # if "true", perform test algorithm
-    printtest::Bool                     # if "true", print test algorithm results
+    printtest::Bool,                    # if "true", print test algorithm results,
+    par_par::Int                        # parallel parameter
 )
     
 ################################## CONSTANTS ###################################
@@ -236,6 +237,9 @@ function simcore(
                 end
             end
             num_reps -= E1
+        elseif algorithm == "P-RBP"
+            list = Matrix{Int}(undef,par_par,2)
+            post_LLR = Vector{Float64}(undef,par_par)
         end
     end
 
@@ -351,6 +355,7 @@ ________________________________________________________________________________
         rbp_not_converged = true        # avoids useless iterations if false
 
         iter = 0
+
         while iter < maxiter
 
             iter += 1
@@ -370,6 +375,24 @@ ________________________________________________________________________________
                         newC2V,
                         Residuals,
                         alpha
+                        )
+                elseif algorithm == "P-RBP"
+                    rbp_not_converged = parallel_RBP!(
+                        bitvector,
+                        V2C,
+                        C2V,
+                        prior_LLRs,
+                        Nc,
+                        Nv,
+                        msum_factor,
+                        msum2,
+                        num_reps,
+                        newC2V,
+                        Residuals,
+                        alpha,
+                        par_par,
+                        list,
+                        post_LLR
                         )
                 elseif algorithm == "RD-RBP"
                     rbp_not_converged = RD_RBP!(

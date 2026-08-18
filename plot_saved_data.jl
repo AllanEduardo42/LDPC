@@ -2,12 +2,12 @@ using DelimitedFiles
 using Plots
 using LaTeXStrings
 
-# Date = "2026-05-05"
-# Hour = "08:50"
-# Protocol = "5GNR"
-# N = 576
-# R = [1,2]
-# EbN0 = [1.0, 1.5, 2.0, 2.5, 3.0]
+Date = "2026-05-05"
+Hour = "08:50"
+Protocol = "5GNR"
+N = 576
+R = [1,2]
+EbN0 = [1.0, 1.5, 2.0, 2.5, 3.0]
 
 # Date = "2026-05-04"
 # Hour = "11:26"
@@ -23,12 +23,12 @@ using LaTeXStrings
 # R = [2,3]
 # EbN0 = [2.0, 2.5, 3.0, 3.5, 4.0]
 
-Date = "2026-05-08"
-Hour = "22:11"
-Protocol = "5GNR"
-N = 576
-R = [1,2]
-EbN0 = [3.5, 4.0, 4.5, 5.0, 5.5, 6.0]
+# Date = "2026-05-08"
+# Hour = "22:11"
+# Protocol = "5GNR"
+# N = 576
+# R = [1,2]
+# EbN0 = [3.5, 4.0, 4.5, 5.0, 5.5, 6.0]
 
 # Date = "2026-05-10"
 # Hour = "18:23"
@@ -36,6 +36,20 @@ EbN0 = [3.5, 4.0, 4.5, 5.0, 5.5, 6.0]
 # N = 1248
 # R = [2,3]
 # EbN0 = [2.0, 2.2, 2.4, 2.6, 2.8]
+
+# Date = "2026-08-17"
+# Hour = "14:32"
+# Protocol = "5GNR"
+# N = 516
+# R = [8,9]
+# EbN0 = [3.5, 4.0, 4.5, 5.0, 5.5, 6.0]
+
+# Date = "2026-08-17"
+# Hour = "22:44"
+# Protocol = "5GNR"
+# N = 576
+# R = [5,6]
+# EbN0 = [4.0, 4.25, 4.5, 4.75, 5.0]
 
 maxiter = 20
 iter = 10
@@ -51,12 +65,15 @@ curves =
  "LBP"                  :none            :solid     2           4
  "RBP"                  :dtriangle       :solid     3           4      
  "RD-RBP"               :utriangle       :solid     4           4         
- "NW-RBP"               :star5           :solid     5           5
+ "NW-RBP"               :star5           :solid     5           6
  "SVNF"                 :diamond         :solid     15          5
- "List-RBP"             :circle          :solid     :gray       3
+ "List-RBP"             :circle          :solid     :gray       4
  "UBP-RBP"              :cross           :solid     :black      3
- "C&R-RBP"              :rect            :solid     11          4
- "C&DR-RBP"             :circle          :solid     14          4       
+ "C&R-RBP"              :rect            :solid     1           4
+#  "C&DR-RBP 2"           :dtriangle       :solid     2           4   
+ "C&DR-RBP"                :circle       :solid     14           4     
+#  "C&DR-RBP 4"           :circle          :solid     4           3   
+#  "C&DR-RBP 5"           :cross           :solid     5           3  
  "C-RBP"                :none            :dot       11          4
 ]
 
@@ -104,10 +121,12 @@ for k in eachindex(EbN0)
                 markersize=curves[i,5],
                 markerstrokewidth = 0.5,
                 guidefontsize=10,
+                tickfontsize=10,
+                legend_font_pointsize = 9,
                 legend_position = :topright,
-                size = 1.5 .*(300,500),
+                size = 1.5 .*(300,510),
                 markershape = curves[i,2],
-                left_margin=3Plots.mm,
+                left_margin=4.1Plots.mm,
                 top_margin=1Plots.mm,
                 fontfamily="Computer Modern",
                 framestyle=:box
@@ -136,6 +155,7 @@ for k in eachindex(EbN0)
     
     p = plot(p1,p2,layout=(2,1),bottom_margin=-3Plots.mm)
     Plots.pdf(p,directory*"/FER_BER_$(N)_$(EbN0[k])dB_$maxiter")
+    Plots.svg(p,directory*"/FER_BER_$(N)_$(EbN0[k])dB_$maxiter")
 end
 
 # FER x EbN0

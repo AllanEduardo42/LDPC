@@ -25,7 +25,7 @@ function List_RBP!(
     local_list::Union{Vector{Float64},Nothing},
     local_coords::Union{Matrix{Int},Nothing},
     listsize::Int,
-    listsize2::Int        
+    listsize2::Int
 )
 
     rbp_not_converged = true

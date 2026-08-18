@@ -5,6 +5,8 @@
 # Separates simulations in terms of EbN0 and number of threads (paralelization)
 # Returns FER and BER matrices (iteration x EbN)
 
+include("simcore.jl")
+
 function prepare_simulation(
     count::Int,
     ebn0::Vector{Float64},
@@ -15,6 +17,7 @@ function prepare_simulation(
 )
 
 ############################ PRINT ALGORITHM DETAILS ###########################
+    
     print_algorithm_details(count,algorithm,BPTYPE,decay)
 
 ################################ MULTITHREADING ################################   
@@ -65,7 +68,8 @@ function prepare_simulation(
                                                     CI_GAMMA,
                                                     RGN_SEEDS[i],
                                                     TEST,
-                                                    TEST && PRIN
+                                                    TEST && PRIN,
+                                                    PAR_PAR
                                                 )
             if !TEST
                 Frame_errors[:,k,i] = frame_errors

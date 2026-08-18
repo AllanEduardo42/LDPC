@@ -20,7 +20,6 @@ include("auxiliary setup functions.jl")
 include("print_simulation_details.jl")
 include("print_algorithm_details.jl")
 include("prepare_simulation.jl")
-include("simcore.jl")
 
 if PROTOCOL == "5GNR"
     include("5G NR LDPC/NR_LDPC_functions.jl")
@@ -121,27 +120,16 @@ if TEST
                 global DECAY_TEST = 0.0
             end
             if PROF
-                global PRIN = false
-                # evaluate expr for profile view
                 global ALGO_PROF = ALGORITHMS[i]
-                prog = "@profview (prepare_simulation(
-                        COUNT,
-                        [EbN0_TEST],
-                        ALGO_PROF,
-                        MAX_FRAME_ERRORS_TEST,
-                        MAXITER_TEST,
-                        BPTYPE,
-                        DECAY_TEST))"
-                expr = Meta.parse(prog)
-                eval(expr)
+                include("prof.jl")
             else
-            LRM[ALGORITHMS[i]], LQM[ALGORITHMS[i]] = prepare_simulation(
-                                                COUNT,
-                                                [EbN0_TEST],
-                                                ALGORITHMS[i],
-                                                MAX_FRAME_ERRORS_TEST,
-                                                MAXITER_TEST,
-                                                DECAY_TEST)
+                LRM[ALGORITHMS[i]], LQM[ALGORITHMS[i]] = prepare_simulation(
+                                                    COUNT,
+                                                    [EbN0_TEST],
+                                                    ALGORITHMS[i],
+                                                    MAX_FRAME_ERRORS_TEST,
+                                                    MAXITER_TEST,
+                                                    DECAY_TEST)
             end
         end
     end

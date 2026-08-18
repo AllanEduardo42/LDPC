@@ -29,7 +29,7 @@ SEED::Int = 1111
 ################################ CONTROL FLAGS #################################
 
 # Testing mode (few trials)
-TEST::Bool = true     
+TEST::Bool = false     
 # Print info is in testing mode                 
 PRIN::Bool = true   
 # profview                    
@@ -40,7 +40,7 @@ RAYL::Bool = false
 ############################### TEST PARAMETERS ################################
 
 ### Maximum number of BP iterations
-MAXITER_TEST::Int = 10
+MAXITER_TEST::Int = 1
 ### EbN0
 EbN0_TEST::Float64 = 2.5
 ### Maximum number of Frame Errors
@@ -54,11 +54,11 @@ DECAY_TEST::Float64 = 0.85
 MAXITER::Int = 20
 
 ### EbN0
-EbN0 = [1.0, 1.5, 2.0, 2.5, 3.0]
+# EbN0 = [1.0, 1.5, 2.0, 2.5, 3.0]
 # EbN0 = [1.0, 1.25, 1.5, 1.75, 2.0]
 # EbN0 = [2.0, 2.5, 3.0, 3.5, 4.0]
-# EbN0 = [3.5, 4.0, 4.5, 5.0, 5.5]
-# EbN0 = [1.5]
+EbN0 =   [4.0, 4.25, 4.5, 4.75, 5.0]
+# EbN0 = [5.0]
 # EbN0 = [2.0, 2.2, 2.4, 2.6, 2.8]
 
 ### Maximum number of Frame Errors (at the last iteration)
@@ -73,6 +73,9 @@ DECAYS = [0.85]
 
 ### CI-RBP gamma constant
 CI_GAMMA = 0.15
+
+### Parallel parameter
+PAR_PAR = 64
 
 ############################### LDPC ALGORITHMS ################################
 
@@ -90,7 +93,8 @@ ALGORITHMS = ["Flooding",        #  1) Flooding
               "OV-RBP",          # 12) Oscillating Variable Node RBP
               "CI-RBP",          # 13) Conditional Innovation RBP
               "UBP-RBP",         # 14) Update Before Propagate RBP
-              "RBP-D1VN"         # 15) RBP with D1VN Processing Scheme
+              "RBP-D1VN",        # 15) RBP with D1VN Processing Scheme,
+              "P-RBP"
               ]
 NUM_MODES = length(ALGORITHMS)
 
@@ -112,36 +116,36 @@ ACTIVE_ALL = false
 
 J = 0
 # Flooding
-ACTIVE[J+=1] = 0                          
+ACTIVE[J+=1] = 1                        
 
 # LBP
 ACTIVE[J+=1] = 1
 
 # RBP
-ACTIVE[J+=1] = 0
+ACTIVE[J+=1] = 1
 
 # RD-RBP
-ACTIVE[J+=1] = 0
+ACTIVE[J+=1] = 1
 
 # NW-RBP
-ACTIVE[J+=1] = 0
+ACTIVE[J+=1] = 1
 
 # SVNF
-ACTIVE[J+=1] = 0
+ACTIVE[J+=1] = 1
 
 # List-RBP
-ACTIVE[J+=1] = 0
+ACTIVE[J+=1] = 1
 LISTSIZES = [16,2]                      # List sizes (min values = [4,2])
 
 # C-RBP
-ACTIVE[J+=1] = 0
+ACTIVE[J+=1] = 1
 
 # C&R-RBP
-ACTIVE[J+=1] = 0
+ACTIVE[J+=1] = 1
 
 # C&DR-RBP
-ACTIVE[J+=1] = 0
-C_DR_ITER::Int = 5                      # Activation of Return in C&DR-RBP
+ACTIVE[J+=1] = 1
+C_DR_ITER::Int = 3                       # Activation of Return in C&DR-RBP
 
 # VC-RBP
 ACTIVE[J+=1] = 0
@@ -153,9 +157,12 @@ ACTIVE[J+=1] = 0
 ACTIVE[J+=1] = 0
 
 # UBP-RBP
-ACTIVE[J+=1] = 0
+ACTIVE[J+=1] = 1
 
 # RBP-D1VN
+ACTIVE[J+=1] = 0
+
+# P-RBP
 ACTIVE[J+=1] = 0
 
 ######################## CODE LENGTH, RATE AND PROTOCOL ########################
@@ -163,7 +170,7 @@ ACTIVE[J+=1] = 0
 # Transmitted message length
 CODE_LENGTH::Int = 576
 # Code Rate = RATE[1]/RATE[2]
-RATE = [1, 2]      
+RATE = [4, 5]      
 # RATE = [2, 3]              
 # LDPC protocol: 5GNR = NR-LDPC (5G); PEG = PEG; WiMAX = IEEE80216e;
 PROTOCOL::String = "5GNR"
