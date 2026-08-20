@@ -2,12 +2,12 @@ using DelimitedFiles
 using Plots
 using LaTeXStrings
 
-Date = "2026-05-05"
-Hour = "08:50"
-Protocol = "5GNR"
-N = 576
-R = [1,2]
-EbN0 = [1.0, 1.5, 2.0, 2.5, 3.0]
+# Date = "2026-05-05"
+# Hour = "08:50"
+# Protocol = "5GNR"
+# N = 576
+# R = [1,2]
+# EbN0 = [1.0, 1.5, 2.0, 2.5, 3.0]
 
 # Date = "2026-05-04"
 # Hour = "11:26"
@@ -44,11 +44,18 @@ EbN0 = [1.0, 1.5, 2.0, 2.5, 3.0]
 # R = [8,9]
 # EbN0 = [3.5, 4.0, 4.5, 5.0, 5.5, 6.0]
 
-# Date = "2026-08-17"
-# Hour = "22:44"
+Date = "2026-08-17"
+Hour = "22:44"
+Protocol = "5GNR"
+N = 576
+R = [5,6]
+EbN0 = [4.0, 4.25, 4.5, 4.75, 5.0]
+
+# Date = "2026-08-18"
+# Hour = "08:18"
 # Protocol = "5GNR"
 # N = 576
-# R = [5,6]
+# R = [4,5]
 # EbN0 = [4.0, 4.25, 4.5, 4.75, 5.0]
 
 maxiter = 20
@@ -64,26 +71,26 @@ PLOTLY = false
 
 GR = true
 
-ONLY_FER = true
+ONLY_FER = false
 
 curves =  
 # algorithm             marker           line       color       marker size                        
 [
-#  "Flooding"             :none            :solid     1           4  
-#  "LBP"                  :none            :solid     2           4
-#  "RBP"                  :dtriangle       :solid     3           4      
-#  "RD-RBP"               :utriangle       :solid     4           4         
-#  "NW-RBP"               :star5           :solid     5           6
-#  "SVNF"                 :diamond         :solid     15          5
-#  "List-RBP"             :circle          :solid     :gray       4
-#  "UBP-RBP"              :cross           :solid     :black      3
- "C&R-RBP"              :none            :solid     1           4
-#  "C&DR-RBP"             :circle          :solid     14          4 
- "C&DR-RBP 2"           :none       :solid     2           4   
- "C&DR-RBP 3"           :circle          :solid     3           4     
- "C&DR-RBP 4"           :rect          :solid     4           3   
- "C&DR-RBP 5"           :cross           :solid     :black           4  
-#  "C-RBP"                :none            :dash       11          4
+ "Flooding"             :none            :solid     1           4  
+ "LBP"                  :none            :solid     2           4
+ "RBP"                  :dtriangle       :solid     3           4      
+ "RD-RBP"               :utriangle       :solid     4           4         
+ "NW-RBP"               :star5           :solid     5           6
+ "SVNF"                 :diamond         :solid     15          5
+ "List-RBP"             :circle          :solid     :gray       4
+ "UBP-RBP"              :cross           :solid     :black      3
+ "C&R-RBP"              :rect            :solid     1           4
+ "C&DR-RBP"             :circle          :solid     14          4 
+#  "C&DR-RBP 2"           :none       :solid     2           4   
+#  "C&DR-RBP 3"           :circle          :solid     3           4     
+#  "C&DR-RBP 4"           :rect          :solid     4           3   
+#  "C&DR-RBP 5"           :cross           :solid     :black           4  
+ "C-RBP"                :none            :dash       11          4
 ]
 
 
