@@ -116,36 +116,36 @@ ACTIVE_ALL = false
 
 J = 0
 # Flooding
-ACTIVE[J+=1] = 1                        
+ACTIVE[J+=1] = 0                        
 
 # LBP
-ACTIVE[J+=1] = 1
+ACTIVE[J+=1] = 0
 
 # RBP
-ACTIVE[J+=1] = 1
+ACTIVE[J+=1] = 0
 
 # RD-RBP
-ACTIVE[J+=1] = 1
+ACTIVE[J+=1] = 0
 
 # NW-RBP
-ACTIVE[J+=1] = 1
+ACTIVE[J+=1] = 0
 
 # SVNF
-ACTIVE[J+=1] = 1
+ACTIVE[J+=1] = 0
 
 # List-RBP
-ACTIVE[J+=1] = 1
+ACTIVE[J+=1] = 0
 LISTSIZES = [16,2]                      # List sizes (min values = [4,2])
 
 # C-RBP
-ACTIVE[J+=1] = 1
+ACTIVE[J+=1] = 0
 
 # C&R-RBP
-ACTIVE[J+=1] = 1
+ACTIVE[J+=1] = 0
 
 # C&DR-RBP
 ACTIVE[J+=1] = 1
-C_DR_ITER::Int = 3                       # Activation of Return in C&DR-RBP
+C_DR_ITER::Int = 4                       # Activation of Return in C&DR-RBP
 
 # VC-RBP
 ACTIVE[J+=1] = 0
@@ -157,7 +157,7 @@ ACTIVE[J+=1] = 0
 ACTIVE[J+=1] = 0
 
 # UBP-RBP
-ACTIVE[J+=1] = 1
+ACTIVE[J+=1] = 0
 
 # RBP-D1VN
 ACTIVE[J+=1] = 0
@@ -170,7 +170,7 @@ ACTIVE[J+=1] = 0
 # Transmitted message length
 CODE_LENGTH::Int = 576
 # Code Rate = RATE[1]/RATE[2]
-RATE = [4, 5]      
+RATE = [5, 6]      
 # RATE = [2, 3]              
 # LDPC protocol: 5GNR = NR-LDPC (5G); PEG = PEG; WiMAX = IEEE80216e;
 PROTOCOL::String = "5GNR"

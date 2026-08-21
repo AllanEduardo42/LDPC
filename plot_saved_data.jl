@@ -89,7 +89,7 @@ curves =
 #  "C&DR-RBP 2"           :none       :solid     2           4   
 #  "C&DR-RBP 3"           :circle          :solid     3           4     
 #  "C&DR-RBP 4"           :rect          :solid     4           3   
-#  "C&DR-RBP 5"           :cross           :solid     :black           4  
+#  "C&DR-RBP 4"           :circle           :solid     14           4  
  "C-RBP"                :none            :dash       11          4
 ]
 
